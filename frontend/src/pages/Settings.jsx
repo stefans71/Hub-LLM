@@ -10,7 +10,16 @@ import {
   ArrowLeft,
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Plug,
+  Database,
+  Link2,
+  Settings as SettingsIcon,
+  X,
+  Plus,
+  Trash2,
+  Edit2,
+  AlertTriangle
 } from 'lucide-react'
 
 // CSS Variables matching mockup
@@ -901,6 +910,955 @@ function AppearanceSettings() {
   )
 }
 
+// MCP Server Type Icons
+const MCPTypeIcon = ({ type, size = 24, color }) => {
+  switch (type) {
+    case 'database':
+      return <Database size={size} style={{ color: color || cssVars.primary }} />
+    case 'api':
+      return <Link2 size={size} style={{ color: color || cssVars.textSecondary }} />
+    case 'custom':
+      return <SettingsIcon size={size} style={{ color: color || cssVars.textSecondary }} />
+    default:
+      return <Plug size={size} style={{ color: color || cssVars.textSecondary }} />
+  }
+}
+
+// Database type icons/emojis
+const dbTypeEmojis = {
+  postgres: '🐘',
+  mysql: '🐬',
+  mongodb: '🍃',
+  redis: '🔴',
+  sqlite: '📦'
+}
+
+// Service icons/emojis
+const serviceEmojis = {
+  github: '🐙',
+  slack: '💬',
+  gdrive: '📁',
+  notion: '📓',
+  jira: '📋',
+  linear: '📐'
+}
+
+// MCP Server Modal
+function MCPModal({ show, onClose, onSave, editServer }) {
+  const [serverType, setServerType] = useState('database')
+  const [dbType, setDbType] = useState('postgres')
+  const [connectionString, setConnectionString] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [accessLevel, setAccessLevel] = useState('readonly')
+  const [service, setService] = useState('github')
+  const [apiToken, setApiToken] = useState('')
+  const [customCommand, setCustomCommand] = useState('')
+  const [customArgs, setCustomArgs] = useState('')
+  const [customName, setCustomName] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  // Reset form when modal opens/closes or editServer changes
+  useEffect(() => {
+    if (show && editServer) {
+      setServerType(editServer.type)
+      if (editServer.type === 'database') {
+        setDbType(editServer.dbType || 'postgres')
+        setConnectionString(editServer.connectionString || '')
+        setDisplayName(editServer.name || '')
+        setAccessLevel(editServer.accessLevel || 'readonly')
+      } else if (editServer.type === 'api') {
+        setService(editServer.service || 'github')
+        setApiToken(editServer.apiToken || '')
+      } else if (editServer.type === 'custom') {
+        setCustomCommand(editServer.command || '')
+        setCustomArgs(editServer.args || '')
+        setCustomName(editServer.name || '')
+      }
+    } else if (show) {
+      // Reset to defaults for new server
+      setServerType('database')
+      setDbType('postgres')
+      setConnectionString('')
+      setDisplayName('')
+      setAccessLevel('readonly')
+      setService('github')
+      setApiToken('')
+      setCustomCommand('')
+      setCustomArgs('')
+      setCustomName('')
+      setError(null)
+    }
+  }, [show, editServer])
+
+  const handleSave = () => {
+    setError(null)
+
+    let server = {
+      id: editServer?.id || Date.now().toString(),
+      type: serverType,
+      connected: false,
+      createdAt: editServer?.createdAt || new Date().toISOString()
+    }
+
+    if (serverType === 'database') {
+      if (!displayName.trim()) {
+        setError('Display name is required')
+        return
+      }
+      if (!connectionString.trim()) {
+        setError('Connection string is required')
+        return
+      }
+      server = {
+        ...server,
+        name: displayName.trim(),
+        dbType,
+        connectionString: connectionString.trim(),
+        accessLevel,
+        icon: dbTypeEmojis[dbType] || '🗄️'
+      }
+    } else if (serverType === 'api') {
+      if (!apiToken.trim()) {
+        setError('API token is required')
+        return
+      }
+      server = {
+        ...server,
+        name: service.charAt(0).toUpperCase() + service.slice(1),
+        service,
+        apiToken: apiToken.trim(),
+        icon: serviceEmojis[service] || '🔗',
+        connected: true
+      }
+    } else if (serverType === 'custom') {
+      if (!customName.trim()) {
+        setError('Display name is required')
+        return
+      }
+      if (!customCommand.trim()) {
+        setError('Server command is required')
+        return
+      }
+      server = {
+        ...server,
+        name: customName.trim(),
+        command: customCommand.trim(),
+        args: customArgs.trim(),
+        icon: '⚙️'
+      }
+    }
+
+    setSaving(true)
+    setTimeout(() => {
+      onSave(server)
+      setSaving(false)
+      onClose()
+    }, 300)
+  }
+
+  if (!show) return null
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          zIndex: 1000
+        }}
+      />
+      {/* Modal */}
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        background: cssVars.bgSecondary,
+        borderRadius: '16px',
+        width: '500px',
+        maxWidth: '90vw',
+        maxHeight: '90vh',
+        overflow: 'auto',
+        zIndex: 1001,
+        boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '20px 24px',
+          borderBottom: `1px solid ${cssVars.border}`
+        }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+            {editServer ? 'Edit MCP Server' : 'Add MCP Server'}
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: cssVars.textSecondary,
+              cursor: 'pointer',
+              padding: '4px'
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '24px' }}>
+          {/* Server Type Selection */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '12px',
+              fontWeight: '600',
+              color: cssVars.textSecondary,
+              textTransform: 'uppercase',
+              marginBottom: '12px'
+            }}>
+              Server Type
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+              {/* Database */}
+              <div
+                onClick={() => setServerType('database')}
+                style={{
+                  padding: '12px',
+                  background: cssVars.bgTertiary,
+                  border: `2px solid ${serverType === 'database' ? cssVars.primary : cssVars.border}`,
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  textAlign: 'center'
+                }}
+              >
+                <Database size={24} style={{ color: serverType === 'database' ? cssVars.primary : cssVars.textSecondary, margin: '0 auto 6px' }} />
+                <div style={{ fontSize: '11px', fontWeight: '500' }}>Database</div>
+              </div>
+              {/* API/Service */}
+              <div
+                onClick={() => setServerType('api')}
+                style={{
+                  padding: '12px',
+                  background: cssVars.bgTertiary,
+                  border: `2px solid ${serverType === 'api' ? cssVars.primary : cssVars.border}`,
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  textAlign: 'center'
+                }}
+              >
+                <Link2 size={24} style={{ color: serverType === 'api' ? cssVars.primary : cssVars.textSecondary, margin: '0 auto 6px' }} />
+                <div style={{ fontSize: '11px', fontWeight: '500' }}>API/Service</div>
+              </div>
+              {/* Custom */}
+              <div
+                onClick={() => setServerType('custom')}
+                style={{
+                  padding: '12px',
+                  background: cssVars.bgTertiary,
+                  border: `2px solid ${serverType === 'custom' ? cssVars.primary : cssVars.border}`,
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  textAlign: 'center'
+                }}
+              >
+                <SettingsIcon size={24} style={{ color: serverType === 'custom' ? cssVars.primary : cssVars.textSecondary, margin: '0 auto 6px' }} />
+                <div style={{ fontSize: '11px', fontWeight: '500' }}>Custom</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Database Options */}
+          {serverType === 'database' && (
+            <>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: cssVars.textSecondary,
+                  textTransform: 'uppercase',
+                  marginBottom: '8px'
+                }}>
+                  Database Type
+                </label>
+                <select
+                  value={dbType}
+                  onChange={(e) => setDbType(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="postgres">🐘 PostgreSQL</option>
+                  <option value="mysql">🐬 MySQL</option>
+                  <option value="mongodb">🍃 MongoDB</option>
+                  <option value="redis">🔴 Redis</option>
+                  <option value="sqlite">📦 SQLite</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: cssVars.textSecondary,
+                  textTransform: 'uppercase',
+                  marginBottom: '8px'
+                }}>
+                  Connection String
+                </label>
+                <input
+                  type="text"
+                  value={connectionString}
+                  onChange={(e) => setConnectionString(e.target.value)}
+                  placeholder="postgresql://user:password@localhost:5432/dbname"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '12px',
+                    fontFamily: 'Monaco, Consolas, monospace',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: cssVars.textSecondary,
+                    textTransform: 'uppercase',
+                    marginBottom: '8px'
+                  }}>
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="e.g. Production DB"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      background: cssVars.bgTertiary,
+                      border: `1px solid ${cssVars.border}`,
+                      borderRadius: '8px',
+                      color: cssVars.textPrimary,
+                      fontSize: '14px',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: cssVars.textSecondary,
+                    textTransform: 'uppercase',
+                    marginBottom: '8px'
+                  }}>
+                    Access Level
+                  </label>
+                  <select
+                    value={accessLevel}
+                    onChange={(e) => setAccessLevel(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      background: cssVars.bgTertiary,
+                      border: `1px solid ${cssVars.border}`,
+                      borderRadius: '8px',
+                      color: cssVars.textPrimary,
+                      fontSize: '14px',
+                      outline: 'none'
+                    }}
+                  >
+                    <option value="readonly">Read-only (safer)</option>
+                    <option value="readwrite">Read & Write</option>
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* API/Service Options */}
+          {serverType === 'api' && (
+            <>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: cssVars.textSecondary,
+                  textTransform: 'uppercase',
+                  marginBottom: '8px'
+                }}>
+                  Service
+                </label>
+                <select
+                  value={service}
+                  onChange={(e) => setService(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="github">🐙 GitHub</option>
+                  <option value="slack">💬 Slack</option>
+                  <option value="gdrive">📁 Google Drive</option>
+                  <option value="notion">📓 Notion</option>
+                  <option value="jira">📋 Jira</option>
+                  <option value="linear">📐 Linear</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: cssVars.textSecondary,
+                  textTransform: 'uppercase',
+                  marginBottom: '8px'
+                }}>
+                  API Token
+                </label>
+                <input
+                  type="password"
+                  value={apiToken}
+                  onChange={(e) => setApiToken(e.target.value)}
+                  placeholder="Enter API token"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '14px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Custom Options */}
+          {serverType === 'custom' && (
+            <>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: cssVars.textSecondary,
+                  textTransform: 'uppercase',
+                  marginBottom: '8px'
+                }}>
+                  Server Command
+                </label>
+                <input
+                  type="text"
+                  value={customCommand}
+                  onChange={(e) => setCustomCommand(e.target.value)}
+                  placeholder="npx @modelcontextprotocol/server-filesystem"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '12px',
+                    fontFamily: 'Monaco, Consolas, monospace',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: cssVars.textSecondary,
+                  textTransform: 'uppercase',
+                  marginBottom: '8px'
+                }}>
+                  Arguments (JSON)
+                </label>
+                <textarea
+                  value={customArgs}
+                  onChange={(e) => setCustomArgs(e.target.value)}
+                  placeholder='["--directory", "/path/to/files"]'
+                  style={{
+                    width: '100%',
+                    minHeight: '80px',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '12px',
+                    fontFamily: 'Monaco, Consolas, monospace',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: cssVars.textSecondary,
+                  textTransform: 'uppercase',
+                  marginBottom: '8px'
+                }}>
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="e.g. File System Access"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '14px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Security Warning */}
+          <div style={{
+            padding: '12px',
+            background: 'rgba(249, 115, 22, 0.1)',
+            border: `1px solid ${cssVars.accent}`,
+            borderRadius: '8px',
+            marginTop: '16px'
+          }}>
+            <div style={{ fontSize: '12px', color: cssVars.accent, display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <span>
+                <strong>Security Note:</strong> MCP servers have direct access to your data. Only connect to trusted sources and use read-only access when possible.
+              </span>
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div style={{
+              marginTop: '16px',
+              padding: '12px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: `1px solid ${cssVars.error}`,
+              borderRadius: '8px',
+              color: cssVars.error,
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          padding: '16px 24px',
+          borderTop: `1px solid ${cssVars.border}`,
+          background: cssVars.bgTertiary
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 20px',
+              background: cssVars.bgSecondary,
+              border: `1px solid ${cssVars.border}`,
+              borderRadius: '8px',
+              color: cssVars.textPrimary,
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              padding: '10px 20px',
+              background: cssVars.primary,
+              border: 'none',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: saving ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            {saving ? (
+              <>
+                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                Saving...
+              </>
+            ) : (
+              editServer ? 'Save Changes' : 'Add Server'
+            )}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// Global MCP Servers Settings Section
+function GlobalMCPSettings() {
+  const [servers, setServers] = useState([])
+  const [showModal, setShowModal] = useState(false)
+  const [editingServer, setEditingServer] = useState(null)
+  const [showHelp, setShowHelp] = useState(false)
+
+  // Load servers from localStorage
+  useEffect(() => {
+    const savedServers = localStorage.getItem('mcp_servers')
+    if (savedServers) {
+      try {
+        setServers(JSON.parse(savedServers))
+      } catch (e) {
+        console.error('Failed to parse MCP servers:', e)
+      }
+    }
+  }, [])
+
+  // Save servers to localStorage
+  const saveServers = (newServers) => {
+    setServers(newServers)
+    localStorage.setItem('mcp_servers', JSON.stringify(newServers))
+  }
+
+  const handleAddServer = (server) => {
+    if (editingServer) {
+      // Update existing
+      const updated = servers.map(s => s.id === server.id ? server : s)
+      saveServers(updated)
+    } else {
+      // Add new
+      saveServers([...servers, server])
+    }
+    setEditingServer(null)
+  }
+
+  const handleEditServer = (server) => {
+    setEditingServer(server)
+    setShowModal(true)
+  }
+
+  const handleDeleteServer = (serverId) => {
+    if (window.confirm('Are you sure you want to remove this MCP server?')) {
+      saveServers(servers.filter(s => s.id !== serverId))
+    }
+  }
+
+  const getTypeLabel = (type) => {
+    switch (type) {
+      case 'database': return 'Database'
+      case 'api': return 'API Service'
+      case 'custom': return 'Custom'
+      default: return type
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>Global MCP Servers</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ position: 'relative' }}>
+            <span
+              style={{ fontSize: '18px', cursor: 'pointer' }}
+              title="MCP servers use context tokens"
+            >
+              ⚠️
+            </span>
+          </div>
+        </div>
+      </div>
+      <p style={{ color: cssVars.textSecondary, fontSize: '14px', marginBottom: '24px' }}>
+        MCP (Model Context Protocol) servers connect AI to external tools and data sources. These are available across all projects.
+      </p>
+
+      {/* What is MCP? Help Section */}
+      <div style={{ marginBottom: '20px' }}>
+        <div
+          onClick={() => setShowHelp(!showHelp)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            padding: '8px 0'
+          }}
+        >
+          <span style={{
+            fontSize: '10px',
+            color: cssVars.textMuted,
+            transition: 'transform 0.2s',
+            transform: showHelp ? 'rotate(90deg)' : 'rotate(0deg)'
+          }}>
+            ▶
+          </span>
+          <span style={{ fontSize: '13px', color: cssVars.primary }}>What is MCP? How does it work?</span>
+        </div>
+        {showHelp && (
+          <div style={{
+            background: cssVars.bgPrimary,
+            border: `1px solid ${cssVars.border}`,
+            borderRadius: '12px',
+            padding: '20px',
+            marginTop: '8px'
+          }}>
+            <p style={{ margin: '0 0 16px 0', lineHeight: '1.6' }}>
+              <strong>MCP (Model Context Protocol)</strong> is a universal standard that connects AI assistants to external tools and data sources. It works with Claude, ChatGPT, Codex, and more.
+            </p>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+              padding: '16px',
+              background: cssVars.bgSecondary,
+              borderRadius: '8px',
+              margin: '16px 0'
+            }}>
+              <span style={{ background: 'rgba(59, 130, 246, 0.2)', border: `1px solid ${cssVars.primary}`, padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>🤖 AI</span>
+              <span style={{ color: cssVars.textMuted }}>→</span>
+              <span style={{ background: 'rgba(168, 85, 247, 0.2)', border: '1px solid #a855f7', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>🔌 MCP</span>
+              <span style={{ color: cssVars.textMuted }}>→</span>
+              <span style={{ background: 'rgba(34, 197, 94, 0.2)', border: `1px solid ${cssVars.success}`, padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>🗄️ Data</span>
+            </div>
+            <p style={{ margin: 0, fontSize: '13px', color: cssVars.textSecondary }}>
+              With PostgreSQL MCP connected, you can ask: "Show me all users who signed up last week" and the AI can query your database directly.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Server List Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '16px'
+      }}>
+        <span style={{ fontWeight: '500' }}>Connected MCP Servers</span>
+        <button
+          onClick={() => {
+            setEditingServer(null)
+            setShowModal(true)
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 16px',
+            background: cssVars.primary,
+            border: 'none',
+            borderRadius: '8px',
+            color: 'white',
+            fontSize: '13px',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}
+        >
+          <Plus size={16} />
+          Add Server
+        </button>
+      </div>
+
+      {/* Server List */}
+      <div style={{
+        background: cssVars.bgTertiary,
+        borderRadius: '12px',
+        overflow: 'hidden'
+      }}>
+        {servers.length === 0 ? (
+          <div style={{
+            padding: '40px 20px',
+            textAlign: 'center',
+            color: cssVars.textMuted
+          }}>
+            <Plug size={48} style={{ opacity: 0.3, marginBottom: '12px' }} />
+            <div style={{ fontSize: '14px', marginBottom: '8px' }}>No MCP servers configured</div>
+            <div style={{ fontSize: '12px' }}>Click "Add Server" to connect your first MCP server</div>
+          </div>
+        ) : (
+          servers.map((server, index) => (
+            <div
+              key={server.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '16px 20px',
+                borderBottom: index < servers.length - 1 ? `1px solid ${cssVars.border}` : 'none',
+                gap: '16px'
+              }}
+            >
+              {/* Icon */}
+              <div style={{
+                width: '44px',
+                height: '44px',
+                background: cssVars.bgSecondary,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px'
+              }}>
+                {server.icon || '🔌'}
+              </div>
+
+              {/* Info */}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: '500', marginBottom: '4px' }}>{server.name}</div>
+                <div style={{ fontSize: '12px', color: cssVars.textMuted }}>
+                  {getTypeLabel(server.type)}
+                  {server.dbType && ` • ${server.dbType.toUpperCase()}`}
+                  {server.service && ` • ${server.service}`}
+                  {server.accessLevel && ` • ${server.accessLevel === 'readonly' ? 'Read-only' : 'Read/Write'}`}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div style={{
+                fontSize: '12px',
+                color: server.connected ? cssVars.success : cssVars.textMuted,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                {server.connected ? '● Connected' : '○ Not tested'}
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => handleEditServer(server)}
+                  style={{
+                    padding: '6px 12px',
+                    background: cssVars.bgSecondary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '6px',
+                    color: cssVars.textPrimary,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Edit2 size={12} />
+                  Configure
+                </button>
+                <button
+                  onClick={() => handleDeleteServer(server.id)}
+                  style={{
+                    padding: '6px 8px',
+                    background: cssVars.bgSecondary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '6px',
+                    color: cssVars.error,
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Info Box */}
+      <div style={{
+        marginTop: '16px',
+        padding: '12px',
+        background: 'rgba(59, 130, 246, 0.1)',
+        borderRadius: '8px',
+        borderLeft: `3px solid ${cssVars.primary}`
+      }}>
+        <div style={{ fontSize: '12px', color: cssVars.textSecondary }}>
+          <strong>🔌 Universal Standard:</strong> MCP is supported by Claude, OpenAI Codex, and most modern AI tools. Servers configured here work with any LLM you use in your projects.
+        </div>
+      </div>
+
+      {/* Modal */}
+      <MCPModal
+        show={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setEditingServer(null)
+        }}
+        onSave={handleAddServer}
+        editServer={editingServer}
+      />
+    </div>
+  )
+}
+
 // Main Settings Page
 export default function Settings({ onBack }) {
   const { user, getAuthHeader } = useAuth()
@@ -914,6 +1872,8 @@ export default function Settings({ onBack }) {
         return <APIKeysSettings />
       case 'appearance':
         return <AppearanceSettings />
+      case 'mcp':
+        return <GlobalMCPSettings />
       default:
         return <ProfileSettings user={user} getAuthHeader={getAuthHeader} />
     }
@@ -993,6 +1953,15 @@ export default function Settings({ onBack }) {
             label="Appearance"
             active={activeTab === 'appearance'}
             onClick={() => setActiveTab('appearance')}
+          />
+
+          {/* Integrations Section */}
+          <SectionHeader label="Integrations" />
+          <NavItem
+            icon={Plug}
+            label="MCP Servers"
+            active={activeTab === 'mcp'}
+            onClick={() => setActiveTab('mcp')}
           />
         </nav>
       </aside>

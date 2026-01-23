@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 29/38 (76%)
+- **Features Passing**: 30/38 (79%)
 
 ## Completed Features
 
@@ -466,13 +466,36 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Full project creation flow now works end-to-end. User fills out all 5 steps, clicks Create Project, backend saves with all configuration (workspace, connection, context, agents, MCP servers), and redirects to workspace view. Project immediately appears in sidebar.
 
+### Session 22 - 2026-01-23
+**Focus**: Add custom MCP server (mcp-002)
+**Completed**:
+- Added Global MCP Servers section to Settings page
+- Created MCPModal component for adding/editing MCP servers
+- Supports 3 server types: Database, API/Service, and Custom
+- Database type options: PostgreSQL, MySQL, MongoDB, Redis, SQLite
+- API/Service options: GitHub, Slack, Google Drive, Notion, Jira, Linear
+- Custom type allows specifying server command and JSON arguments
+- MCP servers stored in localStorage for persistence
+- Server list shows status, type details, and actions (Configure, Delete)
+- Updated CreateProject.jsx to load MCP servers from localStorage
+- Custom MCP servers now appear in Step 5 of Create Project flow
+- Added navigation item "MCP Servers" under Integrations section in Settings sidebar
+- Security warning shown in modal about MCP server data access
+- Expandable "What is MCP?" help section with visual diagram
+
+**Files modified**:
+- frontend/src/pages/Settings.jsx (added MCPModal, GlobalMCPSettings, navigation)
+- frontend/src/pages/CreateProject.jsx (load MCP servers from localStorage, handle emoji icons)
+
+**Notes**: MCP servers are stored in localStorage under key 'mcp_servers'. The CreateProject page loads these servers and merges them with default servers (GitHub, Slack, Google Drive). Custom servers show their type (Database/API/Custom) and connection status.
+
 ---
 
 ## Next Priority Features
 
-1. **mcp-002**: User can add custom MCP server
-2. **auth-005**: Logout flow with route protection
-3. **agents-003**: User can create new agent in settings
+1. **auth-005**: Logout flow with route protection
+2. **agents-003**: User can create new agent in settings
+3. **settings-003**: User can manage VPS servers in settings
 
 ---
 

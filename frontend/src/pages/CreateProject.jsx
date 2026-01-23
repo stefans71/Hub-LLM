@@ -299,52 +299,66 @@ const AgentItem = ({ name, description, icon: Icon, color, checked, onChange, on
   </div>
 )
 
-// MCP Server Item component
-const MCPServerItem = ({ name, status, icon: Icon, color, checked, onChange, onEdit, isGlobal }) => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px',
-    borderRadius: '6px',
-    opacity: checked ? 1 : 0.5
-  }}>
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={onChange}
-      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-    />
+// MCP Server Item component - handles both icon components and emoji strings
+const MCPServerItem = ({ name, status, icon: Icon, color, checked, onChange, onEdit, isGlobal }) => {
+  // Render icon - either as a component or as an emoji string
+  const renderIcon = () => {
+    if (typeof Icon === 'string') {
+      // It's an emoji string
+      return <span style={{ fontSize: '14px' }}>{Icon}</span>
+    } else if (typeof Icon === 'function') {
+      // It's a React component or function returning JSX
+      return <Icon size={14} style={{ color: 'white' }} />
+    }
+    return null
+  }
+
+  return (
     <div style={{
-      width: '24px',
-      height: '24px',
-      background: color,
-      borderRadius: '6px',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      gap: '8px',
+      padding: '8px',
+      borderRadius: '6px',
+      opacity: checked ? 1 : 0.5
     }}>
-      <Icon size={14} style={{ color: 'white' }} />
-    </div>
-    <div style={{ flex: 1 }}>
-      <div style={{ fontSize: '12px', fontWeight: 500 }}>{name}</div>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+      />
       <div style={{
-        fontSize: '10px',
-        color: status === 'connected' ? cssVars.success : cssVars.textMuted
+        width: '24px',
+        height: '24px',
+        background: color,
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}>
-        {status === 'connected' ? '● Connected' : '○ Not configured'}
+        {renderIcon()}
       </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: '12px', fontWeight: 500 }}>{name}</div>
+        <div style={{
+          fontSize: '10px',
+          color: status === 'connected' ? cssVars.success : cssVars.textMuted
+        }}>
+          {status === 'connected' ? '● Connected' : '○ Not configured'}
+        </div>
+      </div>
+      {isGlobal && onEdit && (
+        <span
+          onClick={onEdit}
+          style={{ fontSize: '10px', color: cssVars.primary, cursor: 'pointer' }}
+        >
+          Edit Global →
+        </span>
+      )}
     </div>
-    {isGlobal && onEdit && (
-      <span
-        onClick={onEdit}
-        style={{ fontSize: '10px', color: cssVars.primary, cursor: 'pointer' }}
-      >
-        Edit Global →
-      </span>
-    )}
-  </div>
-)
+  )
+}
 
 export default function CreateProject({ onCancel, onCreateProject }) {
   const { getAuthHeader } = useAuth()
@@ -417,16 +431,46 @@ export default function CreateProject({ onCancel, onCreateProject }) {
     { id: 'test-writer', name: 'test-writer', description: 'Generates unit and integration tests', icon: CheckSquare, color: '34, 197, 94' },
   ]
 
-  // Available global MCP servers
-  const globalMCPServers = [
-    { id: 'github', name: 'GitHub', status: 'connected', icon: () => (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-      </svg>
-    ), color: 'rgba(36, 41, 46, 0.8)' },
-    { id: 'slack', name: 'Slack', status: 'connected', icon: MessageSquare, color: 'rgba(74, 21, 75, 0.8)' },
-    { id: 'google-drive', name: 'Google Drive', status: 'not-connected', icon: FolderOpen, color: 'rgba(66, 133, 244, 0.2)' },
-  ]
+  // Load global MCP servers from localStorage (Settings > MCP Servers)
+  const [globalMCPServers, setGlobalMCPServers] = useState([])
+
+  useEffect(() => {
+    // Default servers
+    const defaultServers = [
+      { id: 'github', name: 'GitHub', status: 'connected', icon: () => (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+      ), color: 'rgba(36, 41, 46, 0.8)' },
+      { id: 'slack', name: 'Slack', status: 'connected', icon: MessageSquare, color: 'rgba(74, 21, 75, 0.8)' },
+      { id: 'google-drive', name: 'Google Drive', status: 'not-connected', icon: FolderOpen, color: 'rgba(66, 133, 244, 0.2)' },
+    ]
+
+    // Load custom servers from localStorage
+    const savedServers = localStorage.getItem('mcp_servers')
+    if (savedServers) {
+      try {
+        const customServers = JSON.parse(savedServers)
+        // Map custom servers to the format expected by MCPServerItem
+        const mappedCustomServers = customServers.map(s => ({
+          id: s.id,
+          name: s.name,
+          status: s.connected ? 'connected' : 'not-connected',
+          icon: s.icon || '🔌',
+          color: s.type === 'database' ? 'rgba(59, 130, 246, 0.8)' :
+                 s.type === 'api' ? 'rgba(168, 85, 247, 0.8)' :
+                 'rgba(107, 114, 128, 0.8)',
+          isCustom: true
+        }))
+        setGlobalMCPServers([...defaultServers, ...mappedCustomServers])
+      } catch (e) {
+        console.error('Failed to parse MCP servers:', e)
+        setGlobalMCPServers(defaultServers)
+      }
+    } else {
+      setGlobalMCPServers(defaultServers)
+    }
+  }, [])
 
   const handleInputChange = (field) => (e) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }))
