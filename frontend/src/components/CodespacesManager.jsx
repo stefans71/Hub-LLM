@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
-import { 
-  Cloud, 
-  Play, 
-  Square, 
-  Trash2, 
+import {
+  Cloud,
+  Play,
+  Square,
+  Trash2,
   ExternalLink,
   RefreshCw,
   Plus,
   GitBranch,
   Cpu,
-  Loader2
+  Loader2,
+  Eye
 } from 'lucide-react'
 
 /**
@@ -17,11 +18,12 @@ import {
  * 
  * Manage GitHub Codespaces - list, start, stop, open in browser.
  */
-export default function CodespacesManager({ githubToken, onOpenInBrowser }) {
+export default function CodespacesManager({ githubToken, onOpenInBrowser, onPreview }) {
   const [codespaces, setCodespaces] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [actionLoading, setActionLoading] = useState({}) // Track loading per codespace
+  const [previewingCodespace, setPreviewingCodespace] = useState(null) // Currently previewed codespace name
 
   useEffect(() => {
     if (githubToken) {
@@ -136,6 +138,14 @@ export default function CodespacesManager({ githubToken, onOpenInBrowser }) {
     }
   }
 
+  const handlePreview = (codespace, port = 5173) => {
+    // Build the forwarded port URL for Codespaces
+    // Format: https://{codespace-name}-{port}.app.github.dev/
+    const previewUrl = `https://${codespace.name}-${port}.app.github.dev/`
+    setPreviewingCodespace(codespace.name)
+    onPreview?.(previewUrl)
+  }
+
   if (!githubToken) {
     return (
       <div className="p-8 text-center">
@@ -215,6 +225,11 @@ export default function CodespacesManager({ githubToken, onOpenInBrowser }) {
                   <span className="text-xs text-gray-500">
                     {getStateText(cs.state)}
                   </span>
+                  {previewingCodespace === cs.name && (
+                    <span className="text-xs px-2 py-0.5 bg-purple-900/50 text-purple-300 rounded-full">
+                      Previewing
+                    </span>
+                  )}
                 </div>
                 
                 <div className="flex items-center gap-4 text-sm text-gray-400">
@@ -232,6 +247,17 @@ export default function CodespacesManager({ githubToken, onOpenInBrowser }) {
               <div className="flex items-center gap-1 ml-4">
                 {cs.state.toLowerCase() === 'available' ? (
                   <>
+                    {onPreview && (
+                      <button
+                        onClick={() => handlePreview(cs)}
+                        className={`p-2 hover:bg-gray-700 rounded-lg transition ${
+                          previewingCodespace === cs.name ? 'text-green-400 bg-gray-700' : 'text-purple-400'
+                        }`}
+                        title="Preview (port 5173)"
+                      >
+                        <Eye size={18} />
+                      </button>
+                    )}
                     <a
                       href={cs.web_url}
                       target="_blank"

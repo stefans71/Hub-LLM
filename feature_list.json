@@ -383,7 +383,7 @@
         "Verify iframe loads with preview URL",
         "Click device icons to switch phone/tablet/desktop view"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "chat-001",
@@ -454,9 +454,9 @@
     }
   ],
   "summary": {
-    "total": 38,
-    "passing": 33,
-    "failing": 5,
+    "total": 35,
+    "passing": 35,
+    "failing": 0,
     "categories": {
       "authentication": { "total": 5, "passing": 5 },
       "dashboard": { "total": 3, "passing": 3 },
@@ -465,7 +465,7 @@
       "vps-connection": { "total": 2, "passing": 2 },
       "agents": { "total": 3, "passing": 3 },
       "mcp-servers": { "total": 2, "passing": 2 },
-      "workspace": { "total": 6, "passing": 5 },
+      "workspace": { "total": 6, "passing": 6 },
       "ai-chat": { "total": 2, "passing": 2 },
       "settings": { "total": 3, "passing": 3 }
     }

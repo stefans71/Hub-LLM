@@ -5,9 +5,10 @@ import FileBrowser from './FileBrowser'
 import ServerManager from './ServerManager'
 import CodespacesManager from './CodespacesManager'
 import CodeEditor from './CodeEditor'
-import { 
-  MessageSquare, 
-  Server, 
+import PreviewPanel from './PreviewPanel'
+import {
+  MessageSquare,
+  Server,
   Terminal as TerminalIcon,
   FolderOpen,
   PanelLeftClose,
@@ -34,6 +35,8 @@ export default function Workspace({ project, model, apiKeys }) {
   const [showRightPanel, setShowRightPanel] = useState(false)
   const [rightPanelContent, setRightPanelContent] = useState(null) // 'files', 'terminal', 'editor'
   const [editingFile, setEditingFile] = useState(null) // { path, content }
+  const [previewUrl, setPreviewUrl] = useState('') // Codespaces preview URL
+  const [previewCollapsed, setPreviewCollapsed] = useState(true)
 
   const openTerminal = (server) => {
     // Check if terminal already open for this server
@@ -147,26 +150,42 @@ export default function Workspace({ project, model, apiKeys }) {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 flex overflow-hidden">
+          {/* Content area */}
+          <div className={`overflow-hidden ${activeTab === 'chat' && !previewCollapsed ? 'flex-1' : 'flex-1'}`}>
+            {activeTab === 'chat' && (
+              <Chat
+                project={project}
+                model={model}
+                apiKeys={apiKeys}
+              />
+            )}
+
+            {activeTab === 'servers' && (
+              <ServerManager
+                projectId={project?.id}
+                onOpenTerminal={openTerminal}
+                onOpenFiles={openFiles}
+              />
+            )}
+
+            {activeTab === 'codespaces' && (
+              <CodespacesManager
+                githubToken={apiKeys.github}
+                onPreview={(url) => {
+                  setPreviewUrl(url)
+                  setPreviewCollapsed(false)
+                }}
+              />
+            )}
+          </div>
+
+          {/* Preview Panel (visible in chat mode) */}
           {activeTab === 'chat' && (
-            <Chat
-              project={project}
-              model={model}
-              apiKeys={apiKeys}
-            />
-          )}
-          
-          {activeTab === 'servers' && (
-            <ServerManager
-              projectId={project?.id}
-              onOpenTerminal={openTerminal}
-              onOpenFiles={openFiles}
-            />
-          )}
-          
-          {activeTab === 'codespaces' && (
-            <CodespacesManager
-              githubToken={apiKeys.github}
+            <PreviewPanel
+              previewUrl={previewUrl}
+              defaultCollapsed={previewCollapsed}
+              onCollapsedChange={setPreviewCollapsed}
             />
           )}
         </div>
