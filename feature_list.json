@@ -255,7 +255,7 @@
         "Click 'Use Global Agents' master checkbox",
         "Verify all agents toggle on/off"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "agents-003",
@@ -455,15 +455,15 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 26,
-    "failing": 12,
+    "passing": 27,
+    "failing": 11,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
       "dashboard": { "total": 3, "passing": 3 },
       "project-creation": { "total": 6, "passing": 5 },
       "github-integration": { "total": 3, "passing": 3 },
       "vps-connection": { "total": 2, "passing": 2 },
-      "agents": { "total": 3, "passing": 1 },
+      "agents": { "total": 3, "passing": 2 },
       "mcp-servers": { "total": 2, "passing": 0 },
       "workspace": { "total": 6, "passing": 5 },
       "ai-chat": { "total": 2, "passing": 2 },

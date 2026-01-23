@@ -349,6 +349,8 @@ const MCPServerItem = ({ name, status, icon: Icon, color, checked, onChange, onE
 export default function CreateProject({ onCancel, onCreateProject }) {
   const { getAuthHeader } = useAuth()
   const fileInputRef = useRef(null)
+  const agentsCheckboxRef = useRef(null)
+  const mcpCheckboxRef = useRef(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -912,7 +914,24 @@ In the meantime, I can help you think through your project. What would you like 
   }
 
   const allAgentsSelected = formData.selectedAgents.length === globalAgents.length
-  const allMCPSelected = formData.selectedMCP.length === globalMCPServers.filter(s => s.status === 'connected').length
+  const someAgentsSelected = formData.selectedAgents.length > 0 && formData.selectedAgents.length < globalAgents.length
+  const connectedMCPServers = globalMCPServers.filter(s => s.status === 'connected')
+  const allMCPSelected = formData.selectedMCP.length === connectedMCPServers.length
+  const someMCPSelected = formData.selectedMCP.length > 0 && formData.selectedMCP.length < connectedMCPServers.length
+
+  // Set indeterminate state for agents master checkbox
+  useEffect(() => {
+    if (agentsCheckboxRef.current) {
+      agentsCheckboxRef.current.indeterminate = someAgentsSelected
+    }
+  }, [someAgentsSelected])
+
+  // Set indeterminate state for MCP master checkbox
+  useEffect(() => {
+    if (mcpCheckboxRef.current) {
+      mcpCheckboxRef.current.indeterminate = someMCPSelected
+    }
+  }, [someMCPSelected])
 
   return (
     <div style={{
@@ -1784,6 +1803,7 @@ Examples:
             <div style={{ background: cssVars.bgTertiary, borderRadius: '8px', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px' }}>
                 <input
+                  ref={agentsCheckboxRef}
                   type="checkbox"
                   checked={allAgentsSelected}
                   onChange={(e) => handleToggleAllAgents(e.target.checked)}
@@ -1793,7 +1813,7 @@ Examples:
                   style={{ flex: 1, cursor: 'pointer' }}
                   onClick={() => setShowGlobalAgents(!showGlobalAgents)}
                 >
-                  <div style={{ fontSize: '13px', fontWeight: 500 }}>Include Global Agents</div>
+                  <div style={{ fontSize: '13px', fontWeight: 500 }}>Use Global Agents</div>
                   <div style={{ fontSize: '11px', color: cssVars.textMuted }}>
                     {formData.selectedAgents.length} agents selected
                   </div>
@@ -1911,6 +1931,7 @@ Examples:
             <div style={{ background: cssVars.bgTertiary, borderRadius: '8px', marginBottom: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px' }}>
                 <input
+                  ref={mcpCheckboxRef}
                   type="checkbox"
                   checked={allMCPSelected}
                   onChange={(e) => handleToggleAllMCP(e.target.checked)}
@@ -1920,7 +1941,7 @@ Examples:
                   style={{ flex: 1, cursor: 'pointer' }}
                   onClick={() => setShowGlobalMCP(!showGlobalMCP)}
                 >
-                  <div style={{ fontSize: '13px', fontWeight: 500 }}>Include Global MCP Servers</div>
+                  <div style={{ fontSize: '13px', fontWeight: 500 }}>Use Global MCP Servers</div>
                   <div style={{ fontSize: '11px', color: cssVars.textMuted }}>
                     {formData.selectedMCP.length} of {globalMCPServers.length} servers selected
                   </div>

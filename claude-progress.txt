@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 26/38 (68%)
+- **Features Passing**: 27/38 (71%)
 
 ## Completed Features
 
@@ -402,12 +402,26 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: The agent selection feature was already implemented in Session 4 as part of the Create Project page. This session verified the functionality works as expected and marked agents-001 as passing. The implementation includes individual toggles, "select all" master checkbox, and dynamic selection count display.
 
+### Session 19 - 2026-01-23
+**Focus**: Master checkbox for agents (agents-002)
+**Completed**:
+- Enhanced master "Use Global Agents" checkbox with indeterminate state support
+- Added refs for both agents and MCP checkboxes
+- Added useEffect hooks to set indeterminate state when some but not all items selected
+- Updated checkbox labels to match spec ("Use Global Agents" and "Use Global MCP Servers")
+- Verified handleToggleAllAgents correctly toggles all agents on/off
+
+**Files modified**:
+- frontend/src/pages/CreateProject.jsx (refs, useEffect for indeterminate state, label updates)
+
+**Notes**: The select-all functionality was already implemented in Session 4 via handleToggleAllAgents. This session enhanced it with proper indeterminate checkbox state (shows dash when some but not all selected) which is standard UX for select-all controls.
+
 ---
 
 ## Next Priority Features
 
-1. **agents-002**: User can select/deselect all agents
-2. **project-001**: User can create project with all settings
+1. **project-001**: User can create project with all settings
+2. **mcp-001**: User can select MCP servers for project
 3. **auth-005**: Logout flow with route protection
 
 ---
