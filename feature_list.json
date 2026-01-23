@@ -1,0 +1,472 @@
+{
+  "project": "HubLLM",
+  "version": "0.2.0",
+  "updated": "2026-01-23",
+  "features": [
+    {
+      "id": "auth-001",
+      "category": "authentication",
+      "priority": 1,
+      "description": "User can sign up with email/password",
+      "steps": [
+        "Navigate to /signup",
+        "Fill in email, password, confirm password",
+        "Click Sign Up button",
+        "Verify redirect to dashboard",
+        "Verify user info displayed"
+      ],
+      "passes": true
+    },
+    {
+      "id": "auth-002",
+      "category": "authentication",
+      "priority": 1,
+      "description": "User can login with email/password",
+      "steps": [
+        "Navigate to /login",
+        "Fill in email and password",
+        "Click Login button",
+        "Verify redirect to dashboard"
+      ],
+      "passes": true
+    },
+    {
+      "id": "auth-003",
+      "category": "authentication",
+      "priority": 1,
+      "description": "User can login with GitHub OAuth",
+      "steps": [
+        "Navigate to /login",
+        "Click 'Sign in with GitHub' button",
+        "Complete OAuth flow in popup",
+        "Verify redirect to dashboard with GitHub user info"
+      ],
+      "passes": true
+    },
+    {
+      "id": "auth-004",
+      "category": "authentication",
+      "priority": 2,
+      "description": "User can login with Google OAuth",
+      "steps": [
+        "Navigate to /login",
+        "Click 'Sign in with Google' button",
+        "Complete OAuth flow",
+        "Verify redirect to dashboard"
+      ],
+      "passes": true
+    },
+    {
+      "id": "auth-005",
+      "category": "authentication",
+      "priority": 3,
+      "description": "User can logout",
+      "steps": [
+        "Click user avatar/menu",
+        "Click Logout",
+        "Verify redirect to login page",
+        "Verify protected routes redirect to login"
+      ],
+      "passes": false
+    },
+    {
+      "id": "dash-001",
+      "category": "dashboard",
+      "priority": 2,
+      "description": "Dashboard shows project list",
+      "steps": [
+        "Login and navigate to dashboard",
+        "Verify projects grid is visible",
+        "Verify each project card shows name, description, status"
+      ],
+      "passes": false
+    },
+    {
+      "id": "dash-002",
+      "category": "dashboard",
+      "priority": 2,
+      "description": "Dashboard shows usage statistics",
+      "steps": [
+        "Navigate to dashboard",
+        "Verify stat cards show: Projects count, Tokens used, Active agents"
+      ],
+      "passes": false
+    },
+    {
+      "id": "dash-003",
+      "category": "dashboard",
+      "priority": 3,
+      "description": "Sidebar shows workspace tree with projects",
+      "steps": [
+        "Navigate to dashboard",
+        "Verify sidebar shows workspace folders",
+        "Verify projects are nested under workspaces",
+        "Click project to open workspace view"
+      ],
+      "passes": false
+    },
+    {
+      "id": "create-001",
+      "category": "project-creation",
+      "priority": 1,
+      "description": "User can access Create Project page",
+      "steps": [
+        "Click 'Create Project' button in header or dashboard",
+        "Verify Create Project form loads with all 5 steps visible"
+      ],
+      "passes": false
+    },
+    {
+      "id": "create-002",
+      "category": "project-creation",
+      "priority": 1,
+      "description": "User can enter project brief and expand with AI",
+      "steps": [
+        "In Create Project, enter project name",
+        "Enter project brief in textarea",
+        "Click 'Define Project with AI' button",
+        "Verify AI chat panel opens",
+        "Verify AI generates initial response analyzing the brief"
+      ],
+      "passes": false
+    },
+    {
+      "id": "create-003",
+      "category": "project-creation",
+      "priority": 1,
+      "description": "AI generates project context from brief",
+      "steps": [
+        "After AI analyzes brief",
+        "Verify Tech Stack field is populated",
+        "Verify Code Standards field is populated",
+        "Verify Context field is populated",
+        "Verify 'Generated from Brief' badge appears"
+      ],
+      "passes": false
+    },
+    {
+      "id": "create-004",
+      "category": "project-creation",
+      "priority": 2,
+      "description": "User can upload .md file as project brief",
+      "steps": [
+        "Click 'Upload .md file' checkbox",
+        "Select a markdown file",
+        "Verify file content loads into brief textarea"
+      ],
+      "passes": false
+    },
+    {
+      "id": "create-005",
+      "category": "project-creation",
+      "priority": 2,
+      "description": "User can use voice input in AI chat",
+      "steps": [
+        "In AI chat panel, click microphone button",
+        "Speak into microphone",
+        "Verify transcription appears in input",
+        "Verify message can be sent"
+      ],
+      "passes": false
+    },
+    {
+      "id": "github-001",
+      "category": "github-integration",
+      "priority": 1,
+      "description": "User can connect GitHub in Create Project flow",
+      "steps": [
+        "In Step 2 Connection Source, click 'Sign in with GitHub'",
+        "Complete OAuth flow",
+        "Verify connected state shows avatar and username",
+        "Verify 'CONNECTED' badge appears"
+      ],
+      "passes": false
+    },
+    {
+      "id": "github-002",
+      "category": "github-integration",
+      "priority": 1,
+      "description": "User can select repository after GitHub connect",
+      "steps": [
+        "After GitHub connected",
+        "Click Repository dropdown",
+        "Verify user's repos are listed",
+        "Select a repository",
+        "Verify success message appears"
+      ],
+      "passes": false
+    },
+    {
+      "id": "github-003",
+      "category": "github-integration",
+      "priority": 2,
+      "description": "User can create new repository from dropdown",
+      "steps": [
+        "In Repository dropdown, select 'Create new repository'",
+        "Enter repository name",
+        "Verify repo is created on GitHub",
+        "Verify repo appears selected"
+      ],
+      "passes": false
+    },
+    {
+      "id": "vps-001",
+      "category": "vps-connection",
+      "priority": 2,
+      "description": "User can expand VPS connection form",
+      "steps": [
+        "In Step 2, click 'Connect to VPS' card",
+        "Verify VPS form expands with IP, Port, SSH Key fields"
+      ],
+      "passes": false
+    },
+    {
+      "id": "vps-002",
+      "category": "vps-connection",
+      "priority": 2,
+      "description": "User can test VPS connection",
+      "steps": [
+        "Fill in VPS IP, Port, SSH Key",
+        "Click 'Test Connection' button",
+        "Verify connection test runs",
+        "Verify success/failure message appears"
+      ],
+      "passes": false
+    },
+    {
+      "id": "agents-001",
+      "category": "agents",
+      "priority": 2,
+      "description": "User can select agents for project",
+      "steps": [
+        "In Step 4 Project Agents, verify agent list shows",
+        "Toggle individual agent checkboxes",
+        "Verify selection count updates"
+      ],
+      "passes": false
+    },
+    {
+      "id": "agents-002",
+      "category": "agents",
+      "priority": 2,
+      "description": "User can select/deselect all agents",
+      "steps": [
+        "Click 'Use Global Agents' master checkbox",
+        "Verify all agents toggle on/off"
+      ],
+      "passes": false
+    },
+    {
+      "id": "agents-003",
+      "category": "agents",
+      "priority": 3,
+      "description": "User can create new agent in settings",
+      "steps": [
+        "Navigate to Settings > Global Agents",
+        "Click 'Create Agent' button",
+        "Fill in name, description, model, system prompt",
+        "Click Save",
+        "Verify agent appears in list"
+      ],
+      "passes": false
+    },
+    {
+      "id": "mcp-001",
+      "category": "mcp-servers",
+      "priority": 2,
+      "description": "User can select MCP servers for project",
+      "steps": [
+        "In Step 5 MCP Servers, verify server list shows",
+        "Toggle individual server checkboxes",
+        "Verify selection updates"
+      ],
+      "passes": false
+    },
+    {
+      "id": "mcp-002",
+      "category": "mcp-servers",
+      "priority": 3,
+      "description": "User can add custom MCP server",
+      "steps": [
+        "Click 'Add MCP Server'",
+        "Fill in server type, configuration",
+        "Click Save",
+        "Verify server appears in list"
+      ],
+      "passes": false
+    },
+    {
+      "id": "project-001",
+      "category": "project-creation",
+      "priority": 1,
+      "description": "User can create project with all settings",
+      "steps": [
+        "Complete all 5 steps",
+        "Click 'Create Project' button",
+        "Verify project is created",
+        "Verify redirect to Workspace view",
+        "Verify project appears in sidebar"
+      ],
+      "passes": false
+    },
+    {
+      "id": "workspace-001",
+      "category": "workspace",
+      "priority": 1,
+      "description": "Workspace shows file browser",
+      "steps": [
+        "Open a project workspace",
+        "Verify file browser panel shows directory tree",
+        "Click folder to expand",
+        "Click file to open in editor"
+      ],
+      "passes": true
+    },
+    {
+      "id": "workspace-002",
+      "category": "workspace",
+      "priority": 1,
+      "description": "Workspace shows terminal",
+      "steps": [
+        "In workspace, verify terminal panel",
+        "Type command and press Enter",
+        "Verify command output appears"
+      ],
+      "passes": true
+    },
+    {
+      "id": "workspace-003",
+      "category": "workspace",
+      "priority": 1,
+      "description": "Workspace shows code editor",
+      "steps": [
+        "Click file in file browser",
+        "Verify Monaco editor opens with file content",
+        "Verify syntax highlighting works",
+        "Edit and save file"
+      ],
+      "passes": true
+    },
+    {
+      "id": "workspace-004",
+      "category": "workspace",
+      "priority": 1,
+      "description": "Workspace shows AI chat panel",
+      "steps": [
+        "Verify AI chat panel on right side",
+        "Type message and send",
+        "Verify AI response streams in"
+      ],
+      "passes": true
+    },
+    {
+      "id": "workspace-005",
+      "category": "workspace",
+      "priority": 2,
+      "description": "User can switch AI models in workspace",
+      "steps": [
+        "Click model selector dropdown",
+        "Verify available models list",
+        "Select different model",
+        "Verify model changes for next message"
+      ],
+      "passes": true
+    },
+    {
+      "id": "workspace-006",
+      "category": "workspace",
+      "priority": 2,
+      "description": "Preview panel shows Codespaces preview",
+      "steps": [
+        "Click preview panel expand button",
+        "Verify iframe loads with preview URL",
+        "Click device icons to switch phone/tablet/desktop view"
+      ],
+      "passes": false
+    },
+    {
+      "id": "chat-001",
+      "category": "ai-chat",
+      "priority": 1,
+      "description": "User can send chat message and receive streaming response",
+      "steps": [
+        "Type message in chat input",
+        "Press Enter or click Send",
+        "Verify message appears in chat",
+        "Verify AI response streams in word by word"
+      ],
+      "passes": true
+    },
+    {
+      "id": "chat-002",
+      "category": "ai-chat",
+      "priority": 2,
+      "description": "User can use voice input for chat",
+      "steps": [
+        "Click microphone button",
+        "Speak message",
+        "Verify transcription appears",
+        "Verify message sends"
+      ],
+      "passes": true
+    },
+    {
+      "id": "settings-001",
+      "category": "settings",
+      "priority": 2,
+      "description": "User can view and update profile",
+      "steps": [
+        "Navigate to Settings > Profile",
+        "Verify current user info displayed",
+        "Update display name",
+        "Click Save",
+        "Verify changes persist"
+      ],
+      "passes": false
+    },
+    {
+      "id": "settings-002",
+      "category": "settings",
+      "priority": 2,
+      "description": "User can manage API keys (BYOK)",
+      "steps": [
+        "Navigate to Settings > API Keys",
+        "Enter OpenRouter API key",
+        "Verify key is saved to localStorage",
+        "Verify key is used in subsequent API calls"
+      ],
+      "passes": false
+    },
+    {
+      "id": "settings-003",
+      "category": "settings",
+      "priority": 3,
+      "description": "User can manage VPS servers in settings",
+      "steps": [
+        "Navigate to Settings > VPS Connections",
+        "Click 'Add VPS Connection'",
+        "Fill in server details",
+        "Test connection",
+        "Save server"
+      ],
+      "passes": false
+    }
+  ],
+  "summary": {
+    "total": 38,
+    "passing": 10,
+    "failing": 28,
+    "categories": {
+      "authentication": { "total": 5, "passing": 4 },
+      "dashboard": { "total": 3, "passing": 0 },
+      "project-creation": { "total": 6, "passing": 0 },
+      "github-integration": { "total": 3, "passing": 0 },
+      "vps-connection": { "total": 2, "passing": 0 },
+      "agents": { "total": 3, "passing": 0 },
+      "mcp-servers": { "total": 2, "passing": 0 },
+      "workspace": { "total": 6, "passing": 5 },
+      "ai-chat": { "total": 2, "passing": 2 },
+      "settings": { "total": 3, "passing": 0 }
+    }
+  }
+}

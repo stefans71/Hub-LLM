@@ -1,0 +1,144 @@
+# HubLLM Development Progress Log
+
+This file tracks progress across Claude coding sessions. Each session should:
+1. Read this file to understand current state
+2. Pick ONE feature from feature_list.json
+3. Implement and test
+4. Update this file before ending session
+
+---
+
+## Project Status
+- **Version**: 0.2.0
+- **Last Updated**: 2026-01-23
+- **Features Passing**: 10/38 (26%)
+
+## Completed Features
+
+### Authentication (4/5 complete)
+- ✅ auth-001: Email/password signup
+- ✅ auth-002: Email/password login
+- ✅ auth-003: GitHub OAuth
+- ✅ auth-004: Google OAuth
+- ❌ auth-005: Logout flow (needs frontend route protection)
+
+### Workspace (5/6 complete)
+- ✅ workspace-001: File browser
+- ✅ workspace-002: Terminal (xterm.js)
+- ✅ workspace-003: Code editor (Monaco)
+- ✅ workspace-004: AI chat panel
+- ✅ workspace-005: Model selector
+- ❌ workspace-006: Preview panel (Codespaces iframe)
+
+### AI Chat (2/2 complete)
+- ✅ chat-001: Streaming responses
+- ✅ chat-002: Voice input
+
+---
+
+## Session Log
+
+### Session 1 - 2026-01-23
+**Focus**: Project setup and OAuth
+**Completed**:
+- Basic FastAPI backend structure
+- PostgreSQL database with SQLAlchemy
+- User authentication (signup, login)
+- GitHub OAuth integration
+- Google OAuth integration
+- JWT token management
+
+**Backend files created**:
+- backend/routers/auth.py
+- backend/services/auth.py
+- backend/models/__init__.py
+
+**Notes**: OAuth callbacks working on localhost. Need to test in Codespaces environment.
+
+### Session 2 - 2026-01-23
+**Focus**: Workspace components
+**Completed**:
+- Terminal component with xterm.js
+- File browser with SFTP
+- Code editor with Monaco
+- AI chat with streaming SSE
+- Model selector dropdown
+
+**Frontend files created**:
+- frontend/src/components/Terminal.jsx
+- frontend/src/components/FileBrowser.jsx
+- frontend/src/components/CodeEditor.jsx
+- frontend/src/components/Chat.jsx
+- frontend/src/components/ModelSelector.jsx
+
+**Notes**: All workspace features functional. Need to integrate into full workspace layout.
+
+### Session 3 - 2026-01-23
+**Focus**: UI Mockup design
+**Completed**:
+- Full HTML mockup with all views
+- Dashboard view design
+- Settings view with all sections
+- Create Project flow (5 steps)
+- Workspace view with preview panel
+- Dynamic hover effects and animations
+
+**Files created**:
+- hubllm-mockup-v2.html (6700+ lines)
+- DESIGN_SPEC.md
+
+**Notes**: Mockup ready for React conversion. GitHub OAuth flow simplified to single card with inline buttons.
+
+---
+
+## Next Priority Features
+
+1. **create-001**: Create Project page (React conversion)
+2. **create-002**: AI brief expansion endpoint
+3. **github-001**: GitHub connect in project flow
+4. **dash-001**: Dashboard view (React)
+5. **settings-001**: Settings page (React)
+
+---
+
+## Known Issues
+
+1. **Cross-LLM Bridge**: Feature designed but not implemented
+2. **Email verification**: Endpoint exists but email sending not configured
+3. **Password reset**: Endpoint exists but email sending not configured
+4. **Protected routes**: Frontend doesn't redirect unauthenticated users
+
+---
+
+## Environment Notes
+
+- Backend runs on: http://localhost:8000
+- Frontend runs on: http://localhost:5173
+- Database: PostgreSQL via Docker
+- Codespaces URL pattern: https://{codespace-name}-{port}.app.github.dev
+
+---
+
+## Commands Reference
+
+```bash
+# Start everything
+./init.sh
+
+# Backend only
+cd backend && source venv/bin/activate && uvicorn main:app --reload
+
+# Frontend only
+cd frontend && npm run dev
+
+# Database
+docker compose up db -d
+
+# Run tests
+cd frontend && npm test
+cd backend && pytest
+
+# Browser automation (for testing)
+agent-browser open http://localhost:5173
+agent-browser snapshot -i
+```
