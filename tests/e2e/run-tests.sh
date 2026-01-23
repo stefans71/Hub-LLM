@@ -63,6 +63,10 @@ if ! curl -s "$BASE_URL" >/dev/null 2>&1; then
     sleep 5
 fi
 
+# Ensure clean browser state before running tests
+agent-browser close 2>/dev/null || true
+sleep 1
+
 echo ""
 echo "========================================"
 echo "  HubLLM E2E Tests (agent-browser)"
