@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 27/38 (71%)
+- **Features Passing**: 28/38 (74%)
 
 ## Completed Features
 
@@ -416,12 +416,32 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: The select-all functionality was already implemented in Session 4 via handleToggleAllAgents. This session enhanced it with proper indeterminate checkbox state (shows dash when some but not all selected) which is standard UX for select-all controls.
 
+### Session 20 - 2026-01-23
+**Focus**: MCP server selection (mcp-001)
+**Completed**:
+- Verified MCP server selection functionality in Step 5 of Create Project
+- Fixed confusing status text: "Not selected" → "○ Not configured" for clarity
+- Updated selection count to show connected servers: "X of Y connected servers selected"
+- MCP functionality includes:
+  - Global MCP server list (GitHub, Slack, Google Drive)
+  - Individual server checkboxes for selection
+  - Master checkbox to select/deselect all connected servers
+  - Indeterminate state when some servers selected
+  - Dynamic selection count display
+  - Visual feedback (opacity) for selected vs unselected
+
+**Files modified**:
+- frontend/src/pages/CreateProject.jsx (status text fix, count text improvement)
+- feature_list.json (marked mcp-001 as passing)
+
+**Notes**: The MCP selection was already implemented in Session 4 but lacked proper UX text. Fixed the confusing "Not selected" text which could be misread as checkbox state instead of connection status.
+
 ---
 
 ## Next Priority Features
 
 1. **project-001**: User can create project with all settings
-2. **mcp-001**: User can select MCP servers for project
+2. **mcp-002**: User can add custom MCP server
 3. **auth-005**: Logout flow with route protection
 
 ---

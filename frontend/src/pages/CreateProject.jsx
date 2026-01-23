@@ -332,7 +332,7 @@ const MCPServerItem = ({ name, status, icon: Icon, color, checked, onChange, onE
         fontSize: '10px',
         color: status === 'connected' ? cssVars.success : cssVars.textMuted
       }}>
-        {status === 'connected' ? '● Connected' : 'Not selected'}
+        {status === 'connected' ? '● Connected' : '○ Not configured'}
       </div>
     </div>
     {isGlobal && onEdit && (
@@ -1943,7 +1943,7 @@ Examples:
                 >
                   <div style={{ fontSize: '13px', fontWeight: 500 }}>Use Global MCP Servers</div>
                   <div style={{ fontSize: '11px', color: cssVars.textMuted }}>
-                    {formData.selectedMCP.length} of {globalMCPServers.length} servers selected
+                    {formData.selectedMCP.length} of {connectedMCPServers.length} connected servers selected
                   </div>
                 </div>
                 <span
