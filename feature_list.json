@@ -79,7 +79,7 @@
         "Verify projects grid is visible",
         "Verify each project card shows name, description, status"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "dash-002",
@@ -454,11 +454,11 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 15,
-    "failing": 23,
+    "passing": 16,
+    "failing": 22,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
-      "dashboard": { "total": 3, "passing": 0 },
+      "dashboard": { "total": 3, "passing": 1 },
       "project-creation": { "total": 6, "passing": 3 },
       "github-integration": { "total": 3, "passing": 2 },
       "vps-connection": { "total": 2, "passing": 0 },

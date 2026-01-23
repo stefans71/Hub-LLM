@@ -7,6 +7,7 @@ import ProjectSidebar from './components/ProjectSidebar'
 import ModelSelector from './components/ModelSelector'
 import SettingsModal from './components/SettingsModal'
 import CreateProject from './pages/CreateProject'
+import Dashboard from './pages/Dashboard'
 import { Settings, LogOut, User, Loader2, Plus } from 'lucide-react'
 
 // Main App content (requires auth)
@@ -17,7 +18,7 @@ function AppContent() {
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
   const [showSettings, setShowSettings] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [currentView, setCurrentView] = useState('workspace') // 'workspace' | 'create-project'
+  const [currentView, setCurrentView] = useState('dashboard') // 'dashboard' | 'workspace' | 'create-project'
   const [apiKeys, setApiKeys] = useState({
     openrouter: localStorage.getItem('openrouter_key') || '',
     claude: localStorage.getItem('claude_key') || '',
@@ -112,9 +113,11 @@ function AppContent() {
         <header className="h-14 border-b border-gray-700 flex items-center justify-between px-4 flex-shrink-0">
           <div className="flex items-center gap-4">
             <h1 className="font-semibold">
-              {currentView === 'create-project' ? 'Create Project' : (activeProject?.name || 'HubLLM')}
+              {currentView === 'create-project' ? 'Create Project' :
+               currentView === 'dashboard' ? 'Dashboard' :
+               (activeProject?.name || 'HubLLM')}
             </h1>
-            {currentView !== 'create-project' && (
+            {currentView === 'workspace' && (
               <ModelSelector
                 selectedModel={selectedModel}
                 onSelectModel={setSelectedModel}
@@ -122,13 +125,23 @@ function AppContent() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentView('create-project')}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-medium"
-            >
-              <Plus size={16} />
-              Create Project
-            </button>
+            {currentView !== 'dashboard' && currentView !== 'create-project' && (
+              <button
+                onClick={() => setCurrentView('create-project')}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-medium"
+              >
+                <Plus size={16} />
+                Create Project
+              </button>
+            )}
+            {currentView === 'workspace' && (
+              <button
+                onClick={() => setCurrentView('dashboard')}
+                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-700 rounded-lg transition text-sm"
+              >
+                Dashboard
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -190,8 +203,16 @@ function AppContent() {
         {/* Main Content Area */}
         {currentView === 'create-project' ? (
           <CreateProject
-            onCancel={() => setCurrentView('workspace')}
+            onCancel={() => setCurrentView('dashboard')}
             onCreateProject={handleProjectCreated}
+          />
+        ) : currentView === 'dashboard' ? (
+          <Dashboard
+            onNavigate={(view, project) => {
+              if (project) setActiveProject(project)
+              setCurrentView(view)
+            }}
+            onCreateProject={() => setCurrentView('create-project')}
           />
         ) : !hasApiKey ? (
           <div className="flex-1 flex items-center justify-center">

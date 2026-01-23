@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 15/38 (39%)
+- **Features Passing**: 16/38 (42%)
 
 ## Completed Features
 
@@ -166,11 +166,32 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: The GitHub repos endpoint `/api/github/repos` already existed in the codebase. The key change was passing the GitHub access token from the OAuth flow to the frontend so it can make authenticated API calls to fetch repositories.
 
+### Session 8 - 2026-01-23
+**Focus**: Dashboard view (dash-001)
+**Completed**:
+- Created Dashboard.jsx page component with full mockup styling
+- Stats grid with 3 stat cards (Active Sessions, Total Projects, Connected LLMs)
+- Projects grid with project cards showing name, description, status, source type
+- View toggle between grid and list modes
+- Empty state with "Create Project" button when no projects exist
+- Page header with "Project Dashboard" title and action buttons
+- Integrated Dashboard as default view after login
+- Added navigation from Dashboard to Workspace when clicking project card
+- Added Dashboard button in header when in Workspace view
+
+**Files created**:
+- frontend/src/pages/Dashboard.jsx (complete dashboard page)
+
+**Files modified**:
+- frontend/src/App.jsx (Dashboard import, default view, routing)
+
+**Notes**: Dashboard fetches projects from `/api/projects/` endpoint. Stats are calculated from project data (GitHub vs Local counts). LLM count is set to 5 (OpenRouter + Anthropic). Future enhancement: add backend `/api/stats/dashboard` endpoint for real-time stats.
+
 ---
 
 ## Next Priority Features
 
-1. **dash-001**: Dashboard view (React)
+1. **dash-002**: Dashboard shows usage statistics
 2. **settings-001**: Settings page (React)
 3. **create-004**: Upload .md file as project brief
 4. **github-003**: Create new repository from dropdown
