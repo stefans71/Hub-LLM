@@ -1,0 +1,238 @@
+import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import {
+  LayoutDashboard,
+  Settings,
+  Folder,
+  FileText,
+  Archive,
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  ChevronLeft,
+  Settings as SettingsIcon
+} from 'lucide-react'
+
+// Workspace Item Component
+function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProject, activeProjectId }) {
+  const hasProjects = projects && projects.length > 0
+
+  return (
+    <div>
+      <div
+        className="workspace-item flex items-center gap-2 px-2 py-1.5 text-gray-300 hover:bg-[#242b35] rounded cursor-pointer text-sm"
+        onClick={() => hasProjects && onToggle()}
+      >
+        <Folder size={16} className="flex-shrink-0 text-gray-400" />
+        <span className="flex-1 truncate">{workspace}</span>
+        {hasProjects && (
+          <span className="text-[10px] text-gray-500">
+            {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          </span>
+        )}
+      </div>
+      {isExpanded && hasProjects && (
+        <div className="ml-2 border-l border-[#2d3748] pl-2">
+          {projects.map((project) => (
+            <div
+              key={project.id}
+              className={`project-item flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm transition ${
+                activeProjectId === project.id
+                  ? 'bg-[#3b82f6]/20 text-[#3b82f6]'
+                  : 'text-gray-400 hover:bg-[#242b35] hover:text-gray-200'
+              }`}
+              onClick={() => onSelectProject(project)}
+            >
+              <FileText size={14} className="flex-shrink-0 opacity-60" />
+              <span className="truncate">{project.name}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function DashboardSidebar({
+  projects,
+  activeProject,
+  onSelectProject,
+  onNavigate,
+  onCreateProject,
+  currentView
+}) {
+  const { user } = useAuth()
+  const [collapsed, setCollapsed] = useState(false)
+  const [expandedWorkspaces, setExpandedWorkspaces] = useState({ Default: true })
+
+  // Group projects by workspace
+  const groupedProjects = projects.reduce((acc, project) => {
+    const workspace = project.workspace || 'Default'
+    if (!acc[workspace]) {
+      acc[workspace] = []
+    }
+    acc[workspace].push(project)
+    return acc
+  }, {})
+
+  // Ensure we have at least the default workspace and Archives
+  const workspaces = Object.keys(groupedProjects)
+  if (!workspaces.includes('Default')) {
+    groupedProjects['Default'] = []
+  }
+
+  const toggleWorkspace = (workspace) => {
+    setExpandedWorkspaces(prev => ({
+      ...prev,
+      [workspace]: !prev[workspace]
+    }))
+  }
+
+  const getUserInitials = () => {
+    if (user?.name) {
+      return user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase()
+    }
+    return 'U'
+  }
+
+  if (collapsed) {
+    return (
+      <aside className="w-12 bg-[#1a2028] border-r border-[#2d3748] flex flex-col items-center py-4 flex-shrink-0">
+        <button
+          onClick={() => setCollapsed(false)}
+          className="p-2 hover:bg-[#242b35] rounded transition text-gray-400 hover:text-white"
+          title="Expand Sidebar"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </aside>
+    )
+  }
+
+  return (
+    <aside className="w-64 bg-[#1a2028] border-r border-[#2d3748] flex flex-col flex-shrink-0">
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto p-3">
+        {/* Main Section */}
+        <div className="mb-4">
+          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2 mb-2">
+            Main
+          </div>
+          <div
+            className={`nav-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition ${
+              currentView === 'dashboard'
+                ? 'bg-[#3b82f6]/20 text-[#3b82f6]'
+                : 'text-gray-300 hover:bg-[#242b35]'
+            }`}
+            onClick={() => onNavigate?.('dashboard')}
+          >
+            <LayoutDashboard size={18} />
+            <span className="text-sm font-medium">Dashboard</span>
+          </div>
+          <div
+            className={`nav-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition ${
+              currentView === 'settings'
+                ? 'bg-[#3b82f6]/20 text-[#3b82f6]'
+                : 'text-gray-300 hover:bg-[#242b35]'
+            }`}
+            onClick={() => onNavigate?.('settings')}
+          >
+            <Settings size={18} />
+            <span className="text-sm font-medium">Settings</span>
+          </div>
+        </div>
+
+        {/* Workspaces Section */}
+        <div>
+          <div className="flex items-center justify-between px-2 mb-2">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Workspaces
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={onCreateProject}
+                className="w-5 h-5 bg-[#3b82f6] hover:bg-[#2563eb] rounded flex items-center justify-center transition"
+                title="Create Project"
+              >
+                <Plus size={12} className="text-white" strokeWidth={3} />
+              </button>
+              <button
+                onClick={() => setCollapsed(true)}
+                className="w-5 h-5 hover:bg-[#242b35] rounded flex items-center justify-center transition text-gray-400 hover:text-white"
+                title="Collapse Sidebar"
+              >
+                <ChevronLeft size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Workspace Tree */}
+          <div className="space-y-1">
+            {Object.entries(groupedProjects).map(([workspace, workspaceProjects]) => (
+              <WorkspaceItem
+                key={workspace}
+                workspace={workspace}
+                projects={workspaceProjects}
+                isExpanded={expandedWorkspaces[workspace]}
+                onToggle={() => toggleWorkspace(workspace)}
+                onSelectProject={(project) => {
+                  onSelectProject?.(project)
+                  onNavigate?.('workspace', project)
+                }}
+                activeProjectId={activeProject?.id}
+              />
+            ))}
+
+            {/* Archives - always show */}
+            <div className="workspace-item flex items-center gap-2 px-2 py-1.5 text-gray-500 hover:bg-[#242b35] rounded cursor-pointer text-sm">
+              <Archive size={16} className="flex-shrink-0 opacity-60" />
+              <span className="truncate">Archives</span>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Footer */}
+      <div className="p-3 border-t border-[#2d3748]">
+        {/* New Project Button */}
+        <button
+          onClick={onCreateProject}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#3b82f6] hover:bg-[#2563eb] rounded-lg transition text-sm font-medium mb-3"
+        >
+          <Plus size={16} />
+          New Project
+        </button>
+
+        {/* User Profile */}
+        <div
+          className="flex items-center gap-3 p-2 hover:bg-[#242b35] rounded-lg cursor-pointer transition"
+          onClick={() => onNavigate?.('settings')}
+        >
+          {user?.avatar_url ? (
+            <img
+              src={user.avatar_url}
+              alt={user.name || user.email}
+              className="w-8 h-8 rounded-full"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-[#3b82f6] flex items-center justify-center text-xs font-medium">
+              {getUserInitials()}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium truncate">
+              {user?.name || 'User'}
+            </div>
+            <div className="text-xs text-gray-500 truncate">
+              Pro Account
+            </div>
+          </div>
+          <SettingsIcon size={16} className="text-gray-500" />
+        </div>
+      </div>
+    </aside>
+  )
+}

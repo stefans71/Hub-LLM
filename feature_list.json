@@ -103,7 +103,7 @@
         "Verify projects are nested under workspaces",
         "Click project to open workspace view"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "create-001",
@@ -455,11 +455,11 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 21,
-    "failing": 17,
+    "passing": 22,
+    "failing": 16,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
-      "dashboard": { "total": 3, "passing": 2 },
+      "dashboard": { "total": 3, "passing": 3 },
       "project-creation": { "total": 6, "passing": 4 },
       "github-integration": { "total": 3, "passing": 3 },
       "vps-connection": { "total": 2, "passing": 0 },

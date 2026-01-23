@@ -4,6 +4,7 @@ import AuthPage from './components/AuthPage'
 import AuthCallback from './components/AuthCallback'
 import Workspace from './components/Workspace'
 import ProjectSidebar from './components/ProjectSidebar'
+import DashboardSidebar from './components/DashboardSidebar'
 import ModelSelector from './components/ModelSelector'
 import SettingsModal from './components/SettingsModal'
 import CreateProject from './pages/CreateProject'
@@ -107,6 +108,44 @@ function AppContent() {
     )
   }
 
+  // Dashboard view with sidebar
+  if (currentView === 'dashboard') {
+    return (
+      <div className="h-screen flex bg-[#0f1419] text-white">
+        {/* Dashboard Sidebar */}
+        <DashboardSidebar
+          projects={projects}
+          activeProject={activeProject}
+          onSelectProject={setActiveProject}
+          onNavigate={(view, project) => {
+            if (project) setActiveProject(project)
+            setCurrentView(view)
+          }}
+          onCreateProject={() => setCurrentView('create-project')}
+          currentView={currentView}
+        />
+
+        {/* Main Content */}
+        <Dashboard
+          onNavigate={(view, project) => {
+            if (project) setActiveProject(project)
+            setCurrentView(view)
+          }}
+          onCreateProject={() => setCurrentView('create-project')}
+        />
+
+        {/* Settings Modal */}
+        {showSettings && (
+          <SettingsModal
+            apiKeys={apiKeys}
+            onSave={saveApiKeys}
+            onClose={() => setShowSettings(false)}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen flex bg-gray-900 text-white">
       {/* Sidebar */}
@@ -124,7 +163,6 @@ function AppContent() {
           <div className="flex items-center gap-4">
             <h1 className="font-semibold">
               {currentView === 'create-project' ? 'Create Project' :
-               currentView === 'dashboard' ? 'Dashboard' :
                (activeProject?.name || 'HubLLM')}
             </h1>
             {currentView === 'workspace' && (
@@ -135,7 +173,7 @@ function AppContent() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {currentView !== 'dashboard' && currentView !== 'create-project' && (
+            {currentView !== 'create-project' && (
               <button
                 onClick={() => setCurrentView('create-project')}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-medium"
@@ -215,14 +253,6 @@ function AppContent() {
           <CreateProject
             onCancel={() => setCurrentView('dashboard')}
             onCreateProject={handleProjectCreated}
-          />
-        ) : currentView === 'dashboard' ? (
-          <Dashboard
-            onNavigate={(view, project) => {
-              if (project) setActiveProject(project)
-              setCurrentView(view)
-            }}
-            onCreateProject={() => setCurrentView('create-project')}
           />
         ) : !hasApiKey ? (
           <div className="flex-1 flex items-center justify-center">

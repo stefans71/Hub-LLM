@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 21/38 (55%)
+- **Features Passing**: 22/38 (58%)
 
 ## Completed Features
 
@@ -307,14 +307,38 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: The GitHub API requires a valid token with `repo` scope to create repositories. The endpoint handles 422 errors for duplicate/invalid repo names gracefully. The form validates repo names to only allow alphanumeric, hyphens, underscores, and periods.
 
+### Session 14 - 2026-01-23
+**Focus**: Dashboard sidebar with workspace tree (dash-003)
+**Completed**:
+- Created new `DashboardSidebar.jsx` component matching mockup design
+- Sidebar features:
+  - Main navigation section with Dashboard and Settings links
+  - Workspaces section with collapsible workspace folders
+  - Projects nested under workspaces (grouped by project.workspace field)
+  - Archives section placeholder
+  - Collapse/expand sidebar functionality
+  - Footer with New Project button and user profile
+- Updated App.jsx to use DashboardSidebar when currentView is 'dashboard'
+- Sidebar integrates with navigation (clicking project opens workspace view)
+- User profile in footer links to Settings page
+- Mockup-consistent styling using CSS variables
+
+**Files created**:
+- frontend/src/components/DashboardSidebar.jsx (full sidebar component)
+
+**Files modified**:
+- frontend/src/App.jsx (imported DashboardSidebar, separate layout for dashboard view)
+
+**Notes**: Projects are grouped by their `workspace` field. If a project doesn't have a workspace, it goes into "Default". The sidebar can be collapsed to a thin strip for more screen space. Clicking a project navigates to the workspace view with that project active.
+
 ---
 
 ## Next Priority Features
 
-1. **dash-003**: Sidebar shows workspace tree with projects
-2. **create-005**: Voice input in AI chat panel
-3. **vps-001**: VPS connection form expansion
-4. **agents-001**: User can select agents for project
+1. **create-005**: Voice input in AI chat panel
+2. **vps-001**: VPS connection form expansion
+3. **agents-001**: User can select agents for project
+4. **project-001**: User can create project with all settings
 
 ---
 
