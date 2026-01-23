@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 14/38 (37%)
+- **Features Passing**: 15/38 (39%)
 
 ## Completed Features
 
@@ -148,14 +148,32 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: GitHub OAuth requires GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables to be configured. The popup flow posts a message with user info (login, avatar_url) back to the opener window for the connected state UI.
 
+### Session 7 - 2026-01-23
+**Focus**: GitHub Repository Selection (github-002)
+**Completed**:
+- Modified `get_github_user` to return the GitHub access token along with user info
+- Updated popup OAuth callback to include `github_token` in the message to opener window
+- Added `fetchGitHubRepos` function in CreateProject.jsx to fetch user's repos via `/api/github/repos`
+- Repository dropdown now populates with real GitHub repositories after OAuth connection
+- Added loading state while fetching repositories
+- Updated success message to show selected repository name
+- Conditional messaging: blue info message when no repo selected, green success when repo selected
+
+**Files modified**:
+- backend/services/auth.py (return access_token in get_github_user)
+- backend/routers/auth.py (include github_token in popup callback message)
+- frontend/src/pages/CreateProject.jsx (real repo fetching and dynamic dropdown)
+
+**Notes**: The GitHub repos endpoint `/api/github/repos` already existed in the codebase. The key change was passing the GitHub access token from the OAuth flow to the frontend so it can make authenticated API calls to fetch repositories.
+
 ---
 
 ## Next Priority Features
 
-1. **github-002**: Repository selection after GitHub connect
-2. **dash-001**: Dashboard view (React)
-3. **settings-001**: Settings page (React)
-4. **create-004**: Upload .md file as project brief
+1. **dash-001**: Dashboard view (React)
+2. **settings-001**: Settings page (React)
+3. **create-004**: Upload .md file as project brief
+4. **github-003**: Create new repository from dropdown
 
 ---
 

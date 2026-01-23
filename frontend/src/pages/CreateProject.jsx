@@ -357,6 +357,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
     connectionType: 'github',
     githubConnected: false,
     githubUser: null,
+    githubToken: null,
     selectedRepo: '',
     vpsServerId: '',
     vpsIp: '',
@@ -368,6 +369,10 @@ export default function CreateProject({ onCancel, onCreateProject }) {
     selectedAgents: ['code-reviewer', 'security-audit', 'test-writer'],
     selectedMCP: ['github', 'slack']
   })
+
+  // GitHub repos state
+  const [githubRepos, setGithubRepos] = useState([])
+  const [loadingRepos, setLoadingRepos] = useState(false)
 
   // UI state
   const [showAIChat, setShowAIChat] = useState(false)
@@ -652,6 +657,30 @@ In the meantime, I can help you think through your project. What would you like 
     }
   }
 
+  // Fetch GitHub repositories using the token
+  const fetchGitHubRepos = async (token) => {
+    setLoadingRepos(true)
+    try {
+      const res = await fetch('/api/github/repos?per_page=50', {
+        headers: {
+          'X-GitHub-Token': token
+        }
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch repositories')
+      }
+
+      const repos = await res.json()
+      setGithubRepos(repos)
+    } catch (err) {
+      console.error('Error fetching repos:', err)
+      setGithubRepos([])
+    } finally {
+      setLoadingRepos(false)
+    }
+  }
+
   const handleConnectGitHub = () => {
     // Open GitHub OAuth flow in popup mode
     const width = 600
@@ -671,12 +700,17 @@ In the meantime, I can help you think through your project. What would you like 
       if (event.origin !== window.location.origin) return
 
       if (event.data?.type === 'oauth-success' && event.data?.provider === 'github') {
+        const githubToken = event.data.github_token
         setFormData(prev => ({
           ...prev,
           githubConnected: true,
           githubUser: event.data.user,
-          githubAccessToken: event.data.access_token
+          githubToken: githubToken
         }))
+        // Fetch repositories after successful connection
+        if (githubToken) {
+          fetchGitHubRepos(githubToken)
+        }
         window.removeEventListener('message', handleMessage)
       } else if (event.data?.type === 'oauth-error') {
         console.error('GitHub OAuth error:', event.data.error)
@@ -1147,32 +1181,83 @@ Examples:
                     }}>CONNECTED</span>
                   </div>
 
-                  <Select
-                    label="Repository"
-                    value={formData.selectedRepo}
-                    onChange={handleInputChange('selectedRepo')}
-                    options={[
-                      { value: '', label: '+ Create new repository' },
-                      { value: 'hubllm-core', label: 'alex-engineer / hubllm-core' },
-                      { value: 'frontend-kit', label: 'alex-engineer / frontend-kit' }
-                    ]}
-                  />
-
-                  <div style={{
-                    marginTop: '16px',
-                    padding: '12px',
-                    background: 'rgba(34, 197, 94, 0.1)',
-                    border: '1px solid rgba(34, 197, 94, 0.3)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: cssVars.success,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}>
-                    <Check size={16} />
-                    Ready! Code will be pushed to your GitHub. Preview via Codespaces.
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: cssVars.textSecondary,
+                      textTransform: 'uppercase',
+                      marginBottom: '8px'
+                    }}>Repository</label>
+                    <select
+                      value={formData.selectedRepo}
+                      onChange={handleInputChange('selectedRepo')}
+                      disabled={loadingRepos}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        background: cssVars.bgSecondary,
+                        border: `1px solid ${cssVars.border}`,
+                        borderRadius: '8px',
+                        color: cssVars.textPrimary,
+                        fontSize: '14px',
+                        outline: 'none',
+                        cursor: loadingRepos ? 'wait' : 'pointer',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <option value="">➕ Create new repository</option>
+                      {loadingRepos ? (
+                        <option disabled>Loading repositories...</option>
+                      ) : (
+                        githubRepos.map(repo => (
+                          <option key={repo.id || repo.full_name} value={repo.full_name}>
+                            {repo.full_name}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    {loadingRepos && (
+                      <div style={{ fontSize: '11px', color: cssVars.textMuted, marginTop: '4px' }}>
+                        Loading your repositories...
+                      </div>
+                    )}
                   </div>
+
+                  {formData.selectedRepo ? (
+                    <div style={{
+                      marginTop: '16px',
+                      padding: '12px',
+                      background: 'rgba(34, 197, 94, 0.1)',
+                      border: '1px solid rgba(34, 197, 94, 0.3)',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      color: cssVars.success,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <Check size={16} />
+                      Ready! Code will be pushed to <strong>{formData.selectedRepo}</strong>. Preview via Codespaces.
+                    </div>
+                  ) : (
+                    <div style={{
+                      marginTop: '16px',
+                      padding: '12px',
+                      background: 'rgba(59, 130, 246, 0.1)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      color: cssVars.primary,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <Check size={16} />
+                      Select a repository above, or create a new one for this project.
+                    </div>
+                  )}
                 </div>
               )}
             </div>

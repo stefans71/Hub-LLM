@@ -406,6 +406,7 @@ async def github_oauth_popup_callback(
     tokens = generate_tokens(user)
 
     # Return HTML that posts message to opener and closes
+    # Include github_token for API calls (fetching repos, etc.)
     return HTMLResponse(content=f"""
         <!DOCTYPE html>
         <html>
@@ -422,6 +423,7 @@ async def github_oauth_popup_callback(
                         name: '{user_info.get("name", "") or ""}',
                         avatar_url: '{user_info.get("avatar_url", "")}'
                     }},
+                    github_token: '{user_info.get("access_token", "")}',
                     access_token: '{tokens.access_token}',
                     refresh_token: '{tokens.refresh_token}'
                 }}, '{FRONTEND_URL}');

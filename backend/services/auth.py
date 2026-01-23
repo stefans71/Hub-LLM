@@ -341,7 +341,8 @@ async def get_github_user(code: str) -> Optional[dict]:
             "login": user_data.get("login"),
             "email": user_data.get("email"),
             "name": user_data.get("name") or user_data.get("login"),
-            "avatar_url": user_data.get("avatar_url")
+            "avatar_url": user_data.get("avatar_url"),
+            "access_token": access_token  # Include GitHub access token for API calls
         }
 
 
