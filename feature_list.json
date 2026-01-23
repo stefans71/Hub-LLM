@@ -451,11 +451,24 @@
         "Save server"
       ],
       "passes": true
+    },
+    {
+      "id": "test-001",
+      "category": "testing",
+      "priority": 2,
+      "description": "E2E test harness with agent-browser",
+      "steps": [
+        "Run npm test to execute all E2E tests",
+        "Verify test runner discovers and runs test scripts",
+        "Verify screenshots are saved on failure",
+        "Verify tests can interact with page elements"
+      ],
+      "passes": true
     }
   ],
   "summary": {
-    "total": 35,
-    "passing": 35,
+    "total": 36,
+    "passing": 36,
     "failing": 0,
     "categories": {
       "authentication": { "total": 5, "passing": 5 },
@@ -467,7 +480,8 @@
       "mcp-servers": { "total": 2, "passing": 2 },
       "workspace": { "total": 6, "passing": 6 },
       "ai-chat": { "total": 2, "passing": 2 },
-      "settings": { "total": 3, "passing": 3 }
+      "settings": { "total": 3, "passing": 3 },
+      "testing": { "total": 1, "passing": 1 }
     }
   }
 }

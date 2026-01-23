@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 35/35 (100%)
+- **Features Passing**: 36/36 (100%)
 
 ## Completed Features
 
@@ -38,6 +38,9 @@ This file tracks progress across Claude coding sessions. Each session should:
 ### AI Chat (2/2 complete)
 - ✅ chat-001: Streaming responses
 - ✅ chat-002: Voice input
+
+### Testing (1/1 complete)
+- ✅ test-001: E2E test harness with agent-browser
 
 ### Project Creation (6/6 complete)
 - ✅ create-001: Access Create Project page
@@ -602,14 +605,47 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Preview panel shows in Chat tab view. Users click the Preview button (eye icon) on a running Codespace to load its preview URL into the panel. Device switching allows testing responsive designs. All 35 features now passing (100% complete).
 
+### Session 27 - 2026-01-23
+**Focus**: E2E test harness with agent-browser (test-001)
+**Completed**:
+- Set up E2E test harness using agent-browser (not Playwright)
+- Created test runner script (`tests/e2e/run-tests.sh`) that:
+  - Discovers and runs all test-*.sh scripts
+  - Tracks pass/fail counts
+  - Saves screenshots on failure
+  - Checks dev server is running before tests
+- Created 4 initial test scripts:
+  - `test-auth-login.sh` - Tests login flow with email/password
+  - `test-auth-signup.sh` - Tests signup flow with unique email
+  - `test-dashboard-view.sh` - Tests dashboard page loads
+  - `test-create-project-view.sh` - Tests Create Project page loads with all 5 steps
+- Updated root package.json with npm test scripts
+- Created tests/README.md with documentation
+
+**Files created**:
+- tests/e2e/run-tests.sh (test runner)
+- tests/e2e/test-auth-login.sh
+- tests/e2e/test-auth-signup.sh
+- tests/e2e/test-dashboard-view.sh
+- tests/e2e/test-create-project-view.sh
+- tests/README.md
+
+**Files modified**:
+- package.json (test scripts, agent-browser dependency)
+- feature_list.json (added test-001 feature)
+- claude-progress.txt (this file)
+
+**Notes**: The test harness uses agent-browser CLI which provides accessibility-first element selection via @e1, @e2 refs from snapshots. Tests are bash scripts that can be run individually or all together with `npm test`. Screenshots are saved to tests/e2e/screenshots/ on failure.
+
 ---
 
 ## Next Priority Features
 
-All 35 features complete! Potential future enhancements:
+All 36 features complete! Potential future enhancements:
 - Cross-LLM Bridge for multi-model conversations
 - Email verification/password reset email sending
 - Additional preview port configuration options
+- More E2E tests for workspace and settings flows
 
 ---
 
