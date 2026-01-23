@@ -150,11 +150,12 @@
       "priority": 2,
       "description": "User can upload .md file as project brief",
       "steps": [
-        "Click 'Upload .md file' checkbox",
+        "Click 'Upload .md file' link",
         "Select a markdown file",
-        "Verify file content loads into brief textarea"
+        "Verify file content loads into brief textarea",
+        "Verify uploaded filename displays with checkmark"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "create-005",
@@ -454,12 +455,12 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 18,
-    "failing": 20,
+    "passing": 19,
+    "failing": 19,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
       "dashboard": { "total": 3, "passing": 2 },
-      "project-creation": { "total": 6, "passing": 3 },
+      "project-creation": { "total": 6, "passing": 4 },
       "github-integration": { "total": 3, "passing": 2 },
       "vps-connection": { "total": 2, "passing": 0 },
       "agents": { "total": 3, "passing": 0 },

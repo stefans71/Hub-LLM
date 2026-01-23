@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 18/38 (47%)
+- **Features Passing**: 19/38 (50%)
 
 ## Completed Features
 
@@ -245,14 +245,29 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Settings page follows mockup design with CSS variables. Profile changes are saved to backend, while preferences (AI alias, timezone, theme, etc.) are saved to localStorage. The API Keys section handles OpenRouter key which is used for AI chat functionality.
 
+### Session 11 - 2026-01-23
+**Focus**: Upload .md file as project brief (create-004)
+**Completed**:
+- Enhanced file upload feature in CreateProject.jsx with visual feedback
+- Added `uploadedFileName` state to track uploaded file
+- Shows checkmark and filename after successful upload
+- "Upload .md file" label changes to "Change file" after upload
+- File input accepts .md and .txt files
+- FileReader loads content directly into project brief textarea
+
+**Files modified**:
+- frontend/src/pages/CreateProject.jsx (upload feedback UI, filename state)
+
+**Notes**: The file upload feature was already partially implemented but lacked visual feedback. Added filename display with checkmark icon so users can see confirmation that their file was loaded successfully.
+
 ---
 
 ## Next Priority Features
 
 1. **settings-002**: API Keys management (BYOK) - partially done in settings-001
-2. **create-004**: Upload .md file as project brief
-3. **github-003**: Create new repository from dropdown
-4. **dash-003**: Sidebar shows workspace tree with projects
+2. **github-003**: Create new repository from dropdown
+3. **dash-003**: Sidebar shows workspace tree with projects
+4. **create-005**: Voice input in AI chat panel
 
 ---
 

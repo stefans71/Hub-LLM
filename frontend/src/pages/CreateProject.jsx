@@ -385,6 +385,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [chatInput, setChatInput] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [contextGenerated, setContextGenerated] = useState(false)
+  const [uploadedFileName, setUploadedFileName] = useState(null)
 
   // Available global agents
   const globalAgents = [
@@ -414,6 +415,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
       const reader = new FileReader()
       reader.onload = (event) => {
         setFormData(prev => ({ ...prev, projectBrief: event.target.result }))
+        setUploadedFileName(file.name)
       }
       reader.readAsText(file)
     }
@@ -835,19 +837,32 @@ In the meantime, I can help you think through your project. What would you like 
                   color: cssVars.textSecondary,
                   textTransform: 'uppercase'
                 }}>Project Brief</label>
-                <label
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{
-                    fontSize: '11px',
-                    color: cssVars.primary,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  <Upload size={12} /> Upload .md file
-                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {uploadedFileName && (
+                    <span style={{
+                      fontSize: '11px',
+                      color: cssVars.success,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <Check size={12} /> {uploadedFileName}
+                    </span>
+                  )}
+                  <label
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      fontSize: '11px',
+                      color: cssVars.primary,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Upload size={12} /> {uploadedFileName ? 'Change file' : 'Upload .md file'}
+                  </label>
+                </div>
                 <input
                   ref={fileInputRef}
                   type="file"
