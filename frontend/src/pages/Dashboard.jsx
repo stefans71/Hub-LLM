@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import {
-  Zap,
   Users,
-  Monitor,
   FolderOpen,
   Grid,
   List,
@@ -11,7 +9,10 @@ import {
   RefreshCw,
   Server,
   GitBranch,
-  MoreVertical
+  MoreVertical,
+  Monitor,
+  Bot,
+  Coins
 } from 'lucide-react'
 
 // Stat Card Component
@@ -147,13 +148,16 @@ export default function Dashboard({ onNavigate, onCreateProject }) {
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState('grid') // 'grid' | 'list'
   const [stats, setStats] = useState({
-    activeSessions: 0,
-    totalProjects: 0,
-    connectedLLMs: 5
+    projectsCount: 0,
+    tokensUsed: 0,
+    activeAgents: 4,
+    githubProjects: 0,
+    localProjects: 0
   })
 
   useEffect(() => {
     loadProjects()
+    loadStats()
   }, [])
 
   const loadProjects = async () => {
@@ -165,17 +169,47 @@ export default function Dashboard({ onNavigate, onCreateProject }) {
       if (res.ok) {
         const data = await res.json()
         setProjects(data)
-        setStats(prev => ({
-          ...prev,
-          totalProjects: data.length,
-          activeSessions: data.filter(p => p.status === 'active').length || Math.min(data.length, 3)
-        }))
       }
     } catch (err) {
       console.error('Failed to load projects:', err)
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadStats = async () => {
+    try {
+      // Get OpenRouter key from localStorage for token usage
+      const openrouterKey = localStorage.getItem('openrouter_api_key')
+      const headers = { ...getAuthHeader() }
+      if (openrouterKey) {
+        headers['X-OpenRouter-Key'] = openrouterKey
+      }
+
+      const res = await fetch('/api/stats/dashboard', { headers })
+      if (res.ok) {
+        const data = await res.json()
+        setStats({
+          projectsCount: data.projects_count,
+          tokensUsed: data.tokens_used,
+          activeAgents: data.active_agents,
+          githubProjects: data.github_projects,
+          localProjects: data.local_projects
+        })
+      }
+    } catch (err) {
+      console.error('Failed to load stats:', err)
+    }
+  }
+
+  const formatTokens = (tokens) => {
+    if (tokens >= 1000000) {
+      return `${(tokens / 1000000).toFixed(1)}M`
+    }
+    if (tokens >= 1000) {
+      return `${(tokens / 1000).toFixed(1)}K`
+    }
+    return tokens.toString()
   }
 
   const handleProjectClick = (project) => {
@@ -220,7 +254,7 @@ export default function Dashboard({ onNavigate, onCreateProject }) {
           </div>
           <div className="flex gap-3">
             <button
-              onClick={loadProjects}
+              onClick={() => { loadProjects(); loadStats(); }}
               className="flex items-center gap-2 px-4 py-2 bg-[#1a2028] border border-[#2d3748] rounded-lg hover:border-gray-600 transition text-sm"
             >
               <RefreshCw size={14} />
@@ -239,31 +273,31 @@ export default function Dashboard({ onNavigate, onCreateProject }) {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <StatCard
-            icon={Zap}
-            iconColor="blue"
-            badge={stats.activeSessions > 0 ? '+20%' : null}
-            badgeType="positive"
-            label="Active Sessions"
-            value={stats.activeSessions}
-            description={`Across ${Math.min(stats.connectedLLMs, 4)} LLM providers`}
-          />
-          <StatCard
             icon={Users}
             iconColor="green"
-            badge={stats.totalProjects > 0 ? '+5%' : null}
+            badge={stats.projectsCount > 0 ? '+5%' : null}
             badgeType="positive"
             label="Total Projects"
-            value={stats.totalProjects}
-            description={`${projects.filter(p => p.github_repo).length} GitHub, ${projects.filter(p => !p.github_repo).length} Local`}
+            value={stats.projectsCount}
+            description={`${stats.githubProjects} GitHub, ${stats.localProjects} Local`}
           />
           <StatCard
-            icon={Monitor}
-            iconColor="purple"
-            badge="Stable"
+            icon={Coins}
+            iconColor="blue"
+            badge={stats.tokensUsed > 0 ? 'This period' : null}
             badgeType="neutral"
-            label="Connected LLMs"
-            value={stats.connectedLLMs}
-            description="OpenRouter + Anthropic"
+            label="Tokens Used"
+            value={formatTokens(stats.tokensUsed)}
+            description="Via OpenRouter API"
+          />
+          <StatCard
+            icon={Bot}
+            iconColor="purple"
+            badge="Enabled"
+            badgeType="neutral"
+            label="Active Agents"
+            value={stats.activeAgents}
+            description="Code, Test, Docs, Review"
           />
         </div>
 

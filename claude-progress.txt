@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 16/38 (42%)
+- **Features Passing**: 17/38 (45%)
 
 ## Completed Features
 
@@ -187,14 +187,36 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Dashboard fetches projects from `/api/projects/` endpoint. Stats are calculated from project data (GitHub vs Local counts). LLM count is set to 5 (OpenRouter + Anthropic). Future enhancement: add backend `/api/stats/dashboard` endpoint for real-time stats.
 
+### Session 9 - 2026-01-23
+**Focus**: Dashboard usage statistics (dash-002)
+**Completed**:
+- Created new `/api/stats/dashboard` backend endpoint for aggregated stats
+- Endpoint returns: projects_count, tokens_used, active_agents, github_projects, local_projects
+- Token usage fetched from OpenRouter API when API key provided via header
+- Updated Dashboard.jsx stat cards to show:
+  - Total Projects (count with GitHub/Local breakdown)
+  - Tokens Used (from OpenRouter API with K/M formatting)
+  - Active Agents (default 4 agents enabled)
+- Added Coins and Bot icons from lucide-react for new stats
+- Refresh All button now reloads both projects and stats
+
+**Files created**:
+- backend/routers/stats.py (dashboard stats endpoint)
+
+**Files modified**:
+- backend/main.py (registered stats router)
+- frontend/src/pages/Dashboard.jsx (new stat cards, stats fetching)
+
+**Notes**: Token usage requires OpenRouter API key in localStorage (`openrouter_api_key`). The endpoint converts OpenRouter's USD usage to approximate token counts. Active agents count is currently a default (4) until the agents feature is fully implemented.
+
 ---
 
 ## Next Priority Features
 
-1. **dash-002**: Dashboard shows usage statistics
-2. **settings-001**: Settings page (React)
-3. **create-004**: Upload .md file as project brief
-4. **github-003**: Create new repository from dropdown
+1. **settings-001**: Settings page (React)
+2. **create-004**: Upload .md file as project brief
+3. **github-003**: Create new repository from dropdown
+4. **dash-003**: Sidebar shows workspace tree with projects
 
 ---
 

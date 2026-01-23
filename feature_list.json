@@ -90,7 +90,7 @@
         "Navigate to dashboard",
         "Verify stat cards show: Projects count, Tokens used, Active agents"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "dash-003",
@@ -454,11 +454,11 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 16,
-    "failing": 22,
+    "passing": 17,
+    "failing": 21,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
-      "dashboard": { "total": 3, "passing": 1 },
+      "dashboard": { "total": 3, "passing": 2 },
       "project-creation": { "total": 6, "passing": 3 },
       "github-integration": { "total": 3, "passing": 2 },
       "vps-connection": { "total": 2, "passing": 0 },
