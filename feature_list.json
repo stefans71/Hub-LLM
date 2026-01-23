@@ -464,12 +464,83 @@
         "Verify tests can interact with page elements"
       ],
       "passes": true
+    },
+    {
+      "id": "ui-fix-001",
+      "category": "ui-overhaul",
+      "priority": 1,
+      "description": "Phase 1: Add header navigation with tabs",
+      "steps": [
+        "Create HeaderNavigation.jsx component with Dashboard, Workspace, Settings, Create Project tabs",
+        "Add react-router-dom for URL-based routing",
+        "Update App.jsx to use header tabs instead of sidebar-only navigation",
+        "Ensure all views accessible via header tabs",
+        "Test navigation works correctly"
+      ],
+      "passes": false,
+      "reference": "tests/Troubleshooting/MOCKUP_ANALYSIS.md"
+    },
+    {
+      "id": "ui-fix-002",
+      "category": "ui-overhaul",
+      "priority": 1,
+      "description": "Phase 2: Workspace layout overhaul",
+      "steps": [
+        "Create WorkspaceSidebar.jsx with files, search, git panels",
+        "Create BottomBar.jsx with Terminal, Docker, Logs, Context tabs",
+        "Add project header with name, VPS status, model selector, Export button",
+        "Restructure Workspace.jsx layout to match mockup",
+        "Test all workspace features work correctly"
+      ],
+      "passes": false,
+      "reference": "tests/Troubleshooting/MOCKUP_ANALYSIS.md"
+    },
+    {
+      "id": "ui-fix-003",
+      "category": "ui-overhaul",
+      "priority": 2,
+      "description": "Phase 3: Settings page completion",
+      "steps": [
+        "Add Anthropic Subscription section (Claude CLI connection)",
+        "Add Global Skills section (name, trigger, prompt)",
+        "Add Voice Input section (Whisper API config)",
+        "Add Default Model section",
+        "Reorganize sidebar into ACCOUNT and GLOBAL DEFAULTS groups"
+      ],
+      "passes": false,
+      "reference": "tests/Troubleshooting/MOCKUP_ANALYSIS.md"
+    },
+    {
+      "id": "ui-fix-004",
+      "category": "ui-overhaul",
+      "priority": 2,
+      "description": "Phase 4: Dashboard polish",
+      "steps": [
+        "Change stat cards to match mockup (Active Sessions, Total Projects, Connected LLMs)",
+        "Update stat card descriptions and badges",
+        "Verify project cards match mockup styling"
+      ],
+      "passes": false,
+      "reference": "tests/Troubleshooting/MOCKUP_ANALYSIS.md"
+    },
+    {
+      "id": "ui-fix-005",
+      "category": "ui-overhaul",
+      "priority": 3,
+      "description": "Phase 5: Create Project polish",
+      "steps": [
+        "Hide project sidebar during wizard flow",
+        "Ensure header tabs visible during wizard",
+        "Match footer button layout to mockup"
+      ],
+      "passes": false,
+      "reference": "tests/Troubleshooting/MOCKUP_ANALYSIS.md"
     }
   ],
   "summary": {
-    "total": 36,
+    "total": 41,
     "passing": 36,
-    "failing": 0,
+    "failing": 5,
     "categories": {
       "authentication": { "total": 5, "passing": 5 },
       "dashboard": { "total": 3, "passing": 3 },
@@ -481,7 +552,8 @@
       "workspace": { "total": 6, "passing": 6 },
       "ai-chat": { "total": 2, "passing": 2 },
       "settings": { "total": 3, "passing": 3 },
-      "testing": { "total": 1, "passing": 1 }
+      "testing": { "total": 1, "passing": 1 },
+      "ui-overhaul": { "total": 5, "passing": 0 }
     }
   }
 }

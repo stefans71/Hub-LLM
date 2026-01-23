@@ -11,7 +11,8 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 36/36 (100%)
+- **Features Passing**: 36/41 (88%)
+- **UI Overhaul Pending**: 5 phases (see ui-fix-001 through ui-fix-005)
 
 ## Completed Features
 
@@ -637,15 +638,59 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: The test harness uses agent-browser CLI which provides accessibility-first element selection via @e1, @e2 refs from snapshots. Tests are bash scripts that can be run individually or all together with `npm test`. Screenshots are saved to tests/e2e/screenshots/ on failure.
 
+### Session 28 - 2026-01-23
+**Focus**: Fix E2E tests and create mockup analysis (test-002, ui-fix-*)
+**Completed**:
+- Fixed all 5 E2E tests (were failing due to ref format changes):
+  - Changed ref extraction from `@eN` to `[ref=eN]` format
+  - Added proper login page detection for auth-required pages
+  - Fixed browser initialization timing (added delay after close)
+  - Added test-settings-view.sh for Settings page
+  - All 5 tests now pass reliably
+- Created comprehensive mockup analysis:
+  - Copied mockup to tests/Troubleshooting/
+  - Took screenshots of all 4 mockup views
+  - Took screenshots of current implementation for comparison
+  - Created MOCKUP_ANALYSIS.md with detailed component comparison
+- Analyzed actual component code vs mockup:
+  - Dashboard.jsx: Different stat cards
+  - Settings.jsx: Missing 4 sections (Anthropic, Skills, Voice, Model)
+  - Workspace.jsx: Missing file sidebar, bottom bar, project header
+  - CreateProject.jsx: Shows project sidebar (should be hidden)
+- Added 5 UI fix phases to feature_list.json
+
+**Files created**:
+- tests/e2e/test-settings-view.sh
+- tests/Troubleshooting/MOCKUP_ANALYSIS.md
+- tests/Troubleshooting/*.png (7 screenshots)
+- tests/Troubleshooting/hubllm-mockup-v2.html (copy)
+
+**Files modified**:
+- tests/e2e/run-tests.sh (browser close before tests)
+- tests/e2e/test-auth-login.sh (ref format fix)
+- tests/e2e/test-auth-signup.sh (ref format fix)
+- tests/e2e/test-create-project-view.sh (login detection, click nav)
+- tests/e2e/test-dashboard-view.sh (login detection)
+- feature_list.json (added ui-fix-001 through ui-fix-005)
+
+**Notes**: Detailed gap analysis in tests/Troubleshooting/MOCKUP_ANALYSIS.md identifies exactly what needs to change. UI fix phases are prioritized: Phase 1 (header nav) and Phase 2 (workspace) are HIGH priority.
+
 ---
 
 ## Next Priority Features
 
-All 36 features complete! Potential future enhancements:
+**UI Overhaul (5 phases - 0/5 complete)**:
+- ❌ ui-fix-001: Phase 1 - Add header navigation with tabs (HIGH)
+- ❌ ui-fix-002: Phase 2 - Workspace layout overhaul (HIGH)
+- ❌ ui-fix-003: Phase 3 - Settings page completion (MEDIUM)
+- ❌ ui-fix-004: Phase 4 - Dashboard polish (MEDIUM)
+- ❌ ui-fix-005: Phase 5 - Create Project polish (LOW)
+
+**Reference**: See tests/Troubleshooting/MOCKUP_ANALYSIS.md for detailed requirements.
+
+**Other future enhancements**:
 - Cross-LLM Bridge for multi-model conversations
 - Email verification/password reset email sending
-- Additional preview port configuration options
-- More E2E tests for workspace and settings flows
 
 ---
 
