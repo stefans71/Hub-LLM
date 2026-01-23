@@ -3,7 +3,7 @@ Projects Router - Manage development projects/workspaces
 """
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 import uuid
 
@@ -13,19 +13,59 @@ router = APIRouter()
 projects_db: dict = {}
 
 
+class ProjectContext(BaseModel):
+    """Project context configuration (tech stack, standards, etc.)"""
+    tech_stack: Optional[str] = None
+    standards: Optional[str] = None
+    additional: Optional[str] = None
+
+
 class ProjectCreate(BaseModel):
+    """Full project creation data from Create Project form"""
     name: str
     description: Optional[str] = None
+    brief: Optional[str] = None  # Project brief/description
+    workspace: Optional[str] = "default"  # Workspace folder name
     color: str = "#3B82F6"  # Default blue
-    context: Optional[str] = None  # Project-specific AI context
+
+    # Connection source
+    connection_type: Optional[str] = "github"  # 'github' or 'vps'
+    github_repo: Optional[str] = None  # Full repo name (user/repo)
+    vps_server_id: Optional[str] = None  # VPS server ID if using VPS
+
+    # Project context (AI-generated or manual)
+    context: Optional[ProjectContext] = None
+
+    # Selected agents and MCP servers
+    agent_ids: Optional[List[str]] = []
+    mcp_server_ids: Optional[List[str]] = []
 
 
 class Project(BaseModel):
+    """Full project model"""
     id: str
     name: str
     description: Optional[str]
+    brief: Optional[str]
+    workspace: str
     color: str
-    context: Optional[str]
+
+    # Connection source
+    connection_type: str
+    github_repo: Optional[str]
+    vps_server_id: Optional[str]
+
+    # Project context
+    context: Optional[ProjectContext]
+
+    # Selected agents and MCP servers
+    agent_ids: List[str]
+    mcp_server_ids: List[str]
+
+    # Status
+    status: str = "active"  # 'active', 'archived', 'error'
+
+    # Timestamps
     created_at: datetime
     updated_at: datetime
 
@@ -33,8 +73,16 @@ class Project(BaseModel):
 class ProjectUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    brief: Optional[str] = None
+    workspace: Optional[str] = None
     color: Optional[str] = None
-    context: Optional[str] = None
+    connection_type: Optional[str] = None
+    github_repo: Optional[str] = None
+    vps_server_id: Optional[str] = None
+    context: Optional[ProjectContext] = None
+    agent_ids: Optional[List[str]] = None
+    mcp_server_ids: Optional[List[str]] = None
+    status: Optional[str] = None
 
 
 @router.get("/")
@@ -45,20 +93,28 @@ async def list_projects() -> list[Project]:
 
 @router.post("/", response_model=Project)
 async def create_project(project: ProjectCreate):
-    """Create a new project"""
+    """Create a new project with full configuration"""
     project_id = str(uuid.uuid4())
     now = datetime.utcnow()
-    
+
     new_project = Project(
         id=project_id,
         name=project.name,
-        description=project.description,
+        description=project.description or project.brief,  # Use brief as description if not provided
+        brief=project.brief,
+        workspace=project.workspace or "default",
         color=project.color,
+        connection_type=project.connection_type or "github",
+        github_repo=project.github_repo,
+        vps_server_id=project.vps_server_id,
         context=project.context,
+        agent_ids=project.agent_ids or [],
+        mcp_server_ids=project.mcp_server_ids or [],
+        status="active",
         created_at=now,
         updated_at=now
     )
-    
+
     projects_db[project_id] = new_project
     return new_project
 

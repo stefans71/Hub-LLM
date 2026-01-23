@@ -881,7 +881,20 @@ In the meantime, I can help you think through your project. What would you like 
     }
   }
 
+  // State for project creation
+  const [creatingProject, setCreatingProject] = useState(false)
+  const [createProjectError, setCreateProjectError] = useState('')
+
   const handleCreateProject = async () => {
+    // Validate required fields
+    if (!formData.projectName.trim()) {
+      setCreateProjectError('Please enter a project name')
+      return
+    }
+
+    setCreatingProject(true)
+    setCreateProjectError('')
+
     try {
       const res = await fetch('/api/projects/', {
         method: 'POST',
@@ -890,14 +903,16 @@ In the meantime, I can help you think through your project. What would you like 
           ...getAuthHeader()
         },
         body: JSON.stringify({
-          name: formData.projectName,
-          brief: formData.projectBrief,
+          name: formData.projectName.trim(),
+          brief: formData.projectBrief.trim() || null,
+          workspace: formData.workspace,
           connection_type: formData.connectionType,
-          github_repo: formData.selectedRepo,
-          vps_server_id: formData.vpsServerId,
+          github_repo: formData.selectedRepo || null,
+          vps_server_id: formData.vpsServerId || null,
           context: {
-            tech_stack: formData.techStack,
-            standards: formData.codeStandards,
+            tech_stack: formData.techStack.trim() || null,
+            standards: formData.codeStandards.trim() || null,
+            additional: formData.context?.trim() || null
           },
           agent_ids: formData.selectedAgents,
           mcp_server_ids: formData.selectedMCP
@@ -907,9 +922,15 @@ In the meantime, I can help you think through your project. What would you like 
       if (res.ok) {
         const project = await res.json()
         onCreateProject?.(project)
+      } else {
+        const error = await res.json()
+        setCreateProjectError(error.detail || 'Failed to create project')
       }
     } catch (err) {
       console.error('Failed to create project:', err)
+      setCreateProjectError(`Network error: ${err.message}`)
+    } finally {
+      setCreatingProject(false)
     }
   }
 
@@ -2027,26 +2048,56 @@ Examples:
       {/* Fixed Action Bar */}
       <div style={{
         display: 'flex',
-        justifyContent: 'space-between',
-        padding: '16px 24px',
+        flexDirection: 'column',
         borderTop: `1px solid ${cssVars.border}`,
         background: cssVars.bgSecondary,
         flexShrink: 0
       }}>
-        <Button variant="secondary" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          onClick={handleCreateProject}
-          disabled={!formData.projectName}
-          style={{
-            animation: formData.projectName ? 'pulse 2s infinite' : 'none'
-          }}
-        >
-          Create Project
-          <ChevronRight size={14} />
-        </Button>
+        {/* Error message */}
+        {createProjectError && (
+          <div style={{
+            padding: '12px 24px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            borderBottom: `1px solid ${cssVars.error}`,
+            color: cssVars.error,
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <X size={16} />
+            {createProjectError}
+          </div>
+        )}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          padding: '16px 24px'
+        }}>
+          <Button variant="secondary" onClick={onCancel} disabled={creatingProject}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleCreateProject}
+            disabled={!formData.projectName.trim() || creatingProject}
+            style={{
+              animation: formData.projectName && !creatingProject ? 'pulse 2s infinite' : 'none'
+            }}
+          >
+            {creatingProject ? (
+              <>
+                <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                Creating...
+              </>
+            ) : (
+              <>
+                Create Project
+                <ChevronRight size={14} />
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <style>{`
