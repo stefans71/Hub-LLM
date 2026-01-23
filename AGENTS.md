@@ -8,124 +8,141 @@ HubLLM is a web-based AI development environment with:
 - GitHub Codespaces integration
 - Project management with agents and MCP servers
 
+---
+
+## CRITICAL: Reference Documents
+
+**Before building ANY UI, read these:**
+
+| Document | Path | Purpose |
+|----------|------|---------|
+| **UI Mockup** | `docs/hubllm-mockup-v2.html` | Complete HTML/CSS for all views |
+| **Component Map** | `docs/HUBLLM_COMPONENT_MAPPING.md` | HTML ID → React → API mapping |
+| **Strategy** | `docs/HUBLLM_DEVELOPMENT_STRATEGY.md` | Architecture, DB schemas |
+
+---
+
 ## Architecture
 
 ```
 Hub-LLM/
-├── backend/          # Python FastAPI
-│   ├── main.py       # Entry point
-│   ├── routers/      # API endpoints
-│   ├── services/     # Business logic
-│   └── models/       # SQLAlchemy models
-├── frontend/         # React + Vite
+├── backend/              # Python FastAPI
+│   ├── main.py
+│   ├── routers/
+│   ├── services/
+│   └── models/
+├── frontend/             # React + Vite
 │   └── src/
 │       ├── components/
 │       ├── contexts/
 │       └── pages/
-├── feature_list.json # Testable features (CHECK THIS FIRST)
-├── claude-progress.txt # Session handoff log (UPDATE THIS)
-└── init.sh           # Start dev environment
+├── docs/                 # ← REFERENCE THESE
+│   ├── hubllm-mockup-v2.html
+│   ├── HUBLLM_COMPONENT_MAPPING.md
+│   └── HUBLLM_DEVELOPMENT_STRATEGY.md
+├── feature_list.json     # Features to implement
+├── claude-progress.txt   # Session log
+└── init.sh               # Start dev environment
 ```
+
+---
 
 ## Before Starting Work
 
-1. **Read `claude-progress.txt`** - See what was done in previous sessions
-2. **Read `feature_list.json`** - Find next failing feature to work on
-3. **Run `./init.sh`** - Start the dev environment
-4. **Pick ONE feature** - Don't try to implement multiple features at once
+1. **Read `claude-progress.txt`** - See what was done
+2. **Read `feature_list.json`** - Find next failing feature
+3. **Read `docs/HUBLLM_COMPONENT_MAPPING.md`** - Understand structure
+4. **Run `./init.sh`** - Start the environment
+5. **Pick ONE feature** - Don't try to do multiple
 
-## Coding Standards
+---
 
-### Backend (Python/FastAPI)
-- Use async/await for all database operations
-- Type hints required on all functions
-- Pydantic models for request/response validation
-- SQLAlchemy async for database
-- JWT tokens for authentication
+## CSS Variables (from mockup)
 
-### Frontend (React)
-- Functional components with hooks
-- Context API for global state
-- Fetch API for HTTP requests (no axios)
-- CSS variables for theming (see :root in mockup)
+```css
+:root {
+  --bg-primary: #0f1419;
+  --bg-secondary: #1a2028;
+  --bg-tertiary: #242b35;
+  --border: #2d3748;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --accent: #f97316;
+  --success: #22c55e;
+  --error: #ef4444;
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+}
+```
 
-## Key Files to Know
+**Always use these variables, never hardcoded colors!**
 
-| File | Purpose |
-|------|---------|
-| `backend/main.py` | FastAPI app setup, middleware |
-| `backend/routers/auth.py` | Authentication endpoints |
-| `backend/routers/chat.py` | AI chat with streaming |
-| `backend/routers/ssh.py` | SSH/SFTP operations |
-| `frontend/src/contexts/AuthContext.jsx` | Auth state management |
-| `frontend/src/components/Chat.jsx` | AI chat component |
-| `frontend/src/components/Terminal.jsx` | xterm.js terminal |
+---
+
+## Views in Mockup
+
+| View | HTML ID | Line | Purpose |
+|------|---------|------|---------|
+| Dashboard | `view-dashboard` | ~2537 | Project list, stats |
+| Settings | `view-settings` | ~2871 | 10 settings sections |
+| Create Project | `view-create-project` | ~3687 | 5-step wizard |
+| Workspace | `view-workspace` | ~4368 | Terminal, editor, chat |
+
+---
+
+## Create Project Flow (5 Steps)
+
+| Step | Key IDs | What It Does |
+|------|---------|--------------|
+| 1. Project Details | `project-brief`, `ai-brief-chat` | Name, brief, AI expansion |
+| 2. Connection Source | `github-card`, `vps-card` | GitHub OAuth or VPS |
+| 3. Project Context | `ctx-tech-stack`, `ctx-standards` | Tech stack, standards |
+| 4. Project Agents | `global-agents-list` | Select agents |
+| 5. MCP Servers | `global-mcp-list` | Select MCP servers |
+
+---
 
 ## Testing with agent-browser
 
 ```bash
-# Install agent-browser
+# Install
 npm install -g agent-browser
 agent-browser install
 
-# Basic workflow
+# Test flow
 agent-browser open http://localhost:5173
-agent-browser snapshot -i              # Get interactive elements
-agent-browser click @e2                # Click by ref
-agent-browser fill @e3 "text"          # Fill input
-agent-browser screenshot test.png      # Take screenshot
+agent-browser snapshot -i
+agent-browser click @e2
+agent-browser fill @e3 "text"
+agent-browser screenshot test.png
 ```
+
+---
 
 ## After Completing Work
 
-1. **Test the feature** - Use agent-browser or manual testing
-2. **Update `feature_list.json`** - Set `passes: true` for completed feature
+1. **Test the feature** - Use agent-browser
+2. **Update `feature_list.json`** - Set `passes: true`
 3. **Update `claude-progress.txt`** - Log what you did
-4. **Commit with clear message** - `git commit -m "feat: [feature-id] description"`
+4. **Commit** - `git commit -m "feat(feature-id): description"`
 
-## Common Tasks
-
-### Add new API endpoint
-1. Create route in `backend/routers/`
-2. Add to `backend/main.py` router includes
-3. Create service function in `backend/services/`
-4. Test with curl or frontend
-
-### Add new React component
-1. Create in `frontend/src/components/`
-2. Follow existing component patterns
-3. Use CSS variables from `:root`
-4. Add to parent component
-
-### Add database table
-1. Add model to `backend/models/__init__.py`
-2. Run migrations: `alembic revision --autogenerate`
-3. Apply: `alembic upgrade head`
-
-## Environment Variables
-
-```env
-# Required in .env
-OPENROUTER_API_KEY=your_key
-GITHUB_CLIENT_ID=your_id
-GITHUB_CLIENT_SECRET=your_secret
-DATABASE_URL=postgresql://hubllm:hubllm@localhost:5432/hubllm
-SECRET_KEY=random_secret_key
-```
+---
 
 ## Do Not
 
-- ❌ Try to implement multiple features in one session
+- ❌ Implement multiple features in one session
+- ❌ Skip reading the mockup and component mapping
+- ❌ Use hardcoded colors (use CSS variables)
 - ❌ Mark features as passing without testing
 - ❌ Skip updating progress files
-- ❌ Change working features without good reason
-- ❌ Remove or edit tests from feature_list.json
 
 ## Do
 
-- ✅ Read progress files before starting
+- ✅ Read docs before writing UI code
+- ✅ Match mockup styling exactly
+- ✅ Use CSS variables
 - ✅ Work on ONE feature at a time
-- ✅ Test with agent-browser before marking complete
-- ✅ Leave code in mergeable state
+- ✅ Test with agent-browser
+- ✅ Update progress files
 - ✅ Write clear commit messages
-- ✅ Update documentation when adding features

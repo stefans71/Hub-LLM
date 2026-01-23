@@ -5,12 +5,45 @@
 ```
 □ 1. Read claude-progress.txt (see what was done last)
 □ 2. Read feature_list.json (find next failing feature)
-□ 3. Run ./init.sh (start dev environment)
-□ 4. Pick ONE feature to implement
-□ 5. Implement and test
-□ 6. Update feature_list.json (set passes: true)
-□ 7. Update claude-progress.txt (log what you did)
-□ 8. Commit changes
+□ 3. Read docs/HUBLLM_COMPONENT_MAPPING.md (understand structure)
+□ 4. Run ./init.sh (start dev environment)
+□ 5. Pick ONE feature to implement
+□ 6. Reference docs/hubllm-mockup-v2.html for UI styling
+□ 7. Implement and test
+□ 8. Update feature_list.json (set passes: true)
+□ 9. Update claude-progress.txt (log what you did)
+□ 10. Commit changes
+```
+
+---
+
+## CRITICAL: Reference Documents
+
+**Before writing ANY UI code, read these:**
+
+| Document | Location | What It Contains |
+|----------|----------|------------------|
+| **UI Mockup** | `docs/hubllm-mockup-v2.html` | Complete HTML/CSS for all views |
+| **Component Map** | `docs/HUBLLM_COMPONENT_MAPPING.md` | HTML ID → React component → API |
+| **Strategy** | `docs/HUBLLM_DEVELOPMENT_STRATEGY.md` | Architecture, database schemas |
+
+### CSS Variables (USE THESE)
+
+```css
+:root {
+  --bg-primary: #0f1419;
+  --bg-secondary: #1a2028;
+  --bg-tertiary: #242b35;
+  --border: #2d3748;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --accent: #f97316;
+  --success: #22c55e;
+  --error: #ef4444;
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+}
 ```
 
 ---
@@ -33,189 +66,118 @@ Look for:
 ```bash
 # List failing features
 cat feature_list.json | grep -B5 '"passes": false' | grep '"id"'
-
-# Or view full feature details
-cat feature_list.json | jq '.features[] | select(.passes == false) | {id, category, description}'
 ```
 
-**Priority order by category:**
-1. `project-creation` - Create Project flow (most important)
-2. `github-integration` - GitHub OAuth in flow
-3. `dashboard` - Dashboard view
-4. `settings` - Settings pages
-5. `agents` / `mcp-servers` - Agent and MCP management
+**Priority order:**
+1. `create-*` - Create Project flow (most important)
+2. `github-*` - GitHub OAuth integration
+3. `dash-*` - Dashboard view
+4. `settings-*` - Settings pages
 
 ---
 
-## Step 3: Start Environment
+## Step 3: Read Component Mapping
+
+```bash
+cat docs/HUBLLM_COMPONENT_MAPPING.md
+```
+
+This shows exactly:
+- Which HTML element maps to which React component
+- Which API endpoints are needed
+- What props each component needs
+
+---
+
+## Step 4: Start Environment
 
 ```bash
 ./init.sh
 ```
 
-Wait for:
-```
-✓ PostgreSQL started
-✓ Backend started
-✓ Frontend started
-Frontend:  http://localhost:5173
-Backend:   http://localhost:8000
-```
-
 ---
 
-## Step 4: Implement ONE Feature
+## Step 5: Implement ONE Feature
 
-Example workflow for `create-001` (Create Project page):
+### Example: Building `create-001` (Create Project page)
 
-1. **Understand the feature:**
+1. **Check the mapping:**
    ```bash
-   cat feature_list.json | jq '.features[] | select(.id == "create-001")'
+   grep -A20 "CREATE PROJECT VIEW" docs/HUBLLM_COMPONENT_MAPPING.md
    ```
 
-2. **Check existing code:**
+2. **Look at mockup HTML:**
    ```bash
-   ls frontend/src/components/
-   ls frontend/src/pages/
+   grep -A50 'id="view-create-project"' docs/hubllm-mockup-v2.html
    ```
 
-3. **Reference the mockup:**
-   - HTML mockup is in project files or previous chat context
-   - CSS variables are defined in `:root`
+3. **Create React component matching the mockup styling**
 
-4. **Implement:**
-   - Create new React component
-   - Add route if needed
-   - Connect to backend API
-
-5. **Test with agent-browser:**
+4. **Test with agent-browser:**
    ```bash
    agent-browser open http://localhost:5173/create-project
    agent-browser snapshot -i
-   agent-browser screenshot create-project-test.png
+   agent-browser screenshot test.png
    ```
 
 ---
 
-## Step 5: Update feature_list.json
+## Step 6: Update Progress Files
 
-After testing passes:
+### feature_list.json
+Change `"passes": false` to `"passes": true` for completed feature
 
-```bash
-# Edit feature_list.json
-# Change: "passes": false
-# To:     "passes": true
-```
-
-**IMPORTANT:** Only mark `passes: true` if you've actually tested it!
-
----
-
-## Step 6: Update claude-progress.txt
-
-Add a new session entry:
-
+### claude-progress.txt
+Add session entry:
 ```markdown
 ### Session [N] - [DATE]
-**Focus**: [Feature ID and name]
-**Completed**:
-- [What you implemented]
-- [Files created/modified]
-
-**Tested**:
-- [How you verified it works]
-
-**Issues**:
-- [Any problems encountered]
-
-**Next**:
-- [Suggested next feature]
+**Focus**: [Feature ID]
+**Completed**: [What you built]
+**Files**: [Files created/modified]
+**Next**: [Suggested next feature]
 ```
 
 ---
 
-## Step 7: Commit Changes
+## Step 7: Commit
 
 ```bash
 git add -A
-git status  # Review changes
-git commit -m "feat(feature-id): brief description"
+git commit -m "feat(feature-id): description"
 git push
 ```
 
-Commit message format:
-- `feat(create-001): implement Create Project page`
-- `fix(auth-003): fix GitHub OAuth callback`
-- `chore: update progress files`
+---
+
+## Views in the Mockup
+
+| View | HTML ID | Purpose |
+|------|---------|---------|
+| Dashboard | `view-dashboard` | Project list, stats |
+| Settings | `view-settings` | User settings (10 sections) |
+| Create Project | `view-create-project` | 5-step project wizard |
+| Workspace | `view-workspace` | Terminal, editor, chat |
 
 ---
 
-## Quick Reference
+## Create Project Steps (from mockup)
 
-### Useful Commands
-
-```bash
-# Start environment
-./init.sh
-
-# View logs
-tail -f backend.log
-tail -f frontend.log
-
-# Test in browser
-agent-browser open http://localhost:5173
-agent-browser snapshot -i
-agent-browser click @e1
-agent-browser fill @e2 "text"
-agent-browser screenshot test.png
-
-# Stop everything
-pkill -f uvicorn
-pkill -f vite
-docker compose stop
-```
-
-### File Locations
-
-```
-Backend API:     backend/routers/
-Backend Logic:   backend/services/
-React Pages:     frontend/src/pages/
-React Components: frontend/src/components/
-Contexts:        frontend/src/contexts/
-```
-
-### API Testing
-
-```bash
-# Health check
-curl http://localhost:8000/health
-
-# Login
-curl -X POST http://localhost:8000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password"}'
-
-# Authenticated request
-curl http://localhost:8000/api/auth/me \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
+| Step | HTML Section | Key Elements |
+|------|--------------|--------------|
+| 1. Project Details | line ~3696 | `project-brief`, `ai-brief-chat` |
+| 2. Connection Source | line ~3879 | `github-card`, `vps-card` |
+| 3. Project Context | line ~4052 | `ctx-tech-stack`, `ctx-standards` |
+| 4. Project Agents | line ~4111 | `global-agents-list` |
+| 5. MCP Servers | line ~4229 | `global-mcp-list` |
 
 ---
 
 ## Don't Forget!
 
-1. ✅ Work on ONE feature per session
-2. ✅ Test before marking complete
-3. ✅ Update both progress files
-4. ✅ Commit with clear message
-5. ✅ Leave code in working state
-
----
-
-## If You're Stuck
-
-1. Read `.claude/skills/hubllm/SKILL.md` for patterns
-2. Check `AGENTS.md` for project overview
-3. Look at existing components for examples
-4. Run `agent-browser snapshot -i` to see current UI state
+1. ✅ Reference the mockup for ALL styling
+2. ✅ Use CSS variables, not hardcoded colors
+3. ✅ Check component mapping before creating files
+4. ✅ Work on ONE feature per session
+5. ✅ Test with agent-browser before marking complete
+6. ✅ Update both progress files
+7. ✅ Commit with clear message

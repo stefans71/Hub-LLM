@@ -2,183 +2,120 @@
 
 ## READ THIS FIRST
 
-This file contains instructions for setting up the HubLLM development harness. 
+This file contains instructions for setting up the HubLLM development harness.
 Follow these steps in order.
 
 ---
 
 ## Step 1: Unpack Files
 
-Move these files from the `hubllm-harness-pack/` folder to the repo root:
+Move files from `hubllm-harness-pack-v2/` to the repo root:
 
 ```bash
 # Run from Hub-LLM repo root
-mv hubllm-harness-pack/feature_list.json .
-mv hubllm-harness-pack/claude-progress.txt .
-mv hubllm-harness-pack/init.sh .
-mv hubllm-harness-pack/AGENTS.md .
-mv hubllm-harness-pack/SESSION_START.md .
+mv hubllm-harness-pack-v2/* .
+mv hubllm-harness-pack-v2/.claude .
 
-# Create skills directory and move skills
-mkdir -p .claude/skills
-mv hubllm-harness-pack/.claude/skills/hubllm .claude/skills/
-mv hubllm-harness-pack/.claude/skills/agent-browser .claude/skills/
+# Clean up
+rm -rf hubllm-harness-pack-v2 hubllm-harness-pack-v2.zip
 
 # Make init.sh executable
 chmod +x init.sh
-
-# Clean up
-rm -rf hubllm-harness-pack/
 ```
 
 ---
 
-## Step 2: Install agent-browser
+## Step 2: Verify File Structure
+
+After unpacking, your repo should have:
+
+```
+Hub-LLM/
+├── .claude/skills/
+│   ├── hubllm/SKILL.md
+│   └── agent-browser/SKILL.md
+├── docs/
+│   ├── hubllm-mockup-v2.html       ← UI MOCKUP (reference this!)
+│   ├── HUBLLM_COMPONENT_MAPPING.md  ← HTML → React mapping
+│   └── HUBLLM_DEVELOPMENT_STRATEGY.md
+├── backend/
+├── frontend/
+├── AGENTS.md
+├── IMPLEMENT.md (this file)
+├── SESSION_START.md
+├── feature_list.json
+├── claude-progress.txt
+├── init.sh
+└── ...
+```
+
+---
+
+## Step 3: Install agent-browser
 
 ```bash
 npm install -g agent-browser
 agent-browser install
 ```
-
-This downloads Chromium for browser automation testing.
-
----
-
-## Step 3: Verify Environment
-
-Check that these exist:
-- `.env` file with API keys (copy from `.env.example` if needed)
-- `docker-compose.yml` for PostgreSQL
-- `backend/` folder with FastAPI code
-- `frontend/` folder with React code
 
 ---
 
 ## Step 4: Test Dev Environment
 
 ```bash
-# Start everything
 ./init.sh
-
-# Should see:
-# ✓ PostgreSQL started
-# ✓ Backend started (PID: xxxx)
-# ✓ Frontend started (PID: xxxx)
-# 
-# Frontend:  http://localhost:5173
-# Backend:   http://localhost:8000
 ```
 
-If in Codespaces, ports will be forwarded automatically.
-
----
-
-## Step 5: Verify Harness Files
-
-```bash
-# Check feature list
-cat feature_list.json | head -50
-
-# Check progress file
-cat claude-progress.txt
-
-# Check skills
-ls -la .claude/skills/
+Should see:
+```
+✓ PostgreSQL started
+✓ Backend started
+✓ Frontend started
+Frontend:  http://localhost:5173
+Backend:   http://localhost:8000
 ```
 
 ---
 
-## Step 6: Test Browser Automation
+## Step 5: Commit Harness Files
 
 ```bash
-# Open the app
-agent-browser open http://localhost:5173
+git add -A
+git commit -m "chore: add development harness and UI docs"
+git push
+```
 
-# Get interactive elements
-agent-browser snapshot -i
+---
 
-# Take screenshot
-agent-browser screenshot setup-test.png
+## KEY REFERENCE FILES
 
-# Close browser
-agent-browser close
+**ALWAYS reference these when building UI components:**
+
+| File | Purpose |
+|------|---------|
+| `docs/hubllm-mockup-v2.html` | Complete UI mockup with all styling |
+| `docs/HUBLLM_COMPONENT_MAPPING.md` | Maps HTML IDs → React components → Backend APIs |
+| `docs/HUBLLM_DEVELOPMENT_STRATEGY.md` | Architecture and implementation plan |
+
+### CSS Variables (from mockup)
+
+```css
+--bg-primary: #0f1419;
+--bg-secondary: #1a2028;
+--bg-tertiary: #242b35;
+--border: #2d3748;
+--primary: #3b82f6;
+--primary-hover: #2563eb;
+--accent: #f97316;
+--success: #22c55e;
+--error: #ef4444;
+--text-primary: #ffffff;
+--text-secondary: #9ca3af;
+--text-muted: #6b7280;
 ```
 
 ---
 
 ## Setup Complete!
 
-The harness is now configured. Here's what each file does:
-
-| File | Purpose |
-|------|---------|
-| `feature_list.json` | 38 features to implement, each marked pass/fail |
-| `claude-progress.txt` | Session handoff log - READ at start, UPDATE at end |
-| `init.sh` | Starts all services with one command |
-| `AGENTS.md` | Instructions for AI agents (you're reading similar now) |
-| `SESSION_START.md` | What to do at the start of each coding session |
-| `.claude/skills/hubllm/SKILL.md` | HubLLM-specific development patterns |
-| `.claude/skills/agent-browser/SKILL.md` | Browser automation commands |
-
----
-
-## What To Do Next
-
-1. **Commit the harness files:**
-   ```bash
-   git add -A
-   git commit -m "chore: add development harness files"
-   git push
-   ```
-
-2. **Start your first coding session** - Read `SESSION_START.md`
-
-3. **Pick a feature from `feature_list.json`** where `passes: false`
-
----
-
-## For Future Sessions
-
-Every new Claude session should:
-
-1. **First message to Claude:**
-   ```
-   Read SESSION_START.md and begin working on HubLLM.
-   ```
-
-2. Claude will then:
-   - Read `claude-progress.txt` to see what was done
-   - Read `feature_list.json` to find next feature
-   - Run `./init.sh` to start the environment
-   - Work on ONE feature
-   - Test with `agent-browser`
-   - Update progress files
-   - Commit changes
-
----
-
-## Troubleshooting
-
-### Port already in use
-```bash
-lsof -ti:8000 | xargs kill -9  # Kill backend
-lsof -ti:5173 | xargs kill -9  # Kill frontend
-```
-
-### Database issues
-```bash
-docker compose down
-docker compose up db -d
-```
-
-### agent-browser not found
-```bash
-npm install -g agent-browser
-agent-browser install
-```
-
-### Missing dependencies
-```bash
-cd backend && pip install -r requirements.txt
-cd frontend && npm install
-```
+For each coding session, read `SESSION_START.md` first.
