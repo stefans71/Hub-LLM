@@ -1,284 +1,396 @@
-# HubLLM Mockup vs Current Implementation Analysis
+# HubLLM Mockup vs Current Implementation - Detailed Analysis
 
 ## Overview
 
-This document analyzes the differences between the mockup (`hubllm-mockup-v2.html`) and the current React implementation to identify gaps and plan fixes.
+This document provides a detailed component-by-component analysis comparing the mockup (`hubllm-mockup-v2.html`, 6739 lines) with the current React implementation.
 
 ---
 
-## Mockup Structure (6739 lines)
+## 1. NAVIGATION ARCHITECTURE
 
-### 4 Main Views
-
-| View | Line # | Description |
-|------|--------|-------------|
-| `view-dashboard` | 2537 | Project Dashboard with stats, project cards |
-| `view-settings` | 2871 | Settings with 10 sections |
-| `view-create-project` | 3687 | 5-step project creation wizard |
-| `view-workspace` | 4368 | Main development workspace |
-
-### Navigation Architecture (Mockup)
-
-```
-Header Navigation Bar
-├── HubLLM.dev (logo)
-├── Dashboard (tab)
-├── Workspace (tab)
-├── Settings (tab)
-└── Create Project (tab)
-
-Left Sidebar (Dashboard/Settings)
-├── MAIN
-│   ├── Dashboard
-│   └── Settings
-├── WORKSPACES
-│   ├── Customers (expandable)
-│   │   ├── Acme Corp Website
-│   │   ├── API Backend Optimization
-│   │   └── Beta Inc Dashboard
-│   ├── Personal (expandable)
-│   └── Archives
-└── Footer
-    ├── + New Project button
-    └── User profile
-```
-
----
-
-## Settings Sections (Mockup)
-
-| Section ID | Name | Line # | Description |
-|------------|------|--------|-------------|
-| `settings-subscription` | Anthropic Subscription | 2984 | Claude Code CLI connection |
-| `settings-apikeys` | API Keys | 3073 | OpenRouter, OpenAI keys |
-| `settings-model` | Default Model | 3117 | Model selection |
-| `settings-vps` | VPS Connections | 3150 | Remote server management |
-| `settings-profile` | Profile | 3162 | User profile info |
-| `settings-appearance` | Appearance | 3210 | Theme, font settings |
-| `settings-voice` | Voice Input | 3261 | Whisper configuration |
-| `settings-globalagents` | Global Agents | 3277 | Reusable AI agents |
-| `settings-globalskills` | Global Skills | 3432 | Reusable skill modules |
-| `settings-globalmcp` | Global MCP Servers | 3502 | MCP server management |
-
----
-
-## Create Project Steps (Mockup)
-
-| Step | Section | Line # | Elements |
-|------|---------|--------|----------|
-| 1 | Project Details | 3697 | Workspace dropdown, name, brief, AI define button |
-| 2 | Connection Source | 3880 | GitHub OAuth, VPS connection form |
-| 3 | Project Context | 4053 | Tech stack, standards, context fields |
-| 4 | Project Agents | 4112 | Global agents checkbox list |
-| 5 | MCP Servers | 4230 | Global MCP checkbox list |
-
----
-
-## Workspace Layout (Mockup)
-
+### Mockup Navigation
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ Header: Project Name │ VPS status │ Model selector │ Export Project     │
+│ [HubLLM.dev logo] │ Dashboard │ Workspace │ Settings │ Create Project  │
+│                   │   (tab)   │   (tab)   │  (tab)   │      (tab)      │
+└─────────────────────────────────────────────────────────────────────────┘
+                              HEADER TABS
+```
+
+### Current Navigation (App.jsx)
+```
+┌──────────┬──────────────────────────────────────────────────────────────┐
+│ SIDEBAR  │                                                              │
+│          │                      CONTENT AREA                            │
+│ Dashboard│                                                              │
+│ Settings │                                                              │
+│          │                                                              │
+│ WORK-    │                                                              │
+│ SPACES   │                                                              │
+│ ├─ proj1 │                                                              │
+│ └─ proj2 │                                                              │
+└──────────┴──────────────────────────────────────────────────────────────┘
+                            SIDEBAR ONLY
+```
+
+### Gap Analysis - Navigation
+| Feature | Mockup | Current | Status |
+|---------|--------|---------|--------|
+| Header with tabs | ✅ Dashboard, Workspace, Settings, Create Project tabs | ❌ No header tabs | **MISSING** |
+| URL-based routing | ✅ Each view has distinct UI state | ❌ State-based (`currentView`) | **DIFFERENT** |
+| Sidebar collapse | ✅ Can collapse to icon-only | ✅ Implemented | ✅ MATCH |
+| Workspace tree | ✅ In sidebar | ✅ In sidebar | ✅ MATCH |
+
+---
+
+## 2. DASHBOARD VIEW
+
+### Mockup Dashboard (view-dashboard, line 2537)
+
+**Stats Cards:**
+- ACTIVE SESSIONS (12) - "Across 4 LLM providers"
+- TOTAL PROJECTS (48) - "12 GitHub, 36 Local"
+- CONNECTED LLMS (5) - "OpenRouter + Anthropic"
+
+**Project Cards:**
+- Workspace label (e.g., "Customers")
+- Project name
+- Description
+- Source tag (VPS/Local/GitHub)
+- Tech stack tag
+- Agent avatars
+- "Updated X ago" timestamp
+
+### Current Dashboard (Dashboard.jsx, 362 lines)
+
+**Stats Cards:**
+- TOTAL PROJECTS - "X GitHub, Y Local"
+- TOKENS USED - "Via OpenRouter API"
+- ACTIVE AGENTS (4) - "Code, Test, Docs, Review"
+
+**Project Cards:**
+- Same structure as mockup ✅
+
+### Gap Analysis - Dashboard
+| Feature | Mockup | Current | Status |
+|---------|--------|---------|--------|
+| Stats: Active Sessions | ✅ "12 across 4 providers" | ❌ Not shown | **MISSING** |
+| Stats: Total Projects | ✅ | ✅ | ✅ MATCH |
+| Stats: Connected LLMs | ✅ "OpenRouter + Anthropic" | ❌ Shows "Tokens Used" | **DIFFERENT** |
+| Stats: Active Agents | ❌ | ✅ Shows instead of sessions | **EXTRA** |
+| Project cards | ✅ | ✅ | ✅ MATCH |
+| Grid/List toggle | ✅ | ✅ | ✅ MATCH |
+| Search bar | ✅ In header | ✅ In header | ✅ MATCH |
+| Refresh All button | ✅ | ✅ | ✅ MATCH |
+
+---
+
+## 3. SETTINGS VIEW
+
+### Mockup Settings Sections (view-settings, line 2871)
+
+| # | Section ID | Name | Line # | Description |
+|---|------------|------|--------|-------------|
+| 1 | settings-subscription | Anthropic Subscription | 2984 | Claude Code CLI connection, auth status |
+| 2 | settings-apikeys | API Keys | 3073 | OpenRouter, OpenAI API keys |
+| 3 | settings-model | Default Model | 3117 | Model selection with provider groups |
+| 4 | settings-vps | VPS Connections | 3150 | Remote server management |
+| 5 | settings-profile | Profile | 3162 | Name, email, avatar, timezone |
+| 6 | settings-appearance | Appearance | 3210 | Theme, accent color, font size |
+| 7 | settings-voice | Voice Input | 3261 | Whisper API configuration |
+| 8 | settings-globalagents | Global Agents | 3277 | Reusable AI agents with icons |
+| 9 | settings-globalskills | Global Skills | 3432 | Skill modules (prompts, triggers) |
+| 10 | settings-globalmcp | Global MCP Servers | 3502 | MCP server connections |
+
+### Current Settings Sections (Settings.jsx, 3478 lines)
+
+| # | Function | Name | Line # |
+|---|----------|------|--------|
+| 1 | ProfileSettings | Profile | 97 |
+| 2 | APIKeysSettings | API Keys | 460 |
+| 3 | AppearanceSettings | Appearance | 766 |
+| 4 | GlobalMCPSettings | Global MCP Servers | 1618 |
+| 5 | GlobalAgentsSettings | Global Agents | 2340 |
+| 6 | VPSConnectionsSettings | VPS Connections | 3204 |
+
+### Gap Analysis - Settings
+| Section | Mockup | Current | Status |
+|---------|--------|---------|--------|
+| Anthropic Subscription | ✅ CLI install, auth, model info | ❌ Not implemented | **MISSING** |
+| API Keys | ✅ OpenRouter, OpenAI | ✅ OpenRouter, custom key | ✅ PARTIAL |
+| Default Model | ✅ Dedicated section | ❌ May be in Appearance | **MISSING** |
+| VPS Connections | ✅ | ✅ | ✅ MATCH |
+| Profile | ✅ | ✅ | ✅ MATCH |
+| Appearance | ✅ Theme, accent, font | ✅ Theme, accent, font | ✅ MATCH |
+| Voice Input (Whisper) | ✅ API key, language | ❌ Not in Settings | **MISSING** |
+| Global Agents | ✅ With icons, enable/disable | ✅ | ✅ MATCH |
+| Global Skills | ✅ Name, trigger, prompt | ❌ Not implemented | **MISSING** |
+| Global MCP Servers | ✅ | ✅ | ✅ MATCH |
+
+### Settings Sidebar Organization
+
+**Mockup:**
+```
+ACCOUNT
+├── Anthropic Subscription
+├── API Keys
+├── Profile
+└── Appearance
+
+GLOBAL DEFAULTS
+├── Agents
+├── Skills
+└── MCP Servers
+```
+
+**Current:**
+```
+ACCOUNT
+├── Profile
+├── API Keys
+└── Appearance
+
+GLOBAL DEFAULTS
+├── Agents
+├── MCP Servers
+└── VPS Connections
+```
+
+---
+
+## 4. CREATE PROJECT VIEW
+
+### Mockup Create Project (view-create-project, line 3687)
+
+| Step | Section | Line # | Key Elements |
+|------|---------|--------|--------------|
+| 1 | Project Details | 3697 | Workspace dropdown, name, brief textarea, "Define Project with AI" button |
+| 2 | Connection Source | 3880 | GitHub OAuth card, VPS form with host/port/user/key |
+| 3 | Project Context | 4053 | Tech stack, coding standards, project context textareas |
+| 4 | Project Agents | 4112 | Checkboxes for global agents |
+| 5 | MCP Servers | 4230 | Checkboxes for global MCP servers |
+
+**Footer:** Cancel button (left), Create Project button (right)
+
+### Current CreateProject (CreateProject.jsx, 2064+ lines)
+
+| Step | Comment | Line # |
+|------|---------|--------|
+| 1 | Project Details | 1117 |
+| 2 | Connection Source | 1388 |
+| 3 | Project Context | 1882 |
+| 4 | Project Agents | 1935 |
+| 5 | MCP Servers | 2064 |
+
+### Gap Analysis - Create Project
+| Feature | Mockup | Current | Status |
+|---------|--------|---------|--------|
+| 5-step wizard | ✅ | ✅ | ✅ MATCH |
+| Project brief textarea | ✅ | ✅ | ✅ MATCH |
+| "Define Project with AI" | ✅ Opens AI chat panel | ✅ | ✅ MATCH |
+| GitHub OAuth flow | ✅ Shows connected state | ✅ | ✅ MATCH |
+| VPS connection form | ✅ | ✅ | ✅ MATCH |
+| Global agents checkboxes | ✅ | ✅ | ✅ MATCH |
+| Global MCP checkboxes | ✅ | ✅ | ✅ MATCH |
+| Sidebar hidden | ✅ Minimal/no sidebar | ❌ Shows project list | **DIFFERENT** |
+| Header tabs visible | ✅ | ❌ Shows "HubLLM" only | **DIFFERENT** |
+
+---
+
+## 5. WORKSPACE VIEW
+
+### Mockup Workspace (view-workspace, line 4368)
+
+**Layout:**
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Project Name │ VPS: status │ ● Connected │ Claude Opus 4.5 ▼ │ Export  │
 ├──────────┬──────────────────────────────────────────────────┬───────────┤
-│ SIDEBAR  │                                                  │  PREVIEW  │
-│          │              AI CHAT PANEL                       │   PANEL   │
-│ Files    │   ┌──────────────────────────────────────┐       │           │
-│ Search   │   │ AI response with code blocks         │       │ Live      │
-│ Git      │   │                                      │       │ Preview   │
-│ +        │   │                                      │       │ (iframe)  │
-│          │   │                                      │       │           │
-│ TREE     │   │                                      │       │ Device    │
-│ Customers│   └──────────────────────────────────────┘       │ selector  │
-│  └─proj  │   ┌──────────────────────────────────────┐       │           │
-│ Personal │   │ Input: Ask Claude to build...        │       │           │
-│ Archives │   └──────────────────────────────────────┘       │           │
+│ WORKSPACES│                                                  │ Live      │
+│ [+] [◀]  │              AI CHAT MESSAGES                    │ Preview   │
+│          │   ┌──────────────────────────────────────┐       │           │
+│ ▾ Cust.  │   │ Claude: I've updated the hero...    │       │ [iframe]  │
+│  └ API   │   │ ```jsx code block```                 │       │           │
+│  └ Acme  │   └──────────────────────────────────────┘       │ Desktop   │
+│ ▸ Personal│   User: Can you add dark mode toggle?          │ Tablet    │
+│ ▸ Archives│                                                 │ Mobile    │
+├──────────┼──────────────────────────────────────────────────┼───────────┤
+│ 📁 Files │   [Ask Claude to build something...]    [🎤] [➤] │ [▶]       │
+│ 🔍 Search│                                                  │           │
+│ 📊 Git   │   ⌘ Enter to send • Click 🎤 for voice          │           │
+│ ➕       │                                                  │           │
 ├──────────┴──────────────────────────────────────────────────┴───────────┤
-│ Bottom Bar: LLM-Dev │ Terminal │ Docker │ Logs │ Context │ VPS Status  │
+│ ▲ LLM-Dev │ > Terminal │ 🐳 Docker │ 📄 Logs │ 📋 Context │ VPS status│
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
----
+### Current Workspace (Workspace.jsx, 289 lines)
 
-## Current Implementation Components
-
-### Pages (`/frontend/src/pages/`)
-- `Dashboard.jsx` (12KB) - Dashboard view
-- `Settings.jsx` (121KB) - Settings page
-- `CreateProject.jsx` (84KB) - Create Project wizard
-
-### Components (`/frontend/src/components/`)
-- `AuthCallback.jsx` - OAuth callback handler
-- `AuthPage.jsx` - Login/signup form
-- `Chat.jsx` - AI chat panel
-- `CodeEditor.jsx` - Monaco editor
-- `CodespacesManager.jsx` - GitHub Codespaces integration
-- `DashboardSidebar.jsx` - Dashboard left sidebar
-- `FileBrowser.jsx` - File tree
-- `ModelSelector.jsx` - Model dropdown
-- `PreviewPanel.jsx` - Live preview iframe
-- `ProjectSidebar.jsx` - Project-specific sidebar
-- `ServerConnect.jsx` - SSH connection
-- `ServerManager.jsx` - Server management
-- `SettingsModal.jsx` - Settings popup (old)
-- `Terminal.jsx` - xterm.js terminal
-- `VoiceInput.jsx` - Voice-to-text
-- `Workspace.jsx` - Main workspace
-
----
-
-## GAP ANALYSIS
-
-### 🔴 Critical Gaps (Missing Features)
-
-| Feature | Mockup | Current | Priority |
-|---------|--------|---------|----------|
-| Header Navigation Tabs | Dashboard, Workspace, Settings, Create Project tabs | No header tabs, sidebar-only nav | HIGH |
-| Anthropic Subscription Section | Full Claude CLI integration | Not implemented | HIGH |
-| Skills Management | Global Skills section | Not implemented | MEDIUM |
-| Workspace Bottom Bar | Terminal, Docker, Logs, Context tabs | Basic terminal only | MEDIUM |
-| Project Context Fields | Tech stack auto-populated | Exists but may not work | MEDIUM |
-
-### 🟡 Styling/Layout Gaps
-
-| Issue | Mockup | Current |
-|-------|--------|---------|
-| Dashboard Stats | "Active Sessions", "Total Projects", "Connected LLMs" | "Total Projects", "Tokens Used", "Active Agents" |
-| Create Project sidebar | Hidden/minimal | Shows project list |
-| Settings sidebar | Nested sections under ACCOUNT, GLOBAL DEFAULTS | Flat list |
-| Workspace layout | 3-panel (sidebar, chat, preview) | Different arrangement |
-
-### 🟢 Working Features
-
-| Feature | Status |
-|---------|--------|
-| Authentication (Login/Signup) | ✅ Working |
-| OAuth (GitHub, Google) | ✅ Working |
-| Dashboard project list | ✅ Working |
-| Dashboard stats cards | ✅ Working (different metrics) |
-| Create Project wizard | ✅ Working |
-| Settings (Profile, API Keys, Appearance, Agents, MCP, VPS) | ✅ Working |
-| Voice Input | ✅ Working |
-| AI Chat | ✅ Working |
-
----
-
-## PHASED FIX PLAN
-
-### Phase 1: Navigation & Layout
-1. Add header navigation tabs (Dashboard, Workspace, Settings, Create Project)
-2. Standardize sidebar layout across views
-3. Fix Create Project sidebar (hide projects list, match mockup)
-
-### Phase 2: Dashboard Polish
-1. Update stat cards to match mockup ("Active Sessions" etc.)
-2. Add project card hover effects
-3. Ensure workspace tree matches mockup
-
-### Phase 3: Settings Enhancements
-1. Add Anthropic Subscription section
-2. Add Skills section (similar to Agents)
-3. Organize into ACCOUNT / GLOBAL DEFAULTS groups
-4. Add search settings functionality
-
-### Phase 4: Workspace Layout
-1. Implement bottom bar with tabs (Terminal, Docker, Logs, Context)
-2. Ensure preview panel matches mockup
-3. Add file explorer search functionality
-4. Add Git panel
-
-### Phase 5: Create Project Polish
-1. Ensure AI chat panel positioning matches mockup
-2. Add GitHub connection state display
-3. Verify all 5 steps match mockup styling
-
----
-
-## JavaScript Functions in Mockup
-
-Key functions that need to be implemented/verified:
-
-```javascript
-// Navigation
-showView(viewName)
-
-// Model Selection
-toggleModelDropdown()
-selectModel(event, modelName, color)
-applyModelSelection(modelName, color)
-
-// Connections
-selectConnection(element, type)
-toggleVPSCard()
-connectGitHub()
-testVPSConnection()
-testGitHubConnection()
-
-// Agents
-toggleAllGlobalAgents(masterCheckbox)
-updateGlobalAgentsMaster()
-showAgentModal(editMode, agentData)
-saveAgent()
-
-// Skills (NEW - not in current)
-showSkillModal(editMode, skillData)
-saveSkill()
-
-// MCP
-showMCPModal(editMode, mcpData)
-testMCPConnection()
-saveMCPServer()
-
-// AI Brief
-handleBriefUpload(input)
-startProjectDefinition()
-sendBriefMessage()
-generateProjectContext()
-
-// Voice
-toggleVoiceInput()
+**Layout:**
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ [Chat] [Servers] [Codespaces]                              [Panel ◀]   │
+├───────────────────────────────────────────────────────────┬─────────────┤
+│                                                           │ Right Panel │
+│              CHAT / SERVERS / CODESPACES                  │ (optional)  │
+│              (based on active tab)                        │             │
+│                                                           │ Terminal/   │
+│                                                           │ Files/      │
+│                                                           │ Editor      │
+└───────────────────────────────────────────────────────────┴─────────────┘
 ```
 
----
-
-## CSS Variables (Mockup)
-
-```css
-:root {
-  --bg-primary: #0f1419;
-  --bg-secondary: #1a2028;
-  --bg-tertiary: #242b35;
-  --border: #2d3748;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --accent: #f97316;
-  --success: #22c55e;
-  --warning: #eab308;
-  --error: #ef4444;
-  --text-primary: #ffffff;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
-}
-```
+### Gap Analysis - Workspace
+| Feature | Mockup | Current | Status |
+|---------|--------|---------|--------|
+| Header bar with project name | ✅ Project + VPS + Model | ❌ Only tabs | **MISSING** |
+| Model selector in header | ✅ | ❌ | **MISSING** |
+| "Export Project" button | ✅ | ❌ | **MISSING** |
+| File explorer sidebar | ✅ Left side always visible | ❌ In right panel only | **MISSING** |
+| Workspace tree | ✅ In left sidebar | ❌ Not in workspace | **MISSING** |
+| AI Chat panel | ✅ Center | ✅ Full width | ✅ PARTIAL |
+| Live Preview panel | ✅ Right side | ✅ Collapsible | ✅ MATCH |
+| Bottom bar tabs | ✅ LLM-Dev, Terminal, Docker, Logs, Context | ❌ No bottom bar | **MISSING** |
+| Voice input button | ✅ In chat input | ✅ | ✅ MATCH |
+| Search in sidebar | ✅ | ❌ | **MISSING** |
+| Git panel in sidebar | ✅ | ❌ | **MISSING** |
 
 ---
 
-## Screenshots Reference
+## 6. COMPONENT INVENTORY
+
+### Existing Components (frontend/src/components/)
+
+| Component | Size | Mockup Feature | Status |
+|-----------|------|----------------|--------|
+| AuthCallback.jsx | 3KB | OAuth callback | ✅ WORKING |
+| AuthPage.jsx | 11KB | Login/signup | ✅ WORKING |
+| Chat.jsx | 7KB | AI chat | ✅ WORKING |
+| CodeEditor.jsx | 6KB | Monaco editor | ✅ WORKING |
+| CodespacesManager.jsx | 11KB | GitHub Codespaces | ✅ WORKING |
+| DashboardSidebar.jsx | 10KB | Dashboard sidebar | ✅ WORKING |
+| FileBrowser.jsx | 9KB | File tree | ✅ WORKING |
+| ModelSelector.jsx | 4KB | Model dropdown | ✅ WORKING |
+| PreviewPanel.jsx | 13KB | Live preview | ✅ WORKING |
+| ProjectSidebar.jsx | 3KB | Project sidebar | ✅ WORKING |
+| ServerConnect.jsx | 8KB | SSH connection | ✅ WORKING |
+| ServerManager.jsx | 13KB | Server list | ✅ WORKING |
+| SettingsModal.jsx | 7KB | Old settings modal | ⚠️ DEPRECATED |
+| Terminal.jsx | 6KB | xterm.js | ✅ WORKING |
+| VoiceInput.jsx | 4KB | Voice-to-text | ✅ WORKING |
+| Workspace.jsx | 10KB | Main workspace | ⚠️ NEEDS WORK |
+
+### Missing Components
+
+| Mockup Feature | Status |
+|----------------|--------|
+| HeaderNavigation.jsx | **NEEDS CREATION** |
+| BottomBar.jsx (Terminal, Docker, Logs tabs) | **NEEDS CREATION** |
+| WorkspaceSidebar.jsx (unified file/search/git) | **NEEDS CREATION** |
+| AnthropicSubscription.jsx (Settings section) | **NEEDS CREATION** |
+| GlobalSkills.jsx (Settings section) | **NEEDS CREATION** |
+| VoiceSettings.jsx (Settings section) | **NEEDS CREATION** |
+| DefaultModelSettings.jsx (Settings section) | **NEEDS CREATION** |
+
+---
+
+## 7. CSS/STYLING COMPARISON
+
+### CSS Variables
+
+| Variable | Mockup | Current | Match |
+|----------|--------|---------|-------|
+| --bg-primary | #0f1419 | #0f1419 | ✅ |
+| --bg-secondary | #1a2028 | #1a2028 | ✅ |
+| --bg-tertiary | #242b35 | #242b35 | ✅ |
+| --border | #2d3748 | #2d3748 | ✅ |
+| --primary | #3b82f6 | #3b82f6 | ✅ |
+| --accent | #f97316 | ❓ | ⚠️ CHECK |
+| --success | #22c55e | ✅ Used | ✅ |
+| --error | #ef4444 | ✅ Used | ✅ |
+
+---
+
+## 8. JAVASCRIPT FUNCTIONS
+
+### Mockup Functions vs Current Implementation
+
+| Function | Mockup | Current Location | Status |
+|----------|--------|------------------|--------|
+| showView(viewName) | ✅ | App.jsx (setCurrentView) | ✅ DIFFERENT |
+| toggleModelDropdown() | ✅ | ModelSelector.jsx | ✅ MATCH |
+| selectConnection(type) | ✅ | CreateProject.jsx | ✅ MATCH |
+| connectGitHub() | ✅ | AuthContext + CreateProject | ✅ MATCH |
+| testVPSConnection() | ✅ | CreateProject + Settings | ✅ MATCH |
+| showAgentModal() | ✅ | Settings.jsx | ✅ MATCH |
+| showSkillModal() | ✅ | ❌ Not implemented | **MISSING** |
+| showMCPModal() | ✅ | Settings.jsx | ✅ MATCH |
+| startProjectDefinition() | ✅ | CreateProject.jsx | ✅ MATCH |
+| toggleVoiceInput() | ✅ | VoiceInput.jsx | ✅ MATCH |
+
+---
+
+## 9. PRIORITIZED FIX PLAN
+
+### Phase 1: Critical Navigation (HIGH PRIORITY)
+1. **Create HeaderNavigation component** with tabs
+2. **Add URL-based routing** (react-router-dom)
+3. **Standardize layout** across all views
+
+### Phase 2: Workspace Overhaul (HIGH PRIORITY)
+1. **Create WorkspaceSidebar** (files, search, git)
+2. **Create BottomBar** (Terminal, Docker, Logs, Context)
+3. **Add project header** with model selector
+4. **Restructure layout** to match mockup
+
+### Phase 3: Settings Completion (MEDIUM PRIORITY)
+1. **Add Anthropic Subscription section**
+2. **Add Global Skills section**
+3. **Add Voice Input section**
+4. **Add Default Model section**
+5. **Reorganize sidebar** (ACCOUNT / GLOBAL DEFAULTS)
+
+### Phase 4: Dashboard Polish (MEDIUM PRIORITY)
+1. **Change stat cards** (Active Sessions, Connected LLMs)
+2. **Match mockup metrics exactly**
+
+### Phase 5: Create Project Polish (LOW PRIORITY)
+1. **Hide sidebar** during wizard
+2. **Ensure header visible**
+
+---
+
+## 10. EFFORT ESTIMATES
+
+| Phase | Components | Complexity | Files to Modify |
+|-------|------------|------------|-----------------|
+| Phase 1 | 2 new, 2 modify | HIGH | App.jsx, new HeaderNav, new routing |
+| Phase 2 | 3 new, 1 major modify | HIGH | Workspace.jsx, new BottomBar, new WorkspaceSidebar |
+| Phase 3 | 4 new sections | MEDIUM | Settings.jsx (add sections) |
+| Phase 4 | 0 new | LOW | Dashboard.jsx (modify stats) |
+| Phase 5 | 0 new | LOW | CreateProject.jsx (modify layout) |
+
+---
+
+## 11. SCREENSHOTS REFERENCE
 
 | File | Description |
 |------|-------------|
-| `mockup-dashboard.png` | Mockup Dashboard view |
-| `mockup-settings.png` | Mockup Settings view |
-| `mockup-create-project.png` | Mockup Create Project view |
-| `mockup-workspace.png` | Mockup Workspace view |
-| `current-dashboard.png` | Current Dashboard view |
-| `current-create-project.png` | Current Create Project view |
-| `current-login.png` | Current Login page |
+| mockup-dashboard.png | Target Dashboard design |
+| mockup-settings.png | Target Settings design |
+| mockup-create-project.png | Target Create Project design |
+| mockup-workspace.png | Target Workspace design |
+| current-dashboard.png | Current Dashboard implementation |
+| current-create-project.png | Current Create Project implementation |
+| current-login.png | Current Login page |
 
 ---
 
-## Next Steps
+## 12. NEXT STEPS
 
-1. Review this analysis
-2. Decide on priority order for phases
-3. Start with Phase 1 (Navigation) as it affects all views
-4. Test each fix against mockup screenshots
+1. **Review this analysis** and confirm priorities
+2. **Start Phase 1** - Add header navigation (biggest visual impact)
+3. **Test each change** against mockup screenshots
+4. **Iterate through phases** in order
+
+**Recommendation:** Start with Phase 1 (Header Navigation) as it affects the entire app and will make the site immediately feel more like the mockup.
