@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 23/38 (61%)
+- **Features Passing**: 24/38 (63%)
 
 ## Completed Features
 
@@ -347,14 +347,29 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Uses the Web Speech API which is free and works in Chrome, Edge, and Safari. The existing VoiceInput.jsx component provided the `useVoice` hook which made integration straightforward. Transcript is appended to chat input on each speech recognition result.
 
+### Session 16 - 2026-01-23
+**Focus**: VPS connection form expansion (vps-001)
+**Completed**:
+- Enhanced VPS card with visual feedback matching mockup design
+- Border color changes to primary blue when expanded
+- Box shadow appears when expanded for depth
+- Hover effect on header changes border color
+- Added info emoji to "Help finding key" link
+- Smooth transitions for all visual state changes
+
+**Files modified**:
+- frontend/src/pages/CreateProject.jsx (VPS card styling with hover/expand states)
+
+**Notes**: The VPS expansion functionality already existed but lacked the visual polish from the mockup. Added transition effects and dynamic border colors to match the design spec. The form includes Server Select, IP Address, Port, and SSH Private Key fields with a Test Connection button (functionality in vps-002).
+
 ---
 
 ## Next Priority Features
 
-1. **create-005**: Voice input in AI chat panel
-2. **vps-001**: VPS connection form expansion
-3. **agents-001**: User can select agents for project
-4. **project-001**: User can create project with all settings
+1. **vps-002**: VPS connection test functionality
+2. **agents-001**: User can select agents for project
+3. **project-001**: User can create project with all settings
+4. **auth-005**: Logout flow with route protection
 
 ---
 

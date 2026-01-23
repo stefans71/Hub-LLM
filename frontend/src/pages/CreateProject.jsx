@@ -1446,12 +1446,17 @@ Examples:
             </div>
 
             {/* VPS Card - Collapsible */}
-            <div style={{
-              background: cssVars.bgTertiary,
-              border: `1px solid ${cssVars.border}`,
-              borderRadius: '12px',
-              overflow: 'hidden'
-            }}>
+            <div
+              id="vps-card"
+              style={{
+                background: cssVars.bgTertiary,
+                border: `1px solid ${showVPSFields ? cssVars.primary : cssVars.border}`,
+                borderRadius: '12px',
+                overflow: 'hidden',
+                transition: 'all 0.2s ease',
+                boxShadow: showVPSFields ? '0 4px 16px rgba(0, 0, 0, 0.15)' : 'none'
+              }}
+            >
               <div
                 onClick={() => setShowVPSFields(!showVPSFields)}
                 style={{
@@ -1459,7 +1464,18 @@ Examples:
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '16px 20px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'background 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (!showVPSFields) {
+                    e.currentTarget.parentElement.style.borderColor = cssVars.primary
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!showVPSFields) {
+                    e.currentTarget.parentElement.style.borderColor = cssVars.border
+                  }
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -1526,7 +1542,7 @@ Examples:
                           textTransform: 'uppercase'
                         }}>SSH Private Key</label>
                         <a href="#" style={{ color: cssVars.primary, fontSize: '12px', textDecoration: 'none' }}>
-                          Help finding key
+                          ℹ️ Help finding key
                         </a>
                       </div>
                       <textarea

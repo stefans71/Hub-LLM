@@ -219,7 +219,7 @@
         "In Step 2, click 'Connect to VPS' card",
         "Verify VPS form expands with IP, Port, SSH Key fields"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "vps-002",
@@ -455,14 +455,14 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 23,
-    "failing": 15,
+    "passing": 24,
+    "failing": 14,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
       "dashboard": { "total": 3, "passing": 3 },
       "project-creation": { "total": 6, "passing": 5 },
       "github-integration": { "total": 3, "passing": 3 },
-      "vps-connection": { "total": 2, "passing": 0 },
+      "vps-connection": { "total": 2, "passing": 1 },
       "agents": { "total": 3, "passing": 0 },
       "mcp-servers": { "total": 2, "passing": 0 },
       "workspace": { "total": 6, "passing": 5 },
