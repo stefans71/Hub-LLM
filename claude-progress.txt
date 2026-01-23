@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 13/38 (34%)
+- **Features Passing**: 14/38 (37%)
 
 ## Completed Features
 
@@ -130,11 +130,29 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: AI integration requires OpenRouter API key in localStorage (set via Settings > API Keys). The expand-brief endpoint uses a system prompt to generate structured JSON with project configuration recommendations.
 
+### Session 6 - 2026-01-23
+**Focus**: GitHub OAuth in Create Project (github-001)
+**Completed**:
+- Added popup mode to GitHub OAuth endpoint (`/api/auth/oauth/github?mode=popup`)
+- Created new popup callback endpoint (`/api/auth/oauth/github/popup/callback`)
+- Popup callback returns HTML that posts message to opener window with user info
+- Updated frontend handleConnectGitHub to use popup mode
+- Added origin verification for security in message handler
+- Updated get_github_user to include `login` field for username display
+- Added `repo` scope for future repository selection feature
+
+**Files modified**:
+- backend/routers/auth.py (popup mode and popup callback endpoint)
+- backend/services/auth.py (added login field to return)
+- frontend/src/pages/CreateProject.jsx (popup mode OAuth)
+
+**Notes**: GitHub OAuth requires GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables to be configured. The popup flow posts a message with user info (login, avatar_url) back to the opener window for the connected state UI.
+
 ---
 
 ## Next Priority Features
 
-1. **github-001**: GitHub connect in project flow
+1. **github-002**: Repository selection after GitHub connect
 2. **dash-001**: Dashboard view (React)
 3. **settings-001**: Settings page (React)
 4. **create-004**: Upload .md file as project brief

@@ -180,7 +180,7 @@
         "Verify connected state shows avatar and username",
         "Verify 'CONNECTED' badge appears"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "github-002",
@@ -454,13 +454,13 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 13,
-    "failing": 25,
+    "passing": 14,
+    "failing": 24,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
       "dashboard": { "total": 3, "passing": 0 },
       "project-creation": { "total": 6, "passing": 3 },
-      "github-integration": { "total": 3, "passing": 0 },
+      "github-integration": { "total": 3, "passing": 1 },
       "vps-connection": { "total": 2, "passing": 0 },
       "agents": { "total": 3, "passing": 0 },
       "mcp-servers": { "total": 2, "passing": 0 },

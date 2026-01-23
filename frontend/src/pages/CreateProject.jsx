@@ -653,26 +653,33 @@ In the meantime, I can help you think through your project. What would you like 
   }
 
   const handleConnectGitHub = () => {
-    // Open GitHub OAuth flow
+    // Open GitHub OAuth flow in popup mode
     const width = 600
     const height = 700
     const left = window.screenX + (window.outerWidth - width) / 2
     const top = window.screenY + (window.outerHeight - height) / 2
 
     const popup = window.open(
-      '/api/auth/oauth/github',
+      '/api/auth/oauth/github?mode=popup',
       'github-oauth',
       `width=${width},height=${height},left=${left},top=${top}`
     )
 
     // Listen for OAuth completion
     const handleMessage = (event) => {
-      if (event.data?.type === 'oauth-success') {
+      // Verify origin for security
+      if (event.origin !== window.location.origin) return
+
+      if (event.data?.type === 'oauth-success' && event.data?.provider === 'github') {
         setFormData(prev => ({
           ...prev,
           githubConnected: true,
-          githubUser: event.data.user
+          githubUser: event.data.user,
+          githubAccessToken: event.data.access_token
         }))
+        window.removeEventListener('message', handleMessage)
+      } else if (event.data?.type === 'oauth-error') {
+        console.error('GitHub OAuth error:', event.data.error)
         window.removeEventListener('message', handleMessage)
       }
     }
