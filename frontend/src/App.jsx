@@ -1,26 +1,26 @@
 import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import AuthPage from './components/AuthPage'
 import AuthCallback from './components/AuthCallback'
 import Workspace from './components/Workspace'
-import ProjectSidebar from './components/ProjectSidebar'
 import DashboardSidebar from './components/DashboardSidebar'
-import ModelSelector from './components/ModelSelector'
+import HeaderNavigation from './components/HeaderNavigation'
 import SettingsModal from './components/SettingsModal'
 import CreateProject from './pages/CreateProject'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
-import { Settings as SettingsIcon, LogOut, User, Loader2, Plus } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 // Main App content (requires auth)
 function AppContent() {
   const { user, logout, isAuthenticated, loading, getAuthHeader } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [projects, setProjects] = useState([])
   const [activeProject, setActiveProject] = useState(null)
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
   const [showSettings, setShowSettings] = useState(false)
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const [currentView, setCurrentView] = useState('dashboard') // 'dashboard' | 'workspace' | 'create-project' | 'settings'
   const [apiKeys, setApiKeys] = useState({
     openrouter: localStorage.getItem('openrouter_key') || '',
     claude: localStorage.getItem('claude_key') || '',
@@ -72,22 +72,21 @@ function AppContent() {
   const handleProjectCreated = (project) => {
     setProjects([...projects, project])
     setActiveProject(project)
-    setCurrentView('workspace')
+    navigate('/workspace')
   }
 
   const handleLogout = async () => {
     await logout()
     setProjects([])
     setActiveProject(null)
-    setCurrentView('dashboard')
-    setShowUserMenu(false)
+    navigate('/dashboard')
   }
 
   // Show loading spinner while checking auth
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-900">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
       </div>
     )
   }
@@ -101,188 +100,109 @@ function AppContent() {
 
   const hasApiKey = apiKeys.openrouter || apiKeys.claude
 
-  // Render Settings page full-screen with its own layout
-  if (currentView === 'settings') {
-    return (
-      <div className="h-screen bg-gray-900 text-white">
-        <Settings onBack={() => setCurrentView('dashboard')} onLogout={handleLogout} />
-      </div>
-    )
-  }
+  // Determine current view based on route
+  const currentView = location.pathname.replace('/', '') || 'dashboard'
 
-  // Dashboard view with sidebar
-  if (currentView === 'dashboard') {
-    return (
-      <div className="h-screen flex bg-[#0f1419] text-white">
-        {/* Dashboard Sidebar */}
-        <DashboardSidebar
-          projects={projects}
-          activeProject={activeProject}
-          onSelectProject={setActiveProject}
-          onNavigate={(view, project) => {
-            if (project) setActiveProject(project)
-            setCurrentView(view)
-          }}
-          onCreateProject={() => setCurrentView('create-project')}
-          currentView={currentView}
-          onLogout={handleLogout}
-        />
-
-        {/* Main Content */}
-        <Dashboard
-          onNavigate={(view, project) => {
-            if (project) setActiveProject(project)
-            setCurrentView(view)
-          }}
-          onCreateProject={() => setCurrentView('create-project')}
-        />
-
-        {/* Settings Modal */}
-        {showSettings && (
-          <SettingsModal
-            apiKeys={apiKeys}
-            onSave={saveApiKeys}
-            onClose={() => setShowSettings(false)}
-          />
-        )}
-      </div>
-    )
-  }
+  // Check if we should show the sidebar (Dashboard view only)
+  const showDashboardSidebar = location.pathname === '/dashboard' || location.pathname === '/'
 
   return (
-    <div className="h-screen flex bg-gray-900 text-white">
-      {/* Sidebar */}
-      <ProjectSidebar
-        projects={projects}
-        activeProject={activeProject}
-        onSelectProject={setActiveProject}
-        onCreateProject={createProject}
-      />
+    <div className="h-screen flex flex-col text-white" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      {/* Header Navigation */}
+      <HeaderNavigation onLogout={handleLogout} />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-14 border-b border-gray-700 flex items-center justify-between px-4 flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <h1 className="font-semibold">
-              {currentView === 'create-project' ? 'Create Project' :
-               (activeProject?.name || 'HubLLM')}
-            </h1>
-            {currentView === 'workspace' && (
-              <ModelSelector
-                selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
-              />
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {currentView !== 'create-project' && (
-              <button
-                onClick={() => setCurrentView('create-project')}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-medium"
-              >
-                <Plus size={16} />
-                Create Project
-              </button>
-            )}
-            {currentView === 'workspace' && (
-              <button
-                onClick={() => setCurrentView('dashboard')}
-                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-700 rounded-lg transition text-sm"
-              >
-                Dashboard
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentView('settings')}
-              className="p-2 hover:bg-gray-700 rounded-lg transition"
-              title="Settings"
-            >
-              <SettingsIcon size={20} />
-            </button>
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Dashboard Sidebar (only on dashboard view) */}
+        {showDashboardSidebar && (
+          <DashboardSidebar
+            projects={projects}
+            activeProject={activeProject}
+            onSelectProject={(project) => {
+              setActiveProject(project)
+              navigate('/workspace')
+            }}
+            onNavigate={(view, project) => {
+              if (project) setActiveProject(project)
+              navigate(`/${view}`)
+            }}
+            onCreateProject={() => navigate('/create-project')}
+            currentView={currentView}
+            onLogout={handleLogout}
+          />
+        )}
 
-            {/* User Menu */}
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-lg transition"
-              >
-                {user?.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={user.name || user.email}
-                    className="w-6 h-6 rounded-full"
+        {/* Routes */}
+        <div className="flex-1 overflow-hidden">
+          <Routes>
+            <Route
+              path="/"
+              element={<Navigate to="/dashboard" replace />}
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <Dashboard
+                  onNavigate={(view, project) => {
+                    if (project) setActiveProject(project)
+                    navigate(`/${view}`)
+                  }}
+                  onCreateProject={() => navigate('/create-project')}
+                />
+              }
+            />
+            <Route
+              path="/workspace"
+              element={
+                hasApiKey ? (
+                  <Workspace
+                    project={activeProject}
+                    model={selectedModel}
+                    apiKeys={apiKeys}
                   />
                 ) : (
-                  <User size={20} />
-                )}
-              </button>
-
-              {showUserMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowUserMenu(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-20">
-                    <div className="p-3 border-b border-gray-700">
-                      <p className="font-medium text-white truncate">
-                        {user?.name || 'User'}
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center max-w-md p-8">
+                      <h2 className="text-xl font-semibold mb-4">Welcome to HubLLM</h2>
+                      <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
+                        Add your API key to get started. You can use OpenRouter for access
+                        to multiple models, or your direct Claude API key.
                       </p>
-                      <p className="text-sm text-gray-400 truncate">
-                        {user?.email}
-                      </p>
-                    </div>
-                    <div className="p-1">
                       <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-400 hover:bg-gray-700 rounded-md transition"
+                        onClick={() => navigate('/settings')}
+                        className="px-6 py-2 rounded-lg transition"
+                        style={{ backgroundColor: 'var(--primary)' }}
                       >
-                        <LogOut size={16} />
-                        <span>Sign Out</span>
+                        Add API Key
                       </button>
                     </div>
                   </div>
-                </>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content Area */}
-        {currentView === 'create-project' ? (
-          <CreateProject
-            onCancel={() => setCurrentView('dashboard')}
-            onCreateProject={handleProjectCreated}
-          />
-        ) : !hasApiKey ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center max-w-md p-8">
-              <h2 className="text-xl font-semibold mb-4">Welcome to HubLLM</h2>
-              <p className="text-gray-400 mb-6">
-                Add your API key to get started. You can use OpenRouter for access
-                to multiple models, or your direct Claude API key.
-              </p>
-              <button
-                onClick={() => setCurrentView('settings')}
-                className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition"
-              >
-                Add API Key
-              </button>
-            </div>
-          </div>
-        ) : (
-          <Workspace
-            project={activeProject}
-            model={selectedModel}
-            apiKeys={apiKeys}
-          />
-        )}
+                )
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <Settings
+                  onBack={() => navigate('/dashboard')}
+                  onLogout={handleLogout}
+                />
+              }
+            />
+            <Route
+              path="/create-project"
+              element={
+                <CreateProject
+                  onCancel={() => navigate('/dashboard')}
+                  onCreateProject={handleProjectCreated}
+                />
+              }
+            />
+          </Routes>
+        </div>
       </div>
 
-      {/* Settings Modal */}
+      {/* Settings Modal (legacy, may be deprecated) */}
       {showSettings && (
         <SettingsModal
           apiKeys={apiKeys}
@@ -297,25 +217,17 @@ function AppContent() {
 // Router component to handle auth callback
 function AppRouter() {
   const { isAuthenticated, loading } = useAuth()
-  const [currentPath, setCurrentPath] = useState(window.location.pathname)
-
-  // Listen for path changes
-  useEffect(() => {
-    const handlePopState = () => setCurrentPath(window.location.pathname)
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [])
+  const location = useLocation()
 
   // Check for OAuth callback
-  const isAuthCallback = currentPath === '/auth/callback' ||
-    window.location.search.includes('access_token')
+  const isAuthCallback = location.pathname === '/auth/callback' ||
+    location.search.includes('access_token')
 
   if (isAuthCallback) {
     return (
       <AuthCallback
         onComplete={() => {
-          window.history.replaceState({}, '', '/')
-          setCurrentPath('/')
+          window.history.replaceState({}, '', '/dashboard')
         }}
       />
     )
@@ -324,8 +236,8 @@ function AppRouter() {
   // Show loading while checking auth
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-900">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
       </div>
     )
   }
@@ -339,12 +251,14 @@ function AppRouter() {
   return <AppContent />
 }
 
-// Main App with AuthProvider
+// Main App with AuthProvider and BrowserRouter
 function App() {
   return (
-    <AuthProvider>
-      <AppRouter />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 

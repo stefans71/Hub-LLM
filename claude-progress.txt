@@ -11,8 +11,8 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 36/41 (88%)
-- **UI Overhaul Pending**: 5 phases (see ui-fix-001 through ui-fix-005)
+- **Features Passing**: 37/41 (90%)
+- **UI Overhaul Progress**: 1/5 phases complete (see ui-fix-001 through ui-fix-005)
 
 ## Completed Features
 
@@ -675,12 +675,36 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Detailed gap analysis in tests/Troubleshooting/MOCKUP_ANALYSIS.md identifies exactly what needs to change. UI fix phases are prioritized: Phase 1 (header nav) and Phase 2 (workspace) are HIGH priority.
 
+### Session 29 - 2026-01-23
+**Focus**: Header navigation with tabs (ui-fix-001)
+**Completed**:
+- Created HeaderNavigation.jsx component with four navigation tabs
+- Tabs: Dashboard, Workspace, Settings, Create Project (matching mockup design)
+- Added react-router-dom for URL-based routing
+- Updated App.jsx to use BrowserRouter with Routes
+- Header shows HubLLM.dev logo, navigation tabs, and user menu
+- All views accessible via header tabs with proper URL paths
+- Dashboard sidebar only shows on /dashboard route
+- User menu dropdown with Profile & Settings and Sign Out options
+- Navigation tabs have active state styling (blue background when selected)
+- Hover effects on tabs match mockup design
+
+**Files created**:
+- frontend/src/components/HeaderNavigation.jsx (header with nav tabs)
+
+**Files modified**:
+- frontend/src/App.jsx (react-router-dom integration, BrowserRouter, Routes)
+- frontend/package.json (added react-router-dom dependency)
+- feature_list.json (marked ui-fix-001 as passing)
+
+**Notes**: Navigation now uses URL-based routing (/dashboard, /workspace, /settings, /create-project) instead of state-based currentView. The header is consistent across all views, matching the mockup design.
+
 ---
 
 ## Next Priority Features
 
-**UI Overhaul (5 phases - 0/5 complete)**:
-- ❌ ui-fix-001: Phase 1 - Add header navigation with tabs (HIGH)
+**UI Overhaul (5 phases - 1/5 complete)**:
+- ✅ ui-fix-001: Phase 1 - Add header navigation with tabs (DONE)
 - ❌ ui-fix-002: Phase 2 - Workspace layout overhaul (HIGH)
 - ❌ ui-fix-003: Phase 3 - Settings page completion (MEDIUM)
 - ❌ ui-fix-004: Phase 4 - Dashboard polish (MEDIUM)
