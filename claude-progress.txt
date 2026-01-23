@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 25/38 (66%)
+- **Features Passing**: 26/38 (68%)
 
 ## Completed Features
 
@@ -387,14 +387,28 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: The test endpoint uses asyncssh which is already installed for the existing SSH terminal features. The endpoint tests the connection and immediately closes it - credentials are not stored. Error messages are user-friendly and suggest specific fixes for common problems.
 
+### Session 18 - 2026-01-23
+**Focus**: Verify agent selection functionality (agents-001)
+**Completed**:
+- Verified Step 4 Project Agents agent selection functionality is working
+- Agent list displays 3 global agents (code-reviewer, security-audit, test-writer)
+- Individual agent checkboxes toggle selection state correctly
+- Selection count updates dynamically (shows "X agents selected")
+- Master checkbox toggles all agents on/off (handleToggleAllAgents)
+- AgentItem component provides visual feedback (opacity changes based on selection)
+
+**Files verified**:
+- frontend/src/pages/CreateProject.jsx (lines 412-416, 782-805, 1749-1875)
+
+**Notes**: The agent selection feature was already implemented in Session 4 as part of the Create Project page. This session verified the functionality works as expected and marked agents-001 as passing. The implementation includes individual toggles, "select all" master checkbox, and dynamic selection count display.
+
 ---
 
 ## Next Priority Features
 
-1. **agents-001**: User can select agents for project
-2. **agents-001**: User can select agents for project
-3. **project-001**: User can create project with all settings
-4. **auth-005**: Logout flow with route protection
+1. **agents-002**: User can select/deselect all agents
+2. **project-001**: User can create project with all settings
+3. **auth-005**: Logout flow with route protection
 
 ---
 
