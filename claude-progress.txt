@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 19/38 (50%)
+- **Features Passing**: 20/38 (53%)
 
 ## Completed Features
 
@@ -260,14 +260,38 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: The file upload feature was already partially implemented but lacked visual feedback. Added filename display with checkmark icon so users can see confirmation that their file was loaded successfully.
 
+### Session 12 - 2026-01-23
+**Focus**: API Keys management with verification (settings-002)
+**Completed**:
+- Added backend `/api/stats/verify-api-key` endpoint to verify OpenRouter API keys
+- Endpoint calls OpenRouter's `/auth/key` to check validity and retrieve account info
+- Returns: validity status, label, usage (USD), limit (USD), tier status, rate limits
+- Added "Verify" button to API Keys settings section
+- Shows loading state while verifying
+- Displays account info panel when key is verified:
+  - Key label from OpenRouter
+  - Usage/limit in USD
+  - Tier status (Free/Paid)
+- Resets account info when key is changed
+- Added spin keyframe animation to index.css for loading icon
+
+**Files modified**:
+- backend/routers/stats.py (verify-api-key endpoint, APIKeyVerifyResponse schema)
+- frontend/src/pages/Settings.jsx (handleVerify, accountInfo state, Verify button, account info display)
+- frontend/src/index.css (spin animation keyframes)
+
+**Files created**: None
+
+**Notes**: The API key verification feature completes the BYOK (Bring Your Own Key) functionality. Users can now verify their OpenRouter API key works before using it, and see account details like usage and tier status.
+
 ---
 
 ## Next Priority Features
 
-1. **settings-002**: API Keys management (BYOK) - partially done in settings-001
-2. **github-003**: Create new repository from dropdown
-3. **dash-003**: Sidebar shows workspace tree with projects
-4. **create-005**: Voice input in AI chat panel
+1. **github-003**: Create new repository from dropdown
+2. **dash-003**: Sidebar shows workspace tree with projects
+3. **create-005**: Voice input in AI chat panel
+4. **vps-001**: VPS connection form expansion
 
 ---
 

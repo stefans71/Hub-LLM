@@ -402,6 +402,8 @@ function APIKeysSettings() {
   const [openrouterKey, setOpenrouterKey] = useState('')
   const [showKey, setShowKey] = useState(false)
   const [message, setMessage] = useState(null)
+  const [verifying, setVerifying] = useState(false)
+  const [accountInfo, setAccountInfo] = useState(null)
 
   useEffect(() => {
     const savedKey = localStorage.getItem('openrouter_api_key') || localStorage.getItem('openrouter_key') || ''
@@ -417,10 +419,47 @@ function APIKeysSettings() {
 
   const handleRemove = () => {
     setOpenrouterKey('')
+    setAccountInfo(null)
     localStorage.removeItem('openrouter_api_key')
     localStorage.removeItem('openrouter_key')
     setMessage({ type: 'success', text: 'API key removed.' })
     setTimeout(() => setMessage(null), 3000)
+  }
+
+  const handleVerify = async () => {
+    if (!openrouterKey.trim()) {
+      setMessage({ type: 'error', text: 'Please enter an API key first.' })
+      setTimeout(() => setMessage(null), 3000)
+      return
+    }
+
+    setVerifying(true)
+    setMessage(null)
+    setAccountInfo(null)
+
+    try {
+      const res = await fetch('/api/stats/verify-api-key', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-OpenRouter-Key': openrouterKey
+        }
+      })
+
+      const data = await res.json()
+
+      if (data.valid) {
+        setAccountInfo(data)
+        setMessage({ type: 'success', text: 'API key verified successfully!' })
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Invalid API key' })
+      }
+    } catch (err) {
+      console.error('Verification failed:', err)
+      setMessage({ type: 'error', text: 'Failed to verify API key. Please try again.' })
+    } finally {
+      setVerifying(false)
+    }
   }
 
   const maskKey = (key) => {
@@ -500,14 +539,18 @@ function APIKeysSettings() {
         }}>
           OpenRouter API Key
         </label>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <input
             type={showKey ? 'text' : 'password'}
             value={openrouterKey}
-            onChange={(e) => setOpenrouterKey(e.target.value)}
+            onChange={(e) => {
+              setOpenrouterKey(e.target.value)
+              setAccountInfo(null)  // Reset account info when key changes
+            }}
             placeholder="sk-or-v1-..."
             style={{
               flex: 1,
+              minWidth: '200px',
               padding: '10px 12px',
               background: cssVars.bgSecondary,
               border: `1px solid ${cssVars.border}`,
@@ -529,6 +572,30 @@ function APIKeysSettings() {
             }}
           >
             {showKey ? 'Hide' : 'Show'}
+          </button>
+          <button
+            onClick={handleVerify}
+            disabled={verifying}
+            style={{
+              padding: '10px 16px',
+              background: cssVars.bgSecondary,
+              border: `1px solid ${cssVars.border}`,
+              borderRadius: '8px',
+              color: cssVars.textPrimary,
+              cursor: verifying ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            {verifying ? (
+              <>
+                <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                Verifying...
+              </>
+            ) : (
+              'Verify'
+            )}
           </button>
           <button
             onClick={handleSave}
@@ -568,6 +635,54 @@ function APIKeysSettings() {
           }}>
             {message.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
             {message.text}
+          </div>
+        )}
+
+        {/* Account Info Display */}
+        {accountInfo && accountInfo.valid && (
+          <div style={{
+            marginTop: '16px',
+            padding: '16px',
+            background: 'rgba(34, 197, 94, 0.1)',
+            borderRadius: '8px',
+            border: `1px solid ${cssVars.success}30`
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '12px',
+              color: cssVars.success
+            }}>
+              <CheckCircle size={18} />
+              <span style={{ fontWeight: '600' }}>Key Verified</span>
+            </div>
+            <div style={{ display: 'grid', gap: '8px', fontSize: '13px' }}>
+              {accountInfo.label && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: cssVars.textSecondary }}>Label:</span>
+                  <span style={{ color: cssVars.textPrimary }}>{accountInfo.label}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: cssVars.textSecondary }}>Usage:</span>
+                <span style={{ color: cssVars.textPrimary }}>
+                  ${accountInfo.usage_usd?.toFixed(4) || '0.0000'}
+                  {accountInfo.limit_usd && ` / $${accountInfo.limit_usd.toFixed(2)}`}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: cssVars.textSecondary }}>Tier:</span>
+                <span style={{
+                  color: accountInfo.is_free_tier ? cssVars.warning : cssVars.success,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}>
+                  {accountInfo.is_free_tier ? '🆓 Free Tier' : '✨ Paid Account'}
+                </span>
+              </div>
+            </div>
           </div>
         )}
       </div>

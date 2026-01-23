@@ -436,7 +436,7 @@
         "Verify key is saved to localStorage",
         "Verify key is used in subsequent API calls"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "settings-003",
@@ -455,8 +455,8 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 19,
-    "failing": 19,
+    "passing": 20,
+    "failing": 18,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
       "dashboard": { "total": 3, "passing": 2 },
@@ -467,7 +467,7 @@
       "mcp-servers": { "total": 2, "passing": 0 },
       "workspace": { "total": 6, "passing": 5 },
       "ai-chat": { "total": 2, "passing": 2 },
-      "settings": { "total": 3, "passing": 1 }
+      "settings": { "total": 3, "passing": 2 }
     }
   }
 }

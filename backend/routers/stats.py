@@ -24,6 +24,17 @@ class DashboardStats(BaseModel):
     local_projects: int
 
 
+class APIKeyVerifyResponse(BaseModel):
+    """API key verification response"""
+    valid: bool
+    label: Optional[str] = None
+    usage_usd: Optional[float] = None
+    limit_usd: Optional[float] = None
+    is_free_tier: Optional[bool] = None
+    rate_limit: Optional[dict] = None
+    error: Optional[str] = None
+
+
 @router.get("/dashboard", response_model=DashboardStats)
 async def get_dashboard_stats(
     x_openrouter_key: Optional[str] = Header(None)
@@ -83,3 +94,67 @@ async def get_dashboard_stats(
         github_projects=github_projects,
         local_projects=local_projects
     )
+
+
+@router.post("/verify-api-key", response_model=APIKeyVerifyResponse)
+async def verify_api_key(
+    x_openrouter_key: Optional[str] = Header(None)
+):
+    """
+    Verify an OpenRouter API key and return account information
+
+    Returns:
+        - valid: Whether the key is valid
+        - label: Key label/name from OpenRouter
+        - usage_usd: Current usage in USD
+        - limit_usd: Spending limit in USD (if set)
+        - is_free_tier: Whether this is a free tier key
+        - rate_limit: Rate limit information
+        - error: Error message if verification failed
+    """
+    if not x_openrouter_key:
+        return APIKeyVerifyResponse(
+            valid=False,
+            error="No API key provided"
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                f"{OPENROUTER_BASE_URL}/auth/key",
+                headers={
+                    "Authorization": f"Bearer {x_openrouter_key}",
+                    "Content-Type": "application/json"
+                }
+            )
+
+            if response.status_code == 200:
+                data = response.json().get("data", {})
+                return APIKeyVerifyResponse(
+                    valid=True,
+                    label=data.get("label", "API Key"),
+                    usage_usd=data.get("usage", 0),
+                    limit_usd=data.get("limit"),
+                    is_free_tier=data.get("is_free_tier", False),
+                    rate_limit=data.get("rate_limit")
+                )
+            elif response.status_code == 401:
+                return APIKeyVerifyResponse(
+                    valid=False,
+                    error="Invalid API key"
+                )
+            else:
+                return APIKeyVerifyResponse(
+                    valid=False,
+                    error=f"OpenRouter returned status {response.status_code}"
+                )
+    except httpx.TimeoutException:
+        return APIKeyVerifyResponse(
+            valid=False,
+            error="Connection timeout - please try again"
+        )
+    except Exception as e:
+        return APIKeyVerifyResponse(
+            valid=False,
+            error=f"Verification failed: {str(e)}"
+        )
