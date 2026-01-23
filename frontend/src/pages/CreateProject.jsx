@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useVoice } from '../components/VoiceInput'
 import {
   ChevronRight, ChevronDown, Upload, Mic, MicOff, Send, X, Plus,
-  Cloud, Server, Check, Sparkles, Zap, ExternalLink,
+  Cloud, Server, Check, Sparkles, Zap, ExternalLink, Loader,
   FileText, Shield, CheckSquare, Wrench, Database,
   MessageSquare, FolderOpen
 } from 'lucide-react'
@@ -394,6 +394,10 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [contextGenerated, setContextGenerated] = useState(false)
   const [uploadedFileName, setUploadedFileName] = useState(null)
 
+  // VPS test connection state
+  const [testingVps, setTestingVps] = useState(false)
+  const [vpsTestResult, setVpsTestResult] = useState(null) // { success: bool, message: string, server_info: {} }
+
   // Voice input for AI chat
   const { isListening, transcript, toggleListening, isSupported: voiceSupported } = useVoice()
 
@@ -435,6 +439,42 @@ export default function CreateProject({ onCancel, onCreateProject }) {
         setUploadedFileName(file.name)
       }
       reader.readAsText(file)
+    }
+  }
+
+  const handleTestVps = async () => {
+    // Validate required fields
+    if (!formData.vpsIp.trim()) {
+      setVpsTestResult({ success: false, message: 'Please enter an IP address' })
+      return
+    }
+
+    setTestingVps(true)
+    setVpsTestResult(null)
+
+    try {
+      const response = await fetch('/api/ssh/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          host: formData.vpsIp.trim(),
+          port: parseInt(formData.vpsPort) || 22,
+          username: 'root', // Default username, could be made configurable
+          private_key: formData.vpsKey.trim() || null
+        })
+      })
+
+      const data = await response.json()
+      setVpsTestResult(data)
+    } catch (error) {
+      setVpsTestResult({
+        success: false,
+        message: `Request failed: ${error.message}`
+      })
+    } finally {
+      setTestingVps(false)
     }
   }
 
@@ -1567,11 +1607,85 @@ Examples:
                       />
                     </div>
 
-                    <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
-                      <Button variant="secondary">
-                        <Zap size={14} />
-                        Test Connection
-                      </Button>
+                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                          variant="secondary"
+                          onClick={handleTestVps}
+                          disabled={testingVps || !formData.vpsIp.trim()}
+                        >
+                          {testingVps ? (
+                            <>
+                              <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                              Testing...
+                            </>
+                          ) : (
+                            <>
+                              <Zap size={14} />
+                              Test Connection
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {/* Test result display */}
+                      {vpsTestResult && (
+                        <div style={{
+                          padding: '12px',
+                          borderRadius: '8px',
+                          background: vpsTestResult.success
+                            ? 'rgba(34, 197, 94, 0.1)'
+                            : 'rgba(239, 68, 68, 0.1)',
+                          border: `1px solid ${vpsTestResult.success ? cssVars.success : cssVars.error}`
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            marginBottom: vpsTestResult.server_info ? '8px' : 0
+                          }}>
+                            {vpsTestResult.success ? (
+                              <Check size={16} style={{ color: cssVars.success }} />
+                            ) : (
+                              <X size={16} style={{ color: cssVars.error }} />
+                            )}
+                            <span style={{
+                              fontSize: '13px',
+                              color: vpsTestResult.success ? cssVars.success : cssVars.error,
+                              fontWeight: 500
+                            }}>
+                              {vpsTestResult.message}
+                            </span>
+                          </div>
+
+                          {/* Server info on success */}
+                          {vpsTestResult.success && vpsTestResult.server_info && (
+                            <div style={{
+                              fontSize: '11px',
+                              color: cssVars.textSecondary,
+                              marginTop: '8px',
+                              paddingTop: '8px',
+                              borderTop: `1px solid ${cssVars.border}`,
+                              fontFamily: 'Monaco, Consolas, monospace'
+                            }}>
+                              <div style={{ marginBottom: '4px' }}>
+                                <span style={{ color: cssVars.textMuted }}>Host:</span>{' '}
+                                {vpsTestResult.server_info.hostname || formData.vpsIp}
+                              </div>
+                              <div style={{ marginBottom: '4px' }}>
+                                <span style={{ color: cssVars.textMuted }}>User:</span>{' '}
+                                {vpsTestResult.server_info.user || 'root'}
+                              </div>
+                              {vpsTestResult.server_info.os && (
+                                <div>
+                                  <span style={{ color: cssVars.textMuted }}>OS:</span>{' '}
+                                  {vpsTestResult.server_info.os}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

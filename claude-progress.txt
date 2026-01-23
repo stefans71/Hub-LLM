@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 24/38 (63%)
+- **Features Passing**: 25/38 (66%)
 
 ## Completed Features
 
@@ -362,11 +362,36 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: The VPS expansion functionality already existed but lacked the visual polish from the mockup. Added transition effects and dynamic border colors to match the design spec. The form includes Server Select, IP Address, Port, and SSH Private Key fields with a Test Connection button (functionality in vps-002).
 
+### Session 17 - 2026-01-23
+**Focus**: VPS connection test functionality (vps-002)
+**Completed**:
+- Added POST `/api/ssh/test` endpoint for testing VPS connections without storing credentials
+- Endpoint attempts SSH connection with provided credentials and returns success/failure
+- On success, runs basic commands (uname, hostname, whoami) to gather server info
+- Comprehensive error handling for common SSH errors:
+  - Connection timeout (10 second limit)
+  - Authentication failed (wrong password/key)
+  - Connection refused (SSH not running)
+  - DNS resolution failures (bad hostname)
+  - Network unreachable
+- Updated CreateProject.jsx with VPS test functionality:
+  - Added `testingVps` and `vpsTestResult` state variables
+  - Added `handleTestVps` async function to call the API
+  - Test Connection button shows loading spinner during test
+  - Success shows green banner with server hostname, user, and OS info
+  - Failure shows red banner with helpful error message
+
+**Files modified**:
+- backend/routers/ssh.py (added TestConnectionRequest, TestConnectionResponse models, POST /test endpoint)
+- frontend/src/pages/CreateProject.jsx (added VPS test state, handler, and result display)
+
+**Notes**: The test endpoint uses asyncssh which is already installed for the existing SSH terminal features. The endpoint tests the connection and immediately closes it - credentials are not stored. Error messages are user-friendly and suggest specific fixes for common problems.
+
 ---
 
 ## Next Priority Features
 
-1. **vps-002**: VPS connection test functionality
+1. **agents-001**: User can select agents for project
 2. **agents-001**: User can select agents for project
 3. **project-001**: User can create project with all settings
 4. **auth-005**: Logout flow with route protection

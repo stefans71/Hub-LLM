@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from typing import Optional
 import asyncio
 import uuid
+import asyncssh
 
 from services.ssh import SSHCredentials, ssh_manager
 
@@ -53,6 +54,21 @@ class FileItem(BaseModel):
 class FileContent(BaseModel):
     path: str
     content: str
+
+
+class TestConnectionRequest(BaseModel):
+    host: str
+    port: int = 22
+    username: str = "root"
+    password: Optional[str] = None
+    private_key: Optional[str] = None
+    passphrase: Optional[str] = None
+
+
+class TestConnectionResponse(BaseModel):
+    success: bool
+    message: str
+    server_info: Optional[dict] = None
 
 
 # === In-memory storage (replace with DB later) ===
@@ -151,6 +167,110 @@ async def disconnect_server(server_id: str):
     """Disconnect from a server"""
     await ssh_manager.disconnect(server_id)
     return {"status": "disconnected"}
+
+
+# === Test Connection (without storing) ===
+
+@router.post("/test", response_model=TestConnectionResponse)
+async def test_connection(request: TestConnectionRequest):
+    """
+    Test SSH connection without storing credentials.
+    Used in Create Project flow to validate VPS settings.
+    """
+    from services.ssh import SSHConnection, SSHCredentials
+
+    credentials = SSHCredentials(
+        host=request.host,
+        port=request.port,
+        username=request.username,
+        password=request.password,
+        private_key=request.private_key,
+        passphrase=request.passphrase
+    )
+
+    conn = SSHConnection(credentials)
+
+    try:
+        # Attempt connection with timeout
+        await asyncio.wait_for(conn.connect(), timeout=10.0)
+
+        # Try to get some server info by running a simple command
+        server_info = {}
+        try:
+            process = await conn.conn.run("uname -a", timeout=5)
+            server_info["os"] = process.stdout.strip()
+        except Exception:
+            server_info["os"] = "Unknown"
+
+        try:
+            process = await conn.conn.run("hostname", timeout=5)
+            server_info["hostname"] = process.stdout.strip()
+        except Exception:
+            server_info["hostname"] = request.host
+
+        try:
+            process = await conn.conn.run("whoami", timeout=5)
+            server_info["user"] = process.stdout.strip()
+        except Exception:
+            server_info["user"] = request.username
+
+        await conn.close()
+
+        return TestConnectionResponse(
+            success=True,
+            message=f"Successfully connected to {request.host}:{request.port}",
+            server_info=server_info
+        )
+
+    except asyncio.TimeoutError:
+        return TestConnectionResponse(
+            success=False,
+            message=f"Connection timed out after 10 seconds. Check that {request.host}:{request.port} is reachable."
+        )
+    except asyncssh.misc.PermissionDenied:
+        return TestConnectionResponse(
+            success=False,
+            message="Authentication failed. Check your username, password, or SSH key."
+        )
+    except asyncssh.misc.HostKeyNotVerifiable:
+        return TestConnectionResponse(
+            success=False,
+            message="Host key verification failed. The server's identity could not be verified."
+        )
+    except asyncssh.misc.ConnectionLost as e:
+        return TestConnectionResponse(
+            success=False,
+            message=f"Connection lost: {str(e)}"
+        )
+    except Exception as e:
+        error_msg = str(e)
+        # Clean up common error messages
+        if "Connection refused" in error_msg:
+            return TestConnectionResponse(
+                success=False,
+                message=f"Connection refused. Check that SSH is running on {request.host}:{request.port}."
+            )
+        if "Name or service not known" in error_msg or "getaddrinfo failed" in error_msg:
+            return TestConnectionResponse(
+                success=False,
+                message=f"Could not resolve hostname '{request.host}'. Check the IP address or hostname."
+            )
+        if "Network is unreachable" in error_msg:
+            return TestConnectionResponse(
+                success=False,
+                message=f"Network unreachable. Check your network connection and firewall settings."
+            )
+
+        return TestConnectionResponse(
+            success=False,
+            message=f"Connection failed: {error_msg}"
+        )
+    finally:
+        # Ensure connection is closed even on error
+        try:
+            await conn.close()
+        except Exception:
+            pass
 
 
 # === WebSocket Terminal ===

@@ -232,7 +232,7 @@
         "Verify connection test runs",
         "Verify success/failure message appears"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "agents-001",
@@ -455,14 +455,14 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 24,
-    "failing": 14,
+    "passing": 25,
+    "failing": 13,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
       "dashboard": { "total": 3, "passing": 3 },
       "project-creation": { "total": 6, "passing": 5 },
       "github-integration": { "total": 3, "passing": 3 },
-      "vps-connection": { "total": 2, "passing": 1 },
+      "vps-connection": { "total": 2, "passing": 2 },
       "agents": { "total": 3, "passing": 0 },
       "mcp-servers": { "total": 2, "passing": 0 },
       "workspace": { "total": 6, "passing": 5 },
