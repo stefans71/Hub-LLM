@@ -8,7 +8,8 @@ import ModelSelector from './components/ModelSelector'
 import SettingsModal from './components/SettingsModal'
 import CreateProject from './pages/CreateProject'
 import Dashboard from './pages/Dashboard'
-import { Settings, LogOut, User, Loader2, Plus } from 'lucide-react'
+import Settings from './pages/Settings'
+import { Settings as SettingsIcon, LogOut, User, Loader2, Plus } from 'lucide-react'
 
 // Main App content (requires auth)
 function AppContent() {
@@ -18,7 +19,7 @@ function AppContent() {
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
   const [showSettings, setShowSettings] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [currentView, setCurrentView] = useState('dashboard') // 'dashboard' | 'workspace' | 'create-project'
+  const [currentView, setCurrentView] = useState('dashboard') // 'dashboard' | 'workspace' | 'create-project' | 'settings'
   const [apiKeys, setApiKeys] = useState({
     openrouter: localStorage.getItem('openrouter_key') || '',
     claude: localStorage.getItem('claude_key') || '',
@@ -97,6 +98,15 @@ function AppContent() {
 
   const hasApiKey = apiKeys.openrouter || apiKeys.claude
 
+  // Render Settings page full-screen with its own layout
+  if (currentView === 'settings') {
+    return (
+      <div className="h-screen bg-gray-900 text-white">
+        <Settings onBack={() => setCurrentView('dashboard')} />
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen flex bg-gray-900 text-white">
       {/* Sidebar */}
@@ -145,11 +155,11 @@ function AppContent() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowSettings(true)}
+              onClick={() => setCurrentView('settings')}
               className="p-2 hover:bg-gray-700 rounded-lg transition"
               title="Settings"
             >
-              <Settings size={20} />
+              <SettingsIcon size={20} />
             </button>
 
             {/* User Menu */}
@@ -223,7 +233,7 @@ function AppContent() {
                 to multiple models, or your direct Claude API key.
               </p>
               <button
-                onClick={() => setShowSettings(true)}
+                onClick={() => setCurrentView('settings')}
                 className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition"
               >
                 Add API Key

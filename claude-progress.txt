@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 17/38 (45%)
+- **Features Passing**: 18/38 (47%)
 
 ## Completed Features
 
@@ -209,11 +209,47 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Token usage requires OpenRouter API key in localStorage (`openrouter_api_key`). The endpoint converts OpenRouter's USD usage to approximate token counts. Active agents count is currently a default (4) until the agents feature is fully implemented.
 
+### Session 10 - 2026-01-23
+**Focus**: Settings page with Profile section (settings-001)
+**Completed**:
+- Created full Settings page (`Settings.jsx`) with sidebar navigation
+- Implemented Profile settings section with:
+  - Avatar display (from OAuth or initials)
+  - Display Name field
+  - AI Assistant Alias field (stored in localStorage)
+  - Email field
+  - Timezone selector (12 common timezones)
+  - Save Profile button with loading state and success/error messages
+- Implemented API Keys settings section with:
+  - OpenRouter API key input with show/hide toggle
+  - Save and Remove buttons
+  - Connection status display
+- Implemented Appearance settings section with:
+  - Theme selector (Dark/Light/System)
+  - Compact Mode toggle
+  - Show Line Numbers toggle
+- Added backend PUT /api/auth/me endpoint for updating user profile
+- Added UserUpdate schema in auth service
+- Added update_user function in auth service
+- Integrated Settings page into App.jsx as full-screen view
+- Settings page has its own sidebar navigation (Profile, API Keys, Appearance)
+- Back to Dashboard navigation from Settings
+
+**Files created**:
+- frontend/src/pages/Settings.jsx (full settings page with 3 sections)
+
+**Files modified**:
+- frontend/src/App.jsx (Settings import, routing, full-screen layout)
+- backend/routers/auth.py (PUT /me endpoint)
+- backend/services/auth.py (UserUpdate schema, update_user function)
+
+**Notes**: Settings page follows mockup design with CSS variables. Profile changes are saved to backend, while preferences (AI alias, timezone, theme, etc.) are saved to localStorage. The API Keys section handles OpenRouter key which is used for AI chat functionality.
+
 ---
 
 ## Next Priority Features
 
-1. **settings-001**: Settings page (React)
+1. **settings-002**: API Keys management (BYOK) - partially done in settings-001
 2. **create-004**: Upload .md file as project brief
 3. **github-003**: Create new repository from dropdown
 4. **dash-003**: Sidebar shows workspace tree with projects

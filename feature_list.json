@@ -422,7 +422,7 @@
         "Click Save",
         "Verify changes persist"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "settings-002",
@@ -454,8 +454,8 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 17,
-    "failing": 21,
+    "passing": 18,
+    "failing": 20,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
       "dashboard": { "total": 3, "passing": 2 },
@@ -466,7 +466,7 @@
       "mcp-servers": { "total": 2, "passing": 0 },
       "workspace": { "total": 6, "passing": 5 },
       "ai-chat": { "total": 2, "passing": 2 },
-      "settings": { "total": 3, "passing": 0 }
+      "settings": { "total": 3, "passing": 1 }
     }
   }
 }

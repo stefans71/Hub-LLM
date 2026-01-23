@@ -27,10 +27,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models import get_session, User, AuthProvider
 from services.auth import (
     UserCreate, UserLogin, UserResponse, TokenResponse,
-    PasswordResetRequest, PasswordReset, OAuthCallback,
+    PasswordResetRequest, PasswordReset, OAuthCallback, UserUpdate,
     create_user, get_user_by_email, get_user_by_id,
     authenticate_user, verify_email, request_password_reset,
-    reset_password, generate_tokens, user_to_response,
+    reset_password, generate_tokens, user_to_response, update_user,
     decode_token, create_verification_token,
     get_github_user, get_google_user, create_or_get_oauth_user,
     GITHUB_CLIENT_ID, GOOGLE_CLIENT_ID
@@ -212,6 +212,28 @@ async def get_me(
 ):
     """Get current authenticated user"""
     return user_to_response(current_user)
+
+
+@router.put("/me", response_model=UserResponse)
+async def update_me(
+    update_data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session)
+):
+    """Update current user's profile"""
+    try:
+        updated_user = await update_user(
+            db,
+            current_user,
+            name=update_data.name,
+            email=update_data.email
+        )
+        return user_to_response(updated_user)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 # ============================================================================

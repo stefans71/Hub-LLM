@@ -81,6 +81,12 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
+class UserUpdate(BaseModel):
+    """User profile update"""
+    name: Optional[str] = None
+    email: Optional[str] = None
+
+
 class PasswordResetRequest(BaseModel):
     """Password reset request"""
     email: EmailStr
@@ -471,3 +477,25 @@ def user_to_response(user: User) -> UserResponse:
         auth_provider=user.auth_provider.value,
         created_at=user.created_at
     )
+
+
+async def update_user(
+    db: AsyncSession,
+    user: User,
+    name: Optional[str] = None,
+    email: Optional[str] = None
+) -> User:
+    """Update user profile"""
+    if name is not None:
+        user.name = name
+    if email is not None and email != user.email:
+        # Check if email is already in use
+        existing = await get_user_by_email(db, email)
+        if existing and existing.id != user.id:
+            raise ValueError("Email already in use")
+        user.email = email
+        user.email_verified = False  # Require re-verification for new email
+
+    await db.commit()
+    await db.refresh(user)
+    return user
