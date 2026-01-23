@@ -67,7 +67,7 @@
         "Verify redirect to login page",
         "Verify protected routes redirect to login"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "dash-001",
@@ -455,10 +455,10 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 30,
-    "failing": 8,
+    "passing": 31,
+    "failing": 7,
     "categories": {
-      "authentication": { "total": 5, "passing": 4 },
+      "authentication": { "total": 5, "passing": 5 },
       "dashboard": { "total": 3, "passing": 3 },
       "project-creation": { "total": 6, "passing": 6 },
       "github-integration": { "total": 3, "passing": 3 },

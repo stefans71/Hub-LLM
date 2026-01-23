@@ -19,7 +19,8 @@ import {
   Plus,
   Trash2,
   Edit2,
-  AlertTriangle
+  AlertTriangle,
+  LogOut
 } from 'lucide-react'
 
 // CSS Variables matching mockup
@@ -85,7 +86,7 @@ function SectionHeader({ label }) {
 }
 
 // Profile Settings Section
-function ProfileSettings({ user, getAuthHeader }) {
+function ProfileSettings({ user, getAuthHeader, onLogout }) {
   const [displayName, setDisplayName] = useState('')
   const [aiAlias, setAiAlias] = useState('Claude')
   const [email, setEmail] = useState('')
@@ -401,6 +402,47 @@ function ProfileSettings({ user, getAuthHeader }) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Sign Out Section */}
+      <div style={{
+        background: cssVars.bgTertiary,
+        borderRadius: '12px',
+        padding: '24px',
+        marginTop: '24px'
+      }}>
+        <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>Sign Out</h3>
+        <p style={{ color: cssVars.textSecondary, fontSize: '14px', marginBottom: '16px' }}>
+          Sign out of your account on this device. You can sign back in at any time.
+        </p>
+        <button
+          onClick={onLogout}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            background: 'transparent',
+            color: cssVars.error,
+            border: `1px solid ${cssVars.error}`,
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = cssVars.error
+            e.target.style.color = 'white'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'transparent'
+            e.target.style.color = cssVars.error
+          }}
+        >
+          <LogOut size={16} />
+          Sign Out
+        </button>
       </div>
     </div>
   )
@@ -1860,14 +1902,19 @@ function GlobalMCPSettings() {
 }
 
 // Main Settings Page
-export default function Settings({ onBack }) {
-  const { user, getAuthHeader } = useAuth()
+export default function Settings({ onBack, onLogout }) {
+  const { user, getAuthHeader, logout } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
+
+  const handleLogout = async () => {
+    await logout()
+    if (onLogout) onLogout()
+  }
 
   const renderContent = () => {
     switch (activeTab) {
       case 'profile':
-        return <ProfileSettings user={user} getAuthHeader={getAuthHeader} />
+        return <ProfileSettings user={user} getAuthHeader={getAuthHeader} onLogout={handleLogout} />
       case 'apikeys':
         return <APIKeysSettings />
       case 'appearance':
@@ -1875,7 +1922,7 @@ export default function Settings({ onBack }) {
       case 'mcp':
         return <GlobalMCPSettings />
       default:
-        return <ProfileSettings user={user} getAuthHeader={getAuthHeader} />
+        return <ProfileSettings user={user} getAuthHeader={getAuthHeader} onLogout={handleLogout} />
     }
   }
 

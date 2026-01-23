@@ -11,16 +11,16 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 30/38 (79%)
+- **Features Passing**: 31/38 (82%)
 
 ## Completed Features
 
-### Authentication (4/5 complete)
+### Authentication (5/5 complete)
 - ✅ auth-001: Email/password signup
 - ✅ auth-002: Email/password login
 - ✅ auth-003: GitHub OAuth
 - ✅ auth-004: Google OAuth
-- ❌ auth-005: Logout flow (needs frontend route protection)
+- ✅ auth-005: Logout flow
 
 ### Workspace (5/6 complete)
 - ✅ workspace-001: File browser
@@ -489,13 +489,31 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: MCP servers are stored in localStorage under key 'mcp_servers'. The CreateProject page loads these servers and merges them with default servers (GitHub, Slack, Google Drive). Custom servers show their type (Database/API/Custom) and connection status.
 
+### Session 23 - 2026-01-23
+**Focus**: Logout flow (auth-005)
+**Completed**:
+- Added logout dropdown menu to DashboardSidebar user profile area
+- Menu shows "Profile & Settings" and "Sign Out" options
+- Dropdown appears above user profile with proper z-index
+- Added Sign Out section to Settings > Profile page
+- Red-outlined button with hover effect (fills red on hover)
+- Proper state cleanup on logout (clears projects, active project, resets view)
+- Logout calls backend POST /api/auth/logout and clears JWT tokens
+
+**Files modified**:
+- frontend/src/components/DashboardSidebar.jsx (added user menu dropdown with logout)
+- frontend/src/pages/Settings.jsx (added Sign Out section to profile, LogOut icon import)
+- frontend/src/App.jsx (passed onLogout to DashboardSidebar and Settings, enhanced handleLogout)
+
+**Notes**: Logout is now accessible from three places: header user menu (workspace/create-project views), dashboard sidebar user profile dropdown, and Settings > Profile page. All locations call the same logout flow which clears tokens and redirects to login.
+
 ---
 
 ## Next Priority Features
 
-1. **auth-005**: Logout flow with route protection
-2. **agents-003**: User can create new agent in settings
-3. **settings-003**: User can manage VPS servers in settings
+1. **agents-003**: User can create new agent in settings
+2. **settings-003**: User can manage VPS servers in settings
+3. **workspace-006**: Preview panel shows Codespaces preview
 
 ---
 
@@ -504,7 +522,6 @@ This file tracks progress across Claude coding sessions. Each session should:
 1. **Cross-LLM Bridge**: Feature designed but not implemented
 2. **Email verification**: Endpoint exists but email sending not configured
 3. **Password reset**: Endpoint exists but email sending not configured
-4. **Protected routes**: Frontend doesn't redirect unauthenticated users
 
 ---
 

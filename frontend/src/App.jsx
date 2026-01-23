@@ -79,6 +79,8 @@ function AppContent() {
     await logout()
     setProjects([])
     setActiveProject(null)
+    setCurrentView('dashboard')
+    setShowUserMenu(false)
   }
 
   // Show loading spinner while checking auth
@@ -103,7 +105,7 @@ function AppContent() {
   if (currentView === 'settings') {
     return (
       <div className="h-screen bg-gray-900 text-white">
-        <Settings onBack={() => setCurrentView('dashboard')} />
+        <Settings onBack={() => setCurrentView('dashboard')} onLogout={handleLogout} />
       </div>
     )
   }
@@ -123,6 +125,7 @@ function AppContent() {
           }}
           onCreateProject={() => setCurrentView('create-project')}
           currentView={currentView}
+          onLogout={handleLogout}
         />
 
         {/* Main Content */}

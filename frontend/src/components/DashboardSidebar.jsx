@@ -10,7 +10,8 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronLeft,
-  Settings as SettingsIcon
+  LogOut,
+  User
 } from 'lucide-react'
 
 // Workspace Item Component
@@ -59,11 +60,18 @@ export default function DashboardSidebar({
   onSelectProject,
   onNavigate,
   onCreateProject,
-  currentView
+  currentView,
+  onLogout
 }) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
   const [expandedWorkspaces, setExpandedWorkspaces] = useState({ Default: true })
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
+  const handleLogout = async () => {
+    await logout()
+    if (onLogout) onLogout()
+  }
 
   // Group projects by workspace
   const groupedProjects = projects.reduce((acc, project) => {
@@ -206,31 +214,66 @@ export default function DashboardSidebar({
           New Project
         </button>
 
-        {/* User Profile */}
-        <div
-          className="flex items-center gap-3 p-2 hover:bg-[#242b35] rounded-lg cursor-pointer transition"
-          onClick={() => onNavigate?.('settings')}
-        >
-          {user?.avatar_url ? (
-            <img
-              src={user.avatar_url}
-              alt={user.name || user.email}
-              className="w-8 h-8 rounded-full"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-[#3b82f6] flex items-center justify-center text-xs font-medium">
-              {getUserInitials()}
+        {/* User Profile with Menu */}
+        <div className="relative">
+          <div
+            className="flex items-center gap-3 p-2 hover:bg-[#242b35] rounded-lg cursor-pointer transition"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+          >
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.name || user.email}
+                className="w-8 h-8 rounded-full"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[#3b82f6] flex items-center justify-center text-xs font-medium">
+                {getUserInitials()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate">
+                {user?.name || 'User'}
+              </div>
+              <div className="text-xs text-gray-500 truncate">
+                {user?.email || 'Pro Account'}
+              </div>
             </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium truncate">
-              {user?.name || 'User'}
-            </div>
-            <div className="text-xs text-gray-500 truncate">
-              Pro Account
-            </div>
+            <ChevronDown size={16} className={`text-gray-500 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
           </div>
-          <SettingsIcon size={16} className="text-gray-500" />
+
+          {/* User Menu Dropdown */}
+          {showUserMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowUserMenu(false)}
+              />
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-[#242b35] rounded-lg shadow-lg border border-[#2d3748] z-20 overflow-hidden">
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false)
+                    onNavigate?.('settings')
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-gray-300 hover:bg-[#2d3748] transition"
+                >
+                  <User size={16} />
+                  <span className="text-sm">Profile & Settings</span>
+                </button>
+                <div className="border-t border-[#2d3748]" />
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false)
+                    handleLogout()
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-red-400 hover:bg-[#2d3748] transition"
+                >
+                  <LogOut size={16} />
+                  <span className="text-sm">Sign Out</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </aside>
