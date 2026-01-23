@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 20/38 (53%)
+- **Features Passing**: 21/38 (55%)
 
 ## Completed Features
 
@@ -284,14 +284,37 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: The API key verification feature completes the BYOK (Bring Your Own Key) functionality. Users can now verify their OpenRouter API key works before using it, and see account details like usage and tier status.
 
+### Session 13 - 2026-01-23
+**Focus**: Create new repository from dropdown (github-003)
+**Completed**:
+- Added `create_repo` method to GitHubService in backend
+- Added POST `/api/github/repos` endpoint to create new repositories
+- Updated CreateProject.jsx with new repo creation form:
+  - Added state for `showCreateRepoForm`, `newRepoName`, `creatingRepo`, `createRepoError`
+  - Added `handleCreateRepo` function to call API and create repository
+  - Added `handleRepoChange` to show/hide the create form when dropdown selection changes
+  - Inline form appears when "Create new repository" is selected
+  - Shows repository name input with validation
+  - Shows preview of full repo name (user/repo-name)
+  - Create button with loading state
+  - Error display for failed creation
+  - Auto-selects the new repo after successful creation
+
+**Files modified**:
+- backend/services/github.py (added create_repo method)
+- backend/routers/github.py (added POST /repos endpoint, httpx import)
+- frontend/src/pages/CreateProject.jsx (create repo form and handlers)
+
+**Notes**: The GitHub API requires a valid token with `repo` scope to create repositories. The endpoint handles 422 errors for duplicate/invalid repo names gracefully. The form validates repo names to only allow alphanumeric, hyphens, underscores, and periods.
+
 ---
 
 ## Next Priority Features
 
-1. **github-003**: Create new repository from dropdown
-2. **dash-003**: Sidebar shows workspace tree with projects
-3. **create-005**: Voice input in AI chat panel
-4. **vps-001**: VPS connection form expansion
+1. **dash-003**: Sidebar shows workspace tree with projects
+2. **create-005**: Voice input in AI chat panel
+3. **vps-001**: VPS connection form expansion
+4. **agents-001**: User can select agents for project
 
 ---
 

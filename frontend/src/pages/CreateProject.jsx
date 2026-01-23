@@ -374,6 +374,12 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [githubRepos, setGithubRepos] = useState([])
   const [loadingRepos, setLoadingRepos] = useState(false)
 
+  // Create new repo state
+  const [showCreateRepoForm, setShowCreateRepoForm] = useState(false)
+  const [newRepoName, setNewRepoName] = useState('')
+  const [creatingRepo, setCreatingRepo] = useState(false)
+  const [createRepoError, setCreateRepoError] = useState('')
+
   // UI state
   const [showAIChat, setShowAIChat] = useState(false)
   const [showVPSFields, setShowVPSFields] = useState(false)
@@ -752,6 +758,74 @@ In the meantime, I can help you think through your project. What would you like 
       ...prev,
       selectedMCP: checked ? globalMCPServers.filter(s => s.status === 'connected').map(s => s.id) : []
     }))
+  }
+
+  // Handle creating a new GitHub repository
+  const handleCreateRepo = async () => {
+    if (!newRepoName.trim()) {
+      setCreateRepoError('Please enter a repository name')
+      return
+    }
+
+    // Validate repo name (only alphanumeric, hyphens, underscores)
+    const validName = /^[a-zA-Z0-9._-]+$/.test(newRepoName)
+    if (!validName) {
+      setCreateRepoError('Repository name can only contain letters, numbers, hyphens, underscores, and periods')
+      return
+    }
+
+    setCreatingRepo(true)
+    setCreateRepoError('')
+
+    try {
+      const res = await fetch('/api/github/repos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-GitHub-Token': formData.githubToken
+        },
+        body: JSON.stringify({
+          name: newRepoName,
+          description: formData.projectName ? `Repository for ${formData.projectName}` : '',
+          private: false
+        })
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.detail || 'Failed to create repository')
+      }
+
+      const newRepo = await res.json()
+
+      // Add the new repo to the list and select it
+      setGithubRepos(prev => [newRepo, ...prev])
+      setFormData(prev => ({
+        ...prev,
+        selectedRepo: newRepo.full_name
+      }))
+
+      // Reset form state
+      setShowCreateRepoForm(false)
+      setNewRepoName('')
+    } catch (err) {
+      console.error('Create repo error:', err)
+      setCreateRepoError(err.message)
+    } finally {
+      setCreatingRepo(false)
+    }
+  }
+
+  // Handle repo selection change
+  const handleRepoChange = (e) => {
+    const value = e.target.value
+    if (value === '__create_new__') {
+      setShowCreateRepoForm(true)
+      setFormData(prev => ({ ...prev, selectedRepo: '' }))
+    } else {
+      setShowCreateRepoForm(false)
+      setFormData(prev => ({ ...prev, selectedRepo: value }))
+    }
   }
 
   const handleCreateProject = async () => {
@@ -1206,9 +1280,9 @@ Examples:
                       marginBottom: '8px'
                     }}>Repository</label>
                     <select
-                      value={formData.selectedRepo}
-                      onChange={handleInputChange('selectedRepo')}
-                      disabled={loadingRepos}
+                      value={showCreateRepoForm ? '__create_new__' : formData.selectedRepo}
+                      onChange={handleRepoChange}
+                      disabled={loadingRepos || creatingRepo}
                       style={{
                         width: '100%',
                         padding: '10px 12px',
@@ -1222,7 +1296,7 @@ Examples:
                         boxSizing: 'border-box'
                       }}
                     >
-                      <option value="">➕ Create new repository</option>
+                      <option value="__create_new__">➕ Create new repository</option>
                       {loadingRepos ? (
                         <option disabled>Loading repositories...</option>
                       ) : (
@@ -1236,6 +1310,83 @@ Examples:
                     {loadingRepos && (
                       <div style={{ fontSize: '11px', color: cssVars.textMuted, marginTop: '4px' }}>
                         Loading your repositories...
+                      </div>
+                    )}
+
+                    {/* Create New Repository Form */}
+                    {showCreateRepoForm && (
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '16px',
+                        background: cssVars.bgTertiary,
+                        borderRadius: '8px',
+                        border: `1px solid ${cssVars.border}`
+                      }}>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: cssVars.textSecondary,
+                          textTransform: 'uppercase',
+                          marginBottom: '8px'
+                        }}>New Repository Name</label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="text"
+                            value={newRepoName}
+                            onChange={(e) => {
+                              setNewRepoName(e.target.value)
+                              setCreateRepoError('')
+                            }}
+                            placeholder="my-new-project"
+                            disabled={creatingRepo}
+                            style={{
+                              flex: 1,
+                              padding: '10px 12px',
+                              background: cssVars.bgSecondary,
+                              border: `1px solid ${createRepoError ? cssVars.error : cssVars.border}`,
+                              borderRadius: '8px',
+                              color: cssVars.textPrimary,
+                              fontSize: '14px',
+                              outline: 'none',
+                              boxSizing: 'border-box'
+                            }}
+                            onKeyDown={(e) => e.key === 'Enter' && handleCreateRepo()}
+                          />
+                          <Button
+                            variant="success"
+                            onClick={handleCreateRepo}
+                            disabled={creatingRepo || !newRepoName.trim()}
+                          >
+                            {creatingRepo ? (
+                              <>
+                                <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</span>
+                                Creating...
+                              </>
+                            ) : (
+                              <>
+                                <Plus size={14} />
+                                Create
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        {createRepoError && (
+                          <div style={{
+                            marginTop: '8px',
+                            fontSize: '12px',
+                            color: cssVars.error
+                          }}>
+                            {createRepoError}
+                          </div>
+                        )}
+                        <div style={{
+                          marginTop: '8px',
+                          fontSize: '11px',
+                          color: cssVars.textMuted
+                        }}>
+                          Will be created as: {formData.githubUser?.login || 'user'}/{newRepoName || 'repository-name'}
+                        </div>
                       </div>
                     )}
                   </div>
