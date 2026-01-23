@@ -4,8 +4,7 @@ import { useVoice } from '../components/VoiceInput'
 import {
   ChevronRight, ChevronDown, Upload, Mic, MicOff, Send, X, Plus,
   Cloud, Server, Check, Sparkles, Zap, ExternalLink, Loader,
-  FileText, Shield, CheckSquare, Wrench, Database,
-  MessageSquare, FolderOpen
+  Wrench, Database, MessageSquare, FolderOpen
 } from 'lucide-react'
 
 // CSS Variables matching the mockup
@@ -257,47 +256,62 @@ const ChatMessage = ({ message, isUser }) => (
   </div>
 )
 
-// Agent Item component
-const AgentItem = ({ name, description, icon: Icon, color, checked, onChange, onEdit, isGlobal }) => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px',
-    borderRadius: '6px',
-    opacity: checked ? 1 : 0.5
-  }}>
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={onChange}
-      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-    />
+// Agent Item component - handles both icon components and emoji strings
+const AgentItem = ({ name, description, icon: Icon, color, checked, onChange, onEdit, isGlobal }) => {
+  // Render icon - either as a component or as an emoji string
+  const renderIcon = () => {
+    if (typeof Icon === 'string') {
+      // It's an emoji string
+      return <span style={{ fontSize: '14px' }}>{Icon}</span>
+    } else if (typeof Icon === 'function') {
+      // It's a React component
+      return <Icon size={14} style={{ color: `rgb(${color})` }} />
+    }
+    // Fallback emoji
+    return <span style={{ fontSize: '14px' }}>🤖</span>
+  }
+
+  return (
     <div style={{
-      width: '24px',
-      height: '24px',
-      background: `rgba(${color}, 0.15)`,
-      borderRadius: '6px',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      gap: '8px',
+      padding: '8px',
+      borderRadius: '6px',
+      opacity: checked ? 1 : 0.5
     }}>
-      <Icon size={14} style={{ color: `rgb(${color})` }} />
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+      />
+      <div style={{
+        width: '24px',
+        height: '24px',
+        background: `rgba(${color}, 0.15)`,
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        {renderIcon()}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: '12px', fontWeight: 500 }}>{name}</div>
+        <div style={{ fontSize: '10px', color: cssVars.textMuted }}>{description}</div>
+      </div>
+      {isGlobal && onEdit && (
+        <span
+          onClick={onEdit}
+          style={{ fontSize: '10px', color: cssVars.primary, cursor: 'pointer' }}
+        >
+          Edit Global →
+        </span>
+      )}
     </div>
-    <div style={{ flex: 1 }}>
-      <div style={{ fontSize: '12px', fontWeight: 500 }}>{name}</div>
-      <div style={{ fontSize: '10px', color: cssVars.textMuted }}>{description}</div>
-    </div>
-    {isGlobal && onEdit && (
-      <span
-        onClick={onEdit}
-        style={{ fontSize: '10px', color: cssVars.primary, cursor: 'pointer' }}
-      >
-        Edit Global →
-      </span>
-    )}
-  </div>
-)
+  )
+}
 
 // MCP Server Item component - handles both icon components and emoji strings
 const MCPServerItem = ({ name, status, icon: Icon, color, checked, onChange, onEdit, isGlobal }) => {
@@ -424,12 +438,45 @@ export default function CreateProject({ onCancel, onCreateProject }) {
     }
   }, [transcript])
 
-  // Available global agents
-  const globalAgents = [
-    { id: 'code-reviewer', name: 'code-reviewer', description: 'Reviews code for quality and best practices', icon: FileText, color: '59, 130, 246' },
-    { id: 'security-audit', name: 'security-audit', description: 'Scans for vulnerabilities', icon: Shield, color: '239, 68, 68' },
-    { id: 'test-writer', name: 'test-writer', description: 'Generates unit and integration tests', icon: CheckSquare, color: '34, 197, 94' },
-  ]
+  // Available global agents - loaded from localStorage (Settings > Global Agents)
+  const [globalAgents, setGlobalAgents] = useState([])
+
+  // Load global agents from localStorage
+  useEffect(() => {
+    // Default agents if none saved
+    const defaultAgents = [
+      { id: 'code-reviewer', name: 'code-reviewer', description: 'Reviews code for quality and best practices', icon: '📋', color: '59, 130, 246', enabled: true },
+      { id: 'security-audit', name: 'security-audit', description: 'Scans for vulnerabilities', icon: '🔒', color: '239, 68, 68', enabled: true },
+      { id: 'test-writer', name: 'test-writer', description: 'Generates unit and integration tests', icon: '🧪', color: '34, 197, 94', enabled: true },
+    ]
+
+    // Load saved agents from localStorage
+    const savedAgents = localStorage.getItem('global_agents')
+    if (savedAgents) {
+      try {
+        const parsedAgents = JSON.parse(savedAgents)
+        // Map to the format expected by AgentItem, only include enabled agents
+        const mappedAgents = parsedAgents
+          .filter(a => a.enabled !== false)
+          .map(a => ({
+            id: a.id,
+            name: a.name,
+            description: a.description,
+            icon: a.icon || '🤖',
+            color: a.name.includes('security') || a.name.includes('audit') ? '239, 68, 68' :
+                   a.name.includes('test') || a.name.includes('writer') ? '34, 197, 94' :
+                   '59, 130, 246',
+            enabled: a.enabled
+          }))
+        setGlobalAgents(mappedAgents)
+      } catch (e) {
+        console.error('Failed to parse global agents:', e)
+        setGlobalAgents(defaultAgents)
+      }
+    } else {
+      setGlobalAgents(defaultAgents)
+    }
+  }, [])
 
   // Load global MCP servers from localStorage (Settings > MCP Servers)
   const [globalMCPServers, setGlobalMCPServers] = useState([])

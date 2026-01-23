@@ -20,7 +20,11 @@ import {
   Trash2,
   Edit2,
   AlertTriangle,
-  LogOut
+  LogOut,
+  Bot,
+  FileText,
+  Shield,
+  FlaskConical
 } from 'lucide-react'
 
 // CSS Variables matching mockup
@@ -1901,6 +1905,843 @@ function GlobalMCPSettings() {
   )
 }
 
+// Agent Icon options
+const agentIcons = ['🔧', '📋', '🔒', '🧪', '📝', '🗄️', '🎨', '⚡', '🤖', '🔍', '📊', '🛡️']
+
+// Default agents (used in CreateProject)
+const defaultAgents = [
+  { id: 'code-reviewer', name: 'code-reviewer', icon: '📋', description: 'Reviews code for quality, security, and best practices. Provides actionable feedback.', model: 'sonnet', tools: 'readonly', enabled: true },
+  { id: 'security-audit', name: 'security-audit', icon: '🔒', description: 'Scans code for vulnerabilities, checks dependencies, and suggests security improvements.', model: 'opus', tools: 'readonly', enabled: true },
+  { id: 'test-writer', name: 'test-writer', icon: '🧪', description: 'Generates unit tests, integration tests, and test fixtures based on your code.', model: 'sonnet', tools: 'all', enabled: true }
+]
+
+// Agent Modal for creating/editing agents
+function AgentModal({ show, onClose, onSave, editAgent }) {
+  const [name, setName] = useState('')
+  const [icon, setIcon] = useState('🔧')
+  const [description, setDescription] = useState('')
+  const [model, setModel] = useState('sonnet')
+  const [tools, setTools] = useState('readonly')
+  const [systemPrompt, setSystemPrompt] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  // Reset form when modal opens/closes or editAgent changes
+  useEffect(() => {
+    if (show && editAgent) {
+      setName(editAgent.name || '')
+      setIcon(editAgent.icon || '🔧')
+      setDescription(editAgent.description || '')
+      setModel(editAgent.model || 'sonnet')
+      setTools(editAgent.tools || 'readonly')
+      setSystemPrompt(editAgent.systemPrompt || '')
+    } else if (show) {
+      // Reset to defaults for new agent
+      setName('')
+      setIcon('🔧')
+      setDescription('')
+      setModel('sonnet')
+      setTools('readonly')
+      setSystemPrompt('')
+      setError(null)
+    }
+  }, [show, editAgent])
+
+  const handleSave = () => {
+    setError(null)
+
+    // Validate name
+    const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-')
+    if (!cleanName) {
+      setError('Agent name is required')
+      return
+    }
+    if (cleanName.length < 2) {
+      setError('Agent name must be at least 2 characters')
+      return
+    }
+
+    // Validate description
+    if (!description.trim()) {
+      setError('Description is required')
+      return
+    }
+
+    const agent = {
+      id: editAgent?.id || `agent-${Date.now()}`,
+      name: cleanName,
+      icon,
+      description: description.trim(),
+      model,
+      tools,
+      systemPrompt: systemPrompt.trim(),
+      enabled: editAgent?.enabled !== undefined ? editAgent.enabled : true,
+      createdAt: editAgent?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+
+    setSaving(true)
+    setTimeout(() => {
+      onSave(agent)
+      setSaving(false)
+      onClose()
+    }, 300)
+  }
+
+  if (!show) return null
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          zIndex: 1000
+        }}
+      />
+      {/* Modal */}
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        background: cssVars.bgSecondary,
+        borderRadius: '16px',
+        width: '520px',
+        maxWidth: '90vw',
+        maxHeight: '90vh',
+        overflow: 'auto',
+        zIndex: 1001,
+        boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '20px 24px',
+          borderBottom: `1px solid ${cssVars.border}`
+        }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+            {editAgent ? 'Edit Agent' : 'Create New Agent'}
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: cssVars.textSecondary,
+              cursor: 'pointer',
+              padding: '4px'
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '24px' }}>
+          {/* Agent Name */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '12px',
+              fontWeight: '600',
+              color: cssVars.textSecondary,
+              textTransform: 'uppercase',
+              marginBottom: '8px'
+            }}>
+              Agent Name
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ color: cssVars.textMuted, fontSize: '16px' }}>@</span>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. api-designer"
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              />
+            </div>
+            <div style={{ fontSize: '11px', color: cssVars.textMuted, marginTop: '4px' }}>
+              Invoke with @agent-name in chat
+            </div>
+          </div>
+
+          {/* Icon Picker */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '12px',
+              fontWeight: '600',
+              color: cssVars.textSecondary,
+              textTransform: 'uppercase',
+              marginBottom: '8px'
+            }}>
+              Icon
+            </label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {agentIcons.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => setIcon(emoji)}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                    border: `2px solid ${icon === emoji ? cssVars.primary : cssVars.border}`,
+                    background: cssVars.bgTertiary,
+                    fontSize: '18px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '12px',
+              fontWeight: '600',
+              color: cssVars.textSecondary,
+              textTransform: 'uppercase',
+              marginBottom: '8px'
+            }}>
+              Description
+            </label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. Designs REST API endpoints following best practices"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: cssVars.bgTertiary,
+                border: `1px solid ${cssVars.border}`,
+                borderRadius: '8px',
+                color: cssVars.textPrimary,
+                fontSize: '14px',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          {/* Model and Tools Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: cssVars.textSecondary,
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>
+                Model
+              </label>
+              <select
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              >
+                <option value="sonnet">Claude Sonnet 4.5 (Fast)</option>
+                <option value="opus">Claude Opus 4.5 (Powerful)</option>
+                <option value="haiku">Claude Haiku 4.5 (Quick)</option>
+              </select>
+            </div>
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: cssVars.textSecondary,
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>
+                Tools Access
+              </label>
+              <select
+                value={tools}
+                onChange={(e) => setTools(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              >
+                <option value="readonly">Read-only (safer)</option>
+                <option value="all">All tools (can edit files)</option>
+                <option value="none">No tools (chat only)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* System Prompt */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '12px',
+              fontWeight: '600',
+              color: cssVars.textSecondary,
+              textTransform: 'uppercase',
+              marginBottom: '8px'
+            }}>
+              System Prompt (Optional)
+            </label>
+            <textarea
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              placeholder={`Custom instructions for this agent...
+
+Example: You are an expert API designer. When asked to design endpoints, always consider REST best practices, proper HTTP methods, and clear naming conventions.`}
+              style={{
+                width: '100%',
+                minHeight: '100px',
+                padding: '10px 12px',
+                background: cssVars.bgTertiary,
+                border: `1px solid ${cssVars.border}`,
+                borderRadius: '8px',
+                color: cssVars.textPrimary,
+                fontSize: '13px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                resize: 'vertical',
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+
+          {/* Tip */}
+          <div style={{
+            padding: '12px',
+            background: 'rgba(59, 130, 246, 0.1)',
+            borderRadius: '8px'
+          }}>
+            <div style={{ fontSize: '12px', color: cssVars.textSecondary }}>
+              <strong>Tip:</strong> This agent will be auto-converted to the correct format (CLAUDE.md agents, Codex skills, or system prompts) based on which LLM you use in each project.
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div style={{
+              marginTop: '16px',
+              padding: '12px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: `1px solid ${cssVars.error}`,
+              borderRadius: '8px',
+              color: cssVars.error,
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          padding: '16px 24px',
+          borderTop: `1px solid ${cssVars.border}`,
+          background: cssVars.bgTertiary
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 20px',
+              background: cssVars.bgSecondary,
+              border: `1px solid ${cssVars.border}`,
+              borderRadius: '8px',
+              color: cssVars.textPrimary,
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              padding: '10px 20px',
+              background: cssVars.primary,
+              border: 'none',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: saving ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            {saving ? (
+              <>
+                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                Saving...
+              </>
+            ) : (
+              editAgent ? 'Save Changes' : 'Create Agent'
+            )}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// Global Agents Settings Section
+function GlobalAgentsSettings() {
+  const [agents, setAgents] = useState([])
+  const [showModal, setShowModal] = useState(false)
+  const [editingAgent, setEditingAgent] = useState(null)
+  const [showHelp, setShowHelp] = useState(false)
+
+  // Load agents from localStorage or use defaults
+  useEffect(() => {
+    const savedAgents = localStorage.getItem('global_agents')
+    if (savedAgents) {
+      try {
+        setAgents(JSON.parse(savedAgents))
+      } catch (e) {
+        console.error('Failed to parse global agents:', e)
+        setAgents(defaultAgents)
+      }
+    } else {
+      // Initialize with default agents
+      setAgents(defaultAgents)
+      localStorage.setItem('global_agents', JSON.stringify(defaultAgents))
+    }
+  }, [])
+
+  // Save agents to localStorage
+  const saveAgents = (newAgents) => {
+    setAgents(newAgents)
+    localStorage.setItem('global_agents', JSON.stringify(newAgents))
+  }
+
+  const handleAddAgent = (agent) => {
+    if (editingAgent) {
+      // Update existing
+      const updated = agents.map(a => a.id === agent.id ? agent : a)
+      saveAgents(updated)
+    } else {
+      // Add new
+      saveAgents([...agents, agent])
+    }
+    setEditingAgent(null)
+  }
+
+  const handleEditAgent = (agent) => {
+    setEditingAgent(agent)
+    setShowModal(true)
+  }
+
+  const handleDeleteAgent = (agentId) => {
+    if (window.confirm('Are you sure you want to remove this agent?')) {
+      saveAgents(agents.filter(a => a.id !== agentId))
+    }
+  }
+
+  const handleToggleAgent = (agentId) => {
+    const updated = agents.map(a =>
+      a.id === agentId ? { ...a, enabled: !a.enabled } : a
+    )
+    saveAgents(updated)
+  }
+
+  const getToolsLabel = (tools) => {
+    switch (tools) {
+      case 'readonly': return 'Read-only tools'
+      case 'all': return 'All tools'
+      case 'none': return 'No tools'
+      default: return tools
+    }
+  }
+
+  const getModelLabel = (model) => {
+    switch (model) {
+      case 'sonnet': return 'Sonnet'
+      case 'opus': return 'Opus'
+      case 'haiku': return 'Haiku'
+      default: return model
+    }
+  }
+
+  // Get icon background color based on agent type
+  const getIconBgColor = (agent) => {
+    if (agent.name.includes('security') || agent.name.includes('audit')) {
+      return 'rgba(239, 68, 68, 0.2)'
+    }
+    if (agent.name.includes('test') || agent.name.includes('writer')) {
+      return 'rgba(34, 197, 94, 0.2)'
+    }
+    return 'rgba(59, 130, 246, 0.2)'
+  }
+
+  return (
+    <div>
+      <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '8px' }}>Global Agents</h2>
+      <p style={{ color: cssVars.textSecondary, fontSize: '14px', marginBottom: '24px' }}>
+        Define reusable agents available across all your projects. These are automatically inherited by new projects.
+      </p>
+
+      {/* What are Agents? Help Section */}
+      <div style={{ marginBottom: '20px' }}>
+        <div
+          onClick={() => setShowHelp(!showHelp)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            padding: '8px 0'
+          }}
+        >
+          <span style={{
+            fontSize: '10px',
+            color: cssVars.textMuted,
+            transition: 'transform 0.2s',
+            transform: showHelp ? 'rotate(90deg)' : 'rotate(0deg)'
+          }}>
+            ▶
+          </span>
+          <span style={{ fontSize: '13px', color: cssVars.primary }}>What are Agents? How do they work?</span>
+        </div>
+        {showHelp && (
+          <div style={{
+            background: cssVars.bgPrimary,
+            border: `1px solid ${cssVars.border}`,
+            borderRadius: '12px',
+            padding: '20px',
+            marginTop: '8px'
+          }}>
+            <p style={{ margin: '0 0 16px 0', lineHeight: '1.6', fontSize: '13px', color: cssVars.textSecondary }}>
+              <strong style={{ color: cssVars.textPrimary }}>Agents</strong> are specialized AI assistants with defined roles, capabilities, and constraints. They can be invoked by name to handle specific tasks.
+            </p>
+            {/* Diagram */}
+            <div style={{
+              background: cssVars.bgTertiary,
+              borderRadius: '12px',
+              padding: '24px',
+              marginBottom: '16px'
+            }}>
+              <div style={{ textAlign: 'center', fontSize: '11px', color: cssVars.textMuted, marginBottom: '12px' }}>
+                HOW AGENTS WORK
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                fontSize: '12px'
+              }}>
+                <div style={{
+                  background: cssVars.primary,
+                  color: 'white',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '20px', marginBottom: '4px' }}>👤</div>
+                  <div>You</div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: cssVars.textMuted }}>
+                  <div>@agent-name</div>
+                  <div>→→→</div>
+                </div>
+                <div style={{
+                  background: 'rgba(59, 130, 246, 0.2)',
+                  border: `2px solid ${cssVars.primary}`,
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '20px', marginBottom: '4px' }}>🤖</div>
+                  <div>Agent</div>
+                  <div style={{ fontSize: '9px', color: cssVars.textMuted, marginTop: '4px' }}>
+                    Custom Role<br/>+ Tools<br/>+ Model
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: cssVars.textMuted }}>
+                  <div>performs</div>
+                  <div>→→→</div>
+                </div>
+                <div style={{
+                  background: cssVars.bgSecondary,
+                  border: `1px solid ${cssVars.border}`,
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '20px', marginBottom: '4px' }}>⚡</div>
+                  <div>Task</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ fontSize: '12px', color: cssVars.textSecondary, lineHeight: '1.6' }}>
+              <strong style={{ color: cssVars.textPrimary }}>Example Usage:</strong><br/>
+              <code style={{
+                background: cssVars.bgTertiary,
+                padding: '4px 8px',
+                borderRadius: '4px',
+                display: 'inline-block',
+                margin: '8px 0'
+              }}>
+                @code-reviewer check src/api/users.js
+              </code>
+              <br/><br/>
+              <strong style={{ color: cssVars.textPrimary }}>Agent Components:</strong>
+              <ul style={{ margin: '8px 0 0 20px' }}>
+                <li><strong>Name:</strong> How you invoke it (e.g., @code-reviewer)</li>
+                <li><strong>Description:</strong> What it does</li>
+                <li><strong>Tools:</strong> What capabilities it has (read-only, file edit, etc.)</li>
+                <li><strong>Model:</strong> Which LLM powers it (Opus for complex, Sonnet for fast)</li>
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Agent List Card */}
+      <div style={{
+        background: cssVars.bgTertiary,
+        borderRadius: '12px',
+        padding: '20px'
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '16px'
+        }}>
+          <span style={{ fontWeight: '500' }}>Your Global Agents</span>
+          <button
+            onClick={() => {
+              setEditingAgent(null)
+              setShowModal(true)
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              background: cssVars.primary,
+              border: 'none',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '13px',
+              fontWeight: '500',
+              cursor: 'pointer'
+            }}
+          >
+            <Plus size={16} />
+            Create Agent
+          </button>
+        </div>
+
+        {/* Agent List */}
+        {agents.length === 0 ? (
+          <div style={{
+            padding: '40px 20px',
+            textAlign: 'center',
+            color: cssVars.textMuted
+          }}>
+            <Bot size={48} style={{ opacity: 0.3, marginBottom: '12px' }} />
+            <div style={{ fontSize: '14px', marginBottom: '8px' }}>No agents configured</div>
+            <div style={{ fontSize: '12px' }}>Click "Create Agent" to add your first agent</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {agents.map((agent) => (
+              <div
+                key={agent.id}
+                style={{
+                  background: cssVars.bgSecondary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  padding: '16px',
+                  opacity: agent.enabled ? 1 : 0.6
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  {/* Icon */}
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    background: getIconBgColor(agent),
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '20px'
+                  }}>
+                    {agent.icon || '🤖'}
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: '500' }}>{agent.name}</div>
+                    <div style={{
+                      fontSize: '13px',
+                      color: cssVars.textSecondary,
+                      marginTop: '2px'
+                    }}>
+                      {agent.description}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <span style={{
+                        fontSize: '11px',
+                        background: cssVars.bgTertiary,
+                        padding: '2px 8px',
+                        borderRadius: '4px'
+                      }}>
+                        {getToolsLabel(agent.tools)}
+                      </span>
+                      <span style={{
+                        fontSize: '11px',
+                        background: cssVars.bgTertiary,
+                        padding: '2px 8px',
+                        borderRadius: '4px'
+                      }}>
+                        Model: {getModelLabel(agent.model)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* Enable Toggle */}
+                    <div
+                      onClick={() => handleToggleAgent(agent.id)}
+                      style={{
+                        width: '36px',
+                        height: '20px',
+                        background: agent.enabled ? cssVars.success : cssVars.bgTertiary,
+                        borderRadius: '10px',
+                        position: 'relative',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s ease'
+                      }}
+                    >
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        background: 'white',
+                        borderRadius: '50%',
+                        position: 'absolute',
+                        top: '2px',
+                        right: agent.enabled ? '2px' : 'auto',
+                        left: agent.enabled ? 'auto' : '2px',
+                        transition: 'all 0.2s ease'
+                      }} />
+                    </div>
+                    <button
+                      onClick={() => handleEditAgent(agent)}
+                      style={{
+                        padding: '6px 12px',
+                        background: cssVars.bgTertiary,
+                        border: `1px solid ${cssVars.border}`,
+                        borderRadius: '6px',
+                        color: cssVars.textPrimary,
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteAgent(agent.id)}
+                      style={{
+                        padding: '6px 12px',
+                        background: cssVars.bgTertiary,
+                        border: `1px solid ${cssVars.border}`,
+                        borderRadius: '6px',
+                        color: cssVars.textPrimary,
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Tip Box */}
+      <div style={{
+        marginTop: '16px',
+        padding: '12px',
+        background: 'rgba(59, 130, 246, 0.1)',
+        borderRadius: '8px',
+        borderLeft: `3px solid ${cssVars.primary}`
+      }}>
+        <div style={{ fontSize: '13px', color: cssVars.textSecondary }}>
+          <strong>Tip:</strong> Global agents are automatically converted to the correct format (CLAUDE.md agents, Codex skills, or system prompts) based on which LLM you use in each project.
+        </div>
+      </div>
+
+      {/* Modal */}
+      <AgentModal
+        show={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setEditingAgent(null)
+        }}
+        onSave={handleAddAgent}
+        editAgent={editingAgent}
+      />
+    </div>
+  )
+}
+
 // Main Settings Page
 export default function Settings({ onBack, onLogout }) {
   const { user, getAuthHeader, logout } = useAuth()
@@ -1919,6 +2760,8 @@ export default function Settings({ onBack, onLogout }) {
         return <APIKeysSettings />
       case 'appearance':
         return <AppearanceSettings />
+      case 'agents':
+        return <GlobalAgentsSettings />
       case 'mcp':
         return <GlobalMCPSettings />
       default:
@@ -2004,6 +2847,12 @@ export default function Settings({ onBack, onLogout }) {
 
           {/* Integrations Section */}
           <SectionHeader label="Integrations" />
+          <NavItem
+            icon={Bot}
+            label="Global Agents"
+            active={activeTab === 'agents'}
+            onClick={() => setActiveTab('agents')}
+          />
           <NavItem
             icon={Plug}
             label="MCP Servers"

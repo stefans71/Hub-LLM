@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 31/38 (82%)
+- **Features Passing**: 32/38 (84%)
 
 ## Completed Features
 
@@ -21,6 +21,11 @@ This file tracks progress across Claude coding sessions. Each session should:
 - ✅ auth-003: GitHub OAuth
 - ✅ auth-004: Google OAuth
 - ✅ auth-005: Logout flow
+
+### Agents (3/3 complete)
+- ✅ agents-001: User can select agents for project
+- ✅ agents-002: User can select/deselect all agents
+- ✅ agents-003: User can create new agent in settings
 
 ### Workspace (5/6 complete)
 - ✅ workspace-001: File browser
@@ -507,13 +512,43 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Logout is now accessible from three places: header user menu (workspace/create-project views), dashboard sidebar user profile dropdown, and Settings > Profile page. All locations call the same logout flow which clears tokens and redirects to login.
 
+### Session 24 - 2026-01-23
+**Focus**: Create new agent in settings (agents-003)
+**Completed**:
+- Added Global Agents section to Settings page
+- Created AgentModal component for creating/editing agents with:
+  - Agent name input (with @ prefix for invocation)
+  - Icon picker (12 emoji options)
+  - Description input
+  - Model selector (Sonnet, Opus, Haiku)
+  - Tools access selector (Read-only, All tools, No tools)
+  - System prompt textarea (optional)
+- Created GlobalAgentsSettings component with:
+  - "What are Agents?" expandable help section with visual diagram
+  - Agent list showing icon, name, description, tools, model badges
+  - Enable/disable toggle for each agent
+  - Edit and Remove buttons for each agent
+  - Tip box about auto-conversion to different LLM formats
+- Added "Global Agents" navigation item in Settings sidebar under Integrations
+- Updated CreateProject.jsx to load agents from localStorage instead of hardcoded values
+- Updated AgentItem component to handle both component icons and emoji strings
+- Agents stored in localStorage under key 'global_agents'
+- Default agents (code-reviewer, security-audit, test-writer) auto-created on first load
+
+**Files modified**:
+- frontend/src/pages/Settings.jsx (AgentModal, GlobalAgentsSettings, navigation)
+- frontend/src/pages/CreateProject.jsx (load agents from localStorage, AgentItem emoji support)
+
+**Files created**: None
+
+**Notes**: Custom agents created in Settings > Global Agents now appear in Step 4 of Create Project. Agents can be enabled/disabled - disabled agents won't appear in the Create Project agent selection.
+
 ---
 
 ## Next Priority Features
 
-1. **agents-003**: User can create new agent in settings
-2. **settings-003**: User can manage VPS servers in settings
-3. **workspace-006**: Preview panel shows Codespaces preview
+1. **settings-003**: User can manage VPS servers in settings
+2. **workspace-006**: Preview panel shows Codespaces preview
 
 ---
 

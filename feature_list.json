@@ -269,7 +269,7 @@
         "Click Save",
         "Verify agent appears in list"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "mcp-001",
@@ -455,15 +455,15 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 31,
-    "failing": 7,
+    "passing": 32,
+    "failing": 6,
     "categories": {
       "authentication": { "total": 5, "passing": 5 },
       "dashboard": { "total": 3, "passing": 3 },
       "project-creation": { "total": 6, "passing": 6 },
       "github-integration": { "total": 3, "passing": 3 },
       "vps-connection": { "total": 2, "passing": 2 },
-      "agents": { "total": 3, "passing": 2 },
+      "agents": { "total": 3, "passing": 3 },
       "mcp-servers": { "total": 2, "passing": 2 },
       "workspace": { "total": 6, "passing": 5 },
       "ai-chat": { "total": 2, "passing": 2 },
