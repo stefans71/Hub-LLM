@@ -419,20 +419,71 @@ export default function CreateProject({ onCancel, onCreateProject }) {
 
     setShowAIChat(true)
     setIsGenerating(true)
+    setChatMessages([])
 
-    // Add initial AI message
-    setChatMessages([{
-      role: 'assistant',
-      content: `I've analyzed your project brief. Let me help you refine the details:
+    try {
+      // Get API key from localStorage (BYOK model)
+      const apiKey = localStorage.getItem('openrouter_key')
 
-Based on "${formData.projectBrief.substring(0, 100)}${formData.projectBrief.length > 100 ? '...' : ''}", I have a few questions:
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+      if (apiKey) {
+        headers['X-OpenRouter-Key'] = apiKey
+      }
 
-1. What is the primary use case for this project?
-2. What features are most important to you?
-3. Do you have any specific technology preferences?`
-    }])
+      const res = await fetch('/api/ai/expand-brief', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          brief: formData.projectBrief,
+          model: 'anthropic/claude-sonnet-4',
+          provider: 'openrouter'
+        })
+      })
 
-    setIsGenerating(false)
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.detail || 'Failed to analyze brief')
+      }
+
+      const data = await res.json()
+
+      // Update form with AI-generated context
+      if (data.tech_stack || data.standards) {
+        setFormData(prev => ({
+          ...prev,
+          techStack: data.tech_stack || prev.techStack,
+          codeStandards: data.standards || prev.codeStandards,
+          context: data.context || prev.context
+        }))
+        setContextGenerated(true)
+      }
+
+      // Add AI analysis as chat message
+      setChatMessages([{
+        role: 'assistant',
+        content: data.analysis || `I've analyzed your project brief. Here's what I recommend:
+
+**Tech Stack:** ${data.tech_stack || 'Not specified'}
+**Standards:** ${data.standards || 'Not specified'}
+
+Feel free to ask me any follow-up questions to refine these recommendations.`
+      }])
+
+    } catch (err) {
+      console.error('AI analysis error:', err)
+      setChatMessages([{
+        role: 'assistant',
+        content: `I couldn't analyze the brief automatically. ${err.message}
+
+Please make sure you have an OpenRouter API key configured in Settings > API Keys.
+
+In the meantime, I can help you think through your project. What would you like to build?`
+      }])
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleSendChatMessage = async () => {
@@ -444,35 +495,161 @@ Based on "${formData.projectBrief.substring(0, 100)}${formData.projectBrief.leng
 
     setIsGenerating(true)
 
-    // Simulate AI response (in production, this would call the API)
-    setTimeout(() => {
+    try {
+      const apiKey = localStorage.getItem('openrouter_key')
+
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+      if (apiKey) {
+        headers['X-OpenRouter-Key'] = apiKey
+      }
+
+      // Build message history for context
+      const messages = [...chatMessages, { role: 'user', content: userMessage }]
+
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          messages: messages,
+          brief: formData.projectBrief,
+          project_context: {
+            tech_stack: formData.techStack,
+            standards: formData.codeStandards,
+            context: formData.context
+          },
+          model: 'anthropic/claude-sonnet-4',
+          provider: 'openrouter'
+        })
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to get response')
+      }
+
+      // Handle streaming response
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let assistantMessage = ''
+
+      // Add placeholder for streaming message
+      setChatMessages(prev => [...prev, { role: 'assistant', content: '' }])
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (data === '[DONE]') continue
+
+            try {
+              const parsed = JSON.parse(data)
+              if (parsed.content) {
+                assistantMessage += parsed.content
+                // Update the last message in real-time
+                setChatMessages(prev => {
+                  const newMessages = [...prev]
+                  newMessages[newMessages.length - 1] = {
+                    role: 'assistant',
+                    content: assistantMessage
+                  }
+                  return newMessages
+                })
+              }
+            } catch (e) {
+              // Ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+
+      // Check if AI response contains context updates
+      if (assistantMessage.includes('```json')) {
+        try {
+          const jsonMatch = assistantMessage.match(/```json\s*([\s\S]*?)\s*```/)
+          if (jsonMatch) {
+            const updateData = JSON.parse(jsonMatch[1])
+            if (updateData.update) {
+              setFormData(prev => ({
+                ...prev,
+                techStack: updateData.update.tech_stack || prev.techStack,
+                codeStandards: updateData.update.standards || prev.codeStandards,
+                context: updateData.update.context || prev.context
+              }))
+              setContextGenerated(true)
+            }
+          }
+        } catch (e) {
+          // Ignore JSON parse errors
+        }
+      }
+
+    } catch (err) {
+      console.error('Chat error:', err)
       setChatMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Great input! Based on your requirements, I suggest:
-
-**Tech Stack**: React + Node.js + PostgreSQL
-**Standards**: TypeScript strict mode, ESLint + Prettier
-**Context**: Modern web application with user authentication
-
-Click "Generate Project Context" to apply these suggestions.`
+        content: 'Sorry, I encountered an error. Please check your API key in Settings > API Keys.'
       }])
+    } finally {
       setIsGenerating(false)
-    }, 1500)
+    }
   }
 
   const handleGenerateContext = async () => {
+    if (!formData.projectBrief.trim()) {
+      alert('Please enter a project brief first')
+      return
+    }
+
     setIsGenerating(true)
 
-    // Simulate AI generating context from brief
-    setTimeout(() => {
+    try {
+      const apiKey = localStorage.getItem('openrouter_key')
+
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+      if (apiKey) {
+        headers['X-OpenRouter-Key'] = apiKey
+      }
+
+      const res = await fetch('/api/ai/expand-brief', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          brief: formData.projectBrief,
+          model: 'anthropic/claude-sonnet-4',
+          provider: 'openrouter'
+        })
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.detail || 'Failed to generate context')
+      }
+
+      const data = await res.json()
+
       setFormData(prev => ({
         ...prev,
-        techStack: 'React, Node.js, Express, PostgreSQL, Redis',
-        codeStandards: 'TypeScript strict mode, async/await patterns, ESLint + Prettier, JSDoc comments for public APIs',
+        techStack: data.tech_stack || prev.techStack,
+        codeStandards: data.standards || prev.codeStandards,
+        context: data.context || prev.context
       }))
       setContextGenerated(true)
+
+    } catch (err) {
+      console.error('Generate context error:', err)
+      alert(`Failed to generate context: ${err.message}`)
+    } finally {
       setIsGenerating(false)
-    }, 1000)
+    }
   }
 
   const handleConnectGitHub = () => {

@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 11/38 (29%)
+- **Features Passing**: 13/38 (34%)
 
 ## Completed Features
 
@@ -110,15 +110,34 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Create Project page fully implemented. AI chat integration simulates responses (needs backend endpoint POST /api/ai/expand-brief for production). GitHub OAuth uses existing flow. VPS form ready for connection testing.
 
+### Session 5 - 2026-01-23
+**Focus**: AI Brief Expansion (create-002, create-003)
+**Completed**:
+- Created backend endpoint `/api/ai/expand-brief` for analyzing project briefs
+- Created backend endpoint `/api/ai/chat` for follow-up conversation about the project
+- Integrated streaming SSE responses for real-time chat experience
+- Updated CreateProject.jsx to call real AI endpoints instead of simulated responses
+- AI generates tech_stack, standards, context, quirks from project brief
+- AI chat panel supports follow-up questions with streaming responses
+- Context updates can be extracted from AI responses
+
+**Files created**:
+- backend/routers/ai.py (AI brief expansion and chat endpoints)
+
+**Files modified**:
+- backend/main.py (registered AI router)
+- frontend/src/pages/CreateProject.jsx (real API integration)
+
+**Notes**: AI integration requires OpenRouter API key in localStorage (set via Settings > API Keys). The expand-brief endpoint uses a system prompt to generate structured JSON with project configuration recommendations.
+
 ---
 
 ## Next Priority Features
 
-1. **create-002**: AI brief expansion endpoint (backend + frontend integration)
-2. **github-001**: GitHub connect in project flow
-3. **dash-001**: Dashboard view (React)
-4. **settings-001**: Settings page (React)
-5. **create-003**: AI generates project context from brief
+1. **github-001**: GitHub connect in project flow
+2. **dash-001**: Dashboard view (React)
+3. **settings-001**: Settings page (React)
+4. **create-004**: Upload .md file as project brief
 
 ---
 

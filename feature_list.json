@@ -128,7 +128,7 @@
         "Verify AI chat panel opens",
         "Verify AI generates initial response analyzing the brief"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "create-003",
@@ -142,7 +142,7 @@
         "Verify Context field is populated",
         "Verify 'Generated from Brief' badge appears"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "create-004",
@@ -454,12 +454,12 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 11,
-    "failing": 27,
+    "passing": 13,
+    "failing": 25,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
       "dashboard": { "total": 3, "passing": 0 },
-      "project-creation": { "total": 6, "passing": 1 },
+      "project-creation": { "total": 6, "passing": 3 },
       "github-integration": { "total": 3, "passing": 0 },
       "vps-connection": { "total": 2, "passing": 0 },
       "agents": { "total": 3, "passing": 0 },
