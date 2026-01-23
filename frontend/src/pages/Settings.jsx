@@ -24,7 +24,11 @@ import {
   Bot,
   FileText,
   Shield,
-  FlaskConical
+  FlaskConical,
+  Server,
+  Monitor,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 // CSS Variables matching mockup
@@ -2742,6 +2746,734 @@ function GlobalAgentsSettings() {
   )
 }
 
+// VPS Connection Modal
+function VPSModal({ show, onClose, onSave, editServer }) {
+  const [name, setName] = useState('')
+  const [host, setHost] = useState('')
+  const [port, setPort] = useState('22')
+  const [username, setUsername] = useState('root')
+  const [privateKey, setPrivateKey] = useState('')
+  const [showKey, setShowKey] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState(null)
+  const [error, setError] = useState(null)
+
+  // Reset form when modal opens/closes or editServer changes
+  useEffect(() => {
+    if (show && editServer) {
+      setName(editServer.name || '')
+      setHost(editServer.host || '')
+      setPort(editServer.port || '22')
+      setUsername(editServer.username || 'root')
+      setPrivateKey(editServer.privateKey || '')
+      setTestResult(editServer.lastTestSuccess ? { success: true, message: 'Previously connected successfully' } : null)
+    } else if (show) {
+      // Reset to defaults for new server
+      setName('')
+      setHost('')
+      setPort('22')
+      setUsername('root')
+      setPrivateKey('')
+      setShowKey(false)
+      setTestResult(null)
+      setError(null)
+    }
+  }, [show, editServer])
+
+  const handleTest = async () => {
+    setTesting(true)
+    setTestResult(null)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/ssh/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          host: host.trim(),
+          port: parseInt(port) || 22,
+          username: username.trim() || 'root',
+          private_key: privateKey.trim() || null
+        })
+      })
+
+      const data = await res.json()
+      setTestResult(data)
+    } catch (err) {
+      setTestResult({ success: false, message: 'Failed to test connection. Network error.' })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  const handleSave = () => {
+    setError(null)
+
+    // Validate
+    if (!name.trim()) {
+      setError('Server name is required')
+      return
+    }
+    if (!host.trim()) {
+      setError('Host/IP is required')
+      return
+    }
+
+    setSaving(true)
+
+    const server = {
+      id: editServer?.id || `vps-${Date.now()}`,
+      name: name.trim(),
+      host: host.trim(),
+      port: port || '22',
+      username: username.trim() || 'root',
+      privateKey: privateKey.trim(),
+      lastTestSuccess: testResult?.success || false,
+      lastTestTime: testResult?.success ? new Date().toISOString() : editServer?.lastTestTime,
+      serverInfo: testResult?.server_info || editServer?.serverInfo
+    }
+
+    onSave(server)
+    setSaving(false)
+    onClose()
+  }
+
+  if (!show) return null
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: cssVars.bgSecondary,
+        borderRadius: '16px',
+        width: '500px',
+        maxHeight: '90vh',
+        overflow: 'auto',
+        border: `1px solid ${cssVars.border}`
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '20px 24px',
+          borderBottom: `1px solid ${cssVars.border}`
+        }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+            {editServer ? 'Edit VPS Connection' : 'Add VPS Connection'}
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: cssVars.textMuted,
+              cursor: 'pointer',
+              padding: '4px'
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div style={{ padding: '24px' }}>
+          {error && (
+            <div style={{
+              padding: '12px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: `1px solid ${cssVars.error}`,
+              borderRadius: '8px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: cssVars.error,
+              fontSize: '13px'
+            }}>
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gap: '16px' }}>
+            {/* Server Name */}
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px' }}>
+                Server Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Production Server, Dev VPS"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <div style={{ fontSize: '11px', color: cssVars.textMuted, marginTop: '4px' }}>
+                A friendly name to identify this server
+              </div>
+            </div>
+
+            {/* Host and Port */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px' }}>
+                  Host / IP Address
+                </label>
+                <input
+                  type="text"
+                  value={host}
+                  onChange={(e) => setHost(e.target.value)}
+                  placeholder="e.g., 192.168.1.100 or server.example.com"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '14px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px' }}>
+                  Port
+                </label>
+                <input
+                  type="text"
+                  value={port}
+                  onChange={(e) => setPort(e.target.value)}
+                  placeholder="22"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '14px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Username */}
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px' }}>
+                Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="root"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* SSH Private Key */}
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px' }}>
+                SSH Private Key
+              </label>
+              <div style={{ position: 'relative' }}>
+                <textarea
+                  value={privateKey}
+                  onChange={(e) => setPrivateKey(e.target.value)}
+                  placeholder="-----BEGIN OPENSSH PRIVATE KEY-----
+...
+-----END OPENSSH PRIVATE KEY-----"
+                  rows={6}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    paddingRight: '40px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: showKey ? cssVars.textPrimary : 'transparent',
+                    textShadow: showKey ? 'none' : '0 0 8px rgba(255,255,255,0.5)',
+                    fontSize: '13px',
+                    fontFamily: 'monospace',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    resize: 'vertical'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowKey(!showKey)}
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    background: 'none',
+                    border: 'none',
+                    color: cssVars.textMuted,
+                    cursor: 'pointer',
+                    padding: '4px'
+                  }}
+                  title={showKey ? 'Hide key' : 'Show key'}
+                >
+                  {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <div style={{ fontSize: '11px', color: cssVars.textMuted, marginTop: '4px' }}>
+                Paste your private key or leave empty to use password authentication
+              </div>
+            </div>
+          </div>
+
+          {/* Test Connection Button */}
+          <div style={{ marginTop: '20px' }}>
+            <button
+              onClick={handleTest}
+              disabled={testing || !host.trim()}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 16px',
+                background: cssVars.bgTertiary,
+                border: `1px solid ${cssVars.border}`,
+                borderRadius: '8px',
+                color: cssVars.textPrimary,
+                fontSize: '13px',
+                cursor: testing || !host.trim() ? 'not-allowed' : 'pointer',
+                opacity: testing || !host.trim() ? 0.5 : 1
+              }}
+            >
+              {testing ? (
+                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+              ) : (
+                <Monitor size={16} />
+              )}
+              {testing ? 'Testing...' : 'Test Connection'}
+            </button>
+
+            {/* Test Result */}
+            {testResult && (
+              <div style={{
+                marginTop: '12px',
+                padding: '12px',
+                background: testResult.success
+                  ? 'rgba(34, 197, 94, 0.1)'
+                  : 'rgba(239, 68, 68, 0.1)',
+                border: `1px solid ${testResult.success ? cssVars.success : cssVars.error}`,
+                borderRadius: '8px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  color: testResult.success ? cssVars.success : cssVars.error,
+                  fontSize: '13px'
+                }}>
+                  {testResult.success ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                  {testResult.message}
+                </div>
+                {testResult.success && testResult.server_info && (
+                  <div style={{
+                    marginTop: '8px',
+                    fontSize: '12px',
+                    color: cssVars.textSecondary,
+                    display: 'grid',
+                    gridTemplateColumns: 'auto 1fr',
+                    gap: '4px 12px'
+                  }}>
+                    <span>Hostname:</span>
+                    <span>{testResult.server_info.hostname}</span>
+                    <span>User:</span>
+                    <span>{testResult.server_info.user}</span>
+                    {testResult.server_info.os && (
+                      <>
+                        <span>OS:</span>
+                        <span>{testResult.server_info.os}</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Security Notice */}
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            background: 'rgba(234, 179, 8, 0.1)',
+            borderRadius: '8px',
+            borderLeft: `3px solid ${cssVars.warning}`,
+            display: 'flex',
+            gap: '8px'
+          }}>
+            <AlertTriangle size={16} style={{ color: cssVars.warning, flexShrink: 0, marginTop: '2px' }} />
+            <div style={{ fontSize: '12px', color: cssVars.textSecondary }}>
+              <strong style={{ color: cssVars.warning }}>Security Note:</strong> Your SSH key is stored locally in your browser and never sent to our servers. Only the connection parameters are used when you work with this VPS.
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '12px',
+          padding: '16px 24px',
+          borderTop: `1px solid ${cssVars.border}`,
+          background: cssVars.bgTertiary
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 20px',
+              background: 'transparent',
+              border: `1px solid ${cssVars.border}`,
+              borderRadius: '8px',
+              color: cssVars.textPrimary,
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !name.trim() || !host.trim()}
+            style={{
+              padding: '10px 20px',
+              background: cssVars.primary,
+              border: 'none',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: saving || !name.trim() || !host.trim() ? 'not-allowed' : 'pointer',
+              opacity: saving || !name.trim() || !host.trim() ? 0.5 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            {saving && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
+            {editServer ? 'Save Changes' : 'Add Server'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// VPS Connections Settings Section
+function VPSConnectionsSettings() {
+  const [servers, setServers] = useState([])
+  const [showModal, setShowModal] = useState(false)
+  const [editingServer, setEditingServer] = useState(null)
+  const [showHelp, setShowHelp] = useState(false)
+
+  // Load servers from localStorage
+  useEffect(() => {
+    const savedServers = localStorage.getItem('vps_servers')
+    if (savedServers) {
+      try {
+        setServers(JSON.parse(savedServers))
+      } catch (e) {
+        console.error('Failed to parse VPS servers:', e)
+      }
+    }
+  }, [])
+
+  // Save servers to localStorage
+  const saveServers = (newServers) => {
+    setServers(newServers)
+    localStorage.setItem('vps_servers', JSON.stringify(newServers))
+  }
+
+  const handleAddServer = (server) => {
+    if (editingServer) {
+      // Update existing
+      const updated = servers.map(s => s.id === server.id ? server : s)
+      saveServers(updated)
+    } else {
+      // Add new
+      saveServers([...servers, server])
+    }
+    setEditingServer(null)
+  }
+
+  const handleEditServer = (server) => {
+    setEditingServer(server)
+    setShowModal(true)
+  }
+
+  const handleDeleteServer = (serverId) => {
+    if (window.confirm('Are you sure you want to remove this VPS connection?')) {
+      saveServers(servers.filter(s => s.id !== serverId))
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0 }}>VPS Connections</h2>
+      </div>
+      <p style={{ color: cssVars.textSecondary, fontSize: '14px', marginBottom: '24px' }}>
+        Manage your VPS/remote server connections. These servers are available when creating new projects.
+      </p>
+
+      {/* What is VPS? Help Section */}
+      <div style={{ marginBottom: '20px' }}>
+        <div
+          onClick={() => setShowHelp(!showHelp)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            padding: '8px 0'
+          }}
+        >
+          <span style={{
+            fontSize: '10px',
+            color: cssVars.textMuted,
+            transition: 'transform 0.2s',
+            transform: showHelp ? 'rotate(90deg)' : 'rotate(0deg)'
+          }}>
+            ▶
+          </span>
+          <span style={{ fontSize: '13px', color: cssVars.primary }}>How does VPS connection work?</span>
+        </div>
+        {showHelp && (
+          <div style={{
+            background: cssVars.bgPrimary,
+            border: `1px solid ${cssVars.border}`,
+            borderRadius: '12px',
+            padding: '20px',
+            marginTop: '8px'
+          }}>
+            <p style={{ margin: '0 0 16px 0', lineHeight: '1.6' }}>
+              <strong>VPS Connections</strong> allow HubLLM to connect directly to your remote servers via SSH. This enables:
+            </p>
+            <ul style={{ margin: '0 0 16px 0', paddingLeft: '20px', lineHeight: '1.8' }}>
+              <li>Direct file access and editing on your server</li>
+              <li>Running terminal commands remotely</li>
+              <li>AI-assisted server management and deployment</li>
+              <li>Secure connection using SSH keys</li>
+            </ul>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+              padding: '16px',
+              background: cssVars.bgSecondary,
+              borderRadius: '8px'
+            }}>
+              <span style={{ background: 'rgba(59, 130, 246, 0.2)', border: `1px solid ${cssVars.primary}`, padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>💻 HubLLM</span>
+              <span style={{ color: cssVars.textMuted }}>→</span>
+              <span style={{ background: 'rgba(168, 85, 247, 0.2)', border: '1px solid #a855f7', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>🔐 SSH</span>
+              <span style={{ color: cssVars.textMuted }}>→</span>
+              <span style={{ background: 'rgba(34, 197, 94, 0.2)', border: `1px solid ${cssVars.success}`, padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>🖥️ VPS</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Server List Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '16px'
+      }}>
+        <span style={{ fontWeight: '500' }}>Your VPS Servers</span>
+        <button
+          onClick={() => {
+            setEditingServer(null)
+            setShowModal(true)
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 16px',
+            background: cssVars.primary,
+            border: 'none',
+            borderRadius: '8px',
+            color: 'white',
+            fontSize: '13px',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}
+        >
+          <Plus size={16} />
+          Add VPS Connection
+        </button>
+      </div>
+
+      {/* Server List */}
+      <div style={{
+        background: cssVars.bgTertiary,
+        borderRadius: '12px',
+        overflow: 'hidden'
+      }}>
+        {servers.length === 0 ? (
+          <div style={{
+            padding: '40px 20px',
+            textAlign: 'center',
+            color: cssVars.textMuted
+          }}>
+            <Server size={48} style={{ opacity: 0.3, marginBottom: '12px' }} />
+            <div style={{ fontSize: '14px', marginBottom: '8px' }}>No VPS connections configured</div>
+            <div style={{ fontSize: '12px' }}>Click "Add VPS Connection" to add your first server</div>
+          </div>
+        ) : (
+          servers.map((server, index) => (
+            <div
+              key={server.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '16px 20px',
+                borderBottom: index < servers.length - 1 ? `1px solid ${cssVars.border}` : 'none',
+                gap: '16px'
+              }}
+            >
+              {/* Icon */}
+              <div style={{
+                width: '44px',
+                height: '44px',
+                background: cssVars.bgSecondary,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Server size={22} style={{ color: cssVars.primary }} />
+              </div>
+
+              {/* Info */}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: '500', marginBottom: '4px' }}>{server.name}</div>
+                <div style={{ fontSize: '12px', color: cssVars.textMuted }}>
+                  {server.username}@{server.host}:{server.port}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div style={{
+                fontSize: '12px',
+                color: server.lastTestSuccess ? cssVars.success : cssVars.textMuted,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                {server.lastTestSuccess ? '● Connected' : '○ Not tested'}
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => handleEditServer(server)}
+                  style={{
+                    padding: '6px 12px',
+                    background: cssVars.bgSecondary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '6px',
+                    color: cssVars.textPrimary,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <Edit2 size={12} />
+                  Configure
+                </button>
+                <button
+                  onClick={() => handleDeleteServer(server.id)}
+                  style={{
+                    padding: '6px 8px',
+                    background: cssVars.bgSecondary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '6px',
+                    color: cssVars.error,
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Info Box */}
+      <div style={{
+        marginTop: '16px',
+        padding: '12px',
+        background: 'rgba(59, 130, 246, 0.1)',
+        borderRadius: '8px',
+        borderLeft: `3px solid ${cssVars.primary}`
+      }}>
+        <div style={{ fontSize: '12px', color: cssVars.textSecondary }}>
+          <strong>🔒 Security:</strong> Your SSH keys are stored locally in your browser only. We never store or transmit your private keys to any server.
+        </div>
+      </div>
+
+      {/* Modal */}
+      <VPSModal
+        show={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setEditingServer(null)
+        }}
+        onSave={handleAddServer}
+        editServer={editingServer}
+      />
+    </div>
+  )
+}
+
 // Main Settings Page
 export default function Settings({ onBack, onLogout }) {
   const { user, getAuthHeader, logout } = useAuth()
@@ -2764,6 +3496,8 @@ export default function Settings({ onBack, onLogout }) {
         return <GlobalAgentsSettings />
       case 'mcp':
         return <GlobalMCPSettings />
+      case 'vps':
+        return <VPSConnectionsSettings />
       default:
         return <ProfileSettings user={user} getAuthHeader={getAuthHeader} onLogout={handleLogout} />
     }
@@ -2858,6 +3592,12 @@ export default function Settings({ onBack, onLogout }) {
             label="MCP Servers"
             active={activeTab === 'mcp'}
             onClick={() => setActiveTab('mcp')}
+          />
+          <NavItem
+            icon={Server}
+            label="VPS Connections"
+            active={activeTab === 'vps'}
+            onClick={() => setActiveTab('vps')}
           />
         </nav>
       </aside>

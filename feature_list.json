@@ -450,13 +450,13 @@
         "Test connection",
         "Save server"
       ],
-      "passes": false
+      "passes": true
     }
   ],
   "summary": {
     "total": 38,
-    "passing": 32,
-    "failing": 6,
+    "passing": 33,
+    "failing": 5,
     "categories": {
       "authentication": { "total": 5, "passing": 5 },
       "dashboard": { "total": 3, "passing": 3 },
@@ -467,7 +467,7 @@
       "mcp-servers": { "total": 2, "passing": 2 },
       "workspace": { "total": 6, "passing": 5 },
       "ai-chat": { "total": 2, "passing": 2 },
-      "settings": { "total": 3, "passing": 2 }
+      "settings": { "total": 3, "passing": 3 }
     }
   }
 }

@@ -427,6 +427,19 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   // VPS test connection state
   const [testingVps, setTestingVps] = useState(false)
   const [vpsTestResult, setVpsTestResult] = useState(null) // { success: bool, message: string, server_info: {} }
+  const [savedVpsServers, setSavedVpsServers] = useState([])
+
+  // Load saved VPS servers from localStorage (Settings > VPS Connections)
+  useEffect(() => {
+    const savedServers = localStorage.getItem('vps_servers')
+    if (savedServers) {
+      try {
+        setSavedVpsServers(JSON.parse(savedServers))
+      } catch (e) {
+        console.error('Failed to parse VPS servers:', e)
+      }
+    }
+  }, [])
 
   // Voice input for AI chat
   const { isListening, transcript, toggleListening, isSupported: voiceSupported } = useVoice()
@@ -521,6 +534,46 @@ export default function CreateProject({ onCancel, onCreateProject }) {
 
   const handleInputChange = (field) => (e) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }))
+  }
+
+  // Handle VPS server selection - pre-fill form if saved server selected
+  const handleVpsServerChange = (e) => {
+    const serverId = e.target.value
+    setFormData(prev => ({ ...prev, vpsServerId: serverId }))
+
+    // If a saved server is selected, pre-fill the form fields
+    if (serverId && serverId !== '') {
+      const server = savedVpsServers.find(s => s.id === serverId)
+      if (server) {
+        setFormData(prev => ({
+          ...prev,
+          vpsServerId: serverId,
+          vpsIp: server.host || '',
+          vpsPort: server.port || '22',
+          vpsKey: server.privateKey || ''
+        }))
+        // Show success if server was previously tested successfully
+        if (server.lastTestSuccess) {
+          setVpsTestResult({
+            success: true,
+            message: 'Server previously connected successfully',
+            server_info: server.serverInfo || null
+          })
+        } else {
+          setVpsTestResult(null)
+        }
+      }
+    } else {
+      // Clear fields for "Add New VPS"
+      setFormData(prev => ({
+        ...prev,
+        vpsServerId: '',
+        vpsIp: '',
+        vpsPort: '22',
+        vpsKey: ''
+      }))
+      setVpsTestResult(null)
+    }
   }
 
   const handleFileUpload = (e) => {
@@ -1680,11 +1733,13 @@ Examples:
                     <Select
                       label="Select Server"
                       value={formData.vpsServerId}
-                      onChange={handleInputChange('vpsServerId')}
+                      onChange={handleVpsServerChange}
                       options={[
                         { value: '', label: '+ Add New VPS' },
-                        { value: 'prod-01', label: 'prod-01 (192.168.1.104)' },
-                        { value: 'staging-01', label: 'staging-01 (192.168.1.105)' }
+                        ...savedVpsServers.map(server => ({
+                          value: server.id,
+                          label: `${server.name} (${server.host})`
+                        }))
                       ]}
                       style={{ marginBottom: '12px' }}
                     />

@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 32/38 (84%)
+- **Features Passing**: 33/38 (87%)
 
 ## Completed Features
 
@@ -543,12 +543,43 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Custom agents created in Settings > Global Agents now appear in Step 4 of Create Project. Agents can be enabled/disabled - disabled agents won't appear in the Create Project agent selection.
 
+### Session 25 - 2026-01-23
+**Focus**: VPS connections management in Settings (settings-003)
+**Completed**:
+- Added VPS Connections section to Settings page under Integrations
+- Created VPSModal component for adding/editing VPS servers with:
+  - Server name input
+  - Host/IP address and port inputs
+  - Username input
+  - SSH private key textarea with show/hide toggle
+  - Test Connection button that calls `/api/ssh/test` endpoint
+  - Connection test result display with server info
+  - Security notice about local key storage
+- Created VPSConnectionsSettings component with:
+  - "How does VPS connection work?" expandable help section
+  - VPS server list showing name, host:port, and connection status
+  - Configure and Delete buttons for each server
+  - Empty state with server icon when no servers configured
+  - Info box about local key storage security
+- Added "VPS Connections" navigation item in Settings sidebar
+- VPS servers stored in localStorage under key 'vps_servers'
+- Updated CreateProject.jsx to load saved VPS servers:
+  - VPS dropdown now shows saved servers from Settings
+  - Selecting a saved server pre-fills IP, port, and SSH key fields
+  - Shows previous test result if server was successfully connected before
+
+**Files modified**:
+- frontend/src/pages/Settings.jsx (VPSModal, VPSConnectionsSettings, navigation, imports)
+- frontend/src/pages/CreateProject.jsx (load VPS servers from localStorage, handleVpsServerChange)
+- feature_list.json (marked settings-003 as passing)
+
+**Notes**: VPS connections now persist across sessions via localStorage. Users can add servers in Settings > VPS Connections, then select them when creating a project in Step 2. SSH keys are stored locally and never sent to our servers.
+
 ---
 
 ## Next Priority Features
 
-1. **settings-003**: User can manage VPS servers in settings
-2. **workspace-006**: Preview panel shows Codespaces preview
+1. **workspace-006**: Preview panel shows Codespaces preview
 
 ---
 
