@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 10/38 (26%)
+- **Features Passing**: 11/38 (29%)
 
 ## Completed Features
 
@@ -89,15 +89,36 @@ This file tracks progress across Claude coding sessions. Each session should:
 
 **Notes**: Mockup ready for React conversion. GitHub OAuth flow simplified to single card with inline buttons.
 
+### Session 4 - 2026-01-23
+**Focus**: Create Project page (create-001)
+**Completed**:
+- Full Create Project page with all 5 steps matching mockup design
+- Step 1: Project Details with workspace/name inputs, brief textarea, AI chat panel
+- Step 2: Connection Source with GitHub OAuth and VPS collapsible form
+- Step 3: Project Context with tech stack and standards fields
+- Step 4: Project Agents with global and project-specific agent selection
+- Step 5: MCP Servers with global and project-specific server selection
+- Fixed action bar with Cancel and Create Project buttons
+- Integration with App.jsx routing (Create Project button in header)
+- All CSS variables matching mockup design
+
+**Files created**:
+- frontend/src/pages/CreateProject.jsx (complete 5-step form)
+
+**Files modified**:
+- frontend/src/App.jsx (added routing and Create Project button)
+
+**Notes**: Create Project page fully implemented. AI chat integration simulates responses (needs backend endpoint POST /api/ai/expand-brief for production). GitHub OAuth uses existing flow. VPS form ready for connection testing.
+
 ---
 
 ## Next Priority Features
 
-1. **create-001**: Create Project page (React conversion)
-2. **create-002**: AI brief expansion endpoint
-3. **github-001**: GitHub connect in project flow
-4. **dash-001**: Dashboard view (React)
-5. **settings-001**: Settings page (React)
+1. **create-002**: AI brief expansion endpoint (backend + frontend integration)
+2. **github-001**: GitHub connect in project flow
+3. **dash-001**: Dashboard view (React)
+4. **settings-001**: Settings page (React)
+5. **create-003**: AI generates project context from brief
 
 ---
 

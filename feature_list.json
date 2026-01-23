@@ -114,7 +114,7 @@
         "Click 'Create Project' button in header or dashboard",
         "Verify Create Project form loads with all 5 steps visible"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "create-002",
@@ -454,12 +454,12 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 10,
-    "failing": 28,
+    "passing": 11,
+    "failing": 27,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
       "dashboard": { "total": 3, "passing": 0 },
-      "project-creation": { "total": 6, "passing": 0 },
+      "project-creation": { "total": 6, "passing": 1 },
       "github-integration": { "total": 3, "passing": 0 },
       "vps-connection": { "total": 2, "passing": 0 },
       "agents": { "total": 3, "passing": 0 },

@@ -6,7 +6,8 @@ import Workspace from './components/Workspace'
 import ProjectSidebar from './components/ProjectSidebar'
 import ModelSelector from './components/ModelSelector'
 import SettingsModal from './components/SettingsModal'
-import { Settings, LogOut, User, Loader2 } from 'lucide-react'
+import CreateProject from './pages/CreateProject'
+import { Settings, LogOut, User, Loader2, Plus } from 'lucide-react'
 
 // Main App content (requires auth)
 function AppContent() {
@@ -16,6 +17,7 @@ function AppContent() {
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
   const [showSettings, setShowSettings] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [currentView, setCurrentView] = useState('workspace') // 'workspace' | 'create-project'
   const [apiKeys, setApiKeys] = useState({
     openrouter: localStorage.getItem('openrouter_key') || '',
     claude: localStorage.getItem('claude_key') || '',
@@ -64,6 +66,12 @@ function AppContent() {
     }
   }
 
+  const handleProjectCreated = (project) => {
+    setProjects([...projects, project])
+    setActiveProject(project)
+    setCurrentView('workspace')
+  }
+
   const handleLogout = async () => {
     await logout()
     setProjects([])
@@ -104,12 +112,23 @@ function AppContent() {
         <header className="h-14 border-b border-gray-700 flex items-center justify-between px-4 flex-shrink-0">
           <div className="flex items-center gap-4">
             <h1 className="font-semibold">
-              {activeProject?.name || 'HubLLM'}
+              {currentView === 'create-project' ? 'Create Project' : (activeProject?.name || 'HubLLM')}
             </h1>
-            <ModelSelector
-              selectedModel={selectedModel}
-              onSelectModel={setSelectedModel}
-            />
+            {currentView !== 'create-project' && (
+              <ModelSelector
+                selectedModel={selectedModel}
+                onSelectModel={setSelectedModel}
+              />
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentView('create-project')}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-medium"
+            >
+              <Plus size={16} />
+              Create Project
+            </button>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -168,8 +187,13 @@ function AppContent() {
           </div>
         </header>
 
-        {/* Workspace Area */}
-        {!hasApiKey ? (
+        {/* Main Content Area */}
+        {currentView === 'create-project' ? (
+          <CreateProject
+            onCancel={() => setCurrentView('workspace')}
+            onCreateProject={handleProjectCreated}
+          />
+        ) : !hasApiKey ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center max-w-md p-8">
               <h2 className="text-xl font-semibold mb-4">Welcome to HubLLM</h2>
