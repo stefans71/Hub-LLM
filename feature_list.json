@@ -168,7 +168,7 @@
         "Verify transcription appears in input",
         "Verify message can be sent"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "github-001",
@@ -455,12 +455,12 @@
   ],
   "summary": {
     "total": 38,
-    "passing": 22,
-    "failing": 16,
+    "passing": 23,
+    "failing": 15,
     "categories": {
       "authentication": { "total": 5, "passing": 4 },
       "dashboard": { "total": 3, "passing": 3 },
-      "project-creation": { "total": 6, "passing": 4 },
+      "project-creation": { "total": 6, "passing": 5 },
       "github-integration": { "total": 3, "passing": 3 },
       "vps-connection": { "total": 2, "passing": 0 },
       "agents": { "total": 3, "passing": 0 },

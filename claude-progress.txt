@@ -11,7 +11,7 @@ This file tracks progress across Claude coding sessions. Each session should:
 ## Project Status
 - **Version**: 0.2.0
 - **Last Updated**: 2026-01-23
-- **Features Passing**: 22/38 (58%)
+- **Features Passing**: 23/38 (61%)
 
 ## Completed Features
 
@@ -330,6 +330,22 @@ This file tracks progress across Claude coding sessions. Each session should:
 - frontend/src/App.jsx (imported DashboardSidebar, separate layout for dashboard view)
 
 **Notes**: Projects are grouped by their `workspace` field. If a project doesn't have a workspace, it goes into "Default". The sidebar can be collapsed to a thin strip for more screen space. Clicking a project navigates to the workspace view with that project active.
+
+### Session 15 - 2026-01-23
+**Focus**: Voice input in AI chat panel (create-005)
+**Completed**:
+- Added voice input functionality to the AI chat panel in Create Project page
+- Integrated existing `useVoice` hook from VoiceInput component
+- Microphone button now toggles voice recording on/off
+- Voice transcription automatically appends to chat input field
+- Visual feedback: button turns red and pulses when recording
+- Graceful degradation: shows MicOff icon and disabled state if browser doesn't support Web Speech API
+- Added appropriate hover titles for different states
+
+**Files modified**:
+- frontend/src/pages/CreateProject.jsx (imported useVoice hook, added voice state, connected mic button)
+
+**Notes**: Uses the Web Speech API which is free and works in Chrome, Edge, and Safari. The existing VoiceInput.jsx component provided the `useVoice` hook which made integration straightforward. Transcript is appended to chat input on each speech recognition result.
 
 ---
 

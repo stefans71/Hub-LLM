@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useVoice } from '../components/VoiceInput'
 import {
-  ChevronRight, ChevronDown, Upload, Mic, Send, X, Plus,
+  ChevronRight, ChevronDown, Upload, Mic, MicOff, Send, X, Plus,
   Cloud, Server, Check, Sparkles, Zap, ExternalLink,
   FileText, Shield, CheckSquare, Wrench, Database,
   MessageSquare, FolderOpen
@@ -392,6 +393,16 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [contextGenerated, setContextGenerated] = useState(false)
   const [uploadedFileName, setUploadedFileName] = useState(null)
+
+  // Voice input for AI chat
+  const { isListening, transcript, toggleListening, isSupported: voiceSupported } = useVoice()
+
+  // Watch for voice transcription results and append to chat input
+  useEffect(() => {
+    if (transcript) {
+      setChatInput(prev => prev + (prev ? ' ' : '') + transcript)
+    }
+  }, [transcript])
 
   // Available global agents
   const globalAgents = [
@@ -1099,19 +1110,25 @@ Examples:
                           }}
                         />
                         <button
+                          onClick={toggleListening}
+                          disabled={!voiceSupported}
                           style={{
                             position: 'absolute',
                             right: '8px',
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            background: 'none',
+                            background: isListening ? cssVars.error : 'none',
                             border: 'none',
-                            cursor: 'pointer',
-                            color: cssVars.textMuted
+                            borderRadius: '4px',
+                            padding: '4px',
+                            cursor: voiceSupported ? 'pointer' : 'not-allowed',
+                            color: isListening ? 'white' : (voiceSupported ? cssVars.textMuted : cssVars.border),
+                            animation: isListening ? 'pulse 1s ease-in-out infinite' : 'none',
+                            transition: 'all 0.2s ease'
                           }}
-                          title="Voice input"
+                          title={!voiceSupported ? 'Voice input not supported in this browser' : (isListening ? 'Stop recording' : 'Start voice input')}
                         >
-                          <Mic size={16} />
+                          {voiceSupported ? <Mic size={16} /> : <MicOff size={16} />}
                         </button>
                       </div>
                       <Button variant="primary" onClick={handleSendChatMessage} style={{ padding: '8px 14px' }}>
