@@ -10,10 +10,40 @@ from fastapi import APIRouter, Query, HTTPException, Body
 from typing import Optional
 from pydantic import BaseModel
 
-from services.ssh import get_connection, servers_db
+from services.ssh import SSHConnection, SSHCredentials
+from routers.ssh import servers_db  # Use the same servers_db as the ssh router
 from routers.projects import projects_db
 
 router = APIRouter()
+
+# Connection cache for this router
+_file_connections: dict[str, SSHConnection] = {}
+
+
+async def get_file_connection(server_id: str) -> SSHConnection:
+    """Get or create an SSH connection for file operations using the correct servers_db"""
+    if server_id not in servers_db:
+        raise ValueError(f"Server {server_id} not found")
+
+    # Return existing connection if available and connected
+    if server_id in _file_connections:
+        return _file_connections[server_id]
+
+    # Create new connection using data from routers/ssh.py servers_db
+    server = servers_db[server_id]
+    credentials = SSHCredentials(
+        host=server.get("host"),
+        port=server.get("port", 22),
+        username=server.get("username"),
+        password=server.get("password"),
+        private_key=server.get("private_key"),
+        passphrase=server.get("passphrase")
+    )
+
+    conn = SSHConnection(credentials)
+    await conn.connect()
+    _file_connections[server_id] = conn
+    return conn
 
 
 class FileWriteRequest(BaseModel):
@@ -63,7 +93,7 @@ async def list_files(
         raise HTTPException(status_code=404, detail=f"Server {resolved_server_id} not found")
 
     try:
-        conn = await get_connection(resolved_server_id)
+        conn = await get_file_connection(resolved_server_id)
 
         # Handle home directory shorthand
         if path == "~":
@@ -121,7 +151,7 @@ async def read_file(
         raise HTTPException(status_code=404, detail=f"Server {resolved_server_id} not found")
 
     try:
-        conn = await get_connection(resolved_server_id)
+        conn = await get_file_connection(resolved_server_id)
 
         # Get file info first to check if it exists and get size
         file_info = await conn.get_file_info(path)
@@ -193,7 +223,7 @@ async def write_file(
         raise HTTPException(status_code=404, detail=f"Server {resolved_server_id} not found")
 
     try:
-        conn = await get_connection(resolved_server_id)
+        conn = await get_file_connection(resolved_server_id)
         await conn.write_file(body.path, body.content)
 
         return {
@@ -234,7 +264,7 @@ async def create_directory(
         raise HTTPException(status_code=404, detail=f"Server {resolved_server_id} not found")
 
     try:
-        conn = await get_connection(resolved_server_id)
+        conn = await get_file_connection(resolved_server_id)
         await conn.create_directory(path)
 
         return {"path": path, "success": True}
@@ -270,7 +300,7 @@ async def delete_file_or_dir(
         raise HTTPException(status_code=404, detail=f"Server {resolved_server_id} not found")
 
     try:
-        conn = await get_connection(resolved_server_id)
+        conn = await get_file_connection(resolved_server_id)
         await conn.delete(path, is_dir)
 
         return {"path": path, "success": True}

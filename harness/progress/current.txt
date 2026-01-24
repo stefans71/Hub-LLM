@@ -516,4 +516,36 @@ Features:
 
 ---
 
+## Session 45 - 2026-01-24
+**Tasks**: BUG-02 (Create Project Button Hidden) + BUG-03 (Terminal WebSocket) - Size XS + M
+**Status**: ✅ Complete
+
+**BUG-02 Fix** (CSS Flexbox):
+- Added `overflow: hidden` to outer container in CreateProject.jsx
+- Added `minHeight: 0` to scrollable content div
+- Standard CSS fix for flexbox scroll containers
+
+**BUG-03 Fixes** (WebSocket + servers_db):
+1. **frontend/vite.config.js**: Added `ws: true` to proxy config for WebSocket support
+2. **backend/routers/terminal.py**: Changed import to use `servers_db` from `routers.ssh` instead of `services.ssh`
+3. **backend/routers/files.py**: Same fix - now uses local `get_file_connection()` with correct servers_db
+4. Fixed server_name retrieval for dict-style storage in terminal.py
+
+**Root Cause Analysis**:
+- Two separate `servers_db` dictionaries existed:
+  - `backend/services/ssh.py` (line 262) - never used
+  - `backend/routers/ssh.py` (line 75) - where Settings saves VPS servers
+- Terminal router was looking up servers from wrong database
+
+**Files Modified**:
+- frontend/src/pages/CreateProject.jsx (BUG-02)
+- frontend/vite.config.js (BUG-03)
+- backend/routers/terminal.py (BUG-03)
+- backend/routers/files.py (BUG-03)
+
+**Verified**: Build passes ✓
+**Note**: Auth required for visual verification - skipped per rule
+
+---
+
 <!-- Add new sessions below this line -->

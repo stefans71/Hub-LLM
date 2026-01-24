@@ -1,39 +1,13 @@
 {
   "meta": {
-    "version": "2.3",
-    "phase": "Bug Fixes",
-    "last_updated": "2024-01-24"
+    "version": "2.4",
+    "phase": "Bug Fixes Complete",
+    "last_updated": "2026-01-24"
   },
-  "queue": [
-    {
-      "id": "BUG-02",
-      "name": "Create Project Button Hidden",
-      "size": "XS",
-      "priority": 2,
-      "status": "pending",
-      "description": "Create Project button at bottom of wizard is cut off/hidden",
-      "location": "Create Project page, Step 5 (MCP Servers), bottom action bar",
-      "fix": "Action bar should be sticky/fixed at bottom, or page needs proper scrolling",
-      "test": "Create Project button fully visible and clickable"
-    },
-    {
-      "id": "BUG-03",
-      "name": "Terminal WebSocket Connection",
-      "size": "M",
-      "priority": 3,
-      "status": "pending",
-      "description": "Terminal shows 'Connecting...' but never connects to VPS",
-      "context": "VPS is connected in Settings (206.189.78.115), project is linked, but terminal WebSocket fails",
-      "debug_steps": [
-        "Check WebSocket URL being called",
-        "Check backend logs for connection attempts",
-        "Verify vps_server_id is passed correctly",
-        "Check if SSH credentials are being retrieved"
-      ],
-      "test": "Terminal connects and shows real bash prompt from DO server"
-    }
-  ],
+  "queue": [],
   "completed": [
+    {"id": "BUG-03", "name": "Terminal WebSocket Connection", "completed": "2026-01-24"},
+    {"id": "BUG-02", "name": "Create Project Button Hidden", "completed": "2026-01-24"},
     {"id": "BUG-01", "name": "Workspace Blank Page Crash", "completed": "2026-01-24"},
     {"id": "FIX-01", "name": "VPS sync to backend", "completed": "2024-01-24"},
     {"id": "FIX-02", "name": "Wrong IP in top bar", "completed": "2024-01-24"},
@@ -41,7 +15,7 @@
     {"id": "FIX-05", "name": "ServerManager architecture", "completed": "2024-01-24"}
   ],
   "notes": {
-    "recent_changes": "ServerManager.jsx, Workspace.jsx, WorkspaceTopBar.jsx were modified - likely source of BUG-01",
+    "recent_fixes": "BUG-02: CSS flexbox fix, BUG-03: Vite WS proxy + unified servers_db",
     "vps_info": "User's DO server: 206.189.78.115, connected in Settings > VPS Connections"
   }
 }

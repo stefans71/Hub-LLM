@@ -11,7 +11,8 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from typing import Optional
 import asyncio
 
-from services.ssh import SSHConnection, SSHCredentials, servers_db, ServerCredentials
+from services.ssh import SSHConnection, SSHCredentials, ServerCredentials
+from routers.ssh import servers_db  # Use the same servers_db as the ssh router
 from routers.projects import projects_db
 
 router = APIRouter()
@@ -92,7 +93,7 @@ async def terminal_websocket(
         return
 
     server = servers_db[resolved_server_id]
-    server_name = server.name if hasattr(server, 'name') else server.get('name', server.host if hasattr(server, 'host') else 'Unknown')
+    server_name = server.name if hasattr(server, 'name') else server.get('name', server.get('host', 'Unknown'))
 
     # Build credentials from server data
     if isinstance(server, ServerCredentials):

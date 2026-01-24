@@ -1104,10 +1104,11 @@ In the meantime, I can help you think through your project. What would you like 
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      color: cssVars.textPrimary
+      color: cssVars.textPrimary,
+      overflow: 'hidden'
     }}>
       {/* Scrollable Content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px', minHeight: 0 }}>
         <div style={{ maxWidth: '720px', margin: '0 auto' }}>
           <h1 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '8px' }}>Create New Project</h1>
           <p style={{ color: cssVars.textSecondary, marginBottom: '32px' }}>
