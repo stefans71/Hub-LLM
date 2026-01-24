@@ -55,3 +55,20 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 40 - 2026-01-24
+**Task**: T-01 (Terminal WebSocket Endpoint)
+**New Commands/Patterns**:
+- Backend is Python/FastAPI, not Node.js - feature_queue had outdated references (routes/vps.js → routers/ssh.py)
+- SSH service already existed in `services/ssh.py` with asyncssh - complete with terminal, SFTP, file ops
+- WebSocket endpoints use FastAPI's `@router.websocket` decorator
+- Query params in WebSocket: `Query(None)` for optional params
+**Friction Points**:
+- feature_queue.json references were for Node.js but backend is Python
+- T-02 was already complete (just used asyncssh instead of ssh2) - marked as pre-existing
+**Files Needing Attention**:
+- Terminal.jsx needs to be integrated with new `/api/terminal/ws` endpoint (T-03)
+- LLMDevPanel.jsx uses mock terminal output - needs real xterm.js integration
+- Multiple SSH endpoints exist (/api/ssh/servers/, /api/servers/, /api/terminal/) - could consolidate
+
+---
+

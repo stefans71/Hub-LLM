@@ -2,55 +2,12 @@
   "meta": {
     "version": "2.1",
     "total_elements": 917,
-    "completed_elements": 862,
+    "completed_elements": 864,
     "completion_percentage": 94,
-    "last_updated": "2024-01-24",
+    "last_updated": "2026-01-24",
     "phase": "Terminal Integration"
   },
   "queue": [
-    {
-      "id": "T-01",
-      "name": "Terminal WebSocket Endpoint",
-      "size": "M",
-      "priority": 1,
-      "status": "pending",
-      "description": "Create WebSocket endpoint at /api/terminal/ws that handles terminal connections",
-      "reference_existing": [
-        "backend/routes/vps.js - VPS connection logic",
-        "backend/services/ - Check for existing SSH services",
-        "frontend/src/pages/Settings.jsx - VPSConnectionsSettings shows working SSH"
-      ],
-      "requirements": [
-        "WebSocket endpoint at /api/terminal/ws",
-        "Accept projectId or vpsId to identify which VPS to connect",
-        "Use express-ws or ws library",
-        "Handle connection lifecycle (open, message, close, error)"
-      ],
-      "depends_on": [],
-      "test": "wscat -c ws://localhost:8000/api/terminal/ws"
-    },
-    {
-      "id": "T-02",
-      "name": "SSH Session Service",
-      "size": "M",
-      "priority": 2,
-      "status": "pending",
-      "description": "Create SSH session service using ssh2 library to connect to VPS",
-      "reference_existing": [
-        "VPS credentials are already stored in database",
-        "VPS connection UI shows 'Connected' status - that logic exists",
-        "Check backend/models/ for VPS/connection schemas"
-      ],
-      "requirements": [
-        "Use ssh2 library for SSH connections",
-        "Retrieve VPS credentials from database (host, port, username, key/password)",
-        "Create interactive shell session",
-        "Pipe SSH stdin/stdout through WebSocket from T-01",
-        "Handle auth failures, timeouts, disconnects gracefully"
-      ],
-      "depends_on": ["T-01"],
-      "test": "Connect via WebSocket, type 'ls', see real directory listing"
-    },
     {
       "id": "T-03",
       "name": "Terminal WebSocket Hook",
@@ -68,7 +25,7 @@
         "Connect WebSocket onmessage to xterm.write",
         "Pass projectId/vpsId from Workspace context"
       ],
-      "depends_on": ["T-02"],
+      "depends_on": [],
       "test": "Open workspace, see real terminal prompt from VPS"
     },
     {
@@ -102,7 +59,7 @@
         "Return: name, type (file/dir), size, permissions, modified date",
         "Handle permission errors gracefully"
       ],
-      "depends_on": ["T-02"],
+      "depends_on": [],
       "test": "curl /api/files?path=/ returns JSON directory listing"
     },
     {
@@ -137,7 +94,7 @@
         "Handle binary vs text files",
         "Handle large files (streaming or size limit)"
       ],
-      "depends_on": ["T-02"],
+      "depends_on": [],
       "test": "Read a file, modify it, save it, verify change on VPS"
     },
     {
@@ -175,10 +132,13 @@
     {"id": "W-69", "name": "Preview Panel", "completed": "2024-01-24"},
     {"id": "M-01", "name": "Model Notification", "completed": "2024-01-24"},
     {"id": "M-10", "name": "Agent Modal", "completed": "2024-01-24"},
-    {"id": "M-63", "name": "MCP Server Modal", "completed": "2024-01-24"}
+    {"id": "M-63", "name": "MCP Server Modal", "completed": "2024-01-24"},
+    {"id": "T-01", "name": "Terminal WebSocket Endpoint", "completed": "2026-01-24"},
+    {"id": "T-02", "name": "SSH Session Service", "completed": "2026-01-24", "note": "Already existed in services/ssh.py with asyncssh"}
   ],
   "notes": {
     "vps_connection_works": "SSH connection to VPS is already working - see Settings > VPS Connections. Credentials stored in database. Reference this existing code.",
+    "terminal_endpoint": "WebSocket at /api/terminal/ws accepts projectId or serverId query params",
     "terminal_component_exists": "Terminal.jsx has xterm.js set up but connected to mock data",
     "file_components_exist": "FileBrowser.jsx and CodeEditor.jsx exist but use mock data",
     "docker_deferred": "Docker integration (D-01, D-02) deferred - do after terminal/files work"

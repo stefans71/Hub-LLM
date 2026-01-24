@@ -368,4 +368,27 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 
 ---
 
+### Session 40 - 2026-01-24
+**Task**: T-01 (Terminal WebSocket Endpoint) + T-02 (SSH Session Service) - Size M + M (T-02 pre-existed)
+**Status**: ✅ Complete
+**Files Modified**:
+- backend/routers/terminal.py (created)
+- backend/routers/__init__.py (modified - added terminal)
+- backend/main.py (modified - added terminal router)
+**Elements Implemented**:
+- WebSocket endpoint at /api/terminal/ws
+- Accepts projectId or serverId query params
+- Looks up project's vps_server_id if projectId given
+- Creates SSH terminal session using existing SSHConnection service
+- Handles bidirectional communication (input, output, resize)
+- Connection lifecycle management (connect, disconnect, error handling)
+- Status endpoint at /api/terminal/status
+**Notes**:
+- T-02 (SSH Session Service) was already implemented in services/ssh.py with asyncssh
+- The new terminal router uses the existing SSHConnection class
+- Protocol: init message with cols/rows, then input/resize messages
+- Server sends: connected, output, error, disconnected messages
+
+---
+
 <!-- Add new sessions below this line -->

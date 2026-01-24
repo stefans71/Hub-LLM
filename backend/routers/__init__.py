@@ -1,1 +1,1 @@
-from . import chat, projects, voice, ssh, github, servers, auth
+from . import chat, projects, voice, ssh, github, servers, auth, ai, stats, terminal
