@@ -238,3 +238,16 @@ agent-browser click "text with spaces and special.chars"  # CSS parser fails
 2. **Get snapshot first** - Run `snapshot -i` before any interaction
 3. **Chain with &&** - `agent-browser click ref=e1 && sleep 1 && agent-browser screenshot out.png`
 4. **Use fill, not type** - `fill` works with special characters, `type` doesn't
+
+---
+
+## Auth Bypass Rule
+
+**NEVER spend tokens on login/signup during visual verification.**
+
+If login page appears:
+- Note "view requires authentication - verified separately"
+- Screenshot what's visible
+- Continue to commit your code
+
+Auth is tested separately. Your job is verifying the component you built.
