@@ -146,3 +146,95 @@ If login page appears:
 - Continue to commit your code
 
 Auth is tested separately. Your job is verifying the component you built.
+
+---
+
+## Working Commands (Verified 2026-01-24)
+
+### Getting Element References
+
+```bash
+# Get interactive snapshot with ref IDs
+agent-browser snapshot -i
+# Output: - textbox "placeholder" [ref=e3]
+#         - button "Submit" [ref=e7]
+```
+
+### Clicking Elements
+
+```bash
+# WORKS: Click by ref ID (most reliable)
+agent-browser click ref=e6
+
+# WORKS: Click by simple text (no special chars)
+agent-browser click "API Keys"
+
+# FAILS: Text with dots/special chars
+agent-browser click "Claude Sonnet 4.5"  # Error: Unexpected token
+```
+
+### Filling Form Fields
+
+```bash
+# WORKS: Fill by ref ID
+agent-browser fill ref=e3 "test@example.com"
+agent-browser fill ref=e4 "password123"
+
+# FAILS: type command with special chars
+agent-browser type "test@example.com"  # Error: @ interpreted as CSS selector
+```
+
+### Navigation
+
+```bash
+# Open URL
+agent-browser open http://localhost:5173/workspace
+
+# Scroll
+agent-browser scroll down
+agent-browser scroll up
+```
+
+### Screenshots
+
+```bash
+# Save screenshot
+agent-browser screenshot /path/to/output.png
+```
+
+### Login Flow (If Needed)
+
+```bash
+# 1. Get snapshot to find element refs
+agent-browser snapshot -i
+
+# 2. Click Create Account tab (if new user)
+agent-browser click ref=e2
+
+# 3. Fill form fields by ref
+agent-browser fill ref=e3 "Test User"
+agent-browser fill ref=e4 "test@example.com"
+agent-browser fill ref=e5 "password123"
+
+# 4. Submit
+agent-browser click ref=e7
+
+# 5. Wait and screenshot
+sleep 2
+agent-browser screenshot result.png
+```
+
+### Commands That DON'T Exist
+
+```bash
+# These will fail:
+agent-browser execute "js code"  # No execute command
+agent-browser click "text with spaces and special.chars"  # CSS parser fails
+```
+
+### Pro Tips
+
+1. **Always use refs** - `ref=eX` syntax is most reliable
+2. **Get snapshot first** - Run `snapshot -i` before any interaction
+3. **Chain with &&** - `agent-browser click ref=e1 && sleep 1 && agent-browser screenshot out.png`
+4. **Use fill, not type** - `fill` works with special characters, `type` doesn't
