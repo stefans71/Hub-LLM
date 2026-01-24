@@ -2,8 +2,8 @@
   "meta": {
     "version": "2.0",
     "total_elements": 917,
-    "completed_elements": 684,
-    "completion_percentage": 75,
+    "completed_elements": 694,
+    "completion_percentage": 76,
     "last_updated": "2026-01-24"
   },
   "queue": [
@@ -68,7 +68,7 @@
       "size": "S",
       "elements": 10,
       "priority": 6,
-      "status": "pending",
+      "status": "complete",
       "description": "Model dropdown with provider groups",
       "mapping_file": "settings.md",
       "mapping_lines": "S-96 to S-105",
@@ -173,6 +173,13 @@
       "elements": 32,
       "completed_date": "2026-01-24",
       "session": 34
+    },
+    {
+      "id": "S-96",
+      "name": "Default Model Section",
+      "elements": 10,
+      "completed_date": "2026-01-24",
+      "session": 35
     }
   ],
   "notes": {

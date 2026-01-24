@@ -457,6 +457,131 @@ function ProfileSettings({ user, getAuthHeader, onLogout }) {
   )
 }
 
+// Default Model Settings Section (S-97 to S-106)
+function DefaultModelSettings() {
+  const [selectedModel, setSelectedModel] = useState('claude-opus-4.5')
+  const [message, setMessage] = useState(null)
+
+  useEffect(() => {
+    const savedModel = localStorage.getItem('default_model') || 'claude-opus-4.5'
+    setSelectedModel(savedModel)
+  }, [])
+
+  const handleSave = () => {
+    localStorage.setItem('default_model', selectedModel)
+    setMessage({ type: 'success', text: 'Default model saved successfully!' })
+    setTimeout(() => setMessage(null), 3000)
+  }
+
+  return (
+    <div>
+      {/* S-98: Section Title */}
+      <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '8px' }}>Default Model</h2>
+
+      {/* S-99: Section Description */}
+      <p style={{ color: cssVars.textSecondary, fontSize: '14px', marginBottom: '24px' }}>
+        Choose the default AI model for new projects. Your Anthropic subscription provides access to all Claude models. Other models require OpenRouter.
+      </p>
+
+      {/* S-100: Model Select Group */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        marginBottom: '16px'
+      }}>
+        {/* S-101: Model Select Dropdown */}
+        <select
+          value={selectedModel}
+          onChange={(e) => setSelectedModel(e.target.value)}
+          style={{
+            flex: 1,
+            padding: '10px 12px',
+            background: cssVars.bgTertiary,
+            border: `1px solid ${cssVars.border}`,
+            borderRadius: '8px',
+            color: cssVars.textPrimary,
+            fontSize: '14px',
+            cursor: 'pointer',
+            outline: 'none'
+          }}
+        >
+          {/* S-102: Anthropic Option Group */}
+          <optgroup label="Anthropic (Subscription - Included)" style={{ background: cssVars.bgSecondary }}>
+            <option value="claude-opus-4.5">Claude Opus 4.5</option>
+            <option value="claude-sonnet-4.5">Claude Sonnet 4.5</option>
+            <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+            <option value="claude-3-opus">Claude 3 Opus</option>
+            <option value="claude-3-haiku">Claude 3 Haiku</option>
+          </optgroup>
+
+          {/* S-103: OpenRouter Option Group */}
+          <optgroup label="OpenRouter (Paid - Requires API Key)" style={{ background: cssVars.bgSecondary }}>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+            <option value="gpt-5.2-codex">GPT-5.2 Codex</option>
+          </optgroup>
+
+          {/* S-104: Google Option Group */}
+          <optgroup label="Google (Coming Soon)" style={{ background: cssVars.bgSecondary }}>
+            <option value="gemini-pro" disabled>Gemini Pro — Coming Soon</option>
+          </optgroup>
+        </select>
+
+        {/* S-105: Save Model Button */}
+        <button
+          onClick={handleSave}
+          style={{
+            padding: '10px 20px',
+            background: cssVars.primary,
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'background 0.15s ease'
+          }}
+          onMouseEnter={(e) => e.target.style.background = cssVars.primaryHover}
+          onMouseLeave={(e) => e.target.style.background = cssVars.primary}
+        >
+          Save
+        </button>
+      </div>
+
+      {/* Success/Error Message */}
+      {message && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '12px',
+          background: message.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+          borderRadius: '8px',
+          marginBottom: '16px',
+          color: message.type === 'success' ? cssVars.success : cssVars.error,
+          fontSize: '13px'
+        }}>
+          {message.type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+          {message.text}
+        </div>
+      )}
+
+      {/* S-106: Model Tip Box */}
+      <div style={{
+        padding: '12px',
+        background: 'rgba(234, 179, 8, 0.1)',
+        borderRadius: '8px',
+        borderLeft: `3px solid ${cssVars.warning}`
+      }}>
+        <div style={{ fontSize: '13px', color: cssVars.textSecondary }}>
+          <strong>💡 Tip:</strong> Claude models are free with your Anthropic subscription. OpenRouter models use your API credits and are billed separately.
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // API Keys Settings Section
 function APIKeysSettings() {
   const [openrouterKey, setOpenrouterKey] = useState('')
@@ -3489,6 +3614,8 @@ export default function Settings({ onBack, onLogout }) {
     switch (activeTab) {
       case 'subscription':
         return <AnthropicSubscription user={user} />
+      case 'model':
+        return <DefaultModelSettings />
       case 'profile':
         return <ProfileSettings user={user} getAuthHeader={getAuthHeader} onLogout={handleLogout} />
       case 'apikeys':
@@ -3568,6 +3695,12 @@ export default function Settings({ onBack, onLogout }) {
             label="Anthropic Subscription"
             active={activeTab === 'subscription'}
             onClick={() => setActiveTab('subscription')}
+          />
+          <NavItem
+            icon={Monitor}
+            label="Default Model"
+            active={activeTab === 'model'}
+            onClick={() => setActiveTab('model')}
           />
           <NavItem
             icon={Key}

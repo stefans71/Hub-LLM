@@ -173,4 +173,28 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 
 ---
 
+### Session 35 - 2026-01-24
+**Task**: S-96 (Default Model Section) - Size S
+**Status**: ✅ Complete
+**Files Modified**:
+- frontend/src/pages/Settings.jsx (modified - added DefaultModelSettings component)
+**Elements Implemented** (10 total):
+- S-97: Default Model Section container
+- S-98: Section Title "Default Model"
+- S-99: Section Description
+- S-100: Model Select Group
+- S-101: Model Select Dropdown
+- S-102: Anthropic Option Group (Claude Opus 4.5, Sonnet 4.5, 3.5 Sonnet, 3 Opus, 3 Haiku)
+- S-103: OpenRouter Option Group (GPT-4o, GPT-4 Turbo, GPT-5.2 Codex)
+- S-104: Google Option Group (Gemini Pro - disabled)
+- S-105: Save Model Button
+- S-106: Model Tip Box (yellow border)
+**Verified**: Screenshot matches mockup - all elements visible and functional
+**Notes**:
+- Added "Default Model" navigation item with Monitor icon
+- Model selection saved to localStorage
+- Tip box styled with warning color border
+
+---
+
 <!-- Add new sessions below this line -->
