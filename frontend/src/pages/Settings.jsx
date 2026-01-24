@@ -1194,7 +1194,7 @@ const serviceEmojis = {
   linear: '📐'
 }
 
-// MCP Server Modal
+// MCP Server Modal (M-63 to M-91)
 function MCPModal({ show, onClose, onSave, editServer }) {
   const [serverType, setServerType] = useState('database')
   const [dbType, setDbType] = useState('postgres')
@@ -1207,7 +1207,29 @@ function MCPModal({ show, onClose, onSave, editServer }) {
   const [customArgs, setCustomArgs] = useState('')
   const [customName, setCustomName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [testing, setTesting] = useState(false)
   const [error, setError] = useState(null)
+
+  // Test connection handler
+  const handleTestConnection = () => {
+    setTesting(true)
+    setError(null)
+    // Simulate connection test
+    setTimeout(() => {
+      setTesting(false)
+      // For demo, show success or failure randomly
+      if (Math.random() > 0.3) {
+        alert('Connection successful!')
+      } else {
+        setError('Connection failed. Please check your credentials.')
+      }
+    }, 1500)
+  }
+
+  // OAuth handler
+  const handleOAuth = () => {
+    alert(`OAuth connection for ${service} would open in a new window`)
+  }
 
   // Reset form when modal opens/closes or editServer changes
   useEffect(() => {
@@ -1312,8 +1334,10 @@ function MCPModal({ show, onClose, onSave, editServer }) {
 
   return (
     <>
-      {/* Overlay */}
+      {/* M-63: Overlay */}
       <div
+        id="mcp-modal-overlay"
+        className="modal-overlay"
         onClick={onClose}
         style={{
           position: 'fixed',
@@ -1325,49 +1349,56 @@ function MCPModal({ show, onClose, onSave, editServer }) {
           zIndex: 1000
         }}
       />
-      {/* Modal */}
-      <div style={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        background: cssVars.bgSecondary,
-        borderRadius: '16px',
-        width: '500px',
-        maxWidth: '90vw',
-        maxHeight: '90vh',
-        overflow: 'auto',
-        zIndex: 1001,
-        boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-      }}>
-        {/* Header */}
-        <div style={{
+      {/* M-64: Modal */}
+      <div
+        id="mcp-modal"
+        className="modal"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: cssVars.bgSecondary,
+          borderRadius: '16px',
+          width: '500px',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          zIndex: 1001,
+          boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+        }}>
+        {/* M-65: Header */}
+        <div className="modal-header" style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '20px 24px',
           borderBottom: `1px solid ${cssVars.border}`
         }}>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+          {/* M-66: Title */}
+          <h3 id="mcp-modal-title" style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
             {editServer ? 'Edit MCP Server' : 'Add MCP Server'}
           </h3>
+          {/* M-67: Close */}
           <button
+            className="modal-close"
             onClick={onClose}
             style={{
               background: 'none',
               border: 'none',
               color: cssVars.textSecondary,
               cursor: 'pointer',
-              padding: '4px'
+              padding: '4px',
+              fontSize: '16px'
             }}
           >
-            <X size={20} />
+            ✕
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: '24px' }}>
-          {/* Server Type Selection */}
+        {/* M-68: Body */}
+        <div className="modal-body" style={{ padding: '24px' }}>
+          {/* M-69: Server Type Selection */}
           <div style={{ marginBottom: '20px' }}>
             <label style={{
               display: 'block',
@@ -1380,9 +1411,10 @@ function MCPModal({ show, onClose, onSave, editServer }) {
               Server Type
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-              {/* Database */}
+              {/* M-70: Database */}
               <div
                 onClick={() => setServerType('database')}
+                className={`mcp-type-option${serverType === 'database' ? ' selected' : ''}`}
                 style={{
                   padding: '12px',
                   background: cssVars.bgTertiary,
@@ -1392,12 +1424,15 @@ function MCPModal({ show, onClose, onSave, editServer }) {
                   textAlign: 'center'
                 }}
               >
-                <Database size={24} style={{ color: serverType === 'database' ? cssVars.primary : cssVars.textSecondary, margin: '0 auto 6px' }} />
+                <div style={{ width: '32px', height: '32px', margin: '0 auto 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Database size={24} style={{ color: serverType === 'database' ? cssVars.primary : cssVars.textSecondary }} />
+                </div>
                 <div style={{ fontSize: '11px', fontWeight: '500' }}>Database</div>
               </div>
-              {/* API/Service */}
+              {/* M-71: API/Service */}
               <div
                 onClick={() => setServerType('api')}
+                className={`mcp-type-option${serverType === 'api' ? ' selected' : ''}`}
                 style={{
                   padding: '12px',
                   background: cssVars.bgTertiary,
@@ -1407,12 +1442,15 @@ function MCPModal({ show, onClose, onSave, editServer }) {
                   textAlign: 'center'
                 }}
               >
-                <Link2 size={24} style={{ color: serverType === 'api' ? cssVars.primary : cssVars.textSecondary, margin: '0 auto 6px' }} />
+                <div style={{ width: '32px', height: '32px', margin: '0 auto 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Link2 size={24} style={{ color: serverType === 'api' ? cssVars.primary : cssVars.textSecondary }} />
+                </div>
                 <div style={{ fontSize: '11px', fontWeight: '500' }}>API/Service</div>
               </div>
-              {/* Custom */}
+              {/* M-72: Custom */}
               <div
                 onClick={() => setServerType('custom')}
+                className={`mcp-type-option${serverType === 'custom' ? ' selected' : ''}`}
                 style={{
                   padding: '12px',
                   background: cssVars.bgTertiary,
@@ -1422,278 +1460,90 @@ function MCPModal({ show, onClose, onSave, editServer }) {
                   textAlign: 'center'
                 }}
               >
-                <SettingsIcon size={24} style={{ color: serverType === 'custom' ? cssVars.primary : cssVars.textSecondary, margin: '0 auto 6px' }} />
+                <div style={{ width: '32px', height: '32px', margin: '0 auto 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <SettingsIcon size={24} style={{ color: serverType === 'custom' ? cssVars.primary : cssVars.textSecondary }} />
+                </div>
                 <div style={{ fontSize: '11px', fontWeight: '500' }}>Custom</div>
               </div>
             </div>
           </div>
 
-          {/* Database Options */}
-          {serverType === 'database' && (
-            <>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
+          {/* M-73: Database Options */}
+          <div id="mcp-database-options" style={{ display: serverType === 'database' ? 'block' : 'none' }}>
+            {/* M-74: Database Type Select */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: cssVars.textSecondary,
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>
+                Database Type
+              </label>
+              <select
+                id="mcp-db-type"
+                className="model-select"
+                value={dbType}
+                onChange={(e) => setDbType(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              >
+                <option value="postgres">🐘 PostgreSQL</option>
+                <option value="mysql">🐬 MySQL</option>
+                <option value="mongodb">🍃 MongoDB</option>
+                <option value="redis">🔴 Redis</option>
+                <option value="sqlite">📦 SQLite</option>
+              </select>
+            </div>
+
+            {/* M-75: Connection String Input */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: cssVars.textSecondary,
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>
+                Connection String
+              </label>
+              <input
+                type="text"
+                id="mcp-connection"
+                className="model-select"
+                value={connectionString}
+                onChange={(e) => setConnectionString(e.target.value)}
+                placeholder="postgresql://user:password@localhost:5432/dbname"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
                   fontSize: '12px',
-                  fontWeight: '600',
-                  color: cssVars.textSecondary,
-                  textTransform: 'uppercase',
-                  marginBottom: '8px'
-                }}>
-                  Database Type
-                </label>
-                <select
-                  value={dbType}
-                  onChange={(e) => setDbType(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: cssVars.bgTertiary,
-                    border: `1px solid ${cssVars.border}`,
-                    borderRadius: '8px',
-                    color: cssVars.textPrimary,
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="postgres">🐘 PostgreSQL</option>
-                  <option value="mysql">🐬 MySQL</option>
-                  <option value="mongodb">🍃 MongoDB</option>
-                  <option value="redis">🔴 Redis</option>
-                  <option value="sqlite">📦 SQLite</option>
-                </select>
-              </div>
+                  fontFamily: 'Monaco, Consolas, monospace',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
 
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: cssVars.textSecondary,
-                  textTransform: 'uppercase',
-                  marginBottom: '8px'
-                }}>
-                  Connection String
-                </label>
-                <input
-                  type="text"
-                  value={connectionString}
-                  onChange={(e) => setConnectionString(e.target.value)}
-                  placeholder="postgresql://user:password@localhost:5432/dbname"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: cssVars.bgTertiary,
-                    border: `1px solid ${cssVars.border}`,
-                    borderRadius: '8px',
-                    color: cssVars.textPrimary,
-                    fontSize: '12px',
-                    fontFamily: 'Monaco, Consolas, monospace',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    color: cssVars.textSecondary,
-                    textTransform: 'uppercase',
-                    marginBottom: '8px'
-                  }}>
-                    Display Name
-                  </label>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="e.g. Production DB"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      background: cssVars.bgTertiary,
-                      border: `1px solid ${cssVars.border}`,
-                      borderRadius: '8px',
-                      color: cssVars.textPrimary,
-                      fontSize: '14px',
-                      outline: 'none',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    color: cssVars.textSecondary,
-                    textTransform: 'uppercase',
-                    marginBottom: '8px'
-                  }}>
-                    Access Level
-                  </label>
-                  <select
-                    value={accessLevel}
-                    onChange={(e) => setAccessLevel(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      background: cssVars.bgTertiary,
-                      border: `1px solid ${cssVars.border}`,
-                      borderRadius: '8px',
-                      color: cssVars.textPrimary,
-                      fontSize: '14px',
-                      outline: 'none'
-                    }}
-                  >
-                    <option value="readonly">Read-only (safer)</option>
-                    <option value="readwrite">Read & Write</option>
-                  </select>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* API/Service Options */}
-          {serverType === 'api' && (
-            <>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: cssVars.textSecondary,
-                  textTransform: 'uppercase',
-                  marginBottom: '8px'
-                }}>
-                  Service
-                </label>
-                <select
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: cssVars.bgTertiary,
-                    border: `1px solid ${cssVars.border}`,
-                    borderRadius: '8px',
-                    color: cssVars.textPrimary,
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="github">🐙 GitHub</option>
-                  <option value="slack">💬 Slack</option>
-                  <option value="gdrive">📁 Google Drive</option>
-                  <option value="notion">📓 Notion</option>
-                  <option value="jira">📋 Jira</option>
-                  <option value="linear">📐 Linear</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: cssVars.textSecondary,
-                  textTransform: 'uppercase',
-                  marginBottom: '8px'
-                }}>
-                  API Token
-                </label>
-                <input
-                  type="password"
-                  value={apiToken}
-                  onChange={(e) => setApiToken(e.target.value)}
-                  placeholder="Enter API token"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: cssVars.bgTertiary,
-                    border: `1px solid ${cssVars.border}`,
-                    borderRadius: '8px',
-                    color: cssVars.textPrimary,
-                    fontSize: '14px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Custom Options */}
-          {serverType === 'custom' && (
-            <>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: cssVars.textSecondary,
-                  textTransform: 'uppercase',
-                  marginBottom: '8px'
-                }}>
-                  Server Command
-                </label>
-                <input
-                  type="text"
-                  value={customCommand}
-                  onChange={(e) => setCustomCommand(e.target.value)}
-                  placeholder="npx @modelcontextprotocol/server-filesystem"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: cssVars.bgTertiary,
-                    border: `1px solid ${cssVars.border}`,
-                    borderRadius: '8px',
-                    color: cssVars.textPrimary,
-                    fontSize: '12px',
-                    fontFamily: 'Monaco, Consolas, monospace',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: cssVars.textSecondary,
-                  textTransform: 'uppercase',
-                  marginBottom: '8px'
-                }}>
-                  Arguments (JSON)
-                </label>
-                <textarea
-                  value={customArgs}
-                  onChange={(e) => setCustomArgs(e.target.value)}
-                  placeholder='["--directory", "/path/to/files"]'
-                  style={{
-                    width: '100%',
-                    minHeight: '80px',
-                    padding: '10px 12px',
-                    background: cssVars.bgTertiary,
-                    border: `1px solid ${cssVars.border}`,
-                    borderRadius: '8px',
-                    color: cssVars.textPrimary,
-                    fontSize: '12px',
-                    fontFamily: 'Monaco, Consolas, monospace',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
+            {/* M-76: Name/Access Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              {/* M-77: Display Name Input */}
+              <div>
                 <label style={{
                   display: 'block',
                   fontSize: '12px',
@@ -1706,9 +1556,11 @@ function MCPModal({ show, onClose, onSave, editServer }) {
                 </label>
                 <input
                   type="text"
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="e.g. File System Access"
+                  id="mcp-name"
+                  className="model-select"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="e.g. Production DB"
                   style={{
                     width: '100%',
                     padding: '10px 12px',
@@ -1722,22 +1574,245 @@ function MCPModal({ show, onClose, onSave, editServer }) {
                   }}
                 />
               </div>
-            </>
-          )}
+              {/* M-78: Access Level Select */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: cssVars.textSecondary,
+                  textTransform: 'uppercase',
+                  marginBottom: '8px'
+                }}>
+                  Access Level
+                </label>
+                <select
+                  id="mcp-access"
+                  className="model-select"
+                  value={accessLevel}
+                  onChange={(e) => setAccessLevel(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="readonly">Read-only (safer)</option>
+                  <option value="readwrite">Read & Write</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
-          {/* Security Warning */}
+          {/* M-79: API/Service Options */}
+          <div id="mcp-api-options" style={{ display: serverType === 'api' ? 'block' : 'none' }}>
+            {/* M-80: Service Select */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: cssVars.textSecondary,
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>
+                Service
+              </label>
+              <select
+                id="mcp-service"
+                className="model-select"
+                value={service}
+                onChange={(e) => setService(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              >
+                <option value="github">🐙 GitHub</option>
+                <option value="slack">💬 Slack</option>
+                <option value="gdrive">📁 Google Drive</option>
+                <option value="notion">📓 Notion</option>
+                <option value="jira">📋 Jira</option>
+                <option value="linear">📐 Linear</option>
+              </select>
+            </div>
+
+            {/* M-81: API Token Input */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: cssVars.textSecondary,
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>
+                API Token / OAuth
+              </label>
+              <input
+                type="password"
+                id="mcp-token"
+                className="model-select"
+                value={apiToken}
+                onChange={(e) => setApiToken(e.target.value)}
+                placeholder="Enter API token or click Connect to OAuth"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {/* M-82: OAuth Connect Button */}
+              <button
+                className="btn btn-secondary"
+                onClick={handleOAuth}
+                style={{
+                  marginTop: '8px',
+                  padding: '8px 16px',
+                  fontSize: '12px',
+                  background: cssVars.bgSecondary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  cursor: 'pointer'
+                }}
+              >
+                🔗 Connect with OAuth
+              </button>
+            </div>
+          </div>
+
+          {/* M-83: Custom Options */}
+          <div id="mcp-custom-options" style={{ display: serverType === 'custom' ? 'block' : 'none' }}>
+            {/* M-84: Server Command Input */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: cssVars.textSecondary,
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>
+                Server Command
+              </label>
+              <input
+                type="text"
+                id="mcp-command"
+                className="model-select"
+                value={customCommand}
+                onChange={(e) => setCustomCommand(e.target.value)}
+                placeholder="npx @modelcontextprotocol/server-filesystem"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '12px',
+                  fontFamily: 'Monaco, Consolas, monospace',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* M-85: Arguments Textarea */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: cssVars.textSecondary,
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>
+                Arguments (JSON)
+              </label>
+              <textarea
+                id="mcp-args"
+                className="model-select"
+                value={customArgs}
+                onChange={(e) => setCustomArgs(e.target.value)}
+                placeholder='["--directory", "/path/to/files"]'
+                style={{
+                  width: '100%',
+                  minHeight: '80px',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '12px',
+                  fontFamily: 'Monaco, Consolas, monospace',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            {/* M-86: Custom Name Input */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: cssVars.textSecondary,
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>
+                Display Name
+              </label>
+              <input
+                type="text"
+                id="mcp-custom-name"
+                className="model-select"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder="e.g. File System Access"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* M-87: Security Warning Box */}
           <div style={{
             padding: '12px',
             background: 'rgba(249, 115, 22, 0.1)',
             border: `1px solid ${cssVars.accent}`,
-            borderRadius: '8px',
-            marginTop: '16px'
+            borderRadius: '8px'
           }}>
-            <div style={{ fontSize: '12px', color: cssVars.accent, display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-              <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
-              <span>
-                <strong>Security Note:</strong> MCP servers have direct access to your data. Only connect to trusted sources and use read-only access when possible.
-              </span>
+            <div style={{ fontSize: '12px', color: cssVars.accent }}>
+              <strong>⚠️ Security Note:</strong> MCP servers have direct access to your data. Only connect to trusted sources and use read-only access when possible.
             </div>
           </div>
 
@@ -1761,15 +1836,17 @@ function MCPModal({ show, onClose, onSave, editServer }) {
           )}
         </div>
 
-        {/* Footer */}
-        <div style={{
+        {/* M-88: Footer */}
+        <div className="modal-footer" style={{
           display: 'flex',
           justifyContent: 'space-between',
           padding: '16px 24px',
           borderTop: `1px solid ${cssVars.border}`,
           background: cssVars.bgTertiary
         }}>
+          {/* M-89: Cancel Button */}
           <button
+            className="btn btn-secondary"
             onClick={onClose}
             style={{
               padding: '10px 20px',
@@ -1783,32 +1860,63 @@ function MCPModal({ show, onClose, onSave, editServer }) {
           >
             Cancel
           </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              padding: '10px 20px',
-              background: cssVars.primary,
-              border: 'none',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            {saving ? (
-              <>
-                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                Saving...
-              </>
-            ) : (
-              editServer ? 'Save Changes' : 'Add Server'
-            )}
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {/* M-90: Test Connection Button */}
+            <button
+              className="btn btn-secondary"
+              onClick={handleTestConnection}
+              disabled={testing}
+              style={{
+                padding: '10px 20px',
+                background: cssVars.bgSecondary,
+                border: `1px solid ${cssVars.border}`,
+                borderRadius: '8px',
+                color: cssVars.textPrimary,
+                fontSize: '14px',
+                cursor: testing ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              {testing ? (
+                <>
+                  <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  Testing...
+                </>
+              ) : (
+                '⚡ Test Connection'
+              )}
+            </button>
+            {/* M-91: Save Button */}
+            <button
+              className="btn btn-primary"
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                padding: '10px 20px',
+                background: cssVars.primary,
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: saving ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              {saving ? (
+                <>
+                  <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  Saving...
+                </>
+              ) : (
+                <span id="mcp-save-text">{editServer ? 'Save Changes' : 'Add Server'}</span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </>

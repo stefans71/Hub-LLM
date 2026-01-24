@@ -323,4 +323,49 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 
 ---
 
+### Session 39 - 2026-01-24
+**Task**: M-63 (MCP Server Modal) - Size M
+**Status**: ✅ Complete
+**Files Modified**:
+- frontend/src/pages/Settings.jsx (modified - updated MCPModal component)
+**Elements Implemented** (29 total):
+- M-63: MCP Modal Overlay (#mcp-modal-overlay .modal-overlay)
+- M-64: MCP Modal Container (#mcp-modal .modal)
+- M-65: Modal Header (.modal-header)
+- M-66: Modal Title (#mcp-modal-title) - "Add MCP Server" / "Edit MCP Server"
+- M-67: Close Button (.modal-close) - ✕
+- M-68: Modal Body (.modal-body)
+- M-69: Server Type Selection (3-column grid)
+- M-70: Database Type Option (.mcp-type-option.selected) with Database icon
+- M-71: API/Service Type Option (.mcp-type-option) with Link icon
+- M-72: Custom Type Option (.mcp-type-option) with Settings icon
+- M-73: Database Options (#mcp-database-options)
+- M-74: Database Type Select (#mcp-db-type) - PostgreSQL, MySQL, MongoDB, Redis, SQLite
+- M-75: Connection String Input (#mcp-connection) with monospace font
+- M-76: Name/Access Grid (2-column)
+- M-77: Display Name Input (#mcp-name)
+- M-78: Access Level Select (#mcp-access) - Read-only, Read & Write
+- M-79: API Options (#mcp-api-options)
+- M-80: Service Select (#mcp-service) - GitHub, Slack, Google Drive, Notion, Jira, Linear
+- M-81: API Token Input (#mcp-token)
+- M-82: OAuth Connect Button (.btn.btn-secondary) - "🔗 Connect with OAuth"
+- M-83: Custom Options (#mcp-custom-options)
+- M-84: Server Command Input (#mcp-command) with monospace font
+- M-85: Arguments Textarea (#mcp-args) for JSON arguments
+- M-86: Custom Name Input (#mcp-custom-name)
+- M-87: Security Warning Box (orange) - "⚠️ Security Note"
+- M-88: Modal Footer (.modal-footer)
+- M-89: Cancel Button (.btn.btn-secondary)
+- M-90: Test Connection Button (.btn.btn-secondary) - "⚡ Test Connection"
+- M-91: Save Button (.btn.btn-primary) with #mcp-save-text span
+**Verified**: Screenshot matches mockup - all elements visible and functional
+**Notes**:
+- MCPModal already existed, updated with proper IDs and classes per mockup
+- Added test connection functionality with loading state
+- Added OAuth connect button for API/Service type
+- All three server types (Database, API/Service, Custom) work correctly
+- Form validation and save functionality preserved
+
+---
+
 <!-- Add new sessions below this line -->

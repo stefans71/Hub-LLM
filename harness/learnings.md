@@ -41,3 +41,17 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 39 - 2026-01-24
+**Task**: M-63 (MCP Server Modal)
+**New Commands/Patterns**:
+- For sidebar navigation: `agent-browser eval "Array.from(document.querySelectorAll('div')).find(d => d.textContent.trim() === 'MCP Servers')?.dispatchEvent(new MouseEvent('click', {bubbles: true}))"`
+- The existing MCPModal component was already well-structured, just needed ID/class additions
+**Friction Points**:
+- `agent-browser click` continues to be unreliable - `eval` with explicit event dispatch works better
+- Sidebar nav items are divs without specific classes, making them harder to target
+**Files Needing Attention**:
+- Settings.jsx now ~4600 lines - MCPModal and GlobalMCPSettings could be extracted to separate files
+- MCPModal has testing/OAuth handlers that are simulated - could be wired to real backend later
+
+---
+
