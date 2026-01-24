@@ -574,4 +574,36 @@ Features:
 
 ---
 
+### Session 47 - 2026-01-24
+**Task**: FEAT-01 (Model Selector Smart Filtering) - Size M
+**Status**: ✅ Complete
+
+**Files Modified**:
+- frontend/src/components/WorkspaceTopBar.jsx (major refactor)
+
+**Features Implemented**:
+- Added MODEL_LIST with 16 models across 5 providers (Anthropic, OpenAI, Google, Meta, Mistral)
+- Search/filter input - type "claude" or "gpt" to filter model list
+- Provider grouping with color-coded headers
+- API key detection from localStorage (openrouter_key, openrouter_api_key)
+- Smart availability checking:
+  - Anthropic models: Always available (subscription)
+  - OpenRouter models: Available only if API key is set
+  - Coming Soon models: Greyed out with "Coming Soon" label
+- Visual indicators:
+  - "✓ Included" / "✓ API Key Added" / "🔑 Requires API Key" in provider headers
+  - RECOMMENDED badge on Claude Opus 4.5
+  - NEW badge on GPT-5.2 Codex
+  - Key icon on unavailable models
+  - 50% opacity on unavailable models
+- Footer showing OpenRouter connection status and "Manage Keys →" link
+
+**Verified**:
+- Search filter works (typing "claude" shows only Claude models) ✓
+- API key detection works (shows "API Key Added" when key present) ✓
+- Greyed out models when no API key ✓
+- Provider grouping and color coding ✓
+
+---
+
 <!-- Add new sessions below this line -->

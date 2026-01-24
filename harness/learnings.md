@@ -4,6 +4,33 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 47 - 2026-01-24
+**Task**: FEAT-01 (Model Selector Smart Filtering)
+**What was fixed**:
+- Refactored model selector in WorkspaceTopBar.jsx to support smart filtering
+- Added MODEL_LIST constant with 16 models across 5 providers
+- Implemented search filter that filters by model name, provider, or ID
+- Added API key detection from localStorage (openrouter_key, openrouter_api_key)
+- Greyed out models that require API key user doesn't have
+**How it was fixed**:
+- Created MODEL_LIST array with model metadata (id, name, provider, tier)
+- Added PROVIDER_COLORS and PROVIDER_NAMES constants for consistent styling
+- getFilteredModels() groups models by provider and applies search filter
+- isModelAvailable() checks tier against apiKeys state
+- Dropdown rewritten with search input, provider headers with status badges, and footer
+**Testing approach**:
+- Set localStorage key via agent-browser eval to bypass API key requirement
+- Created test project via API: POST /api/projects/
+- Tested search filter by typing "claude" - correctly filtered to Anthropic only
+- Tested API key removal - OpenAI models correctly greyed out
+**Gotchas for future**:
+- React controlled inputs need special handling with agent-browser (use native setter + events)
+- Workspace shows "Welcome to HubLLM" unless openrouter_key OR claude_key is in localStorage
+- App.jsx hasApiKey check: `apiKeys.openrouter || apiKeys.claude`
+**Files Modified**:
+- frontend/src/components/WorkspaceTopBar.jsx (major refactor ~250 lines changed)
+
+---
 
 ### Session 35 - 2024-01-24
 **Task**: S-96, S-166, D-73
