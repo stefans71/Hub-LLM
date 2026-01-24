@@ -21,6 +21,7 @@ router = APIRouter()
 # === Models ===
 
 class ServerCreate(BaseModel):
+    id: Optional[str] = None  # Optional: use existing ID (for syncing from localStorage)
     name: str
     host: str
     port: int = 22
@@ -99,9 +100,10 @@ async def list_servers(project_id: Optional[str] = None) -> list[Server]:
 
 @router.post("/servers", response_model=Server)
 async def add_server(server: ServerCreate):
-    """Add a new server configuration"""
-    server_id = str(uuid.uuid4())
-    
+    """Add a new server configuration. If id is provided, use it (for syncing from localStorage)."""
+    # Use provided ID or generate new one
+    server_id = server.id if server.id else str(uuid.uuid4())
+
     servers_db[server_id] = {
         "name": server.name,
         "host": server.host,

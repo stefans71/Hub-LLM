@@ -23,7 +23,9 @@ export default function ServerManager({
   project,
   projectId,
   onOpenTerminal,
-  onOpenFiles
+  onOpenFiles,
+  onConnectionChange,
+  onServerLinked
 }) {
   const navigate = useNavigate()
   const [linkedServer, setLinkedServer] = useState(null)
@@ -82,14 +84,15 @@ export default function ServerManager({
       // Ensure server is synced to backend first
       const backendRes = await fetch('/api/ssh/servers')
       const backendServers = await backendRes.json()
-      let serverId = linkedServer.id
+      const serverId = linkedServer.id
 
       if (!backendServers.find(s => s.id === serverId)) {
-        // Sync to backend
-        const syncRes = await fetch('/api/ssh/servers', {
+        // Sync to backend with the SAME ID
+        await fetch('/api/ssh/servers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            id: serverId, // Preserve the original ID!
             name: linkedServer.name,
             host: linkedServer.host,
             port: parseInt(linkedServer.port) || 22,
@@ -98,10 +101,6 @@ export default function ServerManager({
             private_key: linkedServer.privateKey || null
           })
         })
-        if (syncRes.ok) {
-          const newServer = await syncRes.json()
-          serverId = newServer.id
-        }
       }
 
       const res = await fetch(`/api/ssh/servers/${serverId}/connect`, {
@@ -117,7 +116,10 @@ export default function ServerManager({
       }
 
       // Update linked server status
-      setLinkedServer(prev => ({ ...prev, connected: true }))
+      const connectedServer = { ...linkedServer, connected: true }
+      setLinkedServer(connectedServer)
+      // Notify parent (Workspace) about connection change
+      onConnectionChange?.(connectedServer, true)
       loadServerInfo()
     } catch (err) {
       if (err.name === 'AbortError') {
@@ -137,6 +139,9 @@ export default function ServerManager({
       await fetch(`/api/ssh/servers/${linkedServer.id}/disconnect`, {
         method: 'POST'
       })
+      // Update local state and notify parent
+      setLinkedServer(prev => ({ ...prev, connected: false }))
+      onConnectionChange?.(linkedServer, false)
       loadServerInfo()
     } catch (err) {
       console.error('Failed to disconnect:', err)
@@ -150,9 +155,10 @@ export default function ServerManager({
   }
 
   const linkServer = async (server) => {
-    // TODO: Call API to update project's vps_server_id
     setLinkedServer(server)
     setShowLinkDropdown(false)
+    // Notify parent to update project's vps_server_id
+    onServerLinked?.(server.id)
   }
 
   const goToVpsSettings = () => {

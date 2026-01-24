@@ -1,47 +1,23 @@
 {
   "meta": {
-    "version": "3.5",
-    "phase": "VPS Connection Bugs",
+    "version": "3.6",
+    "phase": "VPS Connection Bugs - COMPLETE",
     "last_updated": "2026-01-24"
   },
-  "queue": [
-    {
-      "id": "BUG-06",
-      "name": "Top Bar VPS Status Never Updates",
-      "size": "S",
-      "priority": 2,
-      "status": "pending",
-      "description": "Top bar shows 'VPS: Loading...' forever, never updates to show server name or IP even when connected",
-      "location": "Workspace top bar, left side near project name",
-      "test": "Link VPS → top bar shows server name. Click Connect → shows 'Connected' (green)"
-    },
+  "queue": [],
+  "completed": [
     {
       "id": "BUG-07",
       "name": "VPS Servers List Not Persisting (UUID Mismatch)",
-      "size": "M",
-      "priority": 1,
-      "status": "pending",
-      "description": "On page refresh, VPS server list is lost but project still has old linkedServerId, causing 'Server UUID not found' error",
-      "evidence": [
-        "After refresh, Servers tab shows 'No VPS Linked'",
-        "BUT LLM-Dev Terminal shows: 'Error: Server 29f6b30a-0f39-4160-97b7-4cb31608f517 not found'",
-        "This means project HAS a saved linkedServerId, but server list is empty"
-      ],
-      "root_cause": [
-        "Project saves linkedServerId to localStorage/backend ✓",
-        "VPS servers list (from Settings > VPS Connections) does NOT persist properly",
-        "On refresh, servers list is empty, so the saved UUID doesn't match anything"
-      ],
-      "fix_approach": [
-        "Check where VPS servers are stored (Settings > VPS Connections)",
-        "Ensure servers list persists to localStorage AND/OR backend",
-        "On workspace load: 1) Load servers list, 2) Then load project's linkedServerId, 3) Match them up",
-        "The Digital Ocean server with IP 206.189.78.115 should always be available after being added in Settings"
-      ],
-      "test": "Add VPS in Settings → Link to project → Refresh → Server still linked AND terminal connects"
-    }
-  ],
-  "completed": [
+      "completed": "2026-01-24",
+      "fix": "Check localStorage first, sync to backend with same ID, backend accepts optional id param"
+    },
+    {
+      "id": "BUG-06",
+      "name": "Top Bar VPS Status Never Updates",
+      "completed": "2026-01-24",
+      "fix": "WorkspaceTopBar fetchVpsInfo checks localStorage first before backend API"
+    },
     {
       "id": "BUG-05-REOPEN",
       "name": "LLM-Dev Panel Drag Resize",
@@ -68,8 +44,7 @@
     {"id": "BUG-01", "name": "Workspace Blank Page Crash", "completed": "2026-01-24"}
   ],
   "notes": {
-    "key_insight": "The UUID error proves linkedServerId IS being saved - the problem is the SERVERS LIST doesn't persist",
-    "settings_vps": "Digital Ocean server (206.189.78.115) is configured in Settings > VPS Connections",
-    "duplicate_ui": "Terminal/Files appear in BOTH Servers tab AND LLM-Dev panel - UX decision needed later"
+    "vps_architecture": "Frontend localStorage is source of truth for VPS configs. Backend servers_db is in-memory cache that needs sync on page load.",
+    "key_pattern": "Components check localStorage FIRST, then sync to backend with original ID preserved"
   }
 }

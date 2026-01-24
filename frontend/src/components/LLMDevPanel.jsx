@@ -48,6 +48,42 @@ export default function LLMDevPanel({ project, linkedServerId }) {
 
   const fetchServerInfo = async (serverId) => {
     try {
+      // First check localStorage (primary source of truth for VPS servers)
+      const savedServers = localStorage.getItem('vps_servers')
+      if (savedServers) {
+        const localServers = JSON.parse(savedServers)
+        const localServer = localServers.find(s => s.id === serverId)
+        if (localServer) {
+          setServerInfo(localServer)
+
+          // Sync to backend if not already there (needed for terminal WebSocket)
+          try {
+            const backendRes = await fetch('/api/ssh/servers')
+            const backendServers = await backendRes.json()
+            if (!backendServers.find(s => s.id === serverId)) {
+              // Server not in backend, sync it with the SAME ID
+              await fetch('/api/ssh/servers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: serverId, // Preserve the original ID!
+                  name: localServer.name,
+                  host: localServer.host,
+                  port: parseInt(localServer.port) || 22,
+                  username: localServer.username || 'root',
+                  auth_type: localServer.privateKey ? 'key' : 'password',
+                  private_key: localServer.privateKey || null
+                })
+              })
+            }
+          } catch (syncErr) {
+            console.error('Failed to sync server to backend:', syncErr)
+          }
+          return
+        }
+      }
+
+      // Fallback: try backend API
       const res = await fetch('/api/ssh/servers')
       const servers = await res.json()
       const server = servers.find(s => s.id === serverId)

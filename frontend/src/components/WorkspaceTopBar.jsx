@@ -142,6 +142,18 @@ export default function WorkspaceTopBar({
 
   const fetchVpsInfo = async (serverId) => {
     try {
+      // First check localStorage (primary source of truth for VPS servers)
+      const savedServers = localStorage.getItem('vps_servers')
+      if (savedServers) {
+        const localServers = JSON.parse(savedServers)
+        const localServer = localServers.find(s => s.id === serverId)
+        if (localServer) {
+          setVpsInfo({ name: localServer.name, ip: localServer.host })
+          return // Found in localStorage, no need to check backend
+        }
+      }
+
+      // Fallback: try backend API
       const res = await fetch('/api/ssh/servers')
       if (res.ok) {
         const servers = await res.json()

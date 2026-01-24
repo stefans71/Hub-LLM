@@ -96,14 +96,15 @@ export default function Workspace({ project, model, apiKeys }) {
       // Ensure server is synced to backend
       const backendRes = await fetch('/api/ssh/servers')
       const backendServers = await backendRes.json()
-      let serverId = project.vps_server_id
+      const serverId = project.vps_server_id
 
       if (!backendServers.find(s => s.id === serverId)) {
-        // Sync to backend
-        const syncRes = await fetch('/api/ssh/servers', {
+        // Sync to backend with the SAME ID
+        await fetch('/api/ssh/servers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            id: serverId, // Preserve the original ID!
             name: localServer.name,
             host: localServer.host,
             port: parseInt(localServer.port) || 22,
@@ -112,10 +113,6 @@ export default function Workspace({ project, model, apiKeys }) {
             private_key: localServer.privateKey || null
           })
         })
-        if (syncRes.ok) {
-          const newServer = await syncRes.json()
-          serverId = newServer.id
-        }
       }
 
       if (isConnected) {

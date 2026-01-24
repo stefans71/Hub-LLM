@@ -4,6 +4,56 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 50 - 2026-01-24
+**Tasks**: BUG-06 (S) + BUG-07 (M) - VPS persistence issues
+
+**Root Cause Analysis**:
+1. Backend `servers_db` is **in-memory only** (`routers/ssh.py` line 75)
+2. Frontend stores VPS servers in localStorage (persists correctly)
+3. After page refresh:
+   - localStorage still has VPS servers ✓
+   - Backend `servers_db` is empty ✗
+   - Project still has `vps_server_id` pointing to old UUID
+   - WorkspaceTopBar and LLMDevPanel only checked backend API → showed "Loading..." or error
+
+**Architecture Issue**:
+- Frontend localStorage = source of truth for VPS server configs
+- Backend in-memory = ephemeral, lost on restart
+- UUID mismatch: When syncing localStorage → backend, backend generated NEW UUIDs
+
+**Solution Pattern**:
+1. **Backend**: Add optional `id` field to `ServerCreate` model so frontend can preserve original UUID
+2. **Frontend components**: Check localStorage FIRST, then fallback to backend API
+3. **Frontend sync**: When syncing to backend, pass the original `id` to preserve UUID
+
+**Code Changes**:
+- **routers/ssh.py**: Added `id: Optional[str] = None` to `ServerCreate`, use provided ID if given
+- **WorkspaceTopBar.jsx** (`fetchVpsInfo`): Check localStorage first for server name/IP
+- **LLMDevPanel.jsx** (`fetchServerInfo`): Check localStorage first, sync to backend with same ID
+- **Workspace.jsx** & **ServerManager.jsx**: Pass `id` field when syncing to backend
+
+**Key Insight**:
+```
+Frontend localStorage (vps_servers) = Persistent source of truth
+Backend servers_db = In-memory cache, needs sync on page load
+Project.vps_server_id = Stable reference, must match localStorage ID
+```
+
+**Pattern for Future**:
+When localStorage is primary storage:
+1. Components should check localStorage FIRST
+2. Sync to backend should preserve original IDs
+3. Backend should accept optional `id` parameter for sync
+
+**Files Modified**:
+- backend/routers/ssh.py (ServerCreate model, add_server function)
+- frontend/src/components/WorkspaceTopBar.jsx (fetchVpsInfo)
+- frontend/src/components/LLMDevPanel.jsx (fetchServerInfo)
+- frontend/src/components/Workspace.jsx (handleConnectionToggle)
+- frontend/src/components/ServerManager.jsx (connectServer)
+
+---
+
 ### Session 49 - 2026-01-24
 **Tasks**: BUG-02-REOPEN (S) + BUG-05-REOPEN (M)
 
