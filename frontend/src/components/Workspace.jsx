@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Chat from './Chat'
 import Terminal from './Terminal'
 import FileBrowser from './FileBrowser'
@@ -7,6 +8,7 @@ import CodespacesManager from './CodespacesManager'
 import CodeEditor from './CodeEditor'
 import PreviewPanel from './PreviewPanel'
 import WorkspaceTopBar from './WorkspaceTopBar'
+import WorkspaceIconSidebar from './WorkspaceIconSidebar'
 import {
   MessageSquare,
   Server,
@@ -31,6 +33,7 @@ import {
  * - Code Editor
  */
 export default function Workspace({ project, model, apiKeys }) {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('chat') // 'chat', 'servers', 'codespaces'
   const [activeServer, setActiveServer] = useState(null)
   const [terminals, setTerminals] = useState([]) // Multiple terminals
@@ -39,6 +42,9 @@ export default function Workspace({ project, model, apiKeys }) {
   const [editingFile, setEditingFile] = useState(null) // { path, content }
   const [previewUrl, setPreviewUrl] = useState('') // Codespaces preview URL
   const [previewCollapsed, setPreviewCollapsed] = useState(true)
+
+  // W-31: Icon Sidebar state
+  const [activeSidebarPanel, setActiveSidebarPanel] = useState('workspaces')
 
   // W-03: Workspace Top Bar state
   const [isConnected, setIsConnected] = useState(true)
@@ -55,6 +61,19 @@ export default function Workspace({ project, model, apiKeys }) {
   const handleExport = () => {
     // TODO: Implement project export functionality
     console.log('Export project:', project?.name)
+  }
+
+  // W-31: Icon Sidebar handlers
+  const handleSidebarPanelChange = (panel) => {
+    setActiveSidebarPanel(activeSidebarPanel === panel ? null : panel)
+  }
+
+  const handleSidebarNavigate = (view) => {
+    if (view === 'create-project') {
+      navigate('/create-project')
+    } else if (view === 'settings') {
+      navigate('/settings')
+    }
   }
 
   const openTerminal = (server) => {
@@ -128,6 +147,13 @@ export default function Workspace({ project, model, apiKeys }) {
 
       {/* W-30: Workspace Main Container */}
       <div className="flex-1 flex overflow-hidden">
+        {/* W-31: Icon Sidebar */}
+        <WorkspaceIconSidebar
+          activePanel={activeSidebarPanel}
+          onPanelChange={handleSidebarPanelChange}
+          onNavigate={handleSidebarNavigate}
+        />
+
         {/* Left side - Main content */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Tab Bar */}
