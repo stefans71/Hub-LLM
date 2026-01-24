@@ -2,8 +2,8 @@
   "meta": {
     "version": "2.0",
     "total_elements": 917,
-    "completed_elements": 652,
-    "completion_percentage": 71,
+    "completed_elements": 684,
+    "completion_percentage": 75,
     "last_updated": "2026-01-24"
   },
   "queue": [
@@ -54,7 +54,7 @@
       "size": "M",
       "elements": 32,
       "priority": 5,
-      "status": "pending",
+      "status": "complete",
       "description": "Claude CLI install, auth status, Cross-LLM toggle",
       "mapping_file": "settings.md",
       "mapping_lines": "S-64 to S-95",
@@ -166,6 +166,13 @@
       "elements": 36,
       "completed_date": "2026-01-24",
       "session": 33
+    },
+    {
+      "id": "S-64",
+      "name": "Anthropic Subscription Section",
+      "elements": 32,
+      "completed_date": "2026-01-24",
+      "session": 34
     }
   ],
   "notes": {

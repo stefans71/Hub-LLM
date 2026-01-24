@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import AnthropicSubscription from '../components/AnthropicSubscription'
 import {
   LayoutDashboard,
   Lock,
@@ -3477,7 +3478,7 @@ function VPSConnectionsSettings() {
 // Main Settings Page
 export default function Settings({ onBack, onLogout }) {
   const { user, getAuthHeader, logout } = useAuth()
-  const [activeTab, setActiveTab] = useState('profile')
+  const [activeTab, setActiveTab] = useState('subscription')
 
   const handleLogout = async () => {
     await logout()
@@ -3486,6 +3487,8 @@ export default function Settings({ onBack, onLogout }) {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'subscription':
+        return <AnthropicSubscription user={user} />
       case 'profile':
         return <ProfileSettings user={user} getAuthHeader={getAuthHeader} onLogout={handleLogout} />
       case 'apikeys':
@@ -3499,7 +3502,7 @@ export default function Settings({ onBack, onLogout }) {
       case 'vps':
         return <VPSConnectionsSettings />
       default:
-        return <ProfileSettings user={user} getAuthHeader={getAuthHeader} onLogout={handleLogout} />
+        return <AnthropicSubscription user={user} />
     }
   }
 
@@ -3561,16 +3564,22 @@ export default function Settings({ onBack, onLogout }) {
           {/* Account Section */}
           <SectionHeader label="Account" />
           <NavItem
-            icon={User}
-            label="Profile"
-            active={activeTab === 'profile'}
-            onClick={() => setActiveTab('profile')}
+            icon={Lock}
+            label="Anthropic Subscription"
+            active={activeTab === 'subscription'}
+            onClick={() => setActiveTab('subscription')}
           />
           <NavItem
             icon={Key}
             label="API Keys"
             active={activeTab === 'apikeys'}
             onClick={() => setActiveTab('apikeys')}
+          />
+          <NavItem
+            icon={User}
+            label="Profile"
+            active={activeTab === 'profile'}
+            onClick={() => setActiveTab('profile')}
           />
           <NavItem
             icon={Palette}
