@@ -14,21 +14,25 @@ Track discoveries, patterns, and friction points for harness improvement.
 - **Verification**: Screenshot shows Cancel and Create Project buttons visible at bottom
 
 **BUG-05 (LLM-Dev panel top edge not draggable)**:
-- **Root Cause**: Previous implementation had a 4px resize handle that was too thin and not clearly visible. The drag functionality existed but was hard to use.
-- **Fix**: Added a dedicated 6px orange drag handle at the top of the panel:
-  - Separate `llm-dev-drag-handle` div with `background: var(--accent)` (orange)
-  - Highlights to blue (`var(--primary)`) on hover
-  - mousedown on handle sets `isDragging = true`
-  - Global mousemove/mouseup listeners calculate new height
-  - Panel auto-expands when dragged above threshold
+- **Root Cause 1**: Previous 4px resize handle was too thin
+- **Root Cause 2 (CRITICAL)**: React's synthetic `onMouseDown` event wasn't reliably firing in all browser scenarios
+- **Fix**:
+  - Added dedicated 8px orange drag handle with `ref`
+  - **Use native event listener via useEffect instead of React's onMouseDown**
+  - Added `flex-shrink: 0` to prevent flex parent from crushing panel
+  - Added `touchAction: none` for mobile compatibility
 - **File Modified**: frontend/src/components/LLMDevPanel.jsx
-- **Verification**: Dragged panel from default 350px to 520px successfully
+- **Verification**:
+  - Drag UP → panel taller (520px) ✓
+  - Drag DOWN → panel shorter (170px) ✓
 
 **Key Learnings**:
 - Nested flex containers: Don't use `100vh` inside a flex child - use `100%` instead
 - Drag handles need to be at least 6-8px tall to be easily grabbable
 - Visual feedback (color change on hover/drag) helps users discover draggable areas
-- Agent-browser simulated events may not trigger React state updates reliably - test with visual verification
+- **CRITICAL**: React's synthetic onMouseDown can fail - use native event listeners via `useEffect + ref` for reliable drag handling
+- Always add `flex-shrink: 0` to panels that should maintain their set height in flex containers
+- Add `touchAction: none` to drag handles for mobile compatibility
 
 **Files Modified**:
 - frontend/src/pages/CreateProject.jsx
