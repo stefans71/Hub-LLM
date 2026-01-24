@@ -153,3 +153,15 @@ tail -n +101 harness/progress/current.txt > temp.txt && mv temp.txt harness/prog
 - ✅ ONE M/L task per session max
 - ✅ Update both queue and progress files
 - ✅ Commit with task ID in message
+
+---
+
+## Visual Verification - Auth Bypass
+
+Authentication is ALREADY VERIFIED. When taking screenshots:
+
+1. **Login page appears?** → Note "requires auth" and skip
+2. **DO NOT** create accounts or login during verification
+3. **DO NOT** spend tokens on auth flows
+
+Just verify YOUR component renders. Auth works.

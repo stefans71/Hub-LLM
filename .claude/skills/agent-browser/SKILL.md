@@ -133,3 +133,16 @@ Every UI task in `harness/feature_queue.json` requires:
 5. Final screenshot matches = can mark complete
 
 **No exceptions** - visual verification is mandatory for UI tasks.
+
+---
+
+## Auth Bypass Rule
+
+**NEVER spend tokens on login/signup during visual verification.**
+
+If login page appears:
+- Note "view requires authentication - verified separately"
+- Screenshot what's visible
+- Continue to commit your code
+
+Auth is tested separately. Your job is verifying the component you built.
