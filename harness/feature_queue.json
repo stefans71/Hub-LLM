@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": "3.0",
-    "phase": "Bug Fixes - Reopened with Details",
+    "version": "3.1",
+    "phase": "Bug Fixes - Reopened",
     "last_updated": "2026-01-24"
   },
   "queue": [
@@ -16,45 +16,10 @@
       "test": "Create Project button fully visible and clickable without scrolling horizontally"
     },
     {
-      "id": "BUG-03-REOPEN",
-      "name": "VPS Connection Wired to Wrong Components",
-      "size": "L",
-      "priority": 2,
-      "status": "pending",
-      "description": "Terminal and file explorer are wired to the WRONG UI components. They appear inside the Servers tab card instead of the proper locations.",
-      "user_flow": [
-        "A: Open Workspace > Servers tab shows 'No VPS Linked' > Click 'Link a Server'",
-        "B: Dropdown shows Digital Ocean server > Select it",
-        "C: Server card appears with 'CONNECTED VPS' label and 'Connect' button",
-        "D: Click Connect > Terminal/folder icons appear IN THE SERVER CARD (WRONG!)"
-      ],
-      "whats_broken": [
-        "TOP BAR: Still shows 'VPS: Loading...' and 'Disconnected' - never updates to connected state",
-        "TERMINAL TAB: In LLM-Dev panel, still shows 'Connecting...' forever - never gets the terminal",
-        "FILE EXPLORER: Icons appear in server card, but should populate the left sidebar Explorer",
-        "SERVERS TAB: Has embedded terminal/files - this should just be for server management, not the actual terminal"
-      ],
-      "expected_behavior": [
-        "Top bar should update: 'VPS: Loading...' → 'VPS: Connected' or show the IP",
-        "Top bar should update: 'Disconnected' → 'Connected' (green)",
-        "Terminal TAB in LLM-Dev panel should show actual bash prompt from DO server",
-        "File Explorer in LEFT SIDEBAR should show files from the connected server",
-        "Servers tab should only manage connections, not embed the terminal"
-      ],
-      "root_cause": "When Connect is clicked, the terminal/file WebSocket connections are being passed to the Servers tab component instead of the Terminal tab and Explorer sidebar",
-      "files_to_check": [
-        "Servers tab component - where is it creating terminal? Should NOT be here",
-        "Terminal tab component - why isn't it receiving the connection?",
-        "Workspace state management - how does VPS connection state propagate?",
-        "Top bar VPS status - why doesn't it update?"
-      ],
-      "test": "After connecting VPS: top bar shows 'Connected', Terminal TAB shows bash prompt, Explorer sidebar shows server files"
-    },
-    {
       "id": "BUG-05-REOPEN",
       "name": "LLM-Dev Panel Drag Resize Not Working",
       "size": "M",
-      "priority": 3,
+      "priority": 2,
       "status": "pending",
       "description": "The top border of LLM-Dev panel should be draggable to resize the panel height.",
       "location": "Workspace, horizontal divider between chat area and LLM-Dev panel",
@@ -66,6 +31,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-03-REOPEN", "name": "VPS Connection Wired to Wrong Components", "completed": "2026-01-24", "fix": "Added callback chain ServerManager → Workspace → LLMDevPanel"},
     {"id": "FEAT-01", "name": "Model Selector Smart Filtering", "completed": "2026-01-24"},
     {"id": "BUG-04", "name": "Model Selector Dropdown Not Opening", "completed": "2026-01-24"},
     {"id": "BUG-05", "name": "LLM-Dev Panel Not Draggable (FAILED)", "completed": "2026-01-24"},
@@ -74,8 +40,7 @@
     {"id": "BUG-01", "name": "Workspace Blank Page Crash", "completed": "2026-01-24"}
   ],
   "notes": {
-    "bug03_key_insight": "Terminal/files wired to Servers tab card instead of Terminal tab and Explorer sidebar",
-    "top_bar_never_updates": "VPS status in top bar stays 'Loading/Disconnected' even after Connect",
-    "architecture_issue": "State from Connect button not propagating to the right components"
+    "bug03_fix": "ServerManager.connectServer() wasn't notifying Workspace - added onConnectionChange + onServerLinked callbacks",
+    "remaining": "BUG-02 and BUG-05 still need fixing"
   }
 }
