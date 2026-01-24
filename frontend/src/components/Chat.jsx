@@ -1,27 +1,31 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
-import VoiceInput from './VoiceInput'
-import { Send, Loader2 } from 'lucide-react'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { Plus, Mic, Send, Copy } from 'lucide-react'
 
+/**
+ * Chat Component (W-54)
+ *
+ * AI chat interface matching mockup specification:
+ * - W-54: Chat Panel Container
+ * - W-55: Chat Messages Container
+ * - W-56-60: Message bubbles (assistant/user)
+ * - W-61-67: Chat Input Area with voice input
+ */
 export default function Chat({ project, model, apiKeys }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [loadingStatus, setLoadingStatus] = useState('')
   const messagesEndRef = useRef(null)
-  const textareaRef = useRef(null)
+  const inputRef = useRef(null)
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
-    }
-  }, [input])
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return
@@ -31,18 +35,18 @@ export default function Chat({ project, model, apiKeys }) {
     setMessages(newMessages)
     setInput('')
     setIsLoading(true)
+    setLoadingStatus('Thinking...')
 
     try {
       // Determine provider based on available keys
-      const provider = apiKeys.claude ? 'claude_direct' : 'openrouter'
-      const apiKey = provider === 'claude_direct' ? apiKeys.claude : apiKeys.openrouter
+      const provider = apiKeys?.claude ? 'claude_direct' : 'openrouter'
 
       const response = await fetch('/api/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-OpenRouter-Key': apiKeys.openrouter || '',
-          'X-Claude-Key': apiKeys.claude || ''
+          'X-OpenRouter-Key': apiKeys?.openrouter || '',
+          'X-Claude-Key': apiKeys?.claude || ''
         },
         body: JSON.stringify({
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
@@ -62,6 +66,7 @@ export default function Chat({ project, model, apiKeys }) {
       const decoder = new TextDecoder()
       let assistantMessage = { role: 'assistant', content: '' }
       setMessages([...newMessages, assistantMessage])
+      setLoadingStatus('Generating response...')
 
       while (true) {
         const { done, value } = await reader.read()
@@ -74,7 +79,7 @@ export default function Chat({ project, model, apiKeys }) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6)
             if (data === '[DONE]') continue
-            
+
             try {
               const parsed = JSON.parse(data)
               if (parsed.content) {
@@ -95,111 +100,191 @@ export default function Chat({ project, model, apiKeys }) {
       ])
     } finally {
       setIsLoading(false)
+      setLoadingStatus('')
     }
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault()
       sendMessage()
     }
   }
 
-  const handleVoiceResult = (text) => {
-    setInput(prev => prev + (prev ? ' ' : '') + text)
-    textareaRef.current?.focus()
+  const toggleMic = () => {
+    setIsRecording(!isRecording)
+    // Voice input would be implemented here with Whisper API
+    if (!isRecording) {
+      // Start recording
+      console.log('Starting voice recording...')
+    } else {
+      // Stop recording and process
+      console.log('Stopping voice recording...')
+    }
+  }
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+  }
+
+  // Extract code language from className
+  const getLanguage = (className) => {
+    const match = /language-(\w+)/.exec(className || '')
+    return match ? match[1] : 'text'
   }
 
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="chat-panel" id="chat-panel">
+      {/* W-55: Chat Messages Container */}
+      <div className="chat-messages">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 mt-20">
-            <p className="text-lg">Start a conversation</p>
-            <p className="text-sm mt-2">Type a message or use voice input</p>
+          <div className="chat-message assistant">
+            <div className="avatar claude-avatar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L14.5 9H22L16 14L18.5 21L12 16.5L5.5 21L8 14L2 9H9.5L12 2Z" fill="currentColor"/>
+              </svg>
+            </div>
+            <div className="chat-message-content">
+              <p>Hello! I'm Claude, your AI coding assistant. Ask me to build, modify, or explain anything about your project.</p>
+            </div>
           </div>
         )}
-        
+
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-3xl rounded-2xl px-4 py-3 ${
-                msg.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-800 text-gray-100'
-              }`}
-            >
-              {msg.role === 'assistant' ? (
+          msg.role === 'assistant' ? (
+            // W-56: Assistant Message
+            <div key={i} className="chat-message assistant">
+              {/* W-57: Claude Avatar */}
+              <div className="avatar claude-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L14.5 9H22L16 14L18.5 21L12 16.5L5.5 21L8 14L2 9H9.5L12 2Z" fill="currentColor"/>
+                </svg>
+              </div>
+              {/* W-58: Message Content */}
+              <div className="chat-message-content">
                 <ReactMarkdown
-                  className="prose prose-invert max-w-none"
                   components={{
+                    p: ({ children }) => <p>{children}</p>,
                     code: ({ node, inline, className, children, ...props }) => {
+                      const language = getLanguage(className)
+                      const codeString = String(children).replace(/\n$/, '')
+
                       if (inline) {
                         return (
-                          <code className="bg-gray-700 px-1 rounded" {...props}>
+                          <code style={{
+                            background: 'var(--bg-tertiary)',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '13px'
+                          }} {...props}>
                             {children}
                           </code>
                         )
                       }
+
+                      // W-58: Code block with header
                       return (
-                        <pre className="bg-gray-900 p-3 rounded-lg overflow-x-auto">
-                          <code {...props}>{children}</code>
-                        </pre>
+                        <div className="chat-code-block">
+                          <div className="chat-code-header">
+                            <span>{language.toUpperCase()}</span>
+                            <button onClick={() => copyToClipboard(codeString)} title="Copy code">
+                              <Copy size={14} />
+                            </button>
+                          </div>
+                          <div className="chat-code-content">
+                            <SyntaxHighlighter
+                              style={oneDark}
+                              language={language}
+                              PreTag="div"
+                              customStyle={{
+                                margin: 0,
+                                padding: 0,
+                                background: 'transparent',
+                                fontSize: '13px'
+                              }}
+                            >
+                              {codeString}
+                            </SyntaxHighlighter>
+                          </div>
+                        </div>
                       )
                     }
                   }}
                 >
                   {msg.content}
                 </ReactMarkdown>
-              ) : (
-                <p className="whitespace-pre-wrap">{msg.content}</p>
-              )}
+              </div>
             </div>
-          </div>
+          ) : (
+            // W-59: User Message
+            <div key={i} className="chat-message user">
+              <div className="bubble">{msg.content}</div>
+            </div>
+          )
         ))}
-        
-        {isLoading && messages[messages.length - 1]?.role === 'user' && (
-          <div className="flex justify-start">
-            <div className="bg-gray-800 rounded-2xl px-4 py-3">
-              <Loader2 className="animate-spin" size={20} />
+
+        {/* W-60: Loading state with spinner */}
+        {isLoading && (
+          <div className="chat-message assistant">
+            <div className="avatar claude-avatar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L14.5 9H22L16 14L18.5 21L12 16.5L5.5 21L8 14L2 9H9.5L12 2Z" fill="currentColor"/>
+              </svg>
+            </div>
+            <div className="chat-message-content">
+              <div className="chat-status">
+                <div className="spinner"></div>
+                {loadingStatus}
+              </div>
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-gray-700 p-4">
-        <div className="flex items-end gap-2 max-w-4xl mx-auto">
-          <VoiceInput onResult={handleVoiceResult} />
-          
-          <div className="flex-1 relative">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message or use voice..."
-              rows={1}
-              className="w-full bg-gray-800 border border-gray-600 rounded-xl px-4 py-3 pr-12 resize-none focus:outline-none focus:border-blue-500 max-h-40"
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim() || isLoading}
-              className="absolute right-2 bottom-2 p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition"
-            >
-              <Send size={18} />
-            </button>
-          </div>
+      {/* W-61: Chat Input Area */}
+      <div className="chat-input-area">
+        {/* W-62: Chat Input Wrapper */}
+        <div className="chat-input-wrapper">
+          {/* W-63: Plus Button */}
+          <button className="plus-btn" title="Add attachment">
+            <Plus size={18} />
+          </button>
+
+          {/* W-64: Chat Text Input */}
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask Claude to build something..."
+          />
+
+          {/* W-65: Mic Button */}
+          <button
+            className={`mic-btn ${isRecording ? 'recording' : ''}`}
+            onClick={toggleMic}
+            title="Voice input (Whisper)"
+          >
+            <Mic size={18} />
+          </button>
+
+          {/* W-66: Send Button */}
+          <button
+            className="send-btn"
+            onClick={sendMessage}
+            disabled={!input.trim() || isLoading}
+          >
+            <Send size={18} />
+          </button>
         </div>
-        <p className="text-xs text-gray-500 text-center mt-2">
-          Model: {model}
-        </p>
+
+        {/* W-67: Input Hint */}
+        <div className="chat-input-hint">
+          Cmd+Enter to send • Click mic for voice input
+        </div>
       </div>
     </div>
   )

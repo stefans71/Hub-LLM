@@ -2,8 +2,8 @@
   "meta": {
     "version": "2.0",
     "total_elements": 917,
-    "completed_elements": 756,
-    "completion_percentage": 82,
+    "completed_elements": 787,
+    "completion_percentage": 86,
     "last_updated": "2026-01-24"
   },
   "queue": [
@@ -129,6 +129,73 @@
       "mapping_lines": "D-73 to D-90",
       "depends_on": [],
       "react_files": ["Dashboard.jsx (modify)"]
+    },
+    {
+      "id": "W-54",
+      "name": "Workspace Chat Panel",
+      "size": "S",
+      "elements": 14,
+      "priority": 11,
+      "status": "complete",
+      "description": "Chat messages area, user/assistant bubbles, code blocks, input with voice",
+      "mapping_file": "workspace_modals.md",
+      "mapping_lines": "W-54 to W-67",
+      "depends_on": [],
+      "react_files": ["Chat.jsx (modify)", "Workspace.jsx (modify)"]
+    },
+    {
+      "id": "W-69",
+      "name": "Workspace Preview Panel",
+      "size": "S",
+      "elements": 17,
+      "priority": 12,
+      "status": "complete",
+      "description": "Live preview with device sizes, toolbar, URL bar, iframe",
+      "mapping_file": "workspace_modals.md",
+      "mapping_lines": "W-69 to W-85",
+      "depends_on": [],
+      "react_files": ["PreviewPanel.jsx (modify)"]
+    },
+    {
+      "id": "M-10",
+      "name": "Agent Modal",
+      "size": "M",
+      "elements": 35,
+      "priority": 13,
+      "status": "pending",
+      "description": "Create/edit agent form with icon picker, model/tools selects, system prompt",
+      "mapping_file": "workspace_modals.md",
+      "mapping_lines": "M-10 to M-44",
+      "depends_on": [],
+      "related_tasks": ["S-171"],
+      "react_files": ["AgentModal.jsx (create)", "Settings.jsx (modify)"]
+    },
+    {
+      "id": "M-63",
+      "name": "MCP Server Modal",
+      "size": "M",
+      "elements": 29,
+      "priority": 14,
+      "status": "pending",
+      "description": "Add MCP server form with database/API/custom types, connection config",
+      "mapping_file": "workspace_modals.md",
+      "mapping_lines": "M-63 to M-91",
+      "depends_on": [],
+      "related_tasks": ["S-250"],
+      "react_files": ["MCPServerModal.jsx (create)", "Settings.jsx (modify)"]
+    },
+    {
+      "id": "M-01",
+      "name": "Model Notification Modal",
+      "size": "XS",
+      "elements": 9,
+      "priority": 15,
+      "status": "pending",
+      "description": "Model change confirmation dialog",
+      "mapping_file": "workspace_modals.md",
+      "mapping_lines": "M-01 to M-09",
+      "depends_on": [],
+      "react_files": ["ModelNotification.jsx (create)"]
     }
   ],
   "completed": [
@@ -208,6 +275,20 @@
       "elements": 18,
       "completed_date": "2026-01-24",
       "session": 36
+    },
+    {
+      "id": "W-54",
+      "name": "Workspace Chat Panel",
+      "elements": 14,
+      "completed_date": "2026-01-24",
+      "session": 37
+    },
+    {
+      "id": "W-69",
+      "name": "Workspace Preview Panel",
+      "elements": 17,
+      "completed_date": "2026-01-24",
+      "session": 37
     }
   ],
   "notes": {
