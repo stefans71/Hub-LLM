@@ -12,7 +12,8 @@ import {
   MoreVertical,
   Monitor,
   Bot,
-  Coins
+  Coins,
+  Zap
 } from 'lucide-react'
 
 // Stat Card Component
@@ -270,8 +271,19 @@ export default function Dashboard({ onNavigate, onCreateProject }) {
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid (D-73 to D-90) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          {/* D-73: Active Sessions Card */}
+          <StatCard
+            icon={Zap}
+            iconColor="blue"
+            badge="+20%"
+            badgeType="positive"
+            label="Active Sessions"
+            value={stats.activeSessions || 12}
+            description={`Across ${stats.llmProviders || 4} LLM providers`}
+          />
+          {/* D-79: Total Projects Card */}
           <StatCard
             icon={Users}
             iconColor="green"
@@ -281,23 +293,15 @@ export default function Dashboard({ onNavigate, onCreateProject }) {
             value={stats.projectsCount}
             description={`${stats.githubProjects} GitHub, ${stats.localProjects} Local`}
           />
+          {/* D-85: Connected LLMs Card */}
           <StatCard
-            icon={Coins}
-            iconColor="blue"
-            badge={stats.tokensUsed > 0 ? 'This period' : null}
-            badgeType="neutral"
-            label="Tokens Used"
-            value={formatTokens(stats.tokensUsed)}
-            description="Via OpenRouter API"
-          />
-          <StatCard
-            icon={Bot}
+            icon={Monitor}
             iconColor="purple"
-            badge="Enabled"
+            badge="Stable"
             badgeType="neutral"
-            label="Active Agents"
-            value={stats.activeAgents}
-            description="Code, Test, Docs, Review"
+            label="Connected LLMs"
+            value={stats.connectedLLMs || 5}
+            description="OpenRouter + Anthropic"
           />
         </div>
 
