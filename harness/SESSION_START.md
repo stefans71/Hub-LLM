@@ -177,3 +177,18 @@ Authentication is ALREADY VERIFIED. When taking screenshots:
 3. **DO NOT** spend tokens on auth flows
 
 Just verify YOUR component renders. Auth works.
+
+---
+
+## Session End (REQUIRED)
+
+Before stopping, append to `harness/learnings.md`:
+```markdown
+### Session [N] - [DATE]
+**Task**: [ID]
+**New Commands/Patterns**: [any discoveries]
+**Friction Points**: [any blockers or time wasted]
+**Files Needing Attention**: [large files, tech debt spotted]
+```
+
+Then commit everything including learnings.

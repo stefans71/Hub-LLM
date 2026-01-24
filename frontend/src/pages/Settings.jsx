@@ -29,7 +29,8 @@ import {
   Server,
   Monitor,
   Eye,
-  EyeOff
+  EyeOff,
+  Mic
 } from 'lucide-react'
 
 // CSS Variables matching mockup
@@ -576,6 +577,79 @@ function DefaultModelSettings() {
       }}>
         <div style={{ fontSize: '13px', color: cssVars.textSecondary }}>
           <strong>💡 Tip:</strong> Claude models are free with your Anthropic subscription. OpenRouter models use your API credits and are billed separately.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Voice Input Settings Section (S-164 to S-170)
+function VoiceSettings() {
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('voice_input_enabled') === 'true'
+    setVoiceEnabled(saved)
+  }, [])
+
+  const handleToggle = () => {
+    const newValue = !voiceEnabled
+    setVoiceEnabled(newValue)
+    localStorage.setItem('voice_input_enabled', String(newValue))
+  }
+
+  return (
+    <div>
+      {/* S-165: Section Title */}
+      <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '8px' }}>Voice Input (Whisper)</h2>
+
+      {/* S-166: Section Description */}
+      <p style={{ color: cssVars.textSecondary, fontSize: '14px', marginBottom: '24px' }}>
+        Enable voice-to-text for prompts using OpenAI Whisper.
+      </p>
+
+      {/* S-167: Voice Toggle Row */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px',
+        background: cssVars.bgTertiary,
+        borderRadius: '8px'
+      }}>
+        <div>
+          {/* S-168: Voice Toggle Label */}
+          <div style={{ fontWeight: '500' }}>Enable Voice Input</div>
+          {/* S-169: Voice Toggle Description */}
+          <div style={{ fontSize: '13px', color: cssVars.textSecondary }}>
+            Use microphone to speak your prompts
+          </div>
+        </div>
+
+        {/* S-170: Voice Toggle */}
+        <div
+          onClick={handleToggle}
+          style={{
+            width: '48px',
+            height: '28px',
+            background: voiceEnabled ? cssVars.primary : cssVars.border,
+            borderRadius: '14px',
+            position: 'relative',
+            cursor: 'pointer',
+            transition: 'background 0.2s ease'
+          }}
+        >
+          <div style={{
+            width: '24px',
+            height: '24px',
+            background: 'white',
+            borderRadius: '50%',
+            position: 'absolute',
+            top: '2px',
+            right: voiceEnabled ? '2px' : 'auto',
+            left: voiceEnabled ? 'auto' : '2px',
+            transition: 'all 0.2s ease'
+          }} />
         </div>
       </div>
     </div>
