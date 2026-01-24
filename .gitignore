@@ -38,3 +38,4 @@ htmlcov/
 .pytest_cache/
 tests/e2e/screenshots/*.png
 tests/e2e/screenshots/*.png
+*.png
