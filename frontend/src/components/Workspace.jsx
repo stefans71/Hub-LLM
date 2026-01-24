@@ -9,6 +9,7 @@ import CodeEditor from './CodeEditor'
 import PreviewPanel from './PreviewPanel'
 import WorkspaceTopBar from './WorkspaceTopBar'
 import WorkspaceIconSidebar from './WorkspaceIconSidebar'
+import WorkspaceFileExplorer from './WorkspaceFileExplorer'
 import {
   MessageSquare,
   Server,
@@ -45,6 +46,8 @@ export default function Workspace({ project, model, apiKeys }) {
 
   // W-31: Icon Sidebar state
   const [activeSidebarPanel, setActiveSidebarPanel] = useState('workspaces')
+  // W-38: File Explorer state
+  const [fileExplorerOpen, setFileExplorerOpen] = useState(true)
 
   // W-03: Workspace Top Bar state
   const [isConnected, setIsConnected] = useState(true)
@@ -65,7 +68,13 @@ export default function Workspace({ project, model, apiKeys }) {
 
   // W-31: Icon Sidebar handlers
   const handleSidebarPanelChange = (panel) => {
-    setActiveSidebarPanel(activeSidebarPanel === panel ? null : panel)
+    if (panel === 'workspaces') {
+      // Toggle file explorer when clicking workspaces icon
+      setFileExplorerOpen(!fileExplorerOpen)
+      setActiveSidebarPanel(fileExplorerOpen ? null : 'workspaces')
+    } else {
+      setActiveSidebarPanel(activeSidebarPanel === panel ? null : panel)
+    }
   }
 
   const handleSidebarNavigate = (view) => {
@@ -74,6 +83,21 @@ export default function Workspace({ project, model, apiKeys }) {
     } else if (view === 'settings') {
       navigate('/settings')
     }
+  }
+
+  // W-38: File Explorer handlers
+  const handleFileExplorerToggle = () => {
+    setFileExplorerOpen(!fileExplorerOpen)
+    if (fileExplorerOpen) {
+      setActiveSidebarPanel(null)
+    } else {
+      setActiveSidebarPanel('workspaces')
+    }
+  }
+
+  const handleSelectProject = (selectedProject) => {
+    // In a real implementation, this would load the selected project
+    console.log('Selected project:', selectedProject)
   }
 
   const openTerminal = (server) => {
@@ -152,6 +176,14 @@ export default function Workspace({ project, model, apiKeys }) {
           activePanel={activeSidebarPanel}
           onPanelChange={handleSidebarPanelChange}
           onNavigate={handleSidebarNavigate}
+        />
+
+        {/* W-38: File Explorer Panel */}
+        <WorkspaceFileExplorer
+          isOpen={fileExplorerOpen}
+          onToggle={handleFileExplorerToggle}
+          currentProject={project}
+          onSelectProject={handleSelectProject}
         />
 
         {/* Left side - Main content */}

@@ -2,8 +2,8 @@
   "meta": {
     "version": "2.0",
     "total_elements": 917,
-    "completed_elements": 602,
-    "completion_percentage": 66,
+    "completed_elements": 616,
+    "completion_percentage": 67,
     "last_updated": "2026-01-24"
   },
   "queue": [
@@ -26,12 +26,12 @@
       "size": "S",
       "elements": 14,
       "priority": 3,
-      "status": "partial",
+      "status": "complete",
       "description": "File tree, workspace folders - FileBrowser.jsx exists, needs wiring",
       "mapping_file": "workspace_modals.md",
       "mapping_lines": "W-38 to W-52",
       "depends_on": ["W-31"],
-      "react_files": ["FileBrowser.jsx (exists)", "Workspace.jsx (modify)"]
+      "react_files": ["WorkspaceFileExplorer.jsx (create)", "Workspace.jsx (modify)"]
     },
     {
       "id": "W-88",
@@ -144,6 +144,13 @@
       "id": "W-31",
       "name": "Workspace Icon Sidebar",
       "elements": 7,
+      "completed_date": "2026-01-24",
+      "session": 32
+    },
+    {
+      "id": "W-38",
+      "name": "Workspace File Explorer Panel",
+      "elements": 14,
       "completed_date": "2026-01-24",
       "session": 32
     }
