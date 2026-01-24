@@ -2,8 +2,8 @@
   "meta": {
     "version": "2.0",
     "total_elements": 917,
-    "completed_elements": 709,
-    "completion_percentage": 77,
+    "completed_elements": 756,
+    "completion_percentage": 82,
     "last_updated": "2026-01-24"
   },
   "queue": [
@@ -95,7 +95,7 @@
       "size": "M",
       "elements": 29,
       "priority": 8,
-      "status": "pending",
+      "status": "complete",
       "description": "Skills list, add skill button, skill items",
       "mapping_file": "settings.md",
       "mapping_lines": "S-218 to S-246",
@@ -109,7 +109,7 @@
       "size": "S",
       "elements": 18,
       "priority": 9,
-      "status": "pending",
+      "status": "complete",
       "description": "Create/edit skill form",
       "mapping_file": "workspace_modals.md",
       "mapping_lines": "M-45 to M-62",
@@ -194,6 +194,20 @@
       "elements": 8,
       "completed_date": "2026-01-24",
       "session": 35
+    },
+    {
+      "id": "S-218",
+      "name": "Global Skills Section",
+      "elements": 29,
+      "completed_date": "2026-01-24",
+      "session": 36
+    },
+    {
+      "id": "M-45",
+      "name": "Skill Modal",
+      "elements": 18,
+      "completed_date": "2026-01-24",
+      "session": 36
     }
   ],
   "notes": {

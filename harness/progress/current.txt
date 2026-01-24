@@ -202,4 +202,31 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 
 ---
 
+### Session 36 - 2026-01-24
+**Task**: S-218 (Global Skills Section) + M-45 (Skill Modal) - Size M + S
+**Status**: ✅ Complete
+**Files Modified**:
+- frontend/src/pages/Settings.jsx (modified - added GlobalSkillsSettings and SkillModal components)
+**Elements Implemented** (47 total):
+- S-221: Global Skills Section Container
+- S-222: Section Title "Global Skills"
+- S-223: Section Description
+- S-224: Skills List Card
+- S-225: Skills List Header
+- S-226: "Your Global Skills" Title
+- S-227: Browse Registry Button
+- S-228: Create Skill Button
+- S-229 to S-235: doc-generator skill item (purple icon, name, description, Installed tag, Configure/Remove buttons)
+- S-236 to S-242: data-analysis skill item (orange icon, name, description, Installed tag, Configure/Remove buttons)
+- S-243 to S-249: frontend-design skill item (blue icon, name, description, Installed tag, Configure/Remove buttons)
+- M-45 to M-62: Skill Modal (Create/Configure form with icon, name, icon color picker, description, Cancel/Save buttons)
+**Verified**: Screenshot matches mockup - all elements visible and functional
+**Notes**:
+- Added "Skills" navigation item in Settings sidebar under Integrations
+- Skills stored in localStorage as 'global_skills'
+- Modal supports creating new skills and editing existing ones
+- Icon color picker with 5 options (blue, purple, orange, green, red)
+
+---
+
 <!-- Add new sessions below this line -->

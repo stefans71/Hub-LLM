@@ -30,7 +30,8 @@ import {
   Monitor,
   Eye,
   EyeOff,
-  Mic
+  Mic,
+  Book
 } from 'lucide-react'
 
 // CSS Variables matching mockup
@@ -2119,6 +2120,13 @@ const defaultAgents = [
   { id: 'test-writer', name: 'test-writer', icon: '🧪', description: 'Generates unit tests, integration tests, and test fixtures based on your code.', model: 'sonnet', tools: 'all', enabled: true }
 ]
 
+// Default skills matching mockup
+const defaultSkills = [
+  { id: 'doc-generator', name: 'doc-generator', icon: '📝', description: 'Generates documentation from code including README, API docs, and inline comments.', iconBg: 'rgba(168, 85, 247, 0.2)' },
+  { id: 'data-analysis', name: 'data-analysis', icon: '📊', description: 'Analyzes data files, generates reports, and creates visualizations.', iconBg: 'rgba(249, 115, 22, 0.2)' },
+  { id: 'frontend-design', name: 'frontend-design', icon: '🎨', description: 'Creates UI components, layouts, and responsive designs following best practices.', iconBg: 'rgba(59, 130, 246, 0.2)' }
+]
+
 // Agent Modal for creating/editing agents
 function AgentModal({ show, onClose, onSave, editAgent }) {
   const [name, setName] = useState('')
@@ -2946,6 +2954,523 @@ function GlobalAgentsSettings() {
   )
 }
 
+// Global Skills Settings Section
+function GlobalSkillsSettings() {
+  const [skills, setSkills] = useState([])
+  const [showModal, setShowModal] = useState(false)
+  const [editingSkill, setEditingSkill] = useState(null)
+
+  // Load skills from localStorage or use defaults
+  useEffect(() => {
+    const savedSkills = localStorage.getItem('global_skills')
+    if (savedSkills) {
+      try {
+        setSkills(JSON.parse(savedSkills))
+      } catch (e) {
+        console.error('Failed to parse global skills:', e)
+        setSkills(defaultSkills)
+      }
+    } else {
+      // Initialize with default skills
+      setSkills(defaultSkills)
+      localStorage.setItem('global_skills', JSON.stringify(defaultSkills))
+    }
+  }, [])
+
+  // Save skills to localStorage
+  const saveSkills = (newSkills) => {
+    setSkills(newSkills)
+    localStorage.setItem('global_skills', JSON.stringify(newSkills))
+  }
+
+  const handleAddSkill = (skill) => {
+    if (editingSkill) {
+      // Update existing
+      const updated = skills.map(s => s.id === skill.id ? skill : s)
+      saveSkills(updated)
+    } else {
+      // Add new
+      saveSkills([...skills, skill])
+    }
+    setEditingSkill(null)
+  }
+
+  const handleEditSkill = (skill) => {
+    setEditingSkill(skill)
+    setShowModal(true)
+  }
+
+  const handleDeleteSkill = (skillId) => {
+    if (window.confirm('Are you sure you want to remove this skill?')) {
+      saveSkills(skills.filter(s => s.id !== skillId))
+    }
+  }
+
+  return (
+    <div>
+      <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '8px' }}>Global Skills</h2>
+      <p style={{ color: cssVars.textSecondary, fontSize: '14px', marginBottom: '24px' }}>
+        Skills are reusable task modules that teach the AI specific workflows. These are available across all projects.
+      </p>
+
+      {/* Skills List Card */}
+      <div style={{
+        background: cssVars.bgTertiary,
+        borderRadius: '12px',
+        padding: '20px'
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '16px'
+        }}>
+          <span style={{ fontWeight: '500' }}>Your Global Skills</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              style={{
+                padding: '8px 16px',
+                background: cssVars.bgSecondary,
+                border: `1px solid ${cssVars.border}`,
+                borderRadius: '8px',
+                color: cssVars.textPrimary,
+                fontSize: '13px',
+                cursor: 'pointer'
+              }}
+            >
+              Browse Registry
+            </button>
+            <button
+              onClick={() => {
+                setEditingSkill(null)
+                setShowModal(true)
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                background: cssVars.primary,
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '13px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              + Create Skill
+            </button>
+          </div>
+        </div>
+
+        {/* Skills List */}
+        {skills.length === 0 ? (
+          <div style={{
+            padding: '40px 20px',
+            textAlign: 'center',
+            color: cssVars.textMuted
+          }}>
+            <Book size={48} style={{ opacity: 0.3, marginBottom: '12px' }} />
+            <div style={{ fontSize: '14px', marginBottom: '8px' }}>No skills configured</div>
+            <div style={{ fontSize: '12px' }}>Click "Create Skill" to add your first skill</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {skills.map((skill, index) => (
+              <div
+                key={skill.id}
+                style={{
+                  background: cssVars.bgSecondary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  padding: '16px',
+                  marginBottom: index === skills.length - 1 ? '0' : undefined
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  {/* Icon */}
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    background: skill.iconBg || 'rgba(59, 130, 246, 0.2)',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '18px'
+                  }}>
+                    {skill.icon || '📚'}
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: '500' }}>{skill.name}</div>
+                    <div style={{
+                      fontSize: '13px',
+                      color: cssVars.textSecondary,
+                      marginTop: '2px'
+                    }}>
+                      {skill.description}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <span style={{
+                        fontSize: '11px',
+                        background: 'rgba(34, 197, 94, 0.2)',
+                        color: cssVars.success,
+                        padding: '2px 8px',
+                        borderRadius: '4px'
+                      }}>
+                        Installed
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => handleEditSkill(skill)}
+                      style={{
+                        padding: '6px 12px',
+                        background: cssVars.bgTertiary,
+                        border: `1px solid ${cssVars.border}`,
+                        borderRadius: '6px',
+                        color: cssVars.textPrimary,
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Configure
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSkill(skill.id)}
+                      style={{
+                        padding: '6px 12px',
+                        background: cssVars.bgTertiary,
+                        border: `1px solid ${cssVars.border}`,
+                        borderRadius: '6px',
+                        color: cssVars.textPrimary,
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Skill Modal */}
+      <SkillModal
+        show={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setEditingSkill(null)
+        }}
+        onSave={handleAddSkill}
+        editSkill={editingSkill}
+      />
+    </div>
+  )
+}
+
+// Skill Modal for creating/editing skills
+function SkillModal({ show, onClose, onSave, editSkill }) {
+  const [name, setName] = useState('')
+  const [icon, setIcon] = useState('📚')
+  const [description, setDescription] = useState('')
+  const [iconBg, setIconBg] = useState('rgba(59, 130, 246, 0.2)')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  // Icon background color options
+  const iconBgOptions = [
+    { value: 'rgba(59, 130, 246, 0.2)', label: 'Blue', color: '#3b82f6' },
+    { value: 'rgba(168, 85, 247, 0.2)', label: 'Purple', color: '#a855f7' },
+    { value: 'rgba(249, 115, 22, 0.2)', label: 'Orange', color: '#f97316' },
+    { value: 'rgba(34, 197, 94, 0.2)', label: 'Green', color: '#22c55e' },
+    { value: 'rgba(239, 68, 68, 0.2)', label: 'Red', color: '#ef4444' }
+  ]
+
+  // Reset form when modal opens/closes or editSkill changes
+  useEffect(() => {
+    if (show && editSkill) {
+      setName(editSkill.name || '')
+      setIcon(editSkill.icon || '📚')
+      setDescription(editSkill.description || '')
+      setIconBg(editSkill.iconBg || 'rgba(59, 130, 246, 0.2)')
+    } else if (show) {
+      // Reset to defaults for new skill
+      setName('')
+      setIcon('📚')
+      setDescription('')
+      setIconBg('rgba(59, 130, 246, 0.2)')
+      setError(null)
+    }
+  }, [show, editSkill])
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      setError('Skill name is required')
+      return
+    }
+    if (!description.trim()) {
+      setError('Description is required')
+      return
+    }
+
+    setSaving(true)
+    setError(null)
+
+    try {
+      const skill = {
+        id: editSkill?.id || name.toLowerCase().replace(/\s+/g, '-'),
+        name: name.trim(),
+        icon,
+        description: description.trim(),
+        iconBg
+      }
+      onSave(skill)
+      onClose()
+    } catch (err) {
+      console.error('Failed to save skill:', err)
+      setError('Failed to save skill')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!show) return null
+
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0, 0, 0, 0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        background: cssVars.bgSecondary,
+        borderRadius: '12px',
+        width: '500px',
+        maxHeight: '90vh',
+        overflow: 'auto'
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '20px 24px',
+          borderBottom: `1px solid ${cssVars.border}`
+        }}>
+          <h3 style={{ margin: 0, fontSize: '18px' }}>
+            {editSkill ? 'Configure Skill' : 'Create Skill'}
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: cssVars.textSecondary,
+              cursor: 'pointer',
+              padding: '4px'
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div style={{ padding: '24px' }}>
+          {error && (
+            <div style={{
+              padding: '12px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: `1px solid ${cssVars.error}`,
+              borderRadius: '8px',
+              marginBottom: '16px',
+              color: cssVars.error,
+              fontSize: '13px'
+            }}>
+              {error}
+            </div>
+          )}
+
+          {/* Icon and Name Row */}
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+            {/* Icon Picker */}
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '500',
+                marginBottom: '6px'
+              }}>
+                Icon
+              </label>
+              <input
+                type="text"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                style={{
+                  width: '60px',
+                  padding: '12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '24px',
+                  textAlign: 'center'
+                }}
+              />
+            </div>
+
+            {/* Name */}
+            <div style={{ flex: 1 }}>
+              <label style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: '500',
+                marginBottom: '6px'
+              }}>
+                Skill Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., doc-generator"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: cssVars.bgTertiary,
+                  border: `1px solid ${cssVars.border}`,
+                  borderRadius: '8px',
+                  color: cssVars.textPrimary,
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Icon Background Color */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '500',
+              marginBottom: '6px'
+            }}>
+              Icon Color
+            </label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {iconBgOptions.map(opt => (
+                <div
+                  key={opt.value}
+                  onClick={() => setIconBg(opt.value)}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    background: opt.value,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    border: iconBg === opt.value ? `2px solid ${opt.color}` : '2px solid transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {iconBg === opt.value && (
+                    <CheckCircle size={16} color={opt.color} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: '500',
+              marginBottom: '6px'
+            }}>
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What does this skill do?"
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: cssVars.bgTertiary,
+                border: `1px solid ${cssVars.border}`,
+                borderRadius: '8px',
+                color: cssVars.textPrimary,
+                fontSize: '14px',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '12px',
+          padding: '16px 24px',
+          borderTop: `1px solid ${cssVars.border}`
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 20px',
+              background: cssVars.bgTertiary,
+              border: `1px solid ${cssVars.border}`,
+              borderRadius: '8px',
+              color: cssVars.textPrimary,
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              padding: '10px 20px',
+              background: cssVars.primary,
+              border: 'none',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: saving ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.7 : 1
+            }}
+          >
+            {saving ? 'Saving...' : (editSkill ? 'Save Changes' : 'Create Skill')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // VPS Connection Modal
 function VPSModal({ show, onClose, onSave, editServer }) {
   const [name, setName] = useState('')
@@ -3700,6 +4225,8 @@ export default function Settings({ onBack, onLogout }) {
         return <AppearanceSettings />
       case 'agents':
         return <GlobalAgentsSettings />
+      case 'skills':
+        return <GlobalSkillsSettings />
       case 'mcp':
         return <GlobalMCPSettings />
       case 'vps':
@@ -3810,6 +4337,12 @@ export default function Settings({ onBack, onLogout }) {
             label="Global Agents"
             active={activeTab === 'agents'}
             onClick={() => setActiveTab('agents')}
+          />
+          <NavItem
+            icon={Book}
+            label="Skills"
+            active={activeTab === 'skills'}
+            onClick={() => setActiveTab('skills')}
           />
           <NavItem
             icon={Plug}
