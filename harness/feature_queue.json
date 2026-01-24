@@ -1,44 +1,91 @@
 {
   "meta": {
-    "version": "2.1",
-    "total_elements": 917,
-    "completed_elements": 870,
-    "completion_percentage": 95,
-    "last_updated": "2026-01-24",
-    "phase": "Terminal Integration Complete"
+    "version": "2.2",
+    "phase": "Terminal Integration Fixes",
+    "last_updated": "2024-01-24"
   },
-  "queue": [],
-  "completed": [
-    {"id": "W-03", "name": "Workspace Top Bar", "completed": "2024-01-24"},
-    {"id": "W-31", "name": "Icon Sidebar", "completed": "2024-01-24"},
-    {"id": "W-38", "name": "File Explorer Panel", "completed": "2024-01-24"},
-    {"id": "W-88", "name": "LLM-Dev Panel", "completed": "2024-01-24"},
-    {"id": "S-64", "name": "Anthropic Subscription", "completed": "2024-01-24"},
-    {"id": "S-96", "name": "Default Model Section", "completed": "2024-01-24"},
-    {"id": "S-166", "name": "Voice Input Section", "completed": "2024-01-24"},
-    {"id": "S-218", "name": "Global Skills Section", "completed": "2024-01-24"},
-    {"id": "M-45", "name": "Skill Modal", "completed": "2024-01-24"},
-    {"id": "D-73", "name": "Dashboard Stats", "completed": "2024-01-24"},
-    {"id": "W-54", "name": "Chat Panel", "completed": "2024-01-24"},
-    {"id": "W-69", "name": "Preview Panel", "completed": "2024-01-24"},
-    {"id": "M-01", "name": "Model Notification", "completed": "2024-01-24"},
-    {"id": "M-10", "name": "Agent Modal", "completed": "2024-01-24"},
-    {"id": "M-63", "name": "MCP Server Modal", "completed": "2024-01-24"},
-    {"id": "T-01", "name": "Terminal WebSocket Endpoint", "completed": "2026-01-24"},
-    {"id": "T-02", "name": "SSH Session Service", "completed": "2026-01-24", "note": "Already existed in services/ssh.py with asyncssh"},
-    {"id": "T-03", "name": "Terminal WebSocket Hook", "completed": "2026-01-24"},
-    {"id": "T-04", "name": "Terminal Status UI", "completed": "2026-01-24", "note": "Included in WorkspaceTerminal component"},
-    {"id": "F-01", "name": "File Listing API", "completed": "2026-01-24"},
-    {"id": "F-03", "name": "File Read/Write API", "completed": "2026-01-24", "note": "Includes mkdir, delete endpoints"},
-    {"id": "F-02", "name": "FileBrowser Integration", "completed": "2026-01-24", "note": "Connected to /api/files endpoints"},
-    {"id": "F-04", "name": "CodeEditor Integration", "completed": "2026-01-24", "note": "Connected to /api/files/content endpoints"}
+  "queue": [
+    {
+      "id": "FIX-01",
+      "name": "Debug WebSocket Connection",
+      "size": "M",
+      "priority": 1,
+      "status": "pending",
+      "description": "Terminal WebSocket shows 'connection failed'. Debug and fix.",
+      "symptoms": [
+        "Terminal shows 'Connecting...' then 'WebSocket connection failed'",
+        "IP shown is 192.168.1.104 (wrong - should be Digital Ocean IP)",
+        "Project shows 'Connected' but terminal doesn't connect"
+      ],
+      "debug_steps": [
+        "1. Check browser console for WebSocket errors",
+        "2. Check backend logs when WebSocket connects",
+        "3. Verify /api/terminal/ws endpoint is registered",
+        "4. Check if project has correct vps_server_id in database",
+        "5. Verify VPS credentials are being retrieved correctly"
+      ],
+      "test": "Terminal connects and shows real bash prompt from VPS"
+    },
+    {
+      "id": "FIX-02",
+      "name": "Fix Project-VPS Linking",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Project shows wrong IP (192.168.1.104 instead of DO server). Fix project-to-VPS association.",
+      "symptoms": [
+        "Top bar shows 'prod-01 (192.168.1.104)' but user's DO server is different",
+        "This is mock/hardcoded data, not from database"
+      ],
+      "check": [
+        "WorkspaceTopBar.jsx - where does it get server info?",
+        "LLMDevPanel.jsx - where does it get server info?",
+        "API endpoint that returns project details with VPS info"
+      ],
+      "test": "Workspace shows correct DO server IP from Settings > VPS Connections"
+    },
+    {
+      "id": "FIX-03",
+      "name": "Wire FileBrowser to Real API",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "description": "File explorer still shows mock data (server.js, routes.js). Connect to /api/files endpoint.",
+      "symptoms": [
+        "Shows hardcoded fake files, not real VPS directory",
+        "Folders like 'src', 'index.js' are mock data"
+      ],
+      "check": [
+        "FileBrowser.jsx - is it calling /api/files?",
+        "Check network tab - does it make API request?",
+        "Does API return data or error?"
+      ],
+      "test": "File browser shows real files from VPS home directory"
+    },
+    {
+      "id": "FIX-04",
+      "name": "Test All LLM-Dev Panel Functions",
+      "size": "S",
+      "priority": 4,
+      "status": "pending",
+      "description": "Verify all panel functionality works with real data",
+      "checklist": [
+        "Terminal tab: Real bash prompt, can run commands",
+        "File Explorer: Shows real files, can expand folders",
+        "Code Editor: Click file → loads content, can edit/save",
+        "Add file button: Creates file on VPS",
+        "Add folder button: Creates folder on VPS", 
+        "Refresh button: Reloads file listing",
+        "Docker tab: Shows real containers (or 'no containers' if none)",
+        "Logs tab: Shows real logs or empty state",
+        "Project Context tab: Shows correct project info"
+      ],
+      "test": "All checklist items pass"
+    }
   ],
   "notes": {
-    "vps_connection_works": "SSH connection to VPS is already working - see Settings > VPS Connections. Credentials stored in database.",
-    "terminal_endpoint": "WebSocket at /api/terminal/ws accepts projectId or serverId query params",
-    "terminal_component_complete": "WorkspaceTerminal.jsx connects xterm.js to WebSocket with status UI and reconnect",
-    "files_api_complete": "GET/PUT /api/files, /api/files/content, /api/files/mkdir - all endpoints ready",
-    "file_components_integrated": "FileBrowser.jsx and CodeEditor.jsx now connected to real /api/files endpoints",
-    "docker_deferred": "Docker integration (D-01, D-02) deferred - consider as next phase"
+    "user_vps": "User has Digital Ocean VPS connected in Settings > VPS Connections showing 'Connected'",
+    "project_created": "Project 'Fridge Meal' created with VPS connection during setup",
+    "issue": "Integration written but not wired to real project/VPS data"
   }
 }
