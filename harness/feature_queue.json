@@ -1,320 +1,186 @@
 {
   "meta": {
-    "version": "2.0",
+    "version": "2.1",
     "total_elements": 917,
-    "completed_elements": 860,
+    "completed_elements": 862,
     "completion_percentage": 94,
-    "last_updated": "2026-01-24"
+    "last_updated": "2024-01-24",
+    "phase": "Terminal Integration"
   },
   "queue": [
     {
-      "id": "W-31",
-      "name": "Workspace Icon Sidebar",
-      "size": "S",
-      "elements": 7,
+      "id": "T-01",
+      "name": "Terminal WebSocket Endpoint",
+      "size": "M",
+      "priority": 1,
+      "status": "pending",
+      "description": "Create WebSocket endpoint at /api/terminal/ws that handles terminal connections",
+      "reference_existing": [
+        "backend/routes/vps.js - VPS connection logic",
+        "backend/services/ - Check for existing SSH services",
+        "frontend/src/pages/Settings.jsx - VPSConnectionsSettings shows working SSH"
+      ],
+      "requirements": [
+        "WebSocket endpoint at /api/terminal/ws",
+        "Accept projectId or vpsId to identify which VPS to connect",
+        "Use express-ws or ws library",
+        "Handle connection lifecycle (open, message, close, error)"
+      ],
+      "depends_on": [],
+      "test": "wscat -c ws://localhost:8000/api/terminal/ws"
+    },
+    {
+      "id": "T-02",
+      "name": "SSH Session Service",
+      "size": "M",
       "priority": 2,
-      "status": "complete",
-      "description": "Workspaces, search, source control, create, settings icons",
-      "mapping_file": "workspace_modals.md",
-      "mapping_lines": "W-31 to W-37",
-      "depends_on": [],
-      "related_tasks": ["W-38"],
-      "react_files": ["WorkspaceIconSidebar.jsx (create)", "Workspace.jsx (modify)"]
+      "status": "pending",
+      "description": "Create SSH session service using ssh2 library to connect to VPS",
+      "reference_existing": [
+        "VPS credentials are already stored in database",
+        "VPS connection UI shows 'Connected' status - that logic exists",
+        "Check backend/models/ for VPS/connection schemas"
+      ],
+      "requirements": [
+        "Use ssh2 library for SSH connections",
+        "Retrieve VPS credentials from database (host, port, username, key/password)",
+        "Create interactive shell session",
+        "Pipe SSH stdin/stdout through WebSocket from T-01",
+        "Handle auth failures, timeouts, disconnects gracefully"
+      ],
+      "depends_on": ["T-01"],
+      "test": "Connect via WebSocket, type 'ls', see real directory listing"
     },
     {
-      "id": "W-38",
-      "name": "Workspace File Explorer Panel",
+      "id": "T-03",
+      "name": "Terminal WebSocket Hook",
       "size": "S",
-      "elements": 14,
       "priority": 3,
-      "status": "complete",
-      "description": "File tree, workspace folders - FileBrowser.jsx exists, needs wiring",
-      "mapping_file": "workspace_modals.md",
-      "mapping_lines": "W-38 to W-52",
-      "depends_on": ["W-31"],
-      "related_tasks": ["W-31"],
-      "react_files": ["WorkspaceFileExplorer.jsx (create)", "Workspace.jsx (modify)"]
+      "status": "pending",
+      "description": "Connect Terminal.jsx xterm.js instance to backend WebSocket",
+      "reference_existing": [
+        "frontend/src/components/Terminal.jsx - xterm.js already set up",
+        "frontend/src/components/LLMDevPanel.jsx - Terminal tab container"
+      ],
+      "requirements": [
+        "Create useTerminalWebSocket hook or integrate into Terminal.jsx",
+        "Connect xterm.onData to WebSocket send",
+        "Connect WebSocket onmessage to xterm.write",
+        "Pass projectId/vpsId from Workspace context"
+      ],
+      "depends_on": ["T-02"],
+      "test": "Open workspace, see real terminal prompt from VPS"
     },
     {
-      "id": "W-88",
-      "name": "LLM-Dev Bottom Panel",
-      "size": "L",
-      "elements": 36,
+      "id": "T-04",
+      "name": "Terminal Status UI",
+      "size": "XS",
       "priority": 4,
-      "status": "complete",
-      "description": "Tab bar + Terminal/Docker/Logs/Context tabs",
-      "mapping_file": "workspace_modals.md",
-      "mapping_lines": "W-88 to W-124",
-      "depends_on": [],
-      "react_files": ["LLMDevPanel.jsx (create)", "Workspace.jsx (modify)"]
+      "status": "pending",
+      "description": "Show terminal connection status and reconnect button",
+      "requirements": [
+        "Show 'Connecting...', 'Connected', 'Disconnected' states",
+        "Add reconnect button on disconnect",
+        "Show error messages if connection fails"
+      ],
+      "depends_on": ["T-03"],
+      "test": "Disconnect VPS, see status change, click reconnect"
     },
     {
-      "id": "S-64",
-      "name": "Anthropic Subscription Section",
-      "size": "M",
-      "elements": 32,
+      "id": "F-01",
+      "name": "File Listing API",
+      "size": "S",
       "priority": 5,
-      "status": "complete",
-      "description": "Claude CLI install, auth status, Cross-LLM toggle",
-      "mapping_file": "settings.md",
-      "mapping_lines": "S-64 to S-95",
-      "depends_on": [],
-      "related_tasks": ["S-96"],
-      "react_files": ["AnthropicSubscription.jsx (create)", "Settings.jsx (modify)"]
+      "status": "pending",
+      "description": "Create API endpoint to list files/directories on VPS",
+      "reference_existing": [
+        "Use same SSH connection from T-02",
+        "Run 'ls -la' or use sftp for directory listing"
+      ],
+      "requirements": [
+        "GET /api/files?vpsId=X&path=/path - returns directory tree",
+        "Return: name, type (file/dir), size, permissions, modified date",
+        "Handle permission errors gracefully"
+      ],
+      "depends_on": ["T-02"],
+      "test": "curl /api/files?path=/ returns JSON directory listing"
     },
     {
-      "id": "S-96",
-      "name": "Default Model Section",
+      "id": "F-02",
+      "name": "FileBrowser Integration",
       "size": "S",
-      "elements": 10,
       "priority": 6,
-      "status": "complete",
-      "description": "Model dropdown with provider groups",
-      "mapping_file": "settings.md",
-      "mapping_lines": "S-96 to S-105",
-      "depends_on": [],
-      "related_tasks": ["S-64"],
-      "react_files": ["DefaultModelSettings.jsx (create)", "Settings.jsx (modify)"]
+      "status": "pending",
+      "description": "Connect FileBrowser.jsx to real file listing API",
+      "reference_existing": [
+        "frontend/src/components/FileBrowser.jsx - UI exists with mock data"
+      ],
+      "requirements": [
+        "Fetch real directory tree from F-01 API",
+        "Expand folders on click (lazy load subdirectories)",
+        "Show loading states",
+        "Handle errors (permission denied, etc.)"
+      ],
+      "depends_on": ["F-01"],
+      "test": "See real files from VPS in file browser"
     },
     {
-      "id": "S-166",
-      "name": "Voice Input Section",
-      "size": "XS",
-      "elements": 7,
+      "id": "F-03",
+      "name": "File Read/Write API",
+      "size": "S",
       "priority": 7,
-      "status": "complete",
-      "description": "Whisper API toggle",
-      "mapping_file": "settings.md",
-      "mapping_lines": "S-166 to S-172",
-      "depends_on": [],
-      "react_files": ["VoiceSettings.jsx (create)", "Settings.jsx (modify)"]
+      "status": "pending",
+      "description": "Create API endpoints to read and write file contents",
+      "requirements": [
+        "GET /api/files/content?vpsId=X&path=/file - returns file content",
+        "PUT /api/files/content - saves file content",
+        "Handle binary vs text files",
+        "Handle large files (streaming or size limit)"
+      ],
+      "depends_on": ["T-02"],
+      "test": "Read a file, modify it, save it, verify change on VPS"
     },
     {
-      "id": "S-218",
-      "name": "Global Skills Section",
-      "size": "M",
-      "elements": 29,
+      "id": "F-04",
+      "name": "CodeEditor Integration",
+      "size": "S",
       "priority": 8,
-      "status": "complete",
-      "description": "Skills list, add skill button, skill items",
-      "mapping_file": "settings.md",
-      "mapping_lines": "S-218 to S-246",
-      "depends_on": [],
-      "related_tasks": ["M-45"],
-      "react_files": ["GlobalSkills.jsx (create)", "Settings.jsx (modify)"]
-    },
-    {
-      "id": "M-45",
-      "name": "Skill Modal",
-      "size": "S",
-      "elements": 18,
-      "priority": 9,
-      "status": "complete",
-      "description": "Create/edit skill form",
-      "mapping_file": "workspace_modals.md",
-      "mapping_lines": "M-45 to M-62",
-      "depends_on": ["S-218"],
-      "related_tasks": ["S-218"],
-      "react_files": ["SkillModal.jsx (create)"]
-    },
-    {
-      "id": "D-73",
-      "name": "Dashboard Stats Alignment",
-      "size": "XS",
-      "elements": 8,
-      "priority": 10,
-      "status": "complete",
-      "description": "Change stats to Active Sessions, Total Projects, Connected LLMs",
-      "mapping_file": "global_dashboard.md",
-      "mapping_lines": "D-73 to D-90",
-      "depends_on": [],
-      "react_files": ["Dashboard.jsx (modify)"]
-    },
-    {
-      "id": "W-54",
-      "name": "Workspace Chat Panel",
-      "size": "S",
-      "elements": 14,
-      "priority": 11,
-      "status": "complete",
-      "description": "Chat messages area, user/assistant bubbles, code blocks, input with voice",
-      "mapping_file": "workspace_modals.md",
-      "mapping_lines": "W-54 to W-67",
-      "depends_on": [],
-      "react_files": ["Chat.jsx (modify)", "Workspace.jsx (modify)"]
-    },
-    {
-      "id": "W-69",
-      "name": "Workspace Preview Panel",
-      "size": "S",
-      "elements": 17,
-      "priority": 12,
-      "status": "complete",
-      "description": "Live preview with device sizes, toolbar, URL bar, iframe",
-      "mapping_file": "workspace_modals.md",
-      "mapping_lines": "W-69 to W-85",
-      "depends_on": [],
-      "react_files": ["PreviewPanel.jsx (modify)"]
-    },
-    {
-      "id": "M-10",
-      "name": "Agent Modal",
-      "size": "M",
-      "elements": 35,
-      "priority": 13,
-      "status": "complete",
-      "description": "Create/edit agent form with icon picker, model/tools selects, system prompt",
-      "mapping_file": "workspace_modals.md",
-      "mapping_lines": "M-10 to M-44",
-      "depends_on": [],
-      "related_tasks": ["S-171"],
-      "react_files": ["AgentModal.jsx (create)", "Settings.jsx (modify)"]
-    },
-    {
-      "id": "M-63",
-      "name": "MCP Server Modal",
-      "size": "M",
-      "elements": 29,
-      "priority": 14,
-      "status": "complete",
-      "description": "Add MCP server form with database/API/custom types, connection config",
-      "mapping_file": "workspace_modals.md",
-      "mapping_lines": "M-63 to M-91",
-      "depends_on": [],
-      "related_tasks": ["S-250"],
-      "react_files": ["MCPServerModal.jsx (create)", "Settings.jsx (modify)"]
-    },
-    {
-      "id": "M-01",
-      "name": "Model Notification Modal",
-      "size": "XS",
-      "elements": 9,
-      "priority": 15,
-      "status": "complete",
-      "description": "Model change confirmation dialog",
-      "mapping_file": "workspace_modals.md",
-      "mapping_lines": "M-01 to M-09",
-      "depends_on": [],
-      "react_files": ["ModelNotification.jsx (create)"]
+      "status": "pending",
+      "description": "Connect CodeEditor.jsx to load/save real files",
+      "reference_existing": [
+        "frontend/src/components/CodeEditor.jsx - Monaco editor exists"
+      ],
+      "requirements": [
+        "Click file in FileBrowser → load content into editor",
+        "Cmd+S / Save button → write to VPS via F-03 API",
+        "Show save status (saving, saved, error)",
+        "Handle unsaved changes warning"
+      ],
+      "depends_on": ["F-02", "F-03"],
+      "test": "Open file, edit, save, verify change persists"
     }
   ],
   "completed": [
-    {
-      "id": "G-01",
-      "name": "Global Navigation",
-      "elements": 9,
-      "completed_date": "2024-01-23",
-      "session": 29
-    },
-    {
-      "id": "W-03",
-      "name": "Workspace Top Bar",
-      "elements": 28,
-      "completed_date": "2026-01-24",
-      "session": 31
-    },
-    {
-      "id": "W-31",
-      "name": "Workspace Icon Sidebar",
-      "elements": 7,
-      "completed_date": "2026-01-24",
-      "session": 32
-    },
-    {
-      "id": "W-38",
-      "name": "Workspace File Explorer Panel",
-      "elements": 14,
-      "completed_date": "2026-01-24",
-      "session": 32
-    },
-    {
-      "id": "W-88",
-      "name": "LLM-Dev Bottom Panel",
-      "elements": 36,
-      "completed_date": "2026-01-24",
-      "session": 33
-    },
-    {
-      "id": "S-64",
-      "name": "Anthropic Subscription Section",
-      "elements": 32,
-      "completed_date": "2026-01-24",
-      "session": 34
-    },
-    {
-      "id": "S-96",
-      "name": "Default Model Section",
-      "elements": 10,
-      "completed_date": "2026-01-24",
-      "session": 35
-    },
-    {
-      "id": "S-166",
-      "name": "Voice Input Section",
-      "elements": 7,
-      "completed_date": "2026-01-24",
-      "session": 35
-    },
-    {
-      "id": "D-73",
-      "name": "Dashboard Stats Alignment",
-      "elements": 8,
-      "completed_date": "2026-01-24",
-      "session": 35
-    },
-    {
-      "id": "S-218",
-      "name": "Global Skills Section",
-      "elements": 29,
-      "completed_date": "2026-01-24",
-      "session": 36
-    },
-    {
-      "id": "M-45",
-      "name": "Skill Modal",
-      "elements": 18,
-      "completed_date": "2026-01-24",
-      "session": 36
-    },
-    {
-      "id": "W-54",
-      "name": "Workspace Chat Panel",
-      "elements": 14,
-      "completed_date": "2026-01-24",
-      "session": 37
-    },
-    {
-      "id": "W-69",
-      "name": "Workspace Preview Panel",
-      "elements": 17,
-      "completed_date": "2026-01-24",
-      "session": 37
-    },
-    {
-      "id": "M-01",
-      "name": "Model Notification Modal",
-      "elements": 9,
-      "completed_date": "2026-01-24",
-      "session": 37
-    },
-    {
-      "id": "M-10",
-      "name": "Agent Modal",
-      "elements": 35,
-      "completed_date": "2026-01-24",
-      "session": 38
-    },
-    {
-      "id": "M-63",
-      "name": "MCP Server Modal",
-      "elements": 29,
-      "completed_date": "2026-01-24",
-      "session": 39
-    }
+    {"id": "W-03", "name": "Workspace Top Bar", "completed": "2024-01-24"},
+    {"id": "W-31", "name": "Icon Sidebar", "completed": "2024-01-24"},
+    {"id": "W-38", "name": "File Explorer Panel", "completed": "2024-01-24"},
+    {"id": "W-88", "name": "LLM-Dev Panel", "completed": "2024-01-24"},
+    {"id": "S-64", "name": "Anthropic Subscription", "completed": "2024-01-24"},
+    {"id": "S-96", "name": "Default Model Section", "completed": "2024-01-24"},
+    {"id": "S-166", "name": "Voice Input Section", "completed": "2024-01-24"},
+    {"id": "S-218", "name": "Global Skills Section", "completed": "2024-01-24"},
+    {"id": "M-45", "name": "Skill Modal", "completed": "2024-01-24"},
+    {"id": "D-73", "name": "Dashboard Stats", "completed": "2024-01-24"},
+    {"id": "W-54", "name": "Chat Panel", "completed": "2024-01-24"},
+    {"id": "W-69", "name": "Preview Panel", "completed": "2024-01-24"},
+    {"id": "M-01", "name": "Model Notification", "completed": "2024-01-24"},
+    {"id": "M-10", "name": "Agent Modal", "completed": "2024-01-24"},
+    {"id": "M-63", "name": "MCP Server Modal", "completed": "2024-01-24"}
   ],
   "notes": {
-    "workspace_priority": "Workspace (W-*) tasks are highest priority - this is where users work",
-    "existing_components": "Terminal.jsx, CodeEditor.jsx, FileBrowser.jsx, PreviewPanel.jsx exist but need wiring",
-    "visual_verification": "ALL UI tasks require screenshot comparison before marking complete"
+    "vps_connection_works": "SSH connection to VPS is already working - see Settings > VPS Connections. Credentials stored in database. Reference this existing code.",
+    "terminal_component_exists": "Terminal.jsx has xterm.js set up but connected to mock data",
+    "file_components_exist": "FileBrowser.jsx and CodeEditor.jsx exist but use mock data",
+    "docker_deferred": "Docker integration (D-01, D-02) deferred - do after terminal/files work"
   }
 }
