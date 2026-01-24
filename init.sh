@@ -5,6 +5,14 @@
 
 set -e
 
+# Check if already running
+if curl -s http://localhost:8000/health >/dev/null 2>&1 && curl -s http://localhost:5173 >/dev/null 2>&1; then
+    echo "✓ Environment already running!"
+    echo "  Frontend:  http://localhost:5173"
+    echo "  Backend:   http://localhost:8000"
+    exit 0
+fi
+
 echo "🚀 Starting HubLLM Development Environment..."
 echo "=============================================="
 
