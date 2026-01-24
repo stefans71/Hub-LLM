@@ -10,6 +10,7 @@ import PreviewPanel from './PreviewPanel'
 import WorkspaceTopBar from './WorkspaceTopBar'
 import WorkspaceIconSidebar from './WorkspaceIconSidebar'
 import WorkspaceFileExplorer from './WorkspaceFileExplorer'
+import LLMDevPanel from './LLMDevPanel'
 import {
   MessageSquare,
   Server,
@@ -374,6 +375,9 @@ export default function Workspace({ project, model, apiKeys }) {
         </div>
       )}
       </div>
+
+      {/* W-88: LLM-Dev Bottom Panel */}
+      <LLMDevPanel project={project} />
     </div>
   )
 }
