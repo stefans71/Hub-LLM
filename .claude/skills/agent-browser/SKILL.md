@@ -149,7 +149,7 @@ Auth is tested separately. Your job is verifying the component you built.
 
 ---
 
-## Working Commands (Verified 2026-01-24)
+## Working Commands (Updated 2026-01-24)
 
 ### Getting Element References
 
@@ -224,13 +224,67 @@ sleep 2
 agent-browser screenshot result.png
 ```
 
+### Running JavaScript (eval command) - NEW!
+
+```bash
+# WORKS: Run arbitrary JavaScript in the page
+agent-browser eval "document.querySelector('.my-button').click()"
+
+# WORKS: Click elements that fail with text selector
+agent-browser eval "document.querySelector('.llm-dev-toggle').click()"
+
+# WORKS: Find element by text content and click
+agent-browser eval "Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Docker')).click()"
+
+# WORKS: Complex interactions
+agent-browser eval "document.querySelector('#my-input').value = 'test'"
+agent-browser eval "document.querySelector('form').submit()"
+```
+
+**Use `eval` when:**
+- `click` command fails with "Resource temporarily unavailable"
+- You need to click elements with complex text content
+- You need to interact with elements that don't have simple selectors
+- You need to run any custom JavaScript
+
 ### Commands That DON'T Exist
 
 ```bash
 # These will fail:
-agent-browser execute "js code"  # No execute command
+agent-browser exec "js code"     # No exec command - use eval instead
+agent-browser execute "js code"  # No execute command - use eval instead
 agent-browser click "text with spaces and special.chars"  # CSS parser fails
 ```
+
+### Handling "Resource temporarily unavailable" Error
+
+Sometimes `click` commands fail with:
+```
+✗ Failed to read: Resource temporarily unavailable (os error 11)
+```
+
+**Solutions:**
+1. Use `eval` instead of `click`:
+   ```bash
+   # Instead of:
+   agent-browser click "LLM-Dev"
+
+   # Use:
+   agent-browser eval "document.querySelector('.llm-dev-toggle').click()"
+   ```
+
+2. Refresh the page and try again:
+   ```bash
+   agent-browser open http://localhost:5173/workspace
+   sleep 2
+   agent-browser click "LLM-Dev"
+   ```
+
+3. Use refs instead of text selectors:
+   ```bash
+   agent-browser snapshot -i  # Get refs first
+   agent-browser click ref=e5
+   ```
 
 ### Pro Tips
 
@@ -238,6 +292,8 @@ agent-browser click "text with spaces and special.chars"  # CSS parser fails
 2. **Get snapshot first** - Run `snapshot -i` before any interaction
 3. **Chain with &&** - `agent-browser click ref=e1 && sleep 1 && agent-browser screenshot out.png`
 4. **Use fill, not type** - `fill` works with special characters, `type` doesn't
+5. **Use eval for complex clicks** - When text selectors fail, `eval` with querySelector is reliable
+6. **Find by text with eval** - `Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Text')).click()`
 
 ---
 
