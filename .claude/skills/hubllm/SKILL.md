@@ -1,205 +1,119 @@
 # HubLLM Development Skill
 
-Skill for developing the HubLLM web-based AI development environment.
+## Project Overview
 
-## CRITICAL: Reference Documents
+HubLLM is a web-based development environment that connects AI models to coding workspaces. This skill provides guidance for implementing UI components.
 
-**ALWAYS read these before implementing UI:**
-
-```
-docs/hubllm-mockup-v2.html         ← Complete UI with all styling
-docs/HUBLLM_COMPONENT_MAPPING.md    ← HTML → React → API mapping
-docs/HUBLLM_DEVELOPMENT_STRATEGY.md ← Architecture plan
-```
-
----
-
-## Project Structure
+## Harness V2 Structure
 
 ```
-Hub-LLM/
-├── backend/              # FastAPI backend
-│   ├── main.py
-│   ├── routers/          # API endpoints
-│   ├── services/         # Business logic
-│   └── models/           # SQLAlchemy models
-├── frontend/             # React frontend
-│   └── src/
-│       ├── components/
-│       ├── contexts/
-│       └── pages/
-├── docs/                 # REFERENCE THESE
-│   ├── hubllm-mockup-v2.html
-│   ├── HUBLLM_COMPONENT_MAPPING.md
-│   └── HUBLLM_DEVELOPMENT_STRATEGY.md
-├── feature_list.json
-├── claude-progress.txt
-├── init.sh
-└── SESSION_START.md
+harness/
+├── SESSION_START.md      # Read this first every session
+├── MASTER_INDEX.md       # 917 elements, completion status
+├── feature_queue.json    # Next 10 priority tasks
+├── progress/
+│   ├── current.txt       # Recent session logs
+│   └── archive/          # Old sessions
+└── mappings/             # Detailed element specs
+    ├── global_dashboard.md   # G-XX, D-XX elements
+    ├── settings.md           # S-XX elements
+    ├── create_project.md     # CP-XX elements
+    └── workspace_modals.md   # W-XX, M-XX elements
 ```
 
----
+## Session Workflow
 
-## CSS Variables (from mockup - USE THESE)
+1. **Start**: `cat harness/progress/current.txt | tail -30`
+2. **Find task**: `cat harness/feature_queue.json`
+3. **Read specs**: `cat harness/mappings/[relevant_file].md`
+4. **Implement**: Match mockup exactly
+5. **Verify**: Screenshot and compare to mockup
+6. **Update**: feature_queue.json + progress/current.txt
+7. **Commit**: `git commit -m "feat(TASK-ID): description"`
+
+## Task Sizing Rules
+
+| Size | Elements | Session Rule |
+|------|----------|--------------|
+| XS | 1-3 | Multiple OK |
+| S | 4-10 | Multiple OK |
+| M | 11-30 | **ONE only** |
+| L | 31-50 | **ONE only** |
+
+## Element ID Prefixes
+
+- `G-XX` = Global (header navigation)
+- `D-XX` = Dashboard view
+- `S-XX` = Settings view
+- `CP-XX` = Create Project view
+- `W-XX` = Workspace view
+- `M-XX` = Modals
+
+## CSS Variables (ALWAYS USE)
 
 ```css
-:root {
-  --bg-primary: #0f1419;
-  --bg-secondary: #1a2028;
-  --bg-tertiary: #242b35;
-  --border: #2d3748;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --accent: #f97316;
-  --success: #22c55e;
-  --warning: #eab308;
-  --error: #ef4444;
-  --text-primary: #ffffff;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
-}
+--bg-primary: #0f1419;
+--bg-secondary: #1a2028;
+--bg-tertiary: #242b35;
+--border: #2d3748;
+--primary: #3b82f6;
+--accent: #f97316;
+--success: #22c55e;
+--error: #ef4444;
+--text-primary: #ffffff;
+--text-secondary: #9ca3af;
 ```
 
----
+## Key Files
 
-## Views in Mockup
+| Purpose | Location |
+|---------|----------|
+| UI Mockup | `docs/hubllm-mockup-v2.html` |
+| Task Queue | `harness/feature_queue.json` |
+| Element Specs | `harness/mappings/*.md` |
+| Progress Log | `harness/progress/current.txt` |
 
-| View | Mockup ID | Line Number |
-|------|-----------|-------------|
-| Dashboard | `view-dashboard` | ~2537 |
-| Settings | `view-settings` | ~2871 |
-| Create Project | `view-create-project` | ~3687 |
-| Workspace | `view-workspace` | ~4368 |
+## Existing Components (Wire These In)
 
----
+These components exist but may not be fully integrated:
 
-## Create Project Flow (5 Steps)
+- `Terminal.jsx` - xterm.js terminal
+- `CodeEditor.jsx` - Monaco editor
+- `FileBrowser.jsx` - File tree
+- `PreviewPanel.jsx` - Live preview
+- `ModelSelector.jsx` - Model dropdown
+- `Chat.jsx` - AI chat
+- `HeaderNavigation.jsx` - Global header
 
-| Step | Key HTML IDs | Purpose |
-|------|--------------|---------|
-| 1 | `project-brief`, `ai-brief-chat` | Project details, AI expansion |
-| 2 | `github-card`, `github-connected`, `vps-card` | Connection source |
-| 3 | `ctx-tech-stack`, `ctx-standards` | Project context |
-| 4 | `global-agents-list` | Agent selection |
-| 5 | `global-mcp-list` | MCP server selection |
+## Current Priority: Workspace View
 
----
+The Workspace view (W-XX) is only 30% complete. Priority tasks:
 
-## Workflow
+1. W-03: Top bar (project info, model selector)
+2. W-31: Icon sidebar
+3. W-88: LLM-Dev bottom panel
 
-### Starting a Session
+## Visual Verification Required
+
+Before marking ANY UI task complete:
 
 ```bash
-# 1. Read progress
-cat claude-progress.txt
-
-# 2. Read component mapping
-cat docs/HUBLLM_COMPONENT_MAPPING.md
-
-# 3. Start environment
-./init.sh
-
-# 4. Pick ONE feature from feature_list.json
+agent-browser open http://localhost:5173/[view]
+agent-browser screenshot current.png
+# Compare to mockup - must match
 ```
 
-### Building a Component
+## Don't
 
-```bash
-# 1. Find the HTML in mockup
-grep -A30 'id="component-id"' docs/hubllm-mockup-v2.html
-
-# 2. Check the mapping
-grep "component-id" docs/HUBLLM_COMPONENT_MAPPING.md
-
-# 3. Create React component with same styling
-
-# 4. Test
-agent-browser open http://localhost:5173/route
-agent-browser snapshot -i
-agent-browser screenshot test.png
-```
-
-### Ending a Session
-
-```bash
-# 1. Update feature_list.json (passes: true)
-# 2. Update claude-progress.txt
-# 3. Commit
-git add -A
-git commit -m "feat(feature-id): description"
-```
-
----
-
-## Key API Endpoints
-
-```
-# Auth
-POST /api/auth/signup
-POST /api/auth/login
-GET  /api/auth/me
-GET  /api/auth/oauth/github
-
-# Chat
-POST /api/chat/completions  (SSE streaming)
-GET  /api/chat/models
-
-# Projects
-GET  /api/projects
-POST /api/projects
-
-# SSH
-POST /api/ssh/connect
-GET  /api/ssh/files
-```
-
----
-
-## Component Patterns
-
-### React Component (matching mockup)
-
-```jsx
-export default function MyComponent() {
-  return (
-    <div style={{
-      background: 'var(--bg-secondary)',
-      border: '1px solid var(--border)',
-      borderRadius: '12px',
-      padding: '20px'
-    }}>
-      <h2 style={{ color: 'var(--text-primary)' }}>Title</h2>
-      <p style={{ color: 'var(--text-secondary)' }}>Content</p>
-      <button style={{
-        background: 'var(--primary)',
-        color: 'white',
-        border: 'none',
-        borderRadius: '8px',
-        padding: '10px 20px',
-        cursor: 'pointer'
-      }}>
-        Action
-      </button>
-    </div>
-  );
-}
-```
-
----
-
-## Do Not
-
-- ❌ Implement multiple features per session
-- ❌ Skip reading the mockup
+- ❌ Mark tasks complete without screenshot verification
+- ❌ Do multiple M/L tasks in one session
 - ❌ Use hardcoded colors (use CSS variables)
-- ❌ Mark features passing without testing
-- ❌ Forget to update progress files
+- ❌ Ignore the mapping files
 
 ## Do
 
-- ✅ Read mockup before writing UI code
-- ✅ Check component mapping for structure
-- ✅ Use CSS variables from mockup
-- ✅ Test with agent-browser
-- ✅ Update progress files
-- ✅ Commit with clear messages
+- ✅ Read mapping file before implementing
+- ✅ Match mockup exactly
+- ✅ Screenshot and verify before marking complete
+- ✅ Update both queue and progress files
+- ✅ Commit with task ID

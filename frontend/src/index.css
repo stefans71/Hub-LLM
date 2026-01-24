@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Variables - HubLLM Theme */
+:root {
+  --bg-primary: #0f1419;
+  --bg-secondary: #1a2028;
+  --bg-tertiary: #242b35;
+  --border: #2d3748;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --accent: #f97316;
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #eab308;
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

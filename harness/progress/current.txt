@@ -1,0 +1,67 @@
+# HubLLM Progress Log - V2
+
+## Summary
+- **Started**: 2024-01-24
+- **Harness Version**: 2.0
+- **Total Elements**: 917
+- **Completed**: 567 (62%)
+
+---
+
+## Previous Work (V1 Harness)
+
+Sessions 1-29 completed under V1 harness. Key accomplishments:
+- Authentication system (5/5 features)
+- Dashboard view (mostly complete)
+- Create Project wizard (5 steps complete)
+- Settings page (6/10 sections)
+- GitHub OAuth integration
+- VPS connection testing
+- Global Agents and MCP configuration
+- Header Navigation (ui-fix-001)
+
+See `harness/progress/archive/v1_sessions.txt` for full V1 history.
+
+---
+
+## V2 Sessions
+
+### Session 30 - 2024-01-24
+**Task**: Harness V2 Setup
+**Status**: ✅ Complete
+**Changes**:
+- Migrated to harness/ folder structure
+- Created component-level task queue
+- Added 4 mapping files (917 elements indexed)
+- Established T-shirt sizing rules
+- Visual verification now required
+
+**Next Priority**: W-31 (Workspace Icon Sidebar) - Size S
+
+---
+
+### Session 31 - 2026-01-24
+**Task**: W-03 (Workspace Top Bar) - Size M
+**Status**: ✅ Complete
+**Files Modified**:
+- frontend/src/components/WorkspaceTopBar.jsx (created)
+- frontend/src/components/Workspace.jsx (modified)
+- frontend/src/index.css (modified - added CSS variables)
+**Elements Implemented** (28 total):
+- W-04: Project Info Container
+- W-05: Project Name
+- W-06: Location Badge (VPS/Local/GitHub)
+- W-07: Divider
+- W-08: Connection Status (Connected/Disconnected toggle)
+- W-09/W-10: Header Toggle Button (collapse/expand)
+- W-11 to W-28: Model Selector with Dropdown (Anthropic, OpenRouter, Google sections)
+- W-29: Export Project Button
+**Verified**: Screenshot matches mockup - all elements visible and functional
+**Notes**:
+- Added CSS variables to index.css (:root) for theme consistency
+- Model selector handles both string IDs and object format
+- Header collapse/expand works with smooth transition
+
+---
+
+<!-- Add new sessions below this line -->

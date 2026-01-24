@@ -6,6 +6,7 @@ import ServerManager from './ServerManager'
 import CodespacesManager from './CodespacesManager'
 import CodeEditor from './CodeEditor'
 import PreviewPanel from './PreviewPanel'
+import WorkspaceTopBar from './WorkspaceTopBar'
 import {
   MessageSquare,
   Server,
@@ -19,8 +20,9 @@ import {
 
 /**
  * Workspace Component
- * 
+ *
  * Main workspace that integrates:
+ * - Workspace Top Bar (W-03): Project info, model selector, connection status
  * - AI Chat with voice
  * - SSH Terminal
  * - File Browser
@@ -37,6 +39,23 @@ export default function Workspace({ project, model, apiKeys }) {
   const [editingFile, setEditingFile] = useState(null) // { path, content }
   const [previewUrl, setPreviewUrl] = useState('') // Codespaces preview URL
   const [previewCollapsed, setPreviewCollapsed] = useState(true)
+
+  // W-03: Workspace Top Bar state
+  const [isConnected, setIsConnected] = useState(true)
+  const [selectedModel, setSelectedModel] = useState(model || { name: 'Claude Opus 4.5', color: '#ef4444' })
+
+  const handleConnectionToggle = () => {
+    setIsConnected(!isConnected)
+  }
+
+  const handleModelChange = (newModel) => {
+    setSelectedModel(newModel)
+  }
+
+  const handleExport = () => {
+    // TODO: Implement project export functionality
+    console.log('Export project:', project?.name)
+  }
 
   const openTerminal = (server) => {
     // Check if terminal already open for this server
@@ -96,11 +115,23 @@ export default function Workspace({ project, model, apiKeys }) {
   }
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      {/* Left side - Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Tab Bar */}
-        <div className="flex items-center gap-1 px-2 py-1 bg-gray-800/50 border-b border-gray-700">
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+      {/* W-03: Workspace Top Bar */}
+      <WorkspaceTopBar
+        project={project}
+        model={selectedModel}
+        onModelChange={handleModelChange}
+        isConnected={isConnected}
+        onConnectionToggle={handleConnectionToggle}
+        onExport={handleExport}
+      />
+
+      {/* W-30: Workspace Main Container */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left side - Main content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Tab Bar */}
+          <div className="flex items-center gap-1 px-2 py-1 bg-gray-800/50 border-b border-gray-700">
           <button
             onClick={() => setActiveTab('chat')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
@@ -284,6 +315,7 @@ export default function Workspace({ project, model, apiKeys }) {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

@@ -1,86 +1,135 @@
 # Agent Browser Skill
 
-Browser automation CLI for AI agents.
+## Purpose
 
-## Core Workflow
-
-```bash
-agent-browser open <url>      # Navigate
-agent-browser snapshot -i     # Get interactive elements with refs
-agent-browser click @e1       # Click by ref
-agent-browser fill @e2 "text" # Fill input
-agent-browser screenshot x.png
-agent-browser close
-```
-
-## Commands
-
-### Navigation
-- `agent-browser open <url>` - Navigate to URL
-- `agent-browser back` - Go back
-- `agent-browser forward` - Go forward
-- `agent-browser reload` - Reload page
-- `agent-browser close` - Close browser
-
-### Reading Page
-- `agent-browser snapshot` - Full accessibility tree
-- `agent-browser snapshot -i` - Interactive elements only (recommended)
-- `agent-browser snapshot -c` - Compact output
-- `agent-browser get text @ref` - Get element text
-- `agent-browser get value @ref` - Get input value
-- `agent-browser get title` - Get page title
-- `agent-browser get url` - Get current URL
-
-### Interaction
-- `agent-browser click @ref` - Click element
-- `agent-browser dblclick @ref` - Double-click
-- `agent-browser fill @ref "text"` - Clear and type
-- `agent-browser type @ref "text"` - Type without clearing
-- `agent-browser press Enter` - Press key
-- `agent-browser press Control+a` - Key combination
-- `agent-browser hover @ref` - Hover element
-- `agent-browser check @ref` - Check checkbox
-- `agent-browser uncheck @ref` - Uncheck checkbox
-- `agent-browser select @ref "value"` - Select dropdown
-- `agent-browser scroll down 500` - Scroll page
-- `agent-browser scrollintoview @ref` - Scroll element into view
-
-### Waiting
-- `agent-browser wait @ref` - Wait for element
-- `agent-browser wait 2000` - Wait milliseconds
-- `agent-browser wait --text "Success"` - Wait for text
-- `agent-browser wait --url "**/dashboard"` - Wait for URL pattern
-
-### Screenshots
-- `agent-browser screenshot` - Screenshot to stdout (base64)
-- `agent-browser screenshot page.png` - Screenshot to file
-- `agent-browser screenshot --full page.png` - Full page screenshot
-
-## Example Test Flow
-
-```bash
-# Test login
-agent-browser open http://localhost:5173/login
-agent-browser snapshot -i
-agent-browser fill @e1 "test@example.com"
-agent-browser fill @e2 "password123"
-agent-browser click @e3
-agent-browser wait --url "**/dashboard"
-agent-browser screenshot login-success.png
-
-# Test form
-agent-browser open http://localhost:5173/create-project
-agent-browser snapshot -i
-agent-browser fill @e1 "My Project"
-agent-browser fill @e2 "Build a todo app"
-agent-browser click @e3
-agent-browser wait 2000
-agent-browser screenshot create-project.png
-```
+Visual testing and verification for HubLLM development. **Required** before marking any UI task complete.
 
 ## Installation
 
 ```bash
 npm install -g agent-browser
-agent-browser install  # Downloads Chromium
+agent-browser install
 ```
+
+## Troubleshooting Installation
+
+If you see missing library errors:
+
+```bash
+# Install Playwright dependencies
+npx playwright install-deps chromium
+
+# Or manual install
+sudo apt-get update
+sudo apt-get install -y libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
+  libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2
+```
+
+## Basic Commands
+
+```bash
+# Open a URL
+agent-browser open http://localhost:5173
+
+# Take screenshot
+agent-browser screenshot output.png
+
+# Interactive snapshot (shows element info)
+agent-browser snapshot -i
+
+# Click element
+agent-browser click "button:contains('Submit')"
+
+# Type text
+agent-browser type "#input-field" "Hello World"
+```
+
+## Visual Verification Workflow
+
+### Step 1: Navigate to View
+
+```bash
+agent-browser open http://localhost:5173/workspace
+```
+
+### Step 2: Take Screenshot
+
+```bash
+agent-browser screenshot workspace-current.png
+```
+
+### Step 3: Compare to Mockup
+
+Open `docs/hubllm-mockup-v2.html` in browser, navigate to same view, compare:
+
+- Layout matches?
+- Colors match CSS variables?
+- All elements present?
+- Spacing/sizing correct?
+
+### Step 4: Fix Differences
+
+If screenshot doesn't match mockup:
+1. Identify specific differences
+2. Check mapping file for element specs
+3. Fix the code
+4. Re-screenshot
+5. Repeat until match
+
+### Step 5: Mark Complete
+
+Only after screenshot matches mockup:
+- Update `harness/feature_queue.json`
+- Log in `harness/progress/current.txt`
+
+## View URLs
+
+| View | URL |
+|------|-----|
+| Dashboard | http://localhost:5173/dashboard |
+| Settings | http://localhost:5173/settings |
+| Create Project | http://localhost:5173/create-project |
+| Workspace | http://localhost:5173/workspace |
+
+## Fallback (If agent-browser Fails)
+
+If agent-browser won't install/run:
+
+1. Open browser manually
+2. Navigate to view
+3. Use browser DevTools to inspect
+4. Take manual screenshot (Cmd/Ctrl+Shift+S)
+5. Compare to mockup visually
+
+**Still required**: Screenshot comparison before marking complete
+
+## Common Issues
+
+### "Cannot find chromium"
+```bash
+agent-browser install --with-deps
+```
+
+### "Missing shared library"
+```bash
+sudo apt-get install -y libgbm1 libasound2
+```
+
+### Connection refused
+```bash
+# Make sure dev server is running
+./init.sh
+# Wait for "Frontend: http://localhost:5173" message
+```
+
+## Integration with Harness
+
+Every UI task in `harness/feature_queue.json` requires:
+
+1. Implementation
+2. Screenshot with agent-browser
+3. Visual comparison to mockup
+4. Fix any differences
+5. Final screenshot matches = can mark complete
+
+**No exceptions** - visual verification is mandatory for UI tasks.

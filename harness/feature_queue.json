@@ -1,0 +1,149 @@
+{
+  "meta": {
+    "version": "2.0",
+    "total_elements": 917,
+    "completed_elements": 595,
+    "completion_percentage": 65,
+    "last_updated": "2026-01-24"
+  },
+  "queue": [
+    {
+      "id": "W-31",
+      "name": "Workspace Icon Sidebar",
+      "size": "S",
+      "elements": 7,
+      "priority": 2,
+      "status": "pending",
+      "description": "Workspaces, search, source control, create, settings icons",
+      "mapping_file": "workspace_modals.md",
+      "mapping_lines": "W-31 to W-37",
+      "depends_on": [],
+      "react_files": ["WorkspaceIconSidebar.jsx (create)", "Workspace.jsx (modify)"]
+    },
+    {
+      "id": "W-38",
+      "name": "Workspace File Explorer Panel",
+      "size": "S",
+      "elements": 14,
+      "priority": 3,
+      "status": "partial",
+      "description": "File tree, workspace folders - FileBrowser.jsx exists, needs wiring",
+      "mapping_file": "workspace_modals.md",
+      "mapping_lines": "W-38 to W-52",
+      "depends_on": ["W-31"],
+      "react_files": ["FileBrowser.jsx (exists)", "Workspace.jsx (modify)"]
+    },
+    {
+      "id": "W-88",
+      "name": "LLM-Dev Bottom Panel",
+      "size": "L",
+      "elements": 36,
+      "priority": 4,
+      "status": "pending",
+      "description": "Tab bar + Terminal/Docker/Logs/Context tabs",
+      "mapping_file": "workspace_modals.md",
+      "mapping_lines": "W-88 to W-124",
+      "depends_on": [],
+      "react_files": ["LLMDevPanel.jsx (create)", "Workspace.jsx (modify)"]
+    },
+    {
+      "id": "S-64",
+      "name": "Anthropic Subscription Section",
+      "size": "M",
+      "elements": 32,
+      "priority": 5,
+      "status": "pending",
+      "description": "Claude CLI install, auth status, Cross-LLM toggle",
+      "mapping_file": "settings.md",
+      "mapping_lines": "S-64 to S-95",
+      "depends_on": [],
+      "react_files": ["AnthropicSubscription.jsx (create)", "Settings.jsx (modify)"]
+    },
+    {
+      "id": "S-96",
+      "name": "Default Model Section",
+      "size": "S",
+      "elements": 10,
+      "priority": 6,
+      "status": "pending",
+      "description": "Model dropdown with provider groups",
+      "mapping_file": "settings.md",
+      "mapping_lines": "S-96 to S-105",
+      "depends_on": [],
+      "react_files": ["DefaultModelSettings.jsx (create)", "Settings.jsx (modify)"]
+    },
+    {
+      "id": "S-166",
+      "name": "Voice Input Section",
+      "size": "XS",
+      "elements": 7,
+      "priority": 7,
+      "status": "pending",
+      "description": "Whisper API toggle",
+      "mapping_file": "settings.md",
+      "mapping_lines": "S-166 to S-172",
+      "depends_on": [],
+      "react_files": ["VoiceSettings.jsx (create)", "Settings.jsx (modify)"]
+    },
+    {
+      "id": "S-218",
+      "name": "Global Skills Section",
+      "size": "M",
+      "elements": 29,
+      "priority": 8,
+      "status": "pending",
+      "description": "Skills list, add skill button, skill items",
+      "mapping_file": "settings.md",
+      "mapping_lines": "S-218 to S-246",
+      "depends_on": [],
+      "react_files": ["GlobalSkills.jsx (create)", "Settings.jsx (modify)"]
+    },
+    {
+      "id": "M-45",
+      "name": "Skill Modal",
+      "size": "S",
+      "elements": 18,
+      "priority": 9,
+      "status": "pending",
+      "description": "Create/edit skill form",
+      "mapping_file": "workspace_modals.md",
+      "mapping_lines": "M-45 to M-62",
+      "depends_on": ["S-218"],
+      "react_files": ["SkillModal.jsx (create)"]
+    },
+    {
+      "id": "D-73",
+      "name": "Dashboard Stats Alignment",
+      "size": "XS",
+      "elements": 8,
+      "priority": 10,
+      "status": "pending",
+      "description": "Change stats to Active Sessions, Total Projects, Connected LLMs",
+      "mapping_file": "global_dashboard.md",
+      "mapping_lines": "D-73 to D-90",
+      "depends_on": [],
+      "react_files": ["Dashboard.jsx (modify)"]
+    }
+  ],
+  "completed": [
+    {
+      "id": "G-01",
+      "name": "Global Navigation",
+      "elements": 9,
+      "completed_date": "2024-01-23",
+      "session": 29
+    },
+    {
+      "id": "W-03",
+      "name": "Workspace Top Bar",
+      "elements": 28,
+      "completed_date": "2026-01-24",
+      "session": 31
+    }
+  ],
+  "notes": {
+    "workspace_priority": "Workspace (W-*) tasks are highest priority - this is where users work",
+    "existing_components": "Terminal.jsx, CodeEditor.jsx, FileBrowser.jsx, PreviewPanel.jsx exist but need wiring",
+    "visual_verification": "ALL UI tasks require screenshot comparison before marking complete"
+  }
+}
