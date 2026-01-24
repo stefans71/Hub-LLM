@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import WorkspaceTerminal from './WorkspaceTerminal'
 
 /**
  * LLM-Dev Bottom Panel (W-88 to W-124)
@@ -53,16 +54,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(3000);`
-
-  // Mock terminal output
-  const terminalOutput = [
-    { type: 'prompt', text: 'user@prod-01:~$ npm run dev' },
-    { type: 'output', text: '> api-backend@1.0.0 dev' },
-    { type: 'output', text: '> node server.js' },
-    { type: 'success', text: '✓ Server running on port 3000' },
-    { type: 'output', text: 'Watching for file changes...' },
-    { type: 'prompt', text: 'user@prod-01:~$ ', cursor: true }
-  ]
 
   // Mock docker containers
   const containers = [
@@ -676,35 +667,12 @@ app.listen(3000);`
                   </button>
                 </div>
 
-                {/* W-108: Terminal Content */}
-                <div
+                {/* W-108: Terminal Content - Real xterm.js terminal connected to VPS */}
+                <WorkspaceTerminal
+                  projectId={project?.id}
+                  serverId={project?.vps_server_id}
                   className="dev-terminal-content"
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    fontFamily: "'Monaco', 'Consolas', monospace",
-                    fontSize: '12px',
-                    overflowY: 'auto'
-                  }}
-                >
-                  {terminalOutput.map((line, index) => (
-                    <div key={index} className="terminal-line" style={{ marginBottom: '2px' }}>
-                      {line.type === 'prompt' && (
-                        <>
-                          <span className="prompt" style={{ color: 'var(--success)' }}>{line.text.split('$')[0]}$</span>
-                          <span className="command" style={{ color: 'var(--text-primary)' }}> {line.text.split('$')[1]}</span>
-                          {line.cursor && <span style={{ animation: 'blink 1s infinite' }}>▋</span>}
-                        </>
-                      )}
-                      {line.type === 'output' && (
-                        <span className="output" style={{ color: 'var(--text-secondary)' }}>{line.text}</span>
-                      )}
-                      {line.type === 'success' && (
-                        <span className="success" style={{ color: 'var(--success)' }}>{line.text}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                />
               </div>
             </>
           )}

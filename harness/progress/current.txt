@@ -391,4 +391,28 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 
 ---
 
+### Session 41 - 2026-01-24
+**Task**: T-03 (Terminal WebSocket Hook) + T-04 (Terminal Status UI) - Size S + XS
+**Status**: ✅ Complete
+**Files Modified**:
+- frontend/src/components/WorkspaceTerminal.jsx (created)
+- frontend/src/components/LLMDevPanel.jsx (modified - integrated WorkspaceTerminal)
+**Elements Implemented**:
+- T-03: WorkspaceTerminal component with xterm.js connected to /api/terminal/ws
+  - WebSocket connection with projectId/serverId query params
+  - Init message protocol (sends cols/rows on connect)
+  - Input/resize message handling
+  - Output/error/connected/disconnected message handling
+- T-04: Terminal status UI built into WorkspaceTerminal
+  - Status states: disconnected, connecting, connected, error
+  - Status indicator with color coding
+  - Reconnect button on disconnect/error
+  - Error message display
+**Notes**:
+- T-04 requirements were naturally included in T-03 implementation
+- Removed mock terminal output from LLMDevPanel
+- Terminal uses ResizeObserver for responsive sizing
+
+---
+
 <!-- Add new sessions below this line -->

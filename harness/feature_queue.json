@@ -2,47 +2,12 @@
   "meta": {
     "version": "2.1",
     "total_elements": 917,
-    "completed_elements": 864,
+    "completed_elements": 866,
     "completion_percentage": 94,
     "last_updated": "2026-01-24",
     "phase": "Terminal Integration"
   },
   "queue": [
-    {
-      "id": "T-03",
-      "name": "Terminal WebSocket Hook",
-      "size": "S",
-      "priority": 3,
-      "status": "pending",
-      "description": "Connect Terminal.jsx xterm.js instance to backend WebSocket",
-      "reference_existing": [
-        "frontend/src/components/Terminal.jsx - xterm.js already set up",
-        "frontend/src/components/LLMDevPanel.jsx - Terminal tab container"
-      ],
-      "requirements": [
-        "Create useTerminalWebSocket hook or integrate into Terminal.jsx",
-        "Connect xterm.onData to WebSocket send",
-        "Connect WebSocket onmessage to xterm.write",
-        "Pass projectId/vpsId from Workspace context"
-      ],
-      "depends_on": [],
-      "test": "Open workspace, see real terminal prompt from VPS"
-    },
-    {
-      "id": "T-04",
-      "name": "Terminal Status UI",
-      "size": "XS",
-      "priority": 4,
-      "status": "pending",
-      "description": "Show terminal connection status and reconnect button",
-      "requirements": [
-        "Show 'Connecting...', 'Connected', 'Disconnected' states",
-        "Add reconnect button on disconnect",
-        "Show error messages if connection fails"
-      ],
-      "depends_on": ["T-03"],
-      "test": "Disconnect VPS, see status change, click reconnect"
-    },
     {
       "id": "F-01",
       "name": "File Listing API",
@@ -134,12 +99,14 @@
     {"id": "M-10", "name": "Agent Modal", "completed": "2024-01-24"},
     {"id": "M-63", "name": "MCP Server Modal", "completed": "2024-01-24"},
     {"id": "T-01", "name": "Terminal WebSocket Endpoint", "completed": "2026-01-24"},
-    {"id": "T-02", "name": "SSH Session Service", "completed": "2026-01-24", "note": "Already existed in services/ssh.py with asyncssh"}
+    {"id": "T-02", "name": "SSH Session Service", "completed": "2026-01-24", "note": "Already existed in services/ssh.py with asyncssh"},
+    {"id": "T-03", "name": "Terminal WebSocket Hook", "completed": "2026-01-24"},
+    {"id": "T-04", "name": "Terminal Status UI", "completed": "2026-01-24", "note": "Included in WorkspaceTerminal component"}
   ],
   "notes": {
     "vps_connection_works": "SSH connection to VPS is already working - see Settings > VPS Connections. Credentials stored in database. Reference this existing code.",
     "terminal_endpoint": "WebSocket at /api/terminal/ws accepts projectId or serverId query params",
-    "terminal_component_exists": "Terminal.jsx has xterm.js set up but connected to mock data",
+    "terminal_component_complete": "WorkspaceTerminal.jsx connects xterm.js to WebSocket with status UI and reconnect",
     "file_components_exist": "FileBrowser.jsx and CodeEditor.jsx exist but use mock data",
     "docker_deferred": "Docker integration (D-01, D-02) deferred - do after terminal/files work"
   }
