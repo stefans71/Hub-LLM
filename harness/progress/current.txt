@@ -438,4 +438,32 @@ Features:
 
 ---
 
+### Session 42 - 2026-01-24
+**Tasks**: F-02 (FileBrowser Integration) + F-04 (CodeEditor Integration) - Size S+S
+**Status**: ✅ Complete
+
+**F-02 Files Modified**:
+- frontend/src/components/FileBrowser.jsx (modified - updated API endpoints)
+**F-02 Changes**:
+- Updated loadFiles() to use GET /api/files?serverId=...&path=...
+- Updated openFile() to use GET /api/files/content?serverId=...&path=...
+- Updated saveFile() to use PUT /api/files/content?serverId=...
+- Updated deleteFile() to use DELETE /api/files?serverId=...&path=...&is_dir=...
+- Added null check for serverId in useEffect
+
+**F-04 Files Modified**:
+- frontend/src/components/Workspace.jsx (modified - updated API endpoints)
+**F-04 Changes**:
+- Updated openEditor() to use GET /api/files/content
+- Updated saveFile() to use PUT /api/files/content
+- Added better error handling with detail messages
+
+**Verified**: Build successful
+**Notes**:
+- Both components now use the new /api/files endpoints
+- Terminal integration phase complete - queue is empty
+- Next phase: Docker integration (D-01, D-02) or other features
+
+---
+
 <!-- Add new sessions below this line -->

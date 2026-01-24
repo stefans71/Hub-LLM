@@ -128,16 +128,19 @@ export default function Workspace({ project, model, apiKeys }) {
   }
 
   const openEditor = async (server, filePath) => {
-    // Fetch file content
+    // Fetch file content via F-03 API
     try {
       const res = await fetch(
-        `/api/ssh/servers/${server.id}/files/read?path=${encodeURIComponent(filePath)}`
+        `/api/files/content?serverId=${encodeURIComponent(server.id)}&path=${encodeURIComponent(filePath)}`
       )
       if (res.ok) {
         const data = await res.json()
         setEditingFile({ path: filePath, content: data.content, serverId: server.id })
         setRightPanelContent('editor')
         setShowRightPanel(true)
+      } else {
+        const error = await res.json()
+        console.error('Failed to open file:', error.detail)
       }
     } catch (err) {
       console.error('Failed to open file:', err)
@@ -146,15 +149,19 @@ export default function Workspace({ project, model, apiKeys }) {
 
   const saveFile = async (path, content) => {
     if (!editingFile) return
-    
-    const res = await fetch(`/api/ssh/servers/${editingFile.serverId}/files/write`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path, content })
-    })
-    
+
+    const res = await fetch(
+      `/api/files/content?serverId=${encodeURIComponent(editingFile.serverId)}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, content })
+      }
+    )
+
     if (!res.ok) {
-      throw new Error('Failed to save')
+      const error = await res.json()
+      throw new Error(error.detail || 'Failed to save')
     }
   }
 

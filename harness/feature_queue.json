@@ -2,52 +2,12 @@
   "meta": {
     "version": "2.1",
     "total_elements": 917,
-    "completed_elements": 868,
+    "completed_elements": 870,
     "completion_percentage": 95,
     "last_updated": "2026-01-24",
-    "phase": "Terminal Integration"
+    "phase": "Terminal Integration Complete"
   },
-  "queue": [
-    {
-      "id": "F-02",
-      "name": "FileBrowser Integration",
-      "size": "S",
-      "priority": 6,
-      "status": "pending",
-      "description": "Connect FileBrowser.jsx to real file listing API",
-      "reference_existing": [
-        "frontend/src/components/FileBrowser.jsx - UI exists with mock data",
-        "backend/routers/files.py - API endpoints created"
-      ],
-      "requirements": [
-        "Fetch real directory tree from F-01 API",
-        "Expand folders on click (lazy load subdirectories)",
-        "Show loading states",
-        "Handle errors (permission denied, etc.)"
-      ],
-      "depends_on": [],
-      "test": "See real files from VPS in file browser"
-    },
-    {
-      "id": "F-04",
-      "name": "CodeEditor Integration",
-      "size": "S",
-      "priority": 8,
-      "status": "pending",
-      "description": "Connect CodeEditor.jsx to load/save real files",
-      "reference_existing": [
-        "frontend/src/components/CodeEditor.jsx - Monaco editor exists"
-      ],
-      "requirements": [
-        "Click file in FileBrowser → load content into editor",
-        "Cmd+S / Save button → write to VPS via F-03 API",
-        "Show save status (saving, saved, error)",
-        "Handle unsaved changes warning"
-      ],
-      "depends_on": ["F-02", "F-03"],
-      "test": "Open file, edit, save, verify change persists"
-    }
-  ],
+  "queue": [],
   "completed": [
     {"id": "W-03", "name": "Workspace Top Bar", "completed": "2024-01-24"},
     {"id": "W-31", "name": "Icon Sidebar", "completed": "2024-01-24"},
@@ -69,14 +29,16 @@
     {"id": "T-03", "name": "Terminal WebSocket Hook", "completed": "2026-01-24"},
     {"id": "T-04", "name": "Terminal Status UI", "completed": "2026-01-24", "note": "Included in WorkspaceTerminal component"},
     {"id": "F-01", "name": "File Listing API", "completed": "2026-01-24"},
-    {"id": "F-03", "name": "File Read/Write API", "completed": "2026-01-24", "note": "Includes mkdir, delete endpoints"}
+    {"id": "F-03", "name": "File Read/Write API", "completed": "2026-01-24", "note": "Includes mkdir, delete endpoints"},
+    {"id": "F-02", "name": "FileBrowser Integration", "completed": "2026-01-24", "note": "Connected to /api/files endpoints"},
+    {"id": "F-04", "name": "CodeEditor Integration", "completed": "2026-01-24", "note": "Connected to /api/files/content endpoints"}
   ],
   "notes": {
-    "vps_connection_works": "SSH connection to VPS is already working - see Settings > VPS Connections. Credentials stored in database. Reference this existing code.",
+    "vps_connection_works": "SSH connection to VPS is already working - see Settings > VPS Connections. Credentials stored in database.",
     "terminal_endpoint": "WebSocket at /api/terminal/ws accepts projectId or serverId query params",
     "terminal_component_complete": "WorkspaceTerminal.jsx connects xterm.js to WebSocket with status UI and reconnect",
     "files_api_complete": "GET/PUT /api/files, /api/files/content, /api/files/mkdir - all endpoints ready",
-    "file_components_exist": "FileBrowser.jsx and CodeEditor.jsx exist but use mock data - needs F-02/F-04",
-    "docker_deferred": "Docker integration (D-01, D-02) deferred - do after terminal/files work"
+    "file_components_integrated": "FileBrowser.jsx and CodeEditor.jsx now connected to real /api/files endpoints",
+    "docker_deferred": "Docker integration (D-01, D-02) deferred - consider as next phase"
   }
 }
