@@ -17,7 +17,9 @@ import WorkspaceTerminal from './WorkspaceTerminal'
  * - W-110: Logs tab content
  * - W-111: Project Context tab content
  */
-export default function LLMDevPanel({ project }) {
+export default function LLMDevPanel({ project, linkedServerId }) {
+  // Use linkedServerId if provided (freshly linked), otherwise fall back to project's vps_server_id
+  const serverId = linkedServerId || project?.vps_server_id
   const [isExpanded, setIsExpanded] = useState(false)
   const [panelHeight, setPanelHeight] = useState(350)
   const [isDragging, setIsDragging] = useState(false)
@@ -34,14 +36,14 @@ export default function LLMDevPanel({ project }) {
 
   // Fetch VPS server info when project changes
   useEffect(() => {
-    if (project?.vps_server_id) {
-      fetchServerInfo(project.vps_server_id)
-      fetchFiles(project.vps_server_id, '~')
+    if (serverId) {
+      fetchServerInfo(serverId)
+      fetchFiles(serverId, '~')
     } else {
       setServerInfo(null)
       setFileTree([])
     }
-  }, [project?.vps_server_id])
+  }, [serverId])
 
   const fetchServerInfo = async (serverId) => {
     try {
@@ -81,9 +83,9 @@ export default function LLMDevPanel({ project }) {
   }
 
   const openFile = async (filePath) => {
-    if (!project?.vps_server_id) return
+    if (!serverId) return
     try {
-      const res = await fetch(`/api/files/content?serverId=${encodeURIComponent(project.vps_server_id)}&path=${encodeURIComponent(filePath)}`)
+      const res = await fetch(`/api/files/content?serverId=${encodeURIComponent(serverId)}&path=${encodeURIComponent(filePath)}`)
       if (res.ok) {
         const data = await res.json()
         setCodeContent(data.content)
@@ -105,8 +107,8 @@ export default function LLMDevPanel({ project }) {
   }
 
   const navigateToFolder = async (folderPath) => {
-    if (!project?.vps_server_id) return
-    await fetchFiles(project.vps_server_id, folderPath)
+    if (!serverId) return
+    await fetchFiles(serverId, folderPath)
   }
 
   // Mock docker containers (will be real in future)
@@ -125,15 +127,7 @@ export default function LLMDevPanel({ project }) {
     { time: '2025-01-22 10:24:20', level: 'WARN', text: 'Slow query detected (>100ms)', warning: true }
   ]
 
-  // Drag resize handlers
-  const handleMouseDown = useCallback((e) => {
-    // Only start drag on the resize handle, not on tabs or toggle
-    if (e.target.closest('.llm-dev-tabs') || e.target.closest('.llm-dev-toggle') || e.target.closest('.llm-dev-status')) {
-      return
-    }
-    e.preventDefault()
-    setIsDragging(true)
-  }, [])
+  // Drag resize handlers - simplified since we have a dedicated drag handle
 
   const handleMouseMove = useCallback((e) => {
     if (!isDragging) return
@@ -253,28 +247,27 @@ export default function LLMDevPanel({ project }) {
       ref={panelRef}
       className="llm-dev-panel"
       style={{
-        height: isExpanded ? `${panelHeight}px` : '40px',
+        height: isExpanded ? `${panelHeight}px` : '48px',
         background: 'var(--bg-secondary)',
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '40px',
+        minHeight: '48px',
         transition: isDragging ? 'none' : 'height 0.2s ease',
         position: 'relative'
       }}
     >
-      {/* Resize Handle - Draggable border */}
+      {/* Drag Handle - Orange bar at top */}
       <div
-        className="llm-dev-resize-handle"
-        onMouseDown={handleMouseDown}
+        className="llm-dev-drag-handle"
+        onMouseDown={(e) => {
+          e.preventDefault()
+          setIsDragging(true)
+        }}
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '4px',
+          height: '6px',
           background: isDragging ? 'var(--primary)' : 'var(--accent)',
           cursor: 'ns-resize',
-          zIndex: 10,
+          flexShrink: 0,
           transition: 'background 0.15s ease'
         }}
         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--primary)'}
@@ -287,10 +280,9 @@ export default function LLMDevPanel({ project }) {
           display: 'flex',
           alignItems: 'center',
           padding: '0 16px',
-          height: '36px',
+          height: '40px',
           userSelect: 'none',
-          flexShrink: 0,
-          marginTop: '4px'
+          flexShrink: 0
         }}
       >
         {/* W-89-90: Dev Panel Toggle */}
@@ -421,7 +413,7 @@ export default function LLMDevPanel({ project }) {
         >
           {serverInfo ? (
             <span className="server" style={{ color: 'var(--success)' }}>● {serverInfo.name} ({serverInfo.host})</span>
-          ) : project?.vps_server_id ? (
+          ) : serverId ? (
             <span className="server" style={{ color: 'var(--warning, #f59e0b)' }}>● Connecting...</span>
           ) : (
             <span className="server" style={{ color: 'var(--text-muted)' }}>● No VPS connected</span>
@@ -477,8 +469,8 @@ export default function LLMDevPanel({ project }) {
                 >
                   <span>Explorer</span>
                   <div style={{ display: 'flex', gap: '2px' }}>
-                    <button onClick={() => project?.vps_server_id && fetchFiles(project.vps_server_id, '~')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '2px 4px', borderRadius: '3px' }} title="Go to Home Directory">🏠</button>
-                    <button onClick={() => project?.vps_server_id && currentPath !== '~' && fetchFiles(project.vps_server_id, currentPath.split('/').slice(0, -1).join('/') || '~')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '2px 4px', borderRadius: '3px' }} title="Go Up One Level">⬆️</button>
+                    <button onClick={() => serverId && fetchFiles(serverId, '~')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '2px 4px', borderRadius: '3px' }} title="Go to Home Directory">🏠</button>
+                    <button onClick={() => serverId && currentPath !== '~' && fetchFiles(serverId, currentPath.split('/').slice(0, -1).join('/') || '~')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '2px 4px', borderRadius: '3px' }} title="Go Up One Level">⬆️</button>
                     <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="Go Back">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="15 18 9 12 15 6"></polyline>
@@ -489,7 +481,7 @@ export default function LLMDevPanel({ project }) {
                         <polyline points="9 18 15 12 9 6"></polyline>
                       </svg>
                     </button>
-                    <button onClick={() => project?.vps_server_id && fetchFiles(project.vps_server_id, currentPath)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="Refresh">
+                    <button onClick={() => serverId && fetchFiles(serverId, currentPath)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="Refresh">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="23 4 23 10 17 10"></polyline>
                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
@@ -535,10 +527,10 @@ export default function LLMDevPanel({ project }) {
                   {loading && (
                     <div style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>Loading...</div>
                   )}
-                  {!loading && fileTree.length === 0 && project?.vps_server_id && (
+                  {!loading && fileTree.length === 0 && serverId && (
                     <div style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>No files found</div>
                   )}
-                  {!loading && !project?.vps_server_id && (
+                  {!loading && !serverId && (
                     <div style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>No VPS connected</div>
                   )}
                   {fileTree.map((item, index) => (
@@ -814,7 +806,7 @@ export default function LLMDevPanel({ project }) {
                 {/* W-108: Terminal Content - Real xterm.js terminal connected to VPS */}
                 <WorkspaceTerminal
                   projectId={project?.id}
-                  serverId={project?.vps_server_id}
+                  serverId={serverId}
                   className="dev-terminal-content"
                 />
               </div>

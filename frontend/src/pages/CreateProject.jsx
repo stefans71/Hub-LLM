@@ -1101,7 +1101,7 @@ In the meantime, I can help you think through your project. What would you like 
   return (
     <div style={{
       background: cssVars.bgPrimary,
-      height: '100vh',
+      height: '100%',
       display: 'flex',
       flexDirection: 'column',
       color: cssVars.textPrimary,

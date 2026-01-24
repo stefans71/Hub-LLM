@@ -4,6 +4,85 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 49 - 2026-01-24
+**Tasks**: BUG-02-REOPEN (S) + BUG-05-REOPEN (M)
+
+**BUG-02 (Create Project button hidden off-screen)**:
+- **Root Cause**: CreateProject.jsx used `height: '100vh'` on its outer container, but it's rendered inside App.jsx's flex layout which already has a header taking space. So 100vh was larger than the available space, pushing the footer off-screen.
+- **Fix**: Changed `height: '100vh'` to `height: '100%'` so the component fills its parent container rather than the entire viewport.
+- **File Modified**: frontend/src/pages/CreateProject.jsx (line 1104)
+- **Verification**: Screenshot shows Cancel and Create Project buttons visible at bottom
+
+**BUG-05 (LLM-Dev panel top edge not draggable)**:
+- **Root Cause**: Previous implementation had a 4px resize handle that was too thin and not clearly visible. The drag functionality existed but was hard to use.
+- **Fix**: Added a dedicated 6px orange drag handle at the top of the panel:
+  - Separate `llm-dev-drag-handle` div with `background: var(--accent)` (orange)
+  - Highlights to blue (`var(--primary)`) on hover
+  - mousedown on handle sets `isDragging = true`
+  - Global mousemove/mouseup listeners calculate new height
+  - Panel auto-expands when dragged above threshold
+- **File Modified**: frontend/src/components/LLMDevPanel.jsx
+- **Verification**: Dragged panel from default 350px to 520px successfully
+
+**Key Learnings**:
+- Nested flex containers: Don't use `100vh` inside a flex child - use `100%` instead
+- Drag handles need to be at least 6-8px tall to be easily grabbable
+- Visual feedback (color change on hover/drag) helps users discover draggable areas
+- Agent-browser simulated events may not trigger React state updates reliably - test with visual verification
+
+**Files Modified**:
+- frontend/src/pages/CreateProject.jsx
+- frontend/src/components/LLMDevPanel.jsx
+
+---
+
+### Session 48 - 2026-01-24
+**Task**: BUG-03-REOPEN (VPS Connection Wired to Wrong UI Components)
+
+**Root Cause Found**:
+1. ServerManager.jsx had `connectServer()` that updated LOCAL state only - never notified Workspace
+2. Workspace.jsx passed `onOpenTerminal` and `onOpenFiles` callbacks but NO `onConnectionChange`
+3. LLMDevPanel used `project?.vps_server_id` but that wasn't updated when linking a server
+4. Result: Top bar stayed "Disconnected", LLM-Dev terminal couldn't find server
+
+**Solution Pattern**:
+Three callbacks from Workspace to ServerManager:
+1. `onConnectionChange(server, connected)` - Updates Workspace's `isConnected` and `activeServer`
+2. `onServerLinked(serverId)` - Updates Workspace's `linkedServerId` state
+3. Pass `linkedServerId` to LLMDevPanel so terminal uses correct server
+
+**Code Changes**:
+- **ServerManager.jsx**:
+  - Added `onConnectionChange` prop, call it when connect/disconnect succeeds
+  - Added `onServerLinked` prop, call it when server is linked via dropdown
+- **Workspace.jsx**:
+  - Added `linkedServerId` state initialized from `project?.vps_server_id`
+  - Added `onConnectionChange` callback to update `isConnected` + `activeServer`
+  - Added `onServerLinked` callback to update `linkedServerId`
+  - Pass `linkedServerId` to LLMDevPanel
+- **LLMDevPanel.jsx**:
+  - Added `linkedServerId` prop
+  - Use `linkedServerId || project?.vps_server_id` for all server operations
+
+**Testing Approach**:
+1. Set `openrouter_key` and `vps_servers` in localStorage via agent-browser eval
+2. Link Digital Ocean server to project
+3. Click Connect - verify top bar shows "Connected"
+4. Expand LLM-Dev panel - verify terminal shows actual bash output from VPS
+5. Verify file explorer shows server files
+
+**Gotchas for future**:
+- `replace_all` in Edit tool can cause self-reference bugs (e.g., `const x = y || x` when replacing `y` with `x`)
+- Connection state flow: ServerManager → Workspace → TopBar + LLMDevPanel
+- LLMDevPanel gets server ID from `linkedServerId` prop, NOT from project state
+
+**Files Modified**:
+- frontend/src/components/ServerManager.jsx
+- frontend/src/components/Workspace.jsx
+- frontend/src/components/LLMDevPanel.jsx
+
+---
+
 ### Session 47 - 2026-01-24
 **Task**: FEAT-01 (Model Selector Smart Filtering)
 **What was fixed**:
