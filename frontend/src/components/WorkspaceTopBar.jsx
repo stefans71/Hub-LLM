@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Package, ChevronUp, ChevronDown } from 'lucide-react'
+import ModelNotification from './ModelNotification'
 
 /**
  * WorkspaceTopBar Component (W-03)
@@ -41,6 +42,8 @@ export default function WorkspaceTopBar({
   const [collapsed, setCollapsed] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [selectedModel, setSelectedModel] = useState(() => getModelDisplay(model))
+  const [showNotification, setShowNotification] = useState(false)
+  const [pendingModel, setPendingModel] = useState(null)
   const dropdownRef = useRef(null)
 
   // Close dropdown when clicking outside
@@ -54,11 +57,32 @@ export default function WorkspaceTopBar({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleModelSelect = (name, color) => {
+  const handleModelSelect = (name, color, requiresApiKey = false) => {
     const newModel = { name, color }
-    setSelectedModel(newModel)
     setDropdownOpen(false)
-    onModelChange?.(newModel)
+
+    // Show notification for non-Anthropic models (OpenRouter)
+    if (requiresApiKey) {
+      setPendingModel(newModel)
+      setShowNotification(true)
+    } else {
+      setSelectedModel(newModel)
+      onModelChange?.(newModel)
+    }
+  }
+
+  const handleConfirmModel = () => {
+    if (pendingModel) {
+      setSelectedModel(pendingModel)
+      onModelChange?.(pendingModel)
+      setPendingModel(null)
+    }
+    setShowNotification(false)
+  }
+
+  const handleCancelModel = () => {
+    setPendingModel(null)
+    setShowNotification(false)
   }
 
   const toggleHeader = () => {
@@ -303,7 +327,7 @@ export default function WorkspaceTopBar({
                     <div
                       key={idx}
                       className={`model-dropdown-item ${selectedModel.name === m.name ? 'active' : ''} ${m.disabled ? 'disabled' : ''}`}
-                      onClick={() => !m.disabled && handleModelSelect(m.name, m.color)}
+                      onClick={() => !m.disabled && handleModelSelect(m.name, m.color, m.paid)}
                       style={{
                         padding: '8px 12px',
                         fontSize: '13px',
@@ -381,6 +405,15 @@ export default function WorkspaceTopBar({
           Export Project
         </button>
       )}
+
+      {/* M-01 to M-09: Model Notification Modal */}
+      <ModelNotification
+        isOpen={showNotification}
+        onClose={handleCancelModel}
+        onConfirm={handleConfirmModel}
+        title="Using OpenRouter API Key"
+        body={`You're selecting ${pendingModel?.name || 'a model'} that will use your OpenRouter API key. Make sure you have configured your API key in Settings.`}
+      />
     </div>
   )
 }

@@ -230,7 +230,7 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 ---
 
 ### Session 37 - 2026-01-24
-**Tasks**: W-54 (Workspace Chat Panel) + W-69 (Workspace Preview Panel) - Size S x2
+**Tasks**: W-54 (Chat Panel) + W-69 (Preview Panel) + M-01 (Model Notification) - Size S+S+XS
 **Status**: ✅ Complete
 
 **W-54 Files Modified**:
@@ -269,11 +269,27 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 - W-83: Refresh Button
 - W-84-85: Preview Frame Container and Demo
 
+**M-01 Files Modified**:
+- frontend/src/components/ModelNotification.jsx (created)
+- frontend/src/components/WorkspaceTopBar.jsx (modified - integrated modal)
+- frontend/src/index.css (modified - added modal styles)
+**M-01 Elements Implemented** (9 total):
+- M-01: Overlay (.model-notification-overlay)
+- M-02: Modal container (.model-notification)
+- M-03: Header (.model-notification-header)
+- M-04: Icon (.model-notification-icon)
+- M-05: Title (.model-notification-title)
+- M-06: Body (.model-notification-body)
+- M-07: Actions (.model-notification-actions)
+- M-08: Cancel Button (.btn.btn-secondary)
+- M-09: Confirm Button (.btn.btn-primary)
+
 **Verified**: Screenshot matches mockup - chat panel and preview panel visible
 **Notes**:
 - Installed react-syntax-highlighter for code block highlighting
 - Chat uses lucide-react icons (Plus, Mic, Send, Copy) instead of emojis
 - Preview panel CSS classes added for consistency with mockup
+- Model notification shows when selecting OpenRouter models
 
 ---
 

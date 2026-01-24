@@ -2,8 +2,8 @@
   "meta": {
     "version": "2.0",
     "total_elements": 917,
-    "completed_elements": 787,
-    "completion_percentage": 86,
+    "completed_elements": 796,
+    "completion_percentage": 87,
     "last_updated": "2026-01-24"
   },
   "queue": [
@@ -190,7 +190,7 @@
       "size": "XS",
       "elements": 9,
       "priority": 15,
-      "status": "pending",
+      "status": "complete",
       "description": "Model change confirmation dialog",
       "mapping_file": "workspace_modals.md",
       "mapping_lines": "M-01 to M-09",
@@ -287,6 +287,13 @@
       "id": "W-69",
       "name": "Workspace Preview Panel",
       "elements": 17,
+      "completed_date": "2026-01-24",
+      "session": 37
+    },
+    {
+      "id": "M-01",
+      "name": "Model Notification Modal",
+      "elements": 9,
       "completed_date": "2026-01-24",
       "session": 37
     }
