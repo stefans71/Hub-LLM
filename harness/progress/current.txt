@@ -606,4 +606,38 @@ Features:
 
 ---
 
+### Session 49 - 2026-01-24
+**Tasks**: BUG-02-REOPEN (S) + BUG-05-REOPEN (M)
+**Status**: ✅ Complete - ALL BUGS FIXED
+
+**BUG-02-REOPEN (Create Project Button Hidden Off-Screen)**:
+- **Root Cause**: CreateProject.jsx used `height: '100vh'` on outer container, but it's rendered inside App.jsx's flex layout with a header. 100vh was larger than available space, pushing footer off-screen.
+- **Fix**: Changed `height: '100vh'` to `height: '100%'` (line 1104)
+- **File Modified**: frontend/src/pages/CreateProject.jsx
+- **Verified**: Screenshot shows Cancel and Create Project buttons visible at bottom ✓
+
+**BUG-05-REOPEN (LLM-Dev Panel Top Edge Not Draggable)**:
+- **Root Cause**: Previous 4px resize handle was too thin and not clearly visible
+- **Fix**: Added dedicated 6px orange drag handle at top of panel:
+  - New `llm-dev-drag-handle` div with orange background (`var(--accent)`)
+  - Highlights to blue (`var(--primary)`) on hover/drag
+  - mousedown sets `isDragging = true`, global listeners handle move/up
+  - Panel height clamped between 100px and 80% of viewport
+  - Auto-expands when dragged above threshold
+- **File Modified**: frontend/src/components/LLMDevPanel.jsx
+- **Verified**: Dragged panel from default 350px to 520px successfully ✓
+
+**Current App State**:
+- All reopened bugs now fixed
+- Create Project wizard fully functional with visible action buttons
+- Workspace LLM-Dev panel has visible orange drag handle
+- Both features verified with screenshots
+
+**Files Modified This Session**:
+- frontend/src/pages/CreateProject.jsx (height fix)
+- frontend/src/components/LLMDevPanel.jsx (drag handle redesign)
+- harness/learnings.md (session notes)
+
+---
+
 <!-- Add new sessions below this line -->

@@ -1,36 +1,13 @@
 {
   "meta": {
-    "version": "3.1",
-    "phase": "Bug Fixes - Reopened",
+    "version": "3.2",
+    "phase": "Bug Fixes Complete",
     "last_updated": "2026-01-24"
   },
-  "queue": [
-    {
-      "id": "BUG-02-REOPEN",
-      "name": "Create Project Button Still Hidden",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Previous BUG-02 fix did NOT work. Create Project button at bottom of wizard is still cut off/hidden off-screen to the right.",
-      "location": "Create Project page, Step 5 (MCP Servers), bottom action bar",
-      "test": "Create Project button fully visible and clickable without scrolling horizontally"
-    },
-    {
-      "id": "BUG-05-REOPEN",
-      "name": "LLM-Dev Panel Drag Resize Not Working",
-      "size": "M",
-      "priority": 2,
-      "status": "pending",
-      "description": "The top border of LLM-Dev panel should be draggable to resize the panel height.",
-      "location": "Workspace, horizontal divider between chat area and LLM-Dev panel",
-      "expected_behavior": [
-        "Drag TOP EDGE of LLM-Dev panel up = panel taller, chat shrinks",
-        "Drag down = panel shorter, chat expands"
-      ],
-      "test": "Can drag divider between chat and LLM-Dev panel to resize both areas"
-    }
-  ],
+  "queue": [],
   "completed": [
+    {"id": "BUG-02-REOPEN", "name": "Create Project Button Hidden Off-Screen", "completed": "2026-01-24", "fix": "Changed height: 100vh to 100% in CreateProject.jsx"},
+    {"id": "BUG-05-REOPEN", "name": "LLM-Dev Panel Drag Resize Not Working", "completed": "2026-01-24", "fix": "Added visible 6px orange drag handle at top of panel"},
     {"id": "BUG-03-REOPEN", "name": "VPS Connection Wired to Wrong Components", "completed": "2026-01-24", "fix": "Added callback chain ServerManager → Workspace → LLMDevPanel"},
     {"id": "FEAT-01", "name": "Model Selector Smart Filtering", "completed": "2026-01-24"},
     {"id": "BUG-04", "name": "Model Selector Dropdown Not Opening", "completed": "2026-01-24"},
@@ -40,7 +17,9 @@
     {"id": "BUG-01", "name": "Workspace Blank Page Crash", "completed": "2026-01-24"}
   ],
   "notes": {
-    "bug03_fix": "ServerManager.connectServer() wasn't notifying Workspace - added onConnectionChange + onServerLinked callbacks",
-    "remaining": "BUG-02 and BUG-05 still need fixing"
+    "status": "ALL BUGS FIXED - Queue empty",
+    "bug02_fix": "100vh in nested flex → use 100% instead",
+    "bug05_fix": "4px resize handle too thin → use 6px+ with clear visual feedback",
+    "next_phase": "Ready for new features or enhancements"
   }
 }
