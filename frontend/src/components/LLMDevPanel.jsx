@@ -24,6 +24,7 @@ export default function LLMDevPanel({ project, linkedServerId }) {
   const [panelHeight, setPanelHeight] = useState(350)
   const [isDragging, setIsDragging] = useState(false)
   const panelRef = useRef(null)
+  const dragHandleRef = useRef(null)
   const [activeTab, setActiveTab] = useState('terminal')
   const [activeFile, setActiveFile] = useState(null)
   const [activeTerminalTab, setActiveTerminalTab] = useState('terminal')
@@ -141,22 +142,32 @@ export default function LLMDevPanel({ project, linkedServerId }) {
     const clampedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight))
 
     setPanelHeight(clampedHeight)
-
-    // Auto-expand if dragging above threshold
-    if (clampedHeight > 60 && !isExpanded) {
-      setIsExpanded(true)
-    }
-  }, [isDragging, isExpanded])
+  }, [isDragging])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
 
     // Collapse if height is below threshold
-    if (panelHeight < 60) {
+    if (panelHeight < 80) {
       setIsExpanded(false)
       setPanelHeight(350)
     }
   }, [panelHeight])
+
+  // Native mousedown listener on drag handle (more reliable than React synthetic events)
+  useEffect(() => {
+    const handle = dragHandleRef.current
+    if (!handle) return
+
+    const onMouseDown = (e) => {
+      e.preventDefault()
+      setIsDragging(true)
+      setIsExpanded(true)
+    }
+
+    handle.addEventListener('mousedown', onMouseDown)
+    return () => handle.removeEventListener('mousedown', onMouseDown)
+  }, [])
 
   // Global mouse event listeners for dragging
   useEffect(() => {
@@ -248,27 +259,26 @@ export default function LLMDevPanel({ project, linkedServerId }) {
       className="llm-dev-panel"
       style={{
         height: isExpanded ? `${panelHeight}px` : '48px',
+        minHeight: '48px',
         background: 'var(--bg-secondary)',
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '48px',
+        flexShrink: 0,  // CRITICAL: Don't let flex parent crush this panel
         transition: isDragging ? 'none' : 'height 0.2s ease',
         position: 'relative'
       }}
     >
       {/* Drag Handle - Orange bar at top */}
       <div
+        ref={dragHandleRef}
         className="llm-dev-drag-handle"
-        onMouseDown={(e) => {
-          e.preventDefault()
-          setIsDragging(true)
-        }}
         style={{
-          height: '6px',
+          height: '8px',
           background: isDragging ? 'var(--primary)' : 'var(--accent)',
           cursor: 'ns-resize',
           flexShrink: 0,
-          transition: 'background 0.15s ease'
+          transition: 'background 0.15s ease',
+          touchAction: 'none'
         }}
         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--primary)'}
         onMouseLeave={(e) => !isDragging && (e.currentTarget.style.background = 'var(--accent)')}
