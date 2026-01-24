@@ -33,6 +33,7 @@ Track discoveries, patterns, and friction points for harness improvement.
 - **CRITICAL**: React's synthetic onMouseDown can fail - use native event listeners via `useEffect + ref` for reliable drag handling
 - Always add `flex-shrink: 0` to panels that should maintain their set height in flex containers
 - Add `touchAction: none` to drag handles for mobile compatibility
+- **CRITICAL for bottom-anchored panels**: Parent container needs `h-full` AND sibling needs `min-h-0` to allow shrinking. Without explicit height constraints, flex items grow instead of the sibling shrinking.
 
 **Files Modified**:
 - frontend/src/pages/CreateProject.jsx
