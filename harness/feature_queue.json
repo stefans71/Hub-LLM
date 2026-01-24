@@ -1,25 +1,75 @@
 {
   "meta": {
-    "version": "3.2",
-    "phase": "Bug Fixes Complete",
+    "version": "3.5",
+    "phase": "VPS Connection Bugs",
     "last_updated": "2026-01-24"
   },
-  "queue": [],
+  "queue": [
+    {
+      "id": "BUG-06",
+      "name": "Top Bar VPS Status Never Updates",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Top bar shows 'VPS: Loading...' forever, never updates to show server name or IP even when connected",
+      "location": "Workspace top bar, left side near project name",
+      "test": "Link VPS → top bar shows server name. Click Connect → shows 'Connected' (green)"
+    },
+    {
+      "id": "BUG-07",
+      "name": "VPS Servers List Not Persisting (UUID Mismatch)",
+      "size": "M",
+      "priority": 1,
+      "status": "pending",
+      "description": "On page refresh, VPS server list is lost but project still has old linkedServerId, causing 'Server UUID not found' error",
+      "evidence": [
+        "After refresh, Servers tab shows 'No VPS Linked'",
+        "BUT LLM-Dev Terminal shows: 'Error: Server 29f6b30a-0f39-4160-97b7-4cb31608f517 not found'",
+        "This means project HAS a saved linkedServerId, but server list is empty"
+      ],
+      "root_cause": [
+        "Project saves linkedServerId to localStorage/backend ✓",
+        "VPS servers list (from Settings > VPS Connections) does NOT persist properly",
+        "On refresh, servers list is empty, so the saved UUID doesn't match anything"
+      ],
+      "fix_approach": [
+        "Check where VPS servers are stored (Settings > VPS Connections)",
+        "Ensure servers list persists to localStorage AND/OR backend",
+        "On workspace load: 1) Load servers list, 2) Then load project's linkedServerId, 3) Match them up",
+        "The Digital Ocean server with IP 206.189.78.115 should always be available after being added in Settings"
+      ],
+      "test": "Add VPS in Settings → Link to project → Refresh → Server still linked AND terminal connects"
+    }
+  ],
   "completed": [
-    {"id": "BUG-02-REOPEN", "name": "Create Project Button Hidden Off-Screen", "completed": "2026-01-24", "fix": "Changed height: 100vh to 100% in CreateProject.jsx"},
-    {"id": "BUG-05-REOPEN", "name": "LLM-Dev Panel Drag Resize Not Working", "completed": "2026-01-24", "fix": "Added visible 6px orange drag handle at top of panel"},
-    {"id": "BUG-03-REOPEN", "name": "VPS Connection Wired to Wrong Components", "completed": "2026-01-24", "fix": "Added callback chain ServerManager → Workspace → LLMDevPanel"},
+    {
+      "id": "BUG-05-REOPEN",
+      "name": "LLM-Dev Panel Drag Resize",
+      "completed": "2026-01-24",
+      "fix": "Native event listeners via useEffect+ref, h-full + min-h-0 for bottom anchor"
+    },
+    {
+      "id": "BUG-02-REOPEN",
+      "name": "Create Project Button Hidden",
+      "completed": "2026-01-24",
+      "fix": "height 100vh → 100%"
+    },
+    {
+      "id": "BUG-03-REOPEN",
+      "name": "VPS Connection Wired to Wrong Components",
+      "completed": "2026-01-24",
+      "fix": "Callback chain ServerManager → Workspace → LLMDevPanel"
+    },
     {"id": "FEAT-01", "name": "Model Selector Smart Filtering", "completed": "2026-01-24"},
     {"id": "BUG-04", "name": "Model Selector Dropdown Not Opening", "completed": "2026-01-24"},
-    {"id": "BUG-05", "name": "LLM-Dev Panel Not Draggable (FAILED)", "completed": "2026-01-24"},
-    {"id": "BUG-03", "name": "Terminal WebSocket Connection (FAILED)", "completed": "2026-01-24"},
-    {"id": "BUG-02", "name": "Create Project Button Hidden (FAILED)", "completed": "2026-01-24"},
+    {"id": "BUG-05", "name": "LLM-Dev Panel (1st attempt failed)", "completed": "2026-01-24"},
+    {"id": "BUG-03", "name": "Terminal WebSocket (1st attempt failed)", "completed": "2026-01-24"},
+    {"id": "BUG-02", "name": "Create Project Button (1st attempt failed)", "completed": "2026-01-24"},
     {"id": "BUG-01", "name": "Workspace Blank Page Crash", "completed": "2026-01-24"}
   ],
   "notes": {
-    "status": "ALL BUGS FIXED - Queue empty",
-    "bug02_fix": "100vh in nested flex → use 100% instead",
-    "bug05_fix": "4px resize handle too thin → use 6px+ with clear visual feedback",
-    "next_phase": "Ready for new features or enhancements"
+    "key_insight": "The UUID error proves linkedServerId IS being saved - the problem is the SERVERS LIST doesn't persist",
+    "settings_vps": "Digital Ocean server (206.189.78.115) is configured in Settings > VPS Connections",
+    "duplicate_ui": "Terminal/Files appear in BOTH Servers tab AND LLM-Dev panel - UX decision needed later"
   }
 }
