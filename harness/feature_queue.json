@@ -1,50 +1,114 @@
 {
   "meta": {
-    "version": "3.6",
-    "phase": "VPS Connection Bugs - COMPLETE",
+    "version": "4.1",
+    "phase": "Discovery + Cleanup + Vision",
     "last_updated": "2026-01-24"
   },
-  "queue": [],
+  "queue": [
+    {
+      "id": "BUG-08",
+      "name": "Site Hanging on Login",
+      "size": "M",
+      "priority": 1,
+      "status": "pending",
+      "description": "Site is hanging when trying to log in. May be related to recent VPS persistence fixes.",
+      "debug": [
+        "Check browser console for errors",
+        "Check backend logs",
+        "Check if recent changes to localStorage sync are causing infinite loop",
+        "Check network tab for stuck requests"
+      ],
+      "test": "Can log in and reach dashboard without hanging"
+    },
+    {
+      "id": "AUDIT-01",
+      "name": "Map Workspace Terminal/Server Components",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Before cleanup, map how terminal components are wired. Use Chrome DevTools React inspector or code review.",
+      "output": "Create harness/debug/workspace-component-map.md documenting:",
+      "deliverable": [
+        "1. List all components that touch terminal/server state",
+        "2. Show data flow: which component OWNS the WebSocket connection?",
+        "3. Show props flow: ServerCard → ? → LLMDevPanel → Terminal",
+        "4. Identify: Are Servers tab terminal and LLM-Dev terminal SAME connection or DIFFERENT?",
+        "5. Recommend: Safe way to remove Server card terminal icons without breaking LLM-Dev"
+      ],
+      "files_to_check": [
+        "frontend/src/components/ServerManager.jsx",
+        "frontend/src/components/Workspace.jsx",
+        "frontend/src/components/LLMDevPanel.jsx",
+        "frontend/src/components/WorkspaceTerminal.jsx"
+      ],
+      "test": "harness/debug/workspace-component-map.md exists with clear diagram"
+    },
+    {
+      "id": "CLEANUP-01",
+      "name": "Remove Duplicate Terminal from Servers Tab",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "depends_on": ["AUDIT-01"],
+      "description": "AFTER audit: Remove terminal/folder icons from Server card. Keep LLM-Dev panel terminal only.",
+      "caution": "DO NOT break LLM-Dev terminal - check audit first!",
+      "test": "Server card has no terminal icon. LLM-Dev terminal still works."
+    },
+    {
+      "id": "CLEANUP-02",
+      "name": "Consolidate servers_db to One Location",
+      "size": "M",
+      "priority": 4,
+      "status": "pending",
+      "description": "servers_db exists in TWO files. Keep ONE in services/ssh.py, import into routers/ssh.py.",
+      "files": ["backend/routers/ssh.py", "backend/services/ssh.py"],
+      "test": "Only one servers_db definition exists. API still works."
+    },
+    {
+      "id": "FEAT-02",
+      "name": "Project Creates Folder on VPS",
+      "size": "M",
+      "priority": 5,
+      "status": "pending",
+      "description": "Create /home/projects/{project-slug}/ folder on VPS when project is created",
+      "test": "Create project with VPS → folder exists on server"
+    },
+    {
+      "id": "FEAT-03",
+      "name": "File Explorer Scoped to Project Folder",
+      "size": "S",
+      "priority": 6,
+      "status": "pending",
+      "depends_on": ["FEAT-02"],
+      "description": "File explorer shows project folder only, not VPS root",
+      "test": "File explorer shows /home/projects/{project}/ not /"
+    },
+    {
+      "id": "FEAT-04",
+      "name": "Terminal Opens in Project Directory",
+      "size": "XS",
+      "priority": 7,
+      "status": "pending",
+      "depends_on": ["FEAT-02"],
+      "description": "Terminal cd's to project folder on connect",
+      "test": "pwd shows /home/projects/{project-name}"
+    }
+  ],
   "completed": [
-    {
-      "id": "BUG-07",
-      "name": "VPS Servers List Not Persisting (UUID Mismatch)",
-      "completed": "2026-01-24",
-      "fix": "Check localStorage first, sync to backend with same ID, backend accepts optional id param"
-    },
-    {
-      "id": "BUG-06",
-      "name": "Top Bar VPS Status Never Updates",
-      "completed": "2026-01-24",
-      "fix": "WorkspaceTopBar fetchVpsInfo checks localStorage first before backend API"
-    },
-    {
-      "id": "BUG-05-REOPEN",
-      "name": "LLM-Dev Panel Drag Resize",
-      "completed": "2026-01-24",
-      "fix": "Native event listeners via useEffect+ref, h-full + min-h-0 for bottom anchor"
-    },
-    {
-      "id": "BUG-02-REOPEN",
-      "name": "Create Project Button Hidden",
-      "completed": "2026-01-24",
-      "fix": "height 100vh → 100%"
-    },
-    {
-      "id": "BUG-03-REOPEN",
-      "name": "VPS Connection Wired to Wrong Components",
-      "completed": "2026-01-24",
-      "fix": "Callback chain ServerManager → Workspace → LLMDevPanel"
-    },
+    {"id": "BUG-07", "name": "VPS Servers List Not Persisting", "completed": "2026-01-24"},
+    {"id": "BUG-06", "name": "Top Bar VPS Status Never Updates", "completed": "2026-01-24"},
+    {"id": "BUG-05-REOPEN", "name": "LLM-Dev Panel Drag Resize", "completed": "2026-01-24"},
+    {"id": "BUG-02-REOPEN", "name": "Create Project Button Hidden", "completed": "2026-01-24"},
+    {"id": "BUG-03-REOPEN", "name": "VPS Connection Wired to Wrong Components", "completed": "2026-01-24"},
     {"id": "FEAT-01", "name": "Model Selector Smart Filtering", "completed": "2026-01-24"},
     {"id": "BUG-04", "name": "Model Selector Dropdown Not Opening", "completed": "2026-01-24"},
-    {"id": "BUG-05", "name": "LLM-Dev Panel (1st attempt failed)", "completed": "2026-01-24"},
-    {"id": "BUG-03", "name": "Terminal WebSocket (1st attempt failed)", "completed": "2026-01-24"},
-    {"id": "BUG-02", "name": "Create Project Button (1st attempt failed)", "completed": "2026-01-24"},
+    {"id": "BUG-05", "name": "LLM-Dev Panel (1st attempt)", "completed": "2026-01-24"},
+    {"id": "BUG-03", "name": "Terminal WebSocket (1st attempt)", "completed": "2026-01-24"},
+    {"id": "BUG-02", "name": "Create Project Button (1st attempt)", "completed": "2026-01-24"},
     {"id": "BUG-01", "name": "Workspace Blank Page Crash", "completed": "2026-01-24"}
   ],
   "notes": {
-    "vps_architecture": "Frontend localStorage is source of truth for VPS configs. Backend servers_db is in-memory cache that needs sync on page load.",
-    "key_pattern": "Components check localStorage FIRST, then sync to backend with original ID preserved"
+    "order": "BUG-08 (login fix) → AUDIT-01 (map components) → CLEANUP (safe removal) → FEATURES",
+    "caution": "Don't remove Server card terminal until we understand the wiring"
   }
 }
