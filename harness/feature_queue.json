@@ -10,7 +10,7 @@
       "name": "Site Hanging on Login",
       "size": "M",
       "priority": 1,
-      "status": "pending",
+      "status": "complete",
       "description": "Site is hanging when trying to log in. May be related to recent VPS persistence fixes.",
       "debug": [
         "Check browser console for errors",
@@ -18,7 +18,8 @@
         "Check if recent changes to localStorage sync are causing infinite loop",
         "Check network tab for stuck requests"
       ],
-      "test": "Can log in and reach dashboard without hanging"
+      "test": "Can log in and reach dashboard without hanging",
+      "fix": "Added 10-second timeout to auth requests, recursion guard for token refresh, and proper cleanup on unmount"
     },
     {
       "id": "AUDIT-01",
@@ -95,6 +96,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-08", "name": "Site Hanging on Login", "completed": "2026-01-24"},
     {"id": "BUG-07", "name": "VPS Servers List Not Persisting", "completed": "2026-01-24"},
     {"id": "BUG-06", "name": "Top Bar VPS Status Never Updates", "completed": "2026-01-24"},
     {"id": "BUG-05-REOPEN", "name": "LLM-Dev Panel Drag Resize", "completed": "2026-01-24"},

@@ -641,3 +641,39 @@ Features:
 ---
 
 <!-- Add new sessions below this line -->
+
+---
+
+### Session 51 - 2026-01-24
+**Task**: BUG-08 (M) - Site Hanging on Login
+**Status**: ✅ Complete
+
+**Root Cause Analysis**:
+1. Backend was stuck in reload state ("Waiting for background tasks to complete") 
+   causing all frontend fetch requests to hang indefinitely
+2. No timeout on auth API calls meant the UI would wait forever if backend unresponsive
+3. Potential infinite loop in token refresh: fetchUser() -> refresh -> fetchUser() without guard
+4. No cleanup on unmount could cause state updates after component unmounted
+
+**Solution**:
+1. Added `fetchWithTimeout()` helper with 10-second timeout for all auth requests
+2. Added recursion guard (`isRetry` parameter) to prevent infinite refresh loops
+3. Added `isMounted` ref to prevent state updates after unmount
+4. Wrapped functions with `useCallback` for proper dependency tracking
+5. On timeout/error, clear tokens and show login page (graceful degradation)
+
+**File Modified**:
+- frontend/src/contexts/AuthContext.jsx
+
+**Key Changes**:
+- `fetchWithTimeout(url, options, timeout)` - AbortController-based timeout
+- `fetchUser(isRetry = false)` - Retry flag prevents infinite loops
+- Proper cleanup in useEffect with `isMounted` ref
+- All async functions wrapped with `useCallback`
+
+**Pattern for Future**:
+When making API calls that could hang:
+1. Always use AbortController for timeout
+2. Add recursion guards to prevent infinite loops
+3. Use isMounted ref to prevent state updates after unmount
+4. Clear stale data on error to allow user to recover
