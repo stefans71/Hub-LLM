@@ -1,155 +1,194 @@
 import { useState, useEffect } from 'react'
-import { 
-  Server, 
-  Plus, 
-  Trash2, 
+import {
+  Server,
+  Plus,
+  Trash2,
   Terminal as TerminalIcon,
   FolderOpen,
   Wifi,
   WifiOff,
-  Eye,
-  EyeOff
+  ExternalLink,
+  Link2,
+  Unlink
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 /**
  * ServerManager Component
- * 
- * Manage SSH server connections - add, remove, connect.
+ *
+ * Shows the project's linked VPS server (from Settings > VPS Connections).
+ * Does NOT duplicate the "Add Server" form - that's in Settings.
  */
-export default function ServerManager({ 
-  projectId, 
-  onOpenTerminal, 
-  onOpenFiles 
+export default function ServerManager({
+  project,
+  projectId,
+  onOpenTerminal,
+  onOpenFiles
 }) {
-  const [servers, setServers] = useState([])
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const [linkedServer, setLinkedServer] = useState(null)
+  const [globalServers, setGlobalServers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [connecting, setConnecting] = useState(false)
   const [error, setError] = useState(null)
-
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    host: '',
-    port: 22,
-    username: '',
-    auth_type: 'password',
-    password: '',
-    private_key: '',
-    passphrase: ''
-  })
-  const [showPassword, setShowPassword] = useState(false)
+  const [showLinkDropdown, setShowLinkDropdown] = useState(false)
 
   useEffect(() => {
-    loadServers()
-  }, [projectId])
+    loadServerInfo()
+  }, [project?.vps_server_id, projectId])
 
-  const loadServers = async () => {
-    try {
-      const url = projectId 
-        ? `/api/ssh/servers?project_id=${projectId}`
-        : '/api/ssh/servers'
-      const res = await fetch(url)
-      const data = await res.json()
-      setServers(data)
-    } catch (err) {
-      console.error('Failed to load servers:', err)
-    }
-  }
-
-  const addServer = async (e) => {
-    e.preventDefault()
+  const loadServerInfo = async () => {
     setLoading(true)
-    setError(null)
-
     try {
-      const res = await fetch('/api/ssh/servers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          project_id: projectId
-        })
-      })
+      // Load global servers from localStorage (same source as Settings)
+      const savedServers = localStorage.getItem('vps_servers')
+      const servers = savedServers ? JSON.parse(savedServers) : []
+      setGlobalServers(servers)
 
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.detail || 'Failed to add server')
+      // Find the project's linked server
+      const serverId = project?.vps_server_id
+      if (serverId) {
+        // First try localStorage (primary source)
+        const localServer = servers.find(s => s.id === serverId)
+        if (localServer) {
+          setLinkedServer(localServer)
+        } else {
+          // Fallback: try backend API
+          const res = await fetch('/api/ssh/servers')
+          const backendServers = await res.json()
+          const backendServer = backendServers.find(s => s.id === serverId)
+          if (backendServer) {
+            setLinkedServer(backendServer)
+          }
+        }
       }
-
-      setShowAddForm(false)
-      setFormData({
-        name: '',
-        host: '',
-        port: 22,
-        username: '',
-        auth_type: 'password',
-        password: '',
-        private_key: '',
-        passphrase: ''
-      })
-      loadServers()
     } catch (err) {
-      setError(err.message)
+      console.error('Failed to load server info:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  const removeServer = async (serverId) => {
-    if (!confirm('Remove this server?')) return
+  const connectServer = async () => {
+    if (!linkedServer) return
+    setConnecting(true)
+    setError(null)
+
+    // Create abort controller for timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
 
     try {
-      await fetch(`/api/ssh/servers/${serverId}`, { method: 'DELETE' })
-      loadServers()
-    } catch (err) {
-      console.error('Failed to remove server:', err)
-    }
-  }
+      // Ensure server is synced to backend first
+      const backendRes = await fetch('/api/ssh/servers')
+      const backendServers = await backendRes.json()
+      let serverId = linkedServer.id
 
-  const connectServer = async (serverId) => {
-    setLoading(true)
-    try {
+      if (!backendServers.find(s => s.id === serverId)) {
+        // Sync to backend
+        const syncRes = await fetch('/api/ssh/servers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: linkedServer.name,
+            host: linkedServer.host,
+            port: parseInt(linkedServer.port) || 22,
+            username: linkedServer.username || 'root',
+            auth_type: linkedServer.privateKey ? 'key' : 'password',
+            private_key: linkedServer.privateKey || null
+          })
+        })
+        if (syncRes.ok) {
+          const newServer = await syncRes.json()
+          serverId = newServer.id
+        }
+      }
+
       const res = await fetch(`/api/ssh/servers/${serverId}/connect`, {
-        method: 'POST'
+        method: 'POST',
+        signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
 
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.detail || 'Connection failed')
       }
 
-      loadServers()
+      // Update linked server status
+      setLinkedServer(prev => ({ ...prev, connected: true }))
+      loadServerInfo()
     } catch (err) {
-      setError(err.message)
+      if (err.name === 'AbortError') {
+        setError('Connection timed out. Check if the server is reachable.')
+      } else {
+        setError(err.message || 'Connection failed')
+      }
     } finally {
-      setLoading(false)
+      clearTimeout(timeoutId)
+      setConnecting(false)
     }
   }
 
-  const disconnectServer = async (serverId) => {
+  const disconnectServer = async () => {
+    if (!linkedServer) return
     try {
-      await fetch(`/api/ssh/servers/${serverId}/disconnect`, {
+      await fetch(`/api/ssh/servers/${linkedServer.id}/disconnect`, {
         method: 'POST'
       })
-      loadServers()
+      loadServerInfo()
     } catch (err) {
       console.error('Failed to disconnect:', err)
     }
   }
 
+  const unlinkServer = async () => {
+    if (!confirm('Unlink this server from the project?')) return
+    // TODO: Call API to update project's vps_server_id to null
+    setLinkedServer(null)
+  }
+
+  const linkServer = async (server) => {
+    // TODO: Call API to update project's vps_server_id
+    setLinkedServer(server)
+    setShowLinkDropdown(false)
+  }
+
+  const goToVpsSettings = () => {
+    navigate('/settings')
+    // Settings page should auto-navigate to VPS Connections section
+    setTimeout(() => {
+      const vpsSection = document.querySelector('[data-section="vps"]')
+      if (vpsSection) vpsSection.click()
+    }, 100)
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center gap-2 text-gray-400">
+          <Server size={20} className="animate-pulse" />
+          Loading server info...
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Server size={20} />
-          Servers
+          Project Server
         </h2>
         <button
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition"
+          onClick={goToVpsSettings}
+          className="flex items-center gap-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition"
+          title="Manage VPS connections in Settings"
         >
-          <Plus size={16} />
-          Add Server
+          <ExternalLink size={14} />
+          Manage VPS
         </button>
       </div>
 
@@ -159,226 +198,150 @@ export default function ServerManager({
         </div>
       )}
 
-      {/* Server List */}
-      <div className="space-y-2">
-        {servers.length === 0 && (
-          <p className="text-gray-500 text-center py-8">
-            No servers configured. Add one to get started.
-          </p>
-        )}
-
-        {servers.map((server) => (
-          <div
-            key={server.id}
-            className="flex items-center justify-between p-3 bg-gray-800 rounded-lg"
-          >
-            <div className="flex items-center gap-3">
-              <div className={`w-2 h-2 rounded-full ${
-                server.connected ? 'bg-green-500' : 'bg-gray-500'
-              }`} />
-              <div>
-                <div className="font-medium">{server.name}</div>
-                <div className="text-sm text-gray-400">
-                  {server.username}@{server.host}:{server.port}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {server.connected ? (
-                <>
-                  <button
-                    onClick={() => onOpenTerminal(server)}
-                    className="p-2 hover:bg-gray-700 rounded-lg transition"
-                    title="Open Terminal"
-                  >
-                    <TerminalIcon size={18} />
-                  </button>
-                  <button
-                    onClick={() => onOpenFiles(server)}
-                    className="p-2 hover:bg-gray-700 rounded-lg transition"
-                    title="Browse Files"
-                  >
-                    <FolderOpen size={18} />
-                  </button>
-                  <button
-                    onClick={() => disconnectServer(server.id)}
-                    className="p-2 hover:bg-gray-700 rounded-lg transition text-yellow-500"
-                    title="Disconnect"
-                  >
-                    <WifiOff size={18} />
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => connectServer(server.id)}
-                  className="p-2 hover:bg-gray-700 rounded-lg transition text-green-500"
-                  title="Connect"
-                >
-                  <Wifi size={18} />
-                </button>
-              )}
-              <button
-                onClick={() => removeServer(server.id)}
-                className="p-2 hover:bg-gray-700 rounded-lg transition text-red-400"
-                title="Remove"
-              >
-                <Trash2 size={18} />
-              </button>
+      {linkedServer ? (
+        /* Show linked server */
+        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+          <div className="p-4 border-b border-gray-700 bg-gray-800/50">
+            <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+              Connected VPS
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Add Server Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl w-full max-w-md mx-4 shadow-2xl">
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
-              <h3 className="font-semibold">Add Server</h3>
-              <button
-                onClick={() => setShowAddForm(false)}
-                className="p-1 hover:bg-gray-700 rounded"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={addServer} className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="My VPS"
-                  required
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium mb-1">Host</label>
-                  <input
-                    type="text"
-                    value={formData.host}
-                    onChange={(e) => setFormData({ ...formData, host: e.target.value })}
-                    placeholder="192.168.1.1 or server.com"
-                    required
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
+          <div className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={`w-3 h-3 rounded-full ${
+                  linkedServer.connected || linkedServer.lastTestSuccess
+                    ? 'bg-green-500'
+                    : 'bg-gray-500'
+                }`} />
                 <div>
-                  <label className="block text-sm font-medium mb-1">Port</label>
-                  <input
-                    type="number"
-                    value={formData.port}
-                    onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) })}
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
-                  />
+                  <div className="font-semibold text-lg">{linkedServer.name}</div>
+                  <div className="text-sm text-gray-400 font-mono">
+                    {linkedServer.username || 'root'}@{linkedServer.host}:{linkedServer.port || 22}
+                  </div>
+                  {linkedServer.serverInfo?.os && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {linkedServer.serverInfo.os}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Username</label>
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  placeholder="root"
-                  required
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Authentication</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="auth_type"
-                      value="password"
-                      checked={formData.auth_type === 'password'}
-                      onChange={(e) => setFormData({ ...formData, auth_type: e.target.value })}
-                    />
-                    Password
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="auth_type"
-                      value="key"
-                      checked={formData.auth_type === 'key'}
-                      onChange={(e) => setFormData({ ...formData, auth_type: e.target.value })}
-                    />
-                    SSH Key
-                  </label>
-                </div>
-              </div>
-
-              {formData.auth_type === 'password' ? (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Password</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:border-blue-500"
-                    />
+              <div className="flex items-center gap-2">
+                {linkedServer.connected ? (
+                  <>
                     <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
+                      onClick={() => onOpenTerminal?.(linkedServer)}
+                      className="p-2 hover:bg-gray-700 rounded-lg transition"
+                      title="Open Terminal"
                     >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      <TerminalIcon size={18} />
+                    </button>
+                    <button
+                      onClick={() => onOpenFiles?.(linkedServer)}
+                      className="p-2 hover:bg-gray-700 rounded-lg transition"
+                      title="Browse Files"
+                    >
+                      <FolderOpen size={18} />
+                    </button>
+                    <button
+                      onClick={disconnectServer}
+                      className="p-2 hover:bg-gray-700 rounded-lg transition text-yellow-500"
+                      title="Disconnect"
+                    >
+                      <WifiOff size={18} />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={connectServer}
+                    disabled={connecting}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition disabled:opacity-50"
+                  >
+                    <Wifi size={16} />
+                    {connecting ? 'Connecting...' : 'Connect'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="px-4 py-3 bg-gray-900/50 border-t border-gray-700 flex items-center justify-between">
+            <span className="text-xs text-gray-500">
+              Linked from Settings → VPS Connections
+            </span>
+            <button
+              onClick={unlinkServer}
+              className="text-xs text-gray-400 hover:text-red-400 flex items-center gap-1"
+            >
+              <Unlink size={12} />
+              Unlink
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* No server linked - show option to link one */
+        <div className="bg-gray-800/50 rounded-xl border border-dashed border-gray-600 p-8 text-center">
+          <Server size={40} className="mx-auto mb-4 text-gray-500" />
+          <h3 className="font-medium mb-2">No VPS Linked to This Project</h3>
+          <p className="text-sm text-gray-400 mb-6">
+            Link a server from your VPS Connections to enable terminal access and file browsing.
+          </p>
+
+          {globalServers.length > 0 ? (
+            <div className="relative inline-block">
+              <button
+                onClick={() => setShowLinkDropdown(!showLinkDropdown)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition"
+              >
+                <Link2 size={16} />
+                Link a Server
+              </button>
+
+              {showLinkDropdown && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
+                  <div className="p-2 border-b border-gray-700 text-xs text-gray-400">
+                    Select from VPS Connections
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {globalServers.map(server => (
+                      <button
+                        key={server.id}
+                        onClick={() => linkServer(server)}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-700 flex items-center gap-3"
+                      >
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          server.lastTestSuccess ? 'bg-green-500' : 'bg-gray-500'
+                        }`} />
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm truncate">{server.name}</div>
+                          <div className="text-xs text-gray-400 truncate">{server.host}:{server.port || 22}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="border-t border-gray-700">
+                    <button
+                      onClick={goToVpsSettings}
+                      className="w-full px-3 py-2 text-left text-sm text-blue-400 hover:bg-gray-700 flex items-center gap-2"
+                    >
+                      <Plus size={14} />
+                      Add new VPS in Settings
                     </button>
                   </div>
                 </div>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Private Key (PEM)</label>
-                    <textarea
-                      value={formData.private_key}
-                      onChange={(e) => setFormData({ ...formData, private_key: e.target.value })}
-                      placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
-                      rows={4}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 font-mono text-xs focus:outline-none focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Passphrase (optional)</label>
-                    <input
-                      type="password"
-                      value={formData.passphrase}
-                      onChange={(e) => setFormData({ ...formData, passphrase: e.target.value })}
-                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
-                    />
-                  </div>
-                </>
               )}
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="px-4 py-2 hover:bg-gray-700 rounded-lg transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
-                >
-                  {loading ? 'Adding...' : 'Add Server'}
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
+          ) : (
+            <button
+              onClick={goToVpsSettings}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition mx-auto"
+            >
+              <Plus size={16} />
+              Add VPS in Settings
+            </button>
+          )}
         </div>
       )}
     </div>

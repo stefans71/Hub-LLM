@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Package, ChevronUp, ChevronDown } from 'lucide-react'
+import { Package, ChevronUp, ChevronDown, Server } from 'lucide-react'
 import ModelNotification from './ModelNotification'
 
 /**
@@ -35,7 +35,8 @@ export default function WorkspaceTopBar({
   project,
   model,
   onModelChange,
-  isConnected = true,
+  isConnected = false,
+  isConnecting = false,
   onConnectionToggle,
   onExport
 }) {
@@ -44,7 +45,32 @@ export default function WorkspaceTopBar({
   const [selectedModel, setSelectedModel] = useState(() => getModelDisplay(model))
   const [showNotification, setShowNotification] = useState(false)
   const [pendingModel, setPendingModel] = useState(null)
+  const [vpsInfo, setVpsInfo] = useState(null)
   const dropdownRef = useRef(null)
+
+  // Fetch VPS server info when project has vps_server_id
+  useEffect(() => {
+    if (project?.vps_server_id) {
+      fetchVpsInfo(project.vps_server_id)
+    } else {
+      setVpsInfo(null)
+    }
+  }, [project?.vps_server_id])
+
+  const fetchVpsInfo = async (serverId) => {
+    try {
+      const res = await fetch('/api/ssh/servers')
+      if (res.ok) {
+        const servers = await res.json()
+        const server = servers.find(s => s.id === serverId)
+        if (server) {
+          setVpsInfo({ name: server.name, ip: server.host })
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch VPS info:', err)
+    }
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -92,7 +118,16 @@ export default function WorkspaceTopBar({
   // Determine location type from project
   const getLocationType = () => {
     if (!project) return { type: 'local', label: 'Local', icon: null }
+    // Check for VPS connection (either from fetched info or project data)
+    if (project.vps_server_id) {
+      if (vpsInfo) {
+        return { type: 'vps', label: `VPS: ${vpsInfo.name} (${vpsInfo.ip})`, icon: 'server' }
+      }
+      return { type: 'vps', label: 'VPS: Loading...', icon: 'server' }
+    }
+    // Legacy support for project.vps object
     if (project.vps) return { type: 'vps', label: `VPS: ${project.vps.name} (${project.vps.ip})`, icon: 'server' }
+    if (project.github_repo) return { type: 'github', label: `GitHub: ${project.github_repo}`, icon: 'github' }
     if (project.github) return { type: 'github', label: `GitHub: ${project.github}`, icon: 'github' }
     return { type: 'local', label: 'Local', icon: null }
   }
@@ -190,9 +225,9 @@ export default function WorkspaceTopBar({
 
           {/* W-08: Connection Status */}
           <div
-            className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}
-            onClick={onConnectionToggle}
-            title={isConnected ? 'Click to disconnect' : 'Click to reconnect'}
+            className={`connection-status ${isConnecting ? 'connecting' : isConnected ? 'connected' : 'disconnected'}`}
+            onClick={!isConnecting ? onConnectionToggle : undefined}
+            title={isConnecting ? 'Connecting...' : isConnected ? 'Click to disconnect' : 'Click to connect'}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -201,18 +236,20 @@ export default function WorkspaceTopBar({
               borderRadius: '20px',
               fontSize: '13px',
               fontWeight: 500,
-              cursor: 'pointer',
-              background: isConnected ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              color: isConnected ? 'var(--success)' : 'var(--error)'
+              cursor: isConnecting ? 'wait' : 'pointer',
+              background: isConnecting ? 'rgba(251, 191, 36, 0.15)' : isConnected ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              color: isConnecting ? 'var(--warning, #fbbf24)' : isConnected ? 'var(--success)' : 'var(--error)',
+              opacity: isConnecting ? 0.8 : 1
             }}
           >
             <span style={{
               width: '8px',
               height: '8px',
               borderRadius: '50%',
-              background: 'currentColor'
+              background: 'currentColor',
+              animation: isConnecting ? 'pulse 1s infinite' : 'none'
             }}></span>
-            {isConnected ? 'Connected' : 'Disconnected'}
+            {isConnecting ? 'Connecting...' : isConnected ? 'Connected' : 'Disconnected'}
           </div>
         </>
       )}

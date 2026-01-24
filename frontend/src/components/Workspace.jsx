@@ -50,12 +50,103 @@ export default function Workspace({ project, model, apiKeys }) {
   // W-38: File Explorer state
   const [fileExplorerOpen, setFileExplorerOpen] = useState(true)
 
-  // W-03: Workspace Top Bar state
-  const [isConnected, setIsConnected] = useState(true)
+  // W-03: Workspace Top Bar state - SSH connection status
+  const [isConnected, setIsConnected] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
   const [selectedModel, setSelectedModel] = useState(model || { name: 'Claude Opus 4.5', color: '#ef4444' })
 
-  const handleConnectionToggle = () => {
-    setIsConnected(!isConnected)
+  // Check initial connection status when project changes
+  useEffect(() => {
+    if (project?.vps_server_id) {
+      checkConnectionStatus()
+    } else {
+      setIsConnected(false)
+    }
+  }, [project?.vps_server_id])
+
+  const checkConnectionStatus = async () => {
+    if (!project?.vps_server_id) return
+    try {
+      const res = await fetch('/api/ssh/servers')
+      const servers = await res.json()
+      const server = servers.find(s => s.id === project.vps_server_id)
+      setIsConnected(server?.connected || false)
+    } catch (err) {
+      console.error('Failed to check connection status:', err)
+    }
+  }
+
+  const handleConnectionToggle = async () => {
+    if (!project?.vps_server_id) return
+
+    setIsConnecting(true)
+    try {
+      // Get server from localStorage (same source as Settings)
+      const savedServers = localStorage.getItem('vps_servers')
+      const servers = savedServers ? JSON.parse(savedServers) : []
+      const localServer = servers.find(s => s.id === project.vps_server_id)
+
+      if (!localServer) {
+        console.error('Server not found in localStorage')
+        return
+      }
+
+      // Ensure server is synced to backend
+      const backendRes = await fetch('/api/ssh/servers')
+      const backendServers = await backendRes.json()
+      let serverId = project.vps_server_id
+
+      if (!backendServers.find(s => s.id === serverId)) {
+        // Sync to backend
+        const syncRes = await fetch('/api/ssh/servers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: localServer.name,
+            host: localServer.host,
+            port: parseInt(localServer.port) || 22,
+            username: localServer.username || 'root',
+            auth_type: localServer.privateKey ? 'key' : 'password',
+            private_key: localServer.privateKey || null
+          })
+        })
+        if (syncRes.ok) {
+          const newServer = await syncRes.json()
+          serverId = newServer.id
+        }
+      }
+
+      if (isConnected) {
+        // Disconnect
+        await fetch(`/api/ssh/servers/${serverId}/disconnect`, { method: 'POST' })
+        setIsConnected(false)
+      } else {
+        // Connect with timeout
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 15000)
+
+        const res = await fetch(`/api/ssh/servers/${serverId}/connect`, {
+          method: 'POST',
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+
+        if (res.ok) {
+          setIsConnected(true)
+        } else {
+          const data = await res.json()
+          throw new Error(data.detail || 'Connection failed')
+        }
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        alert('Connection timed out. Check if the server is reachable.')
+      } else {
+        alert(err.message || 'Connection failed')
+      }
+    } finally {
+      setIsConnecting(false)
+    }
   }
 
   const handleModelChange = (newModel) => {
@@ -173,6 +264,7 @@ export default function Workspace({ project, model, apiKeys }) {
         model={selectedModel}
         onModelChange={handleModelChange}
         isConnected={isConnected}
+        isConnecting={isConnecting}
         onConnectionToggle={handleConnectionToggle}
         onExport={handleExport}
       />
@@ -260,6 +352,7 @@ export default function Workspace({ project, model, apiKeys }) {
 
             {activeTab === 'servers' && (
               <ServerManager
+                project={project}
                 projectId={project?.id}
                 onOpenTerminal={openTerminal}
                 onOpenFiles={openFiles}

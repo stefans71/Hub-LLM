@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import WorkspaceTerminal from './WorkspaceTerminal'
 
 /**
@@ -20,48 +20,99 @@ import WorkspaceTerminal from './WorkspaceTerminal'
 export default function LLMDevPanel({ project }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [activeTab, setActiveTab] = useState('terminal')
-  const [activeFile, setActiveFile] = useState('server.js')
+  const [activeFile, setActiveFile] = useState(null)
   const [activeTerminalTab, setActiveTerminalTab] = useState('terminal')
+  const [serverInfo, setServerInfo] = useState(null)
+  const [fileTree, setFileTree] = useState([])
+  const [currentPath, setCurrentPath] = useState('~')
+  const [openEditors, setOpenEditors] = useState([])
+  const [codeContent, setCodeContent] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  // Mock file tree data
-  const fileTree = [
-    {
-      name: 'src',
-      type: 'folder',
-      expanded: true,
-      children: [
-        { name: 'index.js', type: 'file' },
-        { name: 'server.js', type: 'file', active: true },
-        { name: 'routes.js', type: 'file' }
-      ]
-    },
-    { name: 'package.json', type: 'file' },
-    { name: 'README.md', type: 'file' }
-  ]
+  // Fetch VPS server info when project changes
+  useEffect(() => {
+    if (project?.vps_server_id) {
+      fetchServerInfo(project.vps_server_id)
+      fetchFiles(project.vps_server_id, '~')
+    } else {
+      setServerInfo(null)
+      setFileTree([])
+    }
+  }, [project?.vps_server_id])
 
-  // Mock open editors
-  const openEditors = [
-    { name: 'server.js', active: true },
-    { name: 'routes.js', active: false }
-  ]
+  const fetchServerInfo = async (serverId) => {
+    try {
+      const res = await fetch('/api/ssh/servers')
+      const servers = await res.json()
+      const server = servers.find(s => s.id === serverId)
+      if (server) {
+        setServerInfo(server)
+      }
+    } catch (err) {
+      console.error('Failed to fetch server info:', err)
+    }
+  }
 
-  // Mock code content
-  const codeContent = `const express = require('express');
-const app = express();
+  const fetchFiles = async (serverId, path) => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/files?serverId=${encodeURIComponent(serverId)}&path=${encodeURIComponent(path)}`)
+      if (res.ok) {
+        const data = await res.json()
+        // Transform API response to file tree format
+        const tree = data.files.map(f => ({
+          name: f.name,
+          path: f.path,
+          type: f.is_dir ? 'folder' : 'file',
+          expanded: false,
+          children: f.is_dir ? [] : undefined
+        }))
+        setFileTree(tree)
+        setCurrentPath(data.path || path)
+      }
+    } catch (err) {
+      console.error('Failed to fetch files:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+  const openFile = async (filePath) => {
+    if (!project?.vps_server_id) return
+    try {
+      const res = await fetch(`/api/files/content?serverId=${encodeURIComponent(project.vps_server_id)}&path=${encodeURIComponent(filePath)}`)
+      if (res.ok) {
+        const data = await res.json()
+        setCodeContent(data.content)
+        const fileName = filePath.split('/').pop()
+        setActiveFile(fileName)
+        // Add to open editors if not already there
+        if (!openEditors.find(e => e.name === fileName)) {
+          setOpenEditors([...openEditors, { name: fileName, path: filePath, active: true }].map(e => ({
+            ...e,
+            active: e.name === fileName
+          })))
+        } else {
+          setOpenEditors(openEditors.map(e => ({ ...e, active: e.name === fileName })))
+        }
+      }
+    } catch (err) {
+      console.error('Failed to open file:', err)
+    }
+  }
 
-app.listen(3000);`
+  const navigateToFolder = async (folderPath) => {
+    if (!project?.vps_server_id) return
+    await fetchFiles(project.vps_server_id, folderPath)
+  }
 
-  // Mock docker containers
+  // Mock docker containers (will be real in future)
   const containers = [
     { name: 'api-backend-db-1', image: 'postgres:15', status: 'Running' },
     { name: 'api-backend-redis-1', image: 'redis:7', status: 'Running' }
   ]
 
-  // Mock logs
+  // Mock logs (will be real in future)
   const logs = [
     { time: '2025-01-22 10:23:45', level: 'INFO', text: 'Server started' },
     { time: '2025-01-22 10:23:46', level: 'INFO', text: 'Database connected' },
@@ -290,7 +341,13 @@ app.listen(3000);`
             color: 'var(--text-secondary)'
           }}
         >
-          <span className="server" style={{ color: 'var(--success)' }}>● prod-01 (192.168.1.104)</span>
+          {serverInfo ? (
+            <span className="server" style={{ color: 'var(--success)' }}>● {serverInfo.name} ({serverInfo.host})</span>
+          ) : project?.vps_server_id ? (
+            <span className="server" style={{ color: 'var(--warning, #f59e0b)' }}>● Connecting...</span>
+          ) : (
+            <span className="server" style={{ color: 'var(--text-muted)' }}>● No VPS connected</span>
+          )}
           <span>Tokens: 14.2k</span>
           <span>UTF-8</span>
         </div>
@@ -342,8 +399,8 @@ app.listen(3000);`
                 >
                   <span>Explorer</span>
                   <div style={{ display: 'flex', gap: '2px' }}>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '2px 4px', borderRadius: '3px' }} title="Go to Home Directory">🏠</button>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '2px 4px', borderRadius: '3px' }} title="Go Up One Level">⬆️</button>
+                    <button onClick={() => project?.vps_server_id && fetchFiles(project.vps_server_id, '~')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '2px 4px', borderRadius: '3px' }} title="Go to Home Directory">🏠</button>
+                    <button onClick={() => project?.vps_server_id && currentPath !== '~' && fetchFiles(project.vps_server_id, currentPath.split('/').slice(0, -1).join('/') || '~')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '2px 4px', borderRadius: '3px' }} title="Go Up One Level">⬆️</button>
                     <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="Go Back">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="15 18 9 12 15 6"></polyline>
@@ -354,7 +411,7 @@ app.listen(3000);`
                         <polyline points="9 18 15 12 9 6"></polyline>
                       </svg>
                     </button>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="Refresh">
+                    <button onClick={() => project?.vps_server_id && fetchFiles(project.vps_server_id, currentPath)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="Refresh">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="23 4 23 10 17 10"></polyline>
                         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
@@ -392,15 +449,25 @@ app.listen(3000);`
 
                 {/* Path bar */}
                 <div style={{ padding: '4px 8px', fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border)' }}>
-                  ~/projects/api-backend
+                  {currentPath}
                 </div>
 
                 {/* W-99: Dev File Tree */}
                 <div className="dev-file-tree" style={{ flex: 1, overflowY: 'auto', padding: '8px', borderBottom: '1px solid var(--border)' }}>
+                  {loading && (
+                    <div style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>Loading...</div>
+                  )}
+                  {!loading && fileTree.length === 0 && project?.vps_server_id && (
+                    <div style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>No files found</div>
+                  )}
+                  {!loading && !project?.vps_server_id && (
+                    <div style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>No VPS connected</div>
+                  )}
                   {fileTree.map((item, index) => (
                     <div key={index}>
                       <div
-                        className={`dev-file-item ${item.type === 'folder' ? 'folder' : ''}`}
+                        className={`dev-file-item ${item.type === 'folder' ? 'folder' : ''} ${activeFile === item.name ? 'active' : ''}`}
+                        onClick={() => item.type === 'folder' ? navigateToFolder(item.path) : openFile(item.path)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -409,40 +476,15 @@ app.listen(3000);`
                           borderRadius: '4px',
                           cursor: 'pointer',
                           fontSize: '12px',
-                          color: item.type === 'folder' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                          color: item.type === 'folder' ? 'var(--text-primary)' : activeFile === item.name ? 'var(--primary)' : 'var(--text-secondary)',
                           fontFamily: "'Monaco', 'Consolas', monospace",
-                          fontWeight: item.type === 'folder' ? 500 : 400
+                          fontWeight: item.type === 'folder' ? 500 : 400,
+                          background: activeFile === item.name ? 'rgba(59, 130, 246, 0.2)' : 'transparent'
                         }}
                       >
                         {getFileIcon(item.name, item.type === 'folder')}
                         {item.name}
                       </div>
-                      {item.children && (
-                        <div className="dev-file-children" style={{ marginLeft: '12px' }}>
-                          {item.children.map((child, childIndex) => (
-                            <div
-                              key={childIndex}
-                              className={`dev-file-item ${activeFile === child.name ? 'active' : ''}`}
-                              onClick={() => setActiveFile(child.name)}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                color: activeFile === child.name ? 'var(--primary)' : 'var(--text-secondary)',
-                                fontFamily: "'Monaco', 'Consolas', monospace",
-                                background: activeFile === child.name ? 'rgba(59, 130, 246, 0.2)' : 'transparent'
-                              }}
-                            >
-                              {getFileIcon(child.name)}
-                              {child.name}
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -463,7 +505,7 @@ app.listen(3000);`
                     }}
                   >
                     <span>Open Editors</span>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px' }}>
+                    <button onClick={() => setOpenEditors([])} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -471,11 +513,14 @@ app.listen(3000);`
                     </button>
                   </div>
                   <div className="dev-file-tree" style={{ padding: '8px' }}>
+                    {openEditors.length === 0 && (
+                      <div style={{ padding: '4px 8px', fontSize: '11px', color: 'var(--text-muted)' }}>No open files</div>
+                    )}
                     {openEditors.map((editor, index) => (
                       <div
                         key={index}
                         className={`dev-file-item ${editor.active ? 'active' : ''}`}
-                        onClick={() => setActiveFile(editor.name)}
+                        onClick={() => openFile(editor.path)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -519,11 +564,14 @@ app.listen(3000);`
                     borderBottom: '1px solid var(--border)'
                   }}
                 >
+                  {openEditors.length === 0 && (
+                    <div style={{ padding: '8px 16px', fontSize: '12px', color: 'var(--text-muted)' }}>No open files</div>
+                  )}
                   {openEditors.map((editor, index) => (
                     <div
                       key={index}
                       className={`dev-editor-tab ${editor.active ? 'active' : ''}`}
-                      onClick={() => setActiveFile(editor.name)}
+                      onClick={() => openFile(editor.path)}
                       style={{
                         padding: '8px 16px',
                         fontSize: '12px',
@@ -538,7 +586,20 @@ app.listen(3000);`
                       }}
                     >
                       <span>{editor.name}</span>
-                      <span className="close" style={{ opacity: 0.5, fontSize: '10px' }}>✕</span>
+                      <span
+                        className="close"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenEditors(openEditors.filter((_, i) => i !== index))
+                          if (editor.active && openEditors.length > 1) {
+                            setActiveFile(openEditors[index === 0 ? 1 : 0].name)
+                          } else if (openEditors.length === 1) {
+                            setActiveFile(null)
+                            setCodeContent('')
+                          }
+                        }}
+                        style={{ opacity: 0.5, fontSize: '10px' }}
+                      >✕</span>
                     </div>
                   ))}
                 </div>
@@ -555,13 +616,18 @@ app.listen(3000);`
                     lineHeight: 1.5
                   }}
                 >
-                  {codeContent.split('\n').map((line, index) => (
+                  {!codeContent && (
+                    <div style={{ color: 'var(--text-muted)', textAlign: 'center', paddingTop: '40px' }}>
+                      Select a file to view its contents
+                    </div>
+                  )}
+                  {codeContent && codeContent.split('\n').map((line, index) => (
                     <div key={index}>
                       <span className="line-number" style={{ color: 'var(--text-muted)', marginRight: '16px', userSelect: 'none' }}>{index + 1}</span>
                       <span dangerouslySetInnerHTML={{
                         __html: line
-                          .replace(/(const|require|get|send|listen)/g, '<span style="color: #c678dd;">$1</span>')
-                          .replace(/('.*?')/g, '<span style="color: #98c379;">$1</span>')
+                          .replace(/(const|require|get|send|listen|import|export|function|return|if|else|for|while)/g, '<span style="color: #c678dd;">$1</span>')
+                          .replace(/('.*?'|".*?")/g, '<span style="color: #98c379;">$1</span>')
                           .replace(/(\d+)/g, '<span style="color: #d19a66;">$1</span>')
                       }} />
                     </div>

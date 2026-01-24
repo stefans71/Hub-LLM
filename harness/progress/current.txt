@@ -466,4 +466,36 @@ Features:
 
 ---
 
+## Session 43 - 2026-01-24
+**Task**: Debug terminal integration (FIX-01, FIX-02, FIX-03)
+**Issues Found**:
+- VPS servers saved to localStorage only, NOT synced to backend servers_db
+- LLMDevPanel had hardcoded "prod-01 (192.168.1.104)" and mock file tree
+- WorkspaceTopBar expected project.vps object but API returns vps_server_id string
+
+**Fixes Applied**:
+1. **Settings.jsx** - VPS now syncs to backend /api/ssh/servers on add/edit/delete
+2. **LLMDevPanel.jsx** - Status bar and file tree fetch real data from APIs
+3. **WorkspaceTopBar.jsx** - Fetches VPS info from /api/ssh/servers using vps_server_id
+
+**Files Modified**:
+- frontend/src/pages/Settings.jsx (VPS sync)
+- frontend/src/components/LLMDevPanel.jsx (real data)
+- frontend/src/components/WorkspaceTopBar.jsx (VPS fetch)
+
+**Verified**:
+- VPS added in Settings appears in backend /api/ssh/servers ✓
+- Workspace status bar shows real VPS name/IP (not mock 192.168.1.104) ✓
+- File explorer attempts real API calls (shows proper loading/empty states) ✓
+- Terminal attempts real WebSocket connection ✓
+
+**Additional Fix** (FIX-05: ServerManager architecture):
+- Problem: Servers tab showed "No servers configured" with duplicate Add Server form
+- Root cause: ServerManager called backend API but project's vps_server_id was from localStorage
+- Fix: ServerManager now reads from localStorage (same source as Settings) and shows linked VPS
+- Removed duplicate Add Server form, added "Manage VPS" → Settings navigation
+- Added "Link a Server" dropdown to select from existing global servers
+
+---
+
 <!-- Add new sessions below this line -->

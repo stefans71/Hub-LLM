@@ -3611,6 +3611,8 @@ function VPSModal({ show, onClose, onSave, editServer }) {
   const [username, setUsername] = useState('root')
   const [privateKey, setPrivateKey] = useState('')
   const [showKey, setShowKey] = useState(false)
+  const [idleTimeout, setIdleTimeout] = useState('30') // minutes: '10', '30', '60', 'custom', '0' (never)
+  const [customTimeout, setCustomTimeout] = useState('') // hours when custom is selected
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState(null)
@@ -3624,6 +3626,8 @@ function VPSModal({ show, onClose, onSave, editServer }) {
       setPort(editServer.port || '22')
       setUsername(editServer.username || 'root')
       setPrivateKey(editServer.privateKey || '')
+      setIdleTimeout(editServer.idleTimeout || '30')
+      setCustomTimeout(editServer.customTimeout || '')
       setTestResult(editServer.lastTestSuccess ? { success: true, message: 'Previously connected successfully' } : null)
     } else if (show) {
       // Reset to defaults for new server
@@ -3632,6 +3636,8 @@ function VPSModal({ show, onClose, onSave, editServer }) {
       setPort('22')
       setUsername('root')
       setPrivateKey('')
+      setIdleTimeout('30')
+      setCustomTimeout('')
       setShowKey(false)
       setTestResult(null)
       setError(null)
@@ -3686,6 +3692,8 @@ function VPSModal({ show, onClose, onSave, editServer }) {
       port: port || '22',
       username: username.trim() || 'root',
       privateKey: privateKey.trim(),
+      idleTimeout: idleTimeout,
+      customTimeout: idleTimeout === 'custom' ? customTimeout : '',
       lastTestSuccess: testResult?.success || false,
       lastTestTime: testResult?.success ? new Date().toISOString() : editServer?.lastTestTime,
       serverInfo: testResult?.server_info || editServer?.serverInfo
@@ -3915,6 +3923,62 @@ function VPSModal({ show, onClose, onSave, editServer }) {
                 Paste your private key or leave empty to use password authentication
               </div>
             </div>
+
+            {/* Idle Timeout Setting */}
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px' }}>
+                Session Idle Timeout
+              </label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <select
+                  value={idleTimeout}
+                  onChange={(e) => setIdleTimeout(e.target.value)}
+                  style={{
+                    flex: idleTimeout === 'custom' ? '0 0 auto' : '1',
+                    padding: '10px 12px',
+                    background: cssVars.bgTertiary,
+                    border: `1px solid ${cssVars.border}`,
+                    borderRadius: '8px',
+                    color: cssVars.textPrimary,
+                    fontSize: '14px',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="10">10 minutes</option>
+                  <option value="30">30 minutes</option>
+                  <option value="60">1 hour</option>
+                  <option value="custom">Custom</option>
+                  <option value="0">Never disconnect</option>
+                </select>
+                {idleTimeout === 'custom' && (
+                  <>
+                    <input
+                      type="number"
+                      value={customTimeout}
+                      onChange={(e) => setCustomTimeout(e.target.value)}
+                      placeholder="0"
+                      min="0"
+                      style={{
+                        width: '80px',
+                        padding: '10px 12px',
+                        background: cssVars.bgTertiary,
+                        border: `1px solid ${cssVars.border}`,
+                        borderRadius: '8px',
+                        color: cssVars.textPrimary,
+                        fontSize: '14px',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <span style={{ fontSize: '14px', color: cssVars.textSecondary }}>hours</span>
+                  </>
+                )}
+              </div>
+              <div style={{ fontSize: '11px', color: cssVars.textMuted, marginTop: '4px' }}>
+                Automatically disconnect after inactivity. Set to 0 or "Never" to keep connection alive.
+              </div>
+            </div>
           </div>
 
           {/* Test Connection Button */}
@@ -4064,32 +4128,109 @@ function VPSConnectionsSettings() {
   const [editingServer, setEditingServer] = useState(null)
   const [showHelp, setShowHelp] = useState(false)
 
-  // Load servers from localStorage
+  // Load servers from localStorage and sync to backend
   useEffect(() => {
-    const savedServers = localStorage.getItem('vps_servers')
-    if (savedServers) {
-      try {
-        setServers(JSON.parse(savedServers))
-      } catch (e) {
-        console.error('Failed to parse VPS servers:', e)
+    const loadAndSyncServers = async () => {
+      const savedServers = localStorage.getItem('vps_servers')
+      if (savedServers) {
+        try {
+          const parsed = JSON.parse(savedServers)
+          setServers(parsed)
+
+          // Sync any unsynced servers to backend
+          for (const server of parsed) {
+            if (!server.backendSynced) {
+              try {
+                const res = await fetch('/api/ssh/servers', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    name: server.name,
+                    host: server.host,
+                    port: parseInt(server.port) || 22,
+                    username: server.username || 'root',
+                    auth_type: server.privateKey ? 'key' : 'password',
+                    private_key: server.privateKey || null
+                  })
+                })
+                if (res.ok) {
+                  const backendServer = await res.json()
+                  // Update local storage with synced status and backend ID
+                  const updatedServers = parsed.map(s =>
+                    s.id === server.id ? { ...s, id: backendServer.id, backendSynced: true } : s
+                  )
+                  localStorage.setItem('vps_servers', JSON.stringify(updatedServers))
+                  setServers(updatedServers)
+                }
+              } catch (err) {
+                console.error('Failed to sync server to backend:', err)
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Failed to parse VPS servers:', e)
+        }
       }
     }
+
+    loadAndSyncServers()
   }, [])
 
-  // Save servers to localStorage
+  // Save servers to localStorage AND sync to backend
   const saveServers = (newServers) => {
     setServers(newServers)
     localStorage.setItem('vps_servers', JSON.stringify(newServers))
   }
 
-  const handleAddServer = (server) => {
+  // Sync a single server to backend for terminal/file API access
+  const syncServerToBackend = async (server) => {
+    try {
+      // Check if server already exists in backend
+      const existingRes = await fetch('/api/ssh/servers')
+      const existingServers = await existingRes.json()
+      const exists = existingServers.find(s => s.id === server.id)
+
+      if (exists) {
+        // Delete old entry first (no update endpoint)
+        await fetch(`/api/ssh/servers/${server.id}`, { method: 'DELETE' })
+      }
+
+      // Add server to backend
+      const res = await fetch('/api/ssh/servers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: server.name,
+          host: server.host,
+          port: parseInt(server.port) || 22,
+          username: server.username || 'root',
+          auth_type: server.privateKey ? 'key' : 'password',
+          private_key: server.privateKey || null
+        })
+      })
+
+      if (res.ok) {
+        const backendServer = await res.json()
+        // Update local server with backend ID
+        return { ...server, id: backendServer.id, backendSynced: true }
+      }
+    } catch (err) {
+      console.error('Failed to sync server to backend:', err)
+    }
+    return server
+  }
+
+  const handleAddServer = async (server) => {
+    // Sync to backend first
+    const syncedServer = await syncServerToBackend(server)
+
     if (editingServer) {
       // Update existing
-      const updated = servers.map(s => s.id === server.id ? server : s)
+      const updated = servers.map(s => s.id === editingServer.id ? syncedServer : s)
       saveServers(updated)
     } else {
       // Add new
-      saveServers([...servers, server])
+      saveServers([...servers, syncedServer])
     }
     setEditingServer(null)
   }
@@ -4099,8 +4240,14 @@ function VPSConnectionsSettings() {
     setShowModal(true)
   }
 
-  const handleDeleteServer = (serverId) => {
+  const handleDeleteServer = async (serverId) => {
     if (window.confirm('Are you sure you want to remove this VPS connection?')) {
+      // Delete from backend too
+      try {
+        await fetch(`/api/ssh/servers/${serverId}`, { method: 'DELETE' })
+      } catch (err) {
+        console.error('Failed to delete server from backend:', err)
+      }
       saveServers(servers.filter(s => s.id !== serverId))
     }
   }

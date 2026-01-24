@@ -55,6 +55,32 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 43 - 2026-01-24
+**Task**: FIX-01, FIX-02, FIX-03 (Terminal Integration Debug)
+**Root Cause Found**:
+- VPS servers were ONLY saved to localStorage in Settings, NOT synced to backend
+- Backend servers_db was empty when terminal tried to connect
+- LLMDevPanel and WorkspaceTopBar had hardcoded mock data
+**Solution Pattern**:
+- Settings.jsx now syncs VPS to backend via /api/ssh/servers on add/edit/delete
+- Components fetch real server info using project.vps_server_id
+**Testing Approach**:
+- Used agent-browser with eval for reliable interactions
+- Used curl to verify backend API has VPS data
+- Created test project via API to quickly test workspace
+**Files Modified**:
+- Settings.jsx (sync VPS to backend)
+- LLMDevPanel.jsx (real API calls, removed mock data)
+- WorkspaceTopBar.jsx (fetch VPS info)
+- ServerManager.jsx (show linked VPS, not duplicate Add form)
+- Workspace.jsx (pass project prop to ServerManager)
+**Architecture Lesson**:
+- Settings > VPS Connections = GLOBAL servers (stored in localStorage)
+- Project.vps_server_id = Which global server THIS project uses
+- Components showing project's VPS must read from localStorage, not backend API
+
+---
+
 ### Session 42 - 2026-01-24
 **Task**: F-02 (FileBrowser Integration) + F-04 (CodeEditor Integration)
 **New Commands/Patterns**:
