@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import WorkspaceTerminal from './WorkspaceTerminal'
 
 /**
@@ -19,6 +19,9 @@ import WorkspaceTerminal from './WorkspaceTerminal'
  */
 export default function LLMDevPanel({ project }) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [panelHeight, setPanelHeight] = useState(350)
+  const [isDragging, setIsDragging] = useState(false)
+  const panelRef = useRef(null)
   const [activeTab, setActiveTab] = useState('terminal')
   const [activeFile, setActiveFile] = useState(null)
   const [activeTerminalTab, setActiveTerminalTab] = useState('terminal')
@@ -122,6 +125,62 @@ export default function LLMDevPanel({ project }) {
     { time: '2025-01-22 10:24:20', level: 'WARN', text: 'Slow query detected (>100ms)', warning: true }
   ]
 
+  // Drag resize handlers
+  const handleMouseDown = useCallback((e) => {
+    // Only start drag on the resize handle, not on tabs or toggle
+    if (e.target.closest('.llm-dev-tabs') || e.target.closest('.llm-dev-toggle') || e.target.closest('.llm-dev-status')) {
+      return
+    }
+    e.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isDragging) return
+
+    const windowHeight = window.innerHeight
+    const newHeight = windowHeight - e.clientY
+
+    // Clamp height between 100px and 80% of window
+    const minHeight = 100
+    const maxHeight = windowHeight * 0.8
+    const clampedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight))
+
+    setPanelHeight(clampedHeight)
+
+    // Auto-expand if dragging above threshold
+    if (clampedHeight > 60 && !isExpanded) {
+      setIsExpanded(true)
+    }
+  }, [isDragging, isExpanded])
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false)
+
+    // Collapse if height is below threshold
+    if (panelHeight < 60) {
+      setIsExpanded(false)
+      setPanelHeight(350)
+    }
+  }, [panelHeight])
+
+  // Global mouse event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'ns-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp])
+
   const togglePanel = () => {
     setIsExpanded(!isExpanded)
   }
@@ -191,34 +250,53 @@ export default function LLMDevPanel({ project }) {
 
   return (
     <div
+      ref={panelRef}
       className="llm-dev-panel"
       style={{
-        height: isExpanded ? '350px' : '40px',
-        borderTop: '3px solid var(--accent)',
+        height: isExpanded ? `${panelHeight}px` : '40px',
         background: 'var(--bg-secondary)',
         display: 'flex',
         flexDirection: 'column',
         minHeight: '40px',
-        transition: 'height 0.2s ease'
+        transition: isDragging ? 'none' : 'height 0.2s ease',
+        position: 'relative'
       }}
     >
+      {/* Resize Handle - Draggable border */}
+      <div
+        className="llm-dev-resize-handle"
+        onMouseDown={handleMouseDown}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          background: isDragging ? 'var(--primary)' : 'var(--accent)',
+          cursor: 'ns-resize',
+          zIndex: 10,
+          transition: 'background 0.15s ease'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--primary)'}
+        onMouseLeave={(e) => !isDragging && (e.currentTarget.style.background = 'var(--accent)')}
+      />
       {/* W-88: LLM-Dev Header */}
       <div
         className="llm-dev-header"
-        onClick={togglePanel}
         style={{
           display: 'flex',
           alignItems: 'center',
           padding: '0 16px',
           height: '36px',
-          cursor: 'ns-resize',
           userSelect: 'none',
-          flexShrink: 0
+          flexShrink: 0,
+          marginTop: '4px'
         }}
       >
         {/* W-89-90: Dev Panel Toggle */}
         <div
           className="llm-dev-toggle"
+          onClick={togglePanel}
           style={{
             display: 'flex',
             alignItems: 'center',

@@ -1,11 +1,30 @@
 {
   "meta": {
-    "version": "2.4",
-    "phase": "Bug Fixes Complete",
+    "version": "2.7",
+    "phase": "Bug Fixes",
     "last_updated": "2026-01-24"
   },
-  "queue": [],
+  "queue": [
+    {
+      "id": "FEAT-01",
+      "name": "Model Selector Smart Filtering",
+      "size": "M",
+      "priority": 1,
+      "status": "pending",
+      "description": "Model selector should filter based on users API keys and subscription",
+      "requirements": [
+        "Show models available based on API keys entered in Settings",
+        "Grey out models user doesnt have access to",
+        "Add search/filter - type claude or gpt to filter list",
+        "Group by provider (Anthropic, OpenAI, etc.)"
+      ],
+      "depends_on": [],
+      "test": "Models filtered by available API keys, search works"
+    }
+  ],
   "completed": [
+    {"id": "BUG-05", "name": "LLM-Dev Panel Not Draggable", "completed": "2026-01-24"},
+    {"id": "BUG-04", "name": "Model Selector Dropdown Not Opening", "completed": "2026-01-24"},
     {"id": "BUG-03", "name": "Terminal WebSocket Connection", "completed": "2026-01-24"},
     {"id": "BUG-02", "name": "Create Project Button Hidden", "completed": "2026-01-24"},
     {"id": "BUG-01", "name": "Workspace Blank Page Crash", "completed": "2026-01-24"},
@@ -15,7 +34,7 @@
     {"id": "FIX-05", "name": "ServerManager architecture", "completed": "2024-01-24"}
   ],
   "notes": {
-    "recent_fixes": "BUG-02: CSS flexbox fix, BUG-03: Vite WS proxy + unified servers_db",
+    "recent_fixes": "BUG-04: overflow:visible fix for dropdown, BUG-05: drag resize for LLM-Dev panel",
     "vps_info": "User's DO server: 206.189.78.115, connected in Settings > VPS Connections"
   }
 }

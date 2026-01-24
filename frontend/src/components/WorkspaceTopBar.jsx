@@ -177,7 +177,7 @@ export default function WorkspaceTopBar({
         flexShrink: 0,
         position: 'relative',
         zIndex: 100,
-        overflow: collapsed ? 'visible' : 'hidden',
+        overflow: 'visible',
         transition: 'height 0.2s ease, padding 0.2s ease'
       }}
     >

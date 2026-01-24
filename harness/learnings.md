@@ -108,6 +108,23 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 46 - 2026-01-24
+**Tasks**: BUG-04 (Model Selector Dropdown) + BUG-05 (LLM-Dev Panel Drag)
+**New Commands/Patterns**:
+- CSS overflow:hidden clips absolutely positioned children - dropdown menus need `overflow: visible` on parent
+- React drag resize pattern: useState for height/dragging, useCallback for handlers, useEffect for global mouse events
+- Global event listeners must be added/removed carefully to prevent memory leaks
+- `document.body.style.cursor = 'ns-resize'` during drag provides visual feedback
+**Friction Points**:
+- Workspace requires API key to view full interface - visual verification gated behind config
+- App.jsx gates workspace with `hasApiKey` check, shows welcome screen otherwise
+**Files Needing Attention**:
+- App.jsx line 157: workspace gated by API key - consider showing workspace even without API (degraded mode)
+- WorkspaceTopBar.jsx: model selector now works, ready for FEAT-01 smart filtering
+- LLMDevPanel.jsx: drag resize implemented, could add internal resizers for file explorer/editor columns
+
+---
+
 ### Session 40 - 2026-01-24
 **Task**: T-01 (Terminal WebSocket Endpoint)
 **New Commands/Patterns**:

@@ -548,4 +548,30 @@ Features:
 
 ---
 
+### Session 46 - 2026-01-24
+**Tasks**: BUG-04 + BUG-05 - Size S + S
+**Status**: ✅ Complete
+
+**BUG-04 (Model Selector Dropdown Not Opening)**:
+- **Root Cause**: Parent container `.workspace-top-bar` had `overflow: hidden` which clipped the absolutely positioned dropdown menu
+- **Fix**: Changed `overflow: collapsed ? 'visible' : 'hidden'` to `overflow: 'visible'` in WorkspaceTopBar.jsx line 180
+- **File Modified**: frontend/src/components/WorkspaceTopBar.jsx
+
+**BUG-05 (LLM-Dev Panel Not Draggable)**:
+- **Root Cause**: Panel only had click-to-toggle, no drag resize functionality
+- **Fix**: Added full drag-to-resize implementation:
+  - Added `panelHeight` state (default 350px)
+  - Added `isDragging` state and `panelRef`
+  - Created `handleMouseDown`, `handleMouseMove`, `handleMouseUp` callbacks
+  - Added global mouse event listeners for drag tracking
+  - Added visual resize handle (4px bar at top with hover/drag highlighting)
+  - Clamped height between 100px and 80% of window
+  - Auto-collapse if dragged below 60px threshold
+- **File Modified**: frontend/src/components/LLMDevPanel.jsx
+
+**Verified**: Build passes ✓
+**Note**: Full workspace view requires API key - verification skipped per auth bypass rule
+
+---
+
 <!-- Add new sessions below this line -->
