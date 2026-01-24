@@ -54,6 +54,8 @@ export default function Workspace({ project, model, apiKeys }) {
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [selectedModel, setSelectedModel] = useState(model || { name: 'Claude Opus 4.5', color: '#ef4444' })
+  // Track the currently linked server ID (may differ from project.vps_server_id if just linked)
+  const [linkedServerId, setLinkedServerId] = useState(project?.vps_server_id || null)
 
   // Check initial connection status when project changes
   useEffect(() => {
@@ -257,7 +259,7 @@ export default function Workspace({ project, model, apiKeys }) {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+    <div className="flex-1 flex flex-col overflow-hidden h-full" style={{ background: 'var(--bg-primary)' }}>
       {/* W-03: Workspace Top Bar */}
       <WorkspaceTopBar
         project={project}
@@ -269,8 +271,8 @@ export default function Workspace({ project, model, apiKeys }) {
         onExport={handleExport}
       />
 
-      {/* W-30: Workspace Main Container */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* W-30: Workspace Main Container - min-h-0 allows shrinking for LLM-Dev panel */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* W-31: Icon Sidebar */}
         <WorkspaceIconSidebar
           activePanel={activeSidebarPanel}
@@ -356,6 +358,17 @@ export default function Workspace({ project, model, apiKeys }) {
                 projectId={project?.id}
                 onOpenTerminal={openTerminal}
                 onOpenFiles={openFiles}
+                onConnectionChange={(server, connected) => {
+                  setIsConnected(connected)
+                  if (connected && server) {
+                    setActiveServer(server)
+                  } else if (!connected) {
+                    setActiveServer(null)
+                  }
+                }}
+                onServerLinked={(serverId) => {
+                  setLinkedServerId(serverId)
+                }}
               />
             )}
 
@@ -477,7 +490,7 @@ export default function Workspace({ project, model, apiKeys }) {
       </div>
 
       {/* W-88: LLM-Dev Bottom Panel */}
-      <LLMDevPanel project={project} />
+      <LLMDevPanel project={project} linkedServerId={linkedServerId} />
     </div>
   )
 }
