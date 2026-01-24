@@ -498,4 +498,22 @@ Features:
 
 ---
 
+## Session 44 - 2026-01-24
+**Task**: BUG-01 (Workspace Blank Page Crash) - Size M
+**Status**: ✅ Complete
+**Root Cause**: Missing `useEffect` import in Workspace.jsx
+**Fix Applied**:
+- Added `useEffect` to React import on line 1 of Workspace.jsx
+- Session 43 added useEffect hook at line 58 but forgot to import it
+
+**Files Modified**:
+- frontend/src/components/Workspace.jsx (line 1: added useEffect import)
+
+**Verified**:
+- Build succeeds ✓
+- Page loads without JS crash ✓
+- Shows login page (expected - auth required) ✓
+
+---
+
 <!-- Add new sessions below this line -->

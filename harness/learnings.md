@@ -55,6 +55,19 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 44 - 2026-01-24
+**Task**: BUG-01 (Workspace Blank Page Crash)
+**Root Cause**: Missing `useEffect` import in Workspace.jsx
+**New Commands/Patterns**:
+- Session 43 added useEffect hook (line 58) but forgot to add it to React import (line 1)
+- This caused "useEffect is not defined" error, crashing the component
+**Friction Points**:
+- None - simple one-line fix once identified
+**Files Needing Attention**:
+- None this session
+
+---
+
 ### Session 43 - 2026-01-24
 **Task**: FIX-01, FIX-02, FIX-03 (Terminal Integration Debug)
 **Root Cause Found**:

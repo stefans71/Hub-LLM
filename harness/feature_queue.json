@@ -6,28 +6,6 @@
   },
   "queue": [
     {
-      "id": "BUG-01",
-      "name": "Workspace Blank Page Crash",
-      "size": "M",
-      "priority": 1,
-      "status": "pending",
-      "description": "Workspace page crashes and shows blank when loading",
-      "symptoms": [
-        "Click Workspace in nav → blank page",
-        "Click project card → blank page",
-        "Page was working before recent ServerManager/Workspace changes"
-      ],
-      "debug_steps": [
-        "Check browser console for JavaScript errors",
-        "Check Workspace.jsx for syntax errors",
-        "Check ServerManager.jsx for syntax errors", 
-        "Check WorkspaceTopBar.jsx for syntax errors",
-        "Look for missing imports or undefined variables"
-      ],
-      "likely_cause": "Recent changes to ServerManager.jsx or Workspace.jsx introduced error",
-      "test": "Workspace page loads without crashing"
-    },
-    {
       "id": "BUG-02",
       "name": "Create Project Button Hidden",
       "size": "XS",
@@ -56,6 +34,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-01", "name": "Workspace Blank Page Crash", "completed": "2026-01-24"},
     {"id": "FIX-01", "name": "VPS sync to backend", "completed": "2024-01-24"},
     {"id": "FIX-02", "name": "Wrong IP in top bar", "completed": "2024-01-24"},
     {"id": "FIX-03", "name": "Mock file tree data", "completed": "2024-01-24"},
