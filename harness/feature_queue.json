@@ -18,6 +18,7 @@
       "mapping_file": "workspace_modals.md",
       "mapping_lines": "W-31 to W-37",
       "depends_on": [],
+      "related_tasks": ["W-38"],
       "react_files": ["WorkspaceIconSidebar.jsx (create)", "Workspace.jsx (modify)"]
     },
     {
@@ -31,6 +32,7 @@
       "mapping_file": "workspace_modals.md",
       "mapping_lines": "W-38 to W-52",
       "depends_on": ["W-31"],
+      "related_tasks": ["W-31"],
       "react_files": ["WorkspaceFileExplorer.jsx (create)", "Workspace.jsx (modify)"]
     },
     {
@@ -57,6 +59,7 @@
       "mapping_file": "settings.md",
       "mapping_lines": "S-64 to S-95",
       "depends_on": [],
+      "related_tasks": ["S-96"],
       "react_files": ["AnthropicSubscription.jsx (create)", "Settings.jsx (modify)"]
     },
     {
@@ -70,6 +73,7 @@
       "mapping_file": "settings.md",
       "mapping_lines": "S-96 to S-105",
       "depends_on": [],
+      "related_tasks": ["S-64"],
       "react_files": ["DefaultModelSettings.jsx (create)", "Settings.jsx (modify)"]
     },
     {
@@ -96,6 +100,7 @@
       "mapping_file": "settings.md",
       "mapping_lines": "S-218 to S-246",
       "depends_on": [],
+      "related_tasks": ["M-45"],
       "react_files": ["GlobalSkills.jsx (create)", "Settings.jsx (modify)"]
     },
     {
@@ -109,6 +114,7 @@
       "mapping_file": "workspace_modals.md",
       "mapping_lines": "M-45 to M-62",
       "depends_on": ["S-218"],
+      "related_tasks": ["S-218"],
       "react_files": ["SkillModal.jsx (create)"]
     },
     {
