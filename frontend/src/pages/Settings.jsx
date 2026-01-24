@@ -3690,6 +3690,8 @@ export default function Settings({ onBack, onLogout }) {
         return <AnthropicSubscription user={user} />
       case 'model':
         return <DefaultModelSettings />
+      case 'voice':
+        return <VoiceSettings />
       case 'profile':
         return <ProfileSettings user={user} getAuthHeader={getAuthHeader} onLogout={handleLogout} />
       case 'apikeys':
@@ -3775,6 +3777,12 @@ export default function Settings({ onBack, onLogout }) {
             label="Default Model"
             active={activeTab === 'model'}
             onClick={() => setActiveTab('model')}
+          />
+          <NavItem
+            icon={Mic}
+            label="Voice Input"
+            active={activeTab === 'voice'}
+            onClick={() => setActiveTab('voice')}
           />
           <NavItem
             icon={Key}

@@ -174,11 +174,12 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 ---
 
 ### Session 35 - 2026-01-24
-**Task**: S-96 (Default Model Section) - Size S
+**Tasks**: S-96 (Default Model Section) + S-166 (Voice Input Section) - Size S + XS
 **Status**: ✅ Complete
-**Files Modified**:
+
+**S-96 Files Modified**:
 - frontend/src/pages/Settings.jsx (modified - added DefaultModelSettings component)
-**Elements Implemented** (10 total):
+**S-96 Elements Implemented** (10 total):
 - S-97: Default Model Section container
 - S-98: Section Title "Default Model"
 - S-99: Section Description
@@ -189,11 +190,24 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 - S-104: Google Option Group (Gemini Pro - disabled)
 - S-105: Save Model Button
 - S-106: Model Tip Box (yellow border)
-**Verified**: Screenshot matches mockup - all elements visible and functional
+
+**S-166 Files Modified**:
+- frontend/src/pages/Settings.jsx (modified - added VoiceSettings component)
+**S-166 Elements Implemented** (7 total):
+- S-164: Voice Input Section container
+- S-165: Section Title "Voice Input (Whisper)"
+- S-166: Section Description
+- S-167: Voice Toggle Row
+- S-168: Voice Toggle Label "Enable Voice Input"
+- S-169: Voice Toggle Description
+- S-170: Voice Toggle (on/off switch)
+
+**Verified**: Screenshots match mockup - all elements visible and functional
 **Notes**:
 - Added "Default Model" navigation item with Monitor icon
+- Added "Voice Input" navigation item with Mic icon
 - Model selection saved to localStorage
-- Tip box styled with warning color border
+- Voice toggle state saved to localStorage
 
 ---
 
