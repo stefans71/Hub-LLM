@@ -293,4 +293,34 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 
 ---
 
+### Session 38 - 2026-01-24
+**Task**: M-10 (Agent Modal) - Size M
+**Status**: ✅ Complete
+**Files Modified**:
+- frontend/src/pages/Settings.jsx (modified - updated AgentModal component)
+**Elements Implemented** (35 total):
+- M-10: Agent Modal Overlay (#agent-modal-overlay .modal-overlay)
+- M-11: Agent Modal Container (#agent-modal .modal)
+- M-12: Modal Header (.modal-header)
+- M-13: Modal Title (#agent-modal-title) - "Create New Agent" / "Edit Agent"
+- M-14: Close Button (.modal-close) - ✕
+- M-15: Modal Body (.modal-body)
+- M-16 to M-19: Agent Name field with @ prefix, input (#agent-name), help text
+- M-20 to M-29: Icon Picker with 8 icons (🔧, 📋, 🔒, 🧪, 📝, 🗄️, 🎨, ⚡)
+- M-30 to M-32: Description field (#agent-description)
+- M-33 to M-37: Model/Tools grid (2 columns) with dropdowns (#agent-model, #agent-tools)
+- M-38 to M-40: System Prompt textarea (#agent-prompt)
+- M-41: Tip box with 💡 icon and blue background
+- M-42: Modal Footer (.modal-footer)
+- M-43: Cancel Button (.btn.btn-secondary)
+- M-44: Create/Save Button (.btn.btn-primary) with #agent-save-text span
+**Verified**: Screenshot matches mockup - all elements visible and functional
+**Notes**:
+- AgentModal already existed, updated with proper IDs and classes per mockup
+- Reduced icon picker from 12 icons to 8 to match mockup exactly
+- Added 💡 emoji to tip box
+- Modal supports both create and edit modes
+
+---
+
 <!-- Add new sessions below this line -->

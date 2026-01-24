@@ -2111,7 +2111,8 @@ function GlobalMCPSettings() {
 }
 
 // Agent Icon options
-const agentIcons = ['🔧', '📋', '🔒', '🧪', '📝', '🗄️', '🎨', '⚡', '🤖', '🔍', '📊', '🛡️']
+// Agent icons matching mockup exactly (M-22 to M-29)
+const agentIcons = ['🔧', '📋', '🔒', '🧪', '📝', '🗄️', '🎨', '⚡']
 
 // Default agents (used in CreateProject)
 const defaultAgents = [
@@ -2204,8 +2205,10 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay - M-10 */}
       <div
+        id="agent-modal-overlay"
+        className="modal-overlay"
         onClick={onClose}
         style={{
           position: 'fixed',
@@ -2217,49 +2220,56 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
           zIndex: 1000
         }}
       />
-      {/* Modal */}
-      <div style={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        background: cssVars.bgSecondary,
-        borderRadius: '16px',
-        width: '520px',
-        maxWidth: '90vw',
-        maxHeight: '90vh',
-        overflow: 'auto',
-        zIndex: 1001,
-        boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-      }}>
-        {/* Header */}
-        <div style={{
+      {/* Modal - M-11 */}
+      <div
+        id="agent-modal"
+        className="modal"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: cssVars.bgSecondary,
+          borderRadius: '16px',
+          width: '520px',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          zIndex: 1001,
+          boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+        }}
+      >
+        {/* Header - M-12 */}
+        <div className="modal-header" style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '20px 24px',
           borderBottom: `1px solid ${cssVars.border}`
         }}>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+          <h3 id="agent-modal-title" style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
             {editAgent ? 'Edit Agent' : 'Create New Agent'}
           </h3>
           <button
+            className="modal-close"
             onClick={onClose}
             style={{
               background: 'none',
               border: 'none',
               color: cssVars.textSecondary,
               cursor: 'pointer',
-              padding: '4px'
+              padding: '4px',
+              fontSize: '18px',
+              lineHeight: 1
             }}
           >
-            <X size={20} />
+            ✕
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: '24px' }}>
-          {/* Agent Name */}
+        {/* Body - M-15 */}
+        <div className="modal-body" style={{ padding: '24px' }}>
+          {/* Agent Name - M-16 to M-19 */}
           <div style={{ marginBottom: '16px' }}>
             <label style={{
               display: 'block',
@@ -2275,6 +2285,8 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
               <span style={{ color: cssVars.textMuted, fontSize: '16px' }}>@</span>
               <input
                 type="text"
+                id="agent-name"
+                className="model-select"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. api-designer"
@@ -2295,7 +2307,7 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
             </div>
           </div>
 
-          {/* Icon Picker */}
+          {/* Icon Picker - M-20 to M-29 */}
           <div style={{ marginBottom: '16px' }}>
             <label style={{
               display: 'block',
@@ -2311,6 +2323,7 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
               {agentIcons.map((emoji) => (
                 <button
                   key={emoji}
+                  className={`icon-picker${icon === emoji ? ' selected' : ''}`}
                   onClick={() => setIcon(emoji)}
                   style={{
                     width: '36px',
@@ -2329,7 +2342,7 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
             </div>
           </div>
 
-          {/* Description */}
+          {/* Description - M-30 to M-32 */}
           <div style={{ marginBottom: '16px' }}>
             <label style={{
               display: 'block',
@@ -2343,6 +2356,8 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
             </label>
             <input
               type="text"
+              id="agent-description"
+              className="model-select"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Designs REST API endpoints following best practices"
@@ -2360,7 +2375,7 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
             />
           </div>
 
-          {/* Model and Tools Row */}
+          {/* Model and Tools Row - M-33 to M-37 */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
             <div>
               <label style={{
@@ -2374,6 +2389,8 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
                 Model
               </label>
               <select
+                id="agent-model"
+                className="model-select"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 style={{
@@ -2404,6 +2421,8 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
                 Tools Access
               </label>
               <select
+                id="agent-tools"
+                className="model-select"
                 value={tools}
                 onChange={(e) => setTools(e.target.value)}
                 style={{
@@ -2424,7 +2443,7 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
             </div>
           </div>
 
-          {/* System Prompt */}
+          {/* System Prompt - M-38 to M-40 */}
           <div style={{ marginBottom: '16px' }}>
             <label style={{
               display: 'block',
@@ -2437,6 +2456,8 @@ function AgentModal({ show, onClose, onSave, editAgent }) {
               System Prompt (Optional)
             </label>
             <textarea
+              id="agent-prompt"
+              className="model-select"
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
               placeholder={`Custom instructions for this agent...
@@ -2459,14 +2480,15 @@ Example: You are an expert API designer. When asked to design endpoints, always 
             />
           </div>
 
-          {/* Tip */}
+          {/* Tip - M-41 */}
           <div style={{
             padding: '12px',
             background: 'rgba(59, 130, 246, 0.1)',
-            borderRadius: '8px'
+            borderRadius: '8px',
+            marginBottom: '16px'
           }}>
             <div style={{ fontSize: '12px', color: cssVars.textSecondary }}>
-              <strong>Tip:</strong> This agent will be auto-converted to the correct format (CLAUDE.md agents, Codex skills, or system prompts) based on which LLM you use in each project.
+              <strong>💡 Tip:</strong> This agent will be auto-converted to the correct format (CLAUDE.md agents, Codex skills, or system prompts) based on which LLM you use in each project.
             </div>
           </div>
 
@@ -2490,8 +2512,8 @@ Example: You are an expert API designer. When asked to design endpoints, always 
           )}
         </div>
 
-        {/* Footer */}
-        <div style={{
+        {/* Footer - M-42 to M-44 */}
+        <div className="modal-footer" style={{
           display: 'flex',
           justifyContent: 'space-between',
           padding: '16px 24px',
@@ -2499,6 +2521,7 @@ Example: You are an expert API designer. When asked to design endpoints, always 
           background: cssVars.bgTertiary
         }}>
           <button
+            className="btn btn-secondary"
             onClick={onClose}
             style={{
               padding: '10px 20px',
@@ -2513,6 +2536,7 @@ Example: You are an expert API designer. When asked to design endpoints, always 
             Cancel
           </button>
           <button
+            className="btn btn-primary"
             onClick={handleSave}
             disabled={saving}
             style={{
@@ -2535,7 +2559,7 @@ Example: You are an expert API designer. When asked to design endpoints, always 
                 Saving...
               </>
             ) : (
-              editAgent ? 'Save Changes' : 'Create Agent'
+              <span id="agent-save-text">{editAgent ? 'Save Changes' : 'Create Agent'}</span>
             )}
           </button>
         </div>
