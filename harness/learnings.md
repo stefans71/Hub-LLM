@@ -55,6 +55,20 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 42 - 2026-01-24
+**Task**: F-02 (FileBrowser Integration) + F-04 (CodeEditor Integration)
+**New Commands/Patterns**:
+- FileBrowser.jsx and Workspace.jsx had old API endpoints (/api/ssh/servers/...) that needed updating to new /api/files endpoints
+- API migration was straightforward - just URL changes and response format handling
+**Friction Points**:
+- None - clean migration session
+**Files Needing Attention**:
+- ServerManager.jsx still uses /api/ssh/servers for VPS management (correct - separate concern)
+- Terminal.jsx still uses /api/ssh/servers WebSocket (could migrate to /api/terminal/ws later)
+- Queue is now empty - need to identify next phase tasks
+
+---
+
 ### Session 40 - 2026-01-24
 **Task**: T-01 (Terminal WebSocket Endpoint)
 **New Commands/Patterns**:
