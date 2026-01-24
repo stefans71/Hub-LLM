@@ -392,12 +392,15 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
 ---
 
 ### Session 41 - 2026-01-24
-**Task**: T-03 (Terminal WebSocket Hook) + T-04 (Terminal Status UI) - Size S + XS
+**Tasks**: T-03 + T-04 + F-01 + F-03 - Size S+XS+S+S
 **Status**: ✅ Complete
-**Files Modified**:
+
+**T-03 + T-04 (Terminal Frontend)**:
+Files Modified:
 - frontend/src/components/WorkspaceTerminal.jsx (created)
 - frontend/src/components/LLMDevPanel.jsx (modified - integrated WorkspaceTerminal)
-**Elements Implemented**:
+
+Elements Implemented:
 - T-03: WorkspaceTerminal component with xterm.js connected to /api/terminal/ws
   - WebSocket connection with projectId/serverId query params
   - Init message protocol (sends cols/rows on connect)
@@ -408,10 +411,30 @@ See `harness/progress/archive/v1_sessions.txt` for full V1 history.
   - Status indicator with color coding
   - Reconnect button on disconnect/error
   - Error message display
+
+**F-01 + F-03 (Files Backend API)**:
+Files Modified:
+- backend/routers/files.py (created)
+- backend/routers/__init__.py (modified - added files)
+- backend/main.py (modified - added files router)
+
+Endpoints Implemented:
+- GET /api/files - List directory contents (F-01)
+- GET /api/files/content - Read file content (F-03)
+- PUT /api/files/content - Write file content (F-03)
+- POST /api/files/mkdir - Create directory
+- DELETE /api/files - Delete file or directory
+
+Features:
+- Uses existing SSHConnection.list_directory() and SFTP methods
+- Accepts serverId or projectId query params
+- 10MB file size limit for reads
+- Permission and file not found error handling
+
 **Notes**:
-- T-04 requirements were naturally included in T-03 implementation
-- Removed mock terminal output from LLMDevPanel
-- Terminal uses ResizeObserver for responsive sizing
+- T-04 requirements included in T-03 implementation
+- F-01 and F-03 combined into single files.py router
+- All endpoints verified working via curl and OpenAPI
 
 ---
 

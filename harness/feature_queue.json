@@ -2,31 +2,12 @@
   "meta": {
     "version": "2.1",
     "total_elements": 917,
-    "completed_elements": 866,
-    "completion_percentage": 94,
+    "completed_elements": 868,
+    "completion_percentage": 95,
     "last_updated": "2026-01-24",
     "phase": "Terminal Integration"
   },
   "queue": [
-    {
-      "id": "F-01",
-      "name": "File Listing API",
-      "size": "S",
-      "priority": 5,
-      "status": "pending",
-      "description": "Create API endpoint to list files/directories on VPS",
-      "reference_existing": [
-        "Use same SSH connection from T-02",
-        "Run 'ls -la' or use sftp for directory listing"
-      ],
-      "requirements": [
-        "GET /api/files?vpsId=X&path=/path - returns directory tree",
-        "Return: name, type (file/dir), size, permissions, modified date",
-        "Handle permission errors gracefully"
-      ],
-      "depends_on": [],
-      "test": "curl /api/files?path=/ returns JSON directory listing"
-    },
     {
       "id": "F-02",
       "name": "FileBrowser Integration",
@@ -35,7 +16,8 @@
       "status": "pending",
       "description": "Connect FileBrowser.jsx to real file listing API",
       "reference_existing": [
-        "frontend/src/components/FileBrowser.jsx - UI exists with mock data"
+        "frontend/src/components/FileBrowser.jsx - UI exists with mock data",
+        "backend/routers/files.py - API endpoints created"
       ],
       "requirements": [
         "Fetch real directory tree from F-01 API",
@@ -43,24 +25,8 @@
         "Show loading states",
         "Handle errors (permission denied, etc.)"
       ],
-      "depends_on": ["F-01"],
-      "test": "See real files from VPS in file browser"
-    },
-    {
-      "id": "F-03",
-      "name": "File Read/Write API",
-      "size": "S",
-      "priority": 7,
-      "status": "pending",
-      "description": "Create API endpoints to read and write file contents",
-      "requirements": [
-        "GET /api/files/content?vpsId=X&path=/file - returns file content",
-        "PUT /api/files/content - saves file content",
-        "Handle binary vs text files",
-        "Handle large files (streaming or size limit)"
-      ],
       "depends_on": [],
-      "test": "Read a file, modify it, save it, verify change on VPS"
+      "test": "See real files from VPS in file browser"
     },
     {
       "id": "F-04",
@@ -101,13 +67,16 @@
     {"id": "T-01", "name": "Terminal WebSocket Endpoint", "completed": "2026-01-24"},
     {"id": "T-02", "name": "SSH Session Service", "completed": "2026-01-24", "note": "Already existed in services/ssh.py with asyncssh"},
     {"id": "T-03", "name": "Terminal WebSocket Hook", "completed": "2026-01-24"},
-    {"id": "T-04", "name": "Terminal Status UI", "completed": "2026-01-24", "note": "Included in WorkspaceTerminal component"}
+    {"id": "T-04", "name": "Terminal Status UI", "completed": "2026-01-24", "note": "Included in WorkspaceTerminal component"},
+    {"id": "F-01", "name": "File Listing API", "completed": "2026-01-24"},
+    {"id": "F-03", "name": "File Read/Write API", "completed": "2026-01-24", "note": "Includes mkdir, delete endpoints"}
   ],
   "notes": {
     "vps_connection_works": "SSH connection to VPS is already working - see Settings > VPS Connections. Credentials stored in database. Reference this existing code.",
     "terminal_endpoint": "WebSocket at /api/terminal/ws accepts projectId or serverId query params",
     "terminal_component_complete": "WorkspaceTerminal.jsx connects xterm.js to WebSocket with status UI and reconnect",
-    "file_components_exist": "FileBrowser.jsx and CodeEditor.jsx exist but use mock data",
+    "files_api_complete": "GET/PUT /api/files, /api/files/content, /api/files/mkdir - all endpoints ready",
+    "file_components_exist": "FileBrowser.jsx and CodeEditor.jsx exist but use mock data - needs F-02/F-04",
     "docker_deferred": "Docker integration (D-01, D-02) deferred - do after terminal/files work"
   }
 }

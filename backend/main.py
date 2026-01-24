@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
 
-from routers import chat, projects, voice, ssh, github, servers, auth, ai, stats, terminal
+from routers import chat, projects, voice, ssh, github, servers, auth, ai, stats, terminal, files
 from models import init_db, close_db
 
 
@@ -52,6 +52,7 @@ app.include_router(servers.router, prefix="/api/servers", tags=["servers"])
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 app.include_router(stats.router, prefix="/api/stats", tags=["stats"])
 app.include_router(terminal.router, prefix="/api/terminal", tags=["terminal"])
+app.include_router(files.router, prefix="/api/files", tags=["files"])
 
 
 @app.get("/")
