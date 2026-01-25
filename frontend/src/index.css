@@ -787,3 +787,37 @@
 .btn-secondary:hover {
   background: var(--bg-secondary);
 }
+
+/* xterm.js Terminal Styles */
+.xterm-container {
+  width: 100%;
+  height: 100%;
+}
+
+.xterm-container .xterm {
+  height: 100%;
+  padding: 0;
+}
+
+/* Make xterm scrollbar draggable - use native scrollbar behavior */
+.xterm-container .xterm-viewport {
+  overflow-y: scroll !important;
+}
+
+/* Style the xterm scrollbar to match app theme */
+.xterm-container .xterm-viewport::-webkit-scrollbar {
+  width: 10px;
+}
+
+.xterm-container .xterm-viewport::-webkit-scrollbar-track {
+  background: #1a2028;
+}
+
+.xterm-container .xterm-viewport::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+.xterm-container .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}

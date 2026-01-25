@@ -134,6 +134,7 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onSt
         cursorBlink: true,
         fontSize: 13,
         fontFamily: "'Monaco', 'Consolas', 'Courier New', monospace",
+        scrollback: 5000,
         theme: {
           background: '#0f1419',
           foreground: '#c0caf5',
@@ -288,8 +289,8 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onSt
       minWidth: 0,
       position: 'absolute',
       inset: 0,
-      background: 'var(--bg-primary)',
-      overflow: 'hidden'
+      background: 'var(--bg-primary)'
+      // Note: removed overflow:hidden to allow xterm scrollbar interaction
     }}>
       {/* Terminal Status Bar */}
       <div style={{
@@ -334,16 +335,14 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onSt
         )}
       </div>
 
-      {/* Terminal Container - BUG-12: maxWidth caps at ~80 columns for readability */}
+      {/* Terminal Container - fills available space, xterm handles scrollbar */}
       <div
         ref={terminalRef}
+        className="xterm-container"
         style={{
-          flex: 1,
+          flex: '1 1 auto',
           minHeight: 0,
-          width: '100%',
-          maxWidth: '700px',  // ~80 columns at 13px font (~8px/char + padding)
           padding: '8px',
-          overflow: 'hidden',
           boxSizing: 'border-box'
         }}
       />
@@ -544,8 +543,8 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
           </button>
         </div>
 
-        {/* Terminal instances */}
-        <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+        {/* Terminal instances - position:relative needed for absolute children */}
+        <div style={{ flex: 1, minHeight: 0, minWidth: 0, width: '100%', position: 'relative' }}>
           {terminals.map(terminal => (
             <TerminalInstance
               key={terminal.id}
@@ -570,8 +569,8 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
       minHeight: 0,
       overflow: 'hidden'
     }}>
-      {/* Terminal instances */}
-      <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+      {/* Terminal instances - position:relative needed for absolute children */}
+      <div style={{ flex: 1, minHeight: 0, minWidth: 0, width: '100%', position: 'relative' }}>
         {terminals.map(terminal => (
           <TerminalInstance
             key={terminal.id}
