@@ -32,20 +32,6 @@
   },
   "queue": [
     {
-      "id": "UI-03",
-      "name": "Project Status Dots in Sidebar",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Show VPS connection status on each project",
-      "states": {
-        "green_dot": "VPS connected",
-        "gray_dot": "VPS not connected",
-        "red_dot": "Error or needs attention"
-      },
-      "placement": "Left of project name, before folder icon"
-    },
-    {
       "id": "UI-04",
       "name": "Project Name Truncation + Hover Tooltip",
       "size": "XS",
@@ -131,6 +117,7 @@
     }
   ],
   "completed": [
+    {"id": "UI-03", "name": "Project Status Dots in Sidebar", "completed": "2026-01-25"},
     {"id": "UI-02", "name": "Remove Servers and Codespaces Tabs", "completed": "2026-01-25"},
     {"id": "UI-01", "name": "Simplify Top Bar", "completed": "2026-01-25"},
     {"id": "FEAT-05", "name": "Left Sidebar: Expandable Project File Tree", "completed": "2026-01-25"},

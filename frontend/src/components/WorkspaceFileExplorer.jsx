@@ -39,9 +39,16 @@ export default function WorkspaceFileExplorer({
   // Expanded subdirectories within project file trees
   const [expandedDirs, setExpandedDirs] = useState({})
 
+  // UI-03: VPS connection status per server
+  const [serverStatuses, setServerStatuses] = useState({})
+
   // Fetch projects from API
   useEffect(() => {
     loadProjects()
+    loadServerStatuses()
+    // Poll server statuses every 10 seconds
+    const interval = setInterval(loadServerStatuses, 10000)
+    return () => clearInterval(interval)
   }, [])
 
   const loadProjects = async () => {
@@ -74,6 +81,63 @@ export default function WorkspaceFileExplorer({
     } finally {
       setLoading(false)
     }
+  }
+
+  // UI-03: Load VPS server connection statuses
+  const loadServerStatuses = async () => {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+
+    try {
+      const res = await fetch('/api/ssh/servers', {
+        signal: controller.signal
+      })
+      clearTimeout(timeout)
+
+      if (res.ok) {
+        const servers = await res.json()
+        const statuses = {}
+        servers.forEach(server => {
+          statuses[server.id] = {
+            connected: server.connected || false,
+            error: server.error || null
+          }
+        })
+        setServerStatuses(statuses)
+      }
+    } catch (err) {
+      clearTimeout(timeout)
+      if (err.name !== 'AbortError') {
+        console.error('Failed to load server statuses:', err)
+      }
+    }
+  }
+
+  // UI-03: Get status dot for a project based on VPS connection
+  const getStatusDot = (project) => {
+    if (!project.vps_server_id) {
+      // No VPS assigned - gray dot
+      return { color: '#6b7280', title: 'No VPS connected' }
+    }
+
+    const status = serverStatuses[project.vps_server_id]
+    if (!status) {
+      // Server not found in backend - gray dot
+      return { color: '#6b7280', title: 'VPS not found' }
+    }
+
+    if (status.error) {
+      // Error state - red dot
+      return { color: '#ef4444', title: `VPS Error: ${status.error}` }
+    }
+
+    if (status.connected) {
+      // Connected - green dot
+      return { color: '#22c55e', title: 'VPS connected' }
+    }
+
+    // Not connected - gray dot
+    return { color: '#6b7280', title: 'VPS not connected' }
   }
 
   // Fetch VPS files for a project
@@ -423,6 +487,24 @@ export default function WorkspaceFileExplorer({
                             <span style={{ width: '12px' }}></span>
                           )}
 
+                          {/* UI-03: Status dot - before folder icon */}
+                          {(() => {
+                            const statusDot = getStatusDot(project)
+                            return (
+                              <span
+                                style={{
+                                  width: '8px',
+                                  height: '8px',
+                                  borderRadius: '50%',
+                                  backgroundColor: statusDot.color,
+                                  flexShrink: 0,
+                                  boxShadow: statusDot.color === '#22c55e' ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none'
+                                }}
+                                title={statusDot.title}
+                              />
+                            )
+                          })()}
+
                           {/* Project icon and name */}
                           <div
                             onClick={() => handleProjectClick(project)}
@@ -442,13 +524,6 @@ export default function WorkspaceFileExplorer({
                               {project.name}
                             </span>
                           </div>
-
-                          {/* No VPS indicator */}
-                          {!hasVps && (
-                            <span style={{ fontSize: '10px', opacity: 0.4, marginLeft: 'auto' }} title="No VPS connected">
-                              ○
-                            </span>
-                          )}
                         </div>
 
                         {/* Project file tree (when expanded) */}

@@ -4,6 +4,30 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 60 - 2026-01-25 EST
+**Task**: UI-03 (S) - Project Status Dots in Sidebar
+
+**What**: Added VPS connection status dots to projects in sidebar showing real-time connection state
+
+**Implementation**:
+1. Added `loadServerStatuses()` function that fetches from `/api/ssh/servers`
+2. Added `getStatusDot()` helper that returns color + tooltip based on status
+3. Added polling every 10 seconds to keep status dots updated
+4. Implemented in both `WorkspaceFileExplorer.jsx` (workspace view) and `DashboardSidebar.jsx` (dashboard view)
+
+**Status Dot Colors**:
+- Green (#22c55e) + glow: VPS connected
+- Gray (#6b7280): No VPS assigned OR not connected
+- Red (#ef4444): Error state
+
+**Placement**: Left of project name, before folder icon (as per spec)
+
+**Files Modified**:
+- frontend/src/components/WorkspaceFileExplorer.jsx
+- frontend/src/components/DashboardSidebar.jsx
+
+---
+
 ### Session 59 - 2026-01-25 EST
 **Task**: UI-01 (S) + UI-02 (S) - Simplify Workspace UI
 

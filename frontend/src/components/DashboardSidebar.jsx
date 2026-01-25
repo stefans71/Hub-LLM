@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import {
   LayoutDashboard,
@@ -14,8 +14,30 @@ import {
   User
 } from 'lucide-react'
 
+// UI-03: Get status dot color and title for a project
+function getProjectStatusDot(project, serverStatuses) {
+  if (!project.vps_server_id) {
+    return { color: '#6b7280', title: 'No VPS connected' }
+  }
+
+  const status = serverStatuses[project.vps_server_id]
+  if (!status) {
+    return { color: '#6b7280', title: 'VPS not found' }
+  }
+
+  if (status.error) {
+    return { color: '#ef4444', title: `VPS Error: ${status.error}` }
+  }
+
+  if (status.connected) {
+    return { color: '#22c55e', title: 'VPS connected' }
+  }
+
+  return { color: '#6b7280', title: 'VPS not connected' }
+}
+
 // Workspace Item Component
-function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProject, activeProjectId }) {
+function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProject, activeProjectId, serverStatuses }) {
   const hasProjects = projects && projects.length > 0
 
   return (
@@ -34,20 +56,35 @@ function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProj
       </div>
       {isExpanded && hasProjects && (
         <div className="ml-2 border-l border-[#2d3748] pl-2">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className={`project-item flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm transition ${
-                activeProjectId === project.id
-                  ? 'bg-[#3b82f6]/20 text-[#3b82f6]'
-                  : 'text-gray-400 hover:bg-[#242b35] hover:text-gray-200'
-              }`}
-              onClick={() => onSelectProject(project)}
-            >
-              <FileText size={14} className="flex-shrink-0 opacity-60" />
-              <span className="truncate">{project.name}</span>
-            </div>
-          ))}
+          {projects.map((project) => {
+            const statusDot = getProjectStatusDot(project, serverStatuses)
+            return (
+              <div
+                key={project.id}
+                className={`project-item flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm transition ${
+                  activeProjectId === project.id
+                    ? 'bg-[#3b82f6]/20 text-[#3b82f6]'
+                    : 'text-gray-400 hover:bg-[#242b35] hover:text-gray-200'
+                }`}
+                onClick={() => onSelectProject(project)}
+              >
+                {/* UI-03: Status dot - before project icon */}
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: statusDot.color,
+                    flexShrink: 0,
+                    boxShadow: statusDot.color === '#22c55e' ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none'
+                  }}
+                  title={statusDot.title}
+                />
+                <FileText size={14} className="flex-shrink-0 opacity-60" />
+                <span className="truncate">{project.name}</span>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
@@ -67,6 +104,45 @@ export default function DashboardSidebar({
   const [collapsed, setCollapsed] = useState(false)
   const [expandedWorkspaces, setExpandedWorkspaces] = useState({ Default: true })
   const [showUserMenu, setShowUserMenu] = useState(false)
+  // UI-03: VPS connection status per server
+  const [serverStatuses, setServerStatuses] = useState({})
+
+  // UI-03: Load VPS server connection statuses
+  useEffect(() => {
+    const loadServerStatuses = async () => {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
+
+      try {
+        const res = await fetch('/api/ssh/servers', {
+          signal: controller.signal
+        })
+        clearTimeout(timeout)
+
+        if (res.ok) {
+          const servers = await res.json()
+          const statuses = {}
+          servers.forEach(server => {
+            statuses[server.id] = {
+              connected: server.connected || false,
+              error: server.error || null
+            }
+          })
+          setServerStatuses(statuses)
+        }
+      } catch (err) {
+        clearTimeout(timeout)
+        if (err.name !== 'AbortError') {
+          console.error('Failed to load server statuses:', err)
+        }
+      }
+    }
+
+    loadServerStatuses()
+    // Poll server statuses every 10 seconds
+    const interval = setInterval(loadServerStatuses, 10000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleLogout = async () => {
     await logout()
@@ -191,6 +267,7 @@ export default function DashboardSidebar({
                   onNavigate?.('workspace', project)
                 }}
                 activeProjectId={activeProject?.id}
+                serverStatuses={serverStatuses}
               />
             ))}
 
