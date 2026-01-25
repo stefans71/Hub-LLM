@@ -30,19 +30,9 @@
       "moved_here": ["VPS Connections (from Servers tab)", "Codespaces config"]
     }
   },
-  "queue": [
-    {
-      "id": "BUG-11",
-      "name": "LLM-Dev Tabs Don't Switch Content",
-      "size": "S",
-      "priority": 11,
-      "status": "pending",
-      "description": "Clicking Terminal/Docker/Logs tabs on left doesn't switch panel on right",
-      "expected": "Click 'Terminal' tab → Terminal panel shows",
-      "current": "Click does nothing"
-    }
-  ],
+  "queue": [],
   "completed": [
+    {"id": "BUG-11", "name": "LLM-Dev Tabs Don't Switch Content", "completed": "2026-01-25", "note": "Verified working - no fix needed"},
     {"id": "BUG-10", "name": "Terminal Auto-Scroll to Bottom", "completed": "2026-01-25"},
     {"id": "FEAT-04", "name": "Terminal Opens in Project Directory", "completed": "2026-01-25"},
     {"id": "FEAT-03", "name": "Remove Explorer from LLM-Dev Panel", "completed": "2026-01-25"},

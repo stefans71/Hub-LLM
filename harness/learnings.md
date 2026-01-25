@@ -7,6 +7,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 ### Session 60 - 2026-01-25 EST
 **Task**: UI-03, UI-04, UI-05, UI-06, FEAT-06 - Major UI Session
 
+**BUG-11: LLM-Dev Tabs Don't Switch Content (S)**
+- Verified all tabs working correctly: Terminal, Editor, Docker, Logs, Project Context
+- Bug may have been fixed by earlier changes in session or was already working
+- No code changes needed - marked as resolved
+
 **BUG-10: Terminal Content Cut Off at Bottom (XS)**
 - Issue: Terminal content was cut off, couldn't scroll to see all text
 - Root cause: Flex containers missing `minHeight: 0` causing height calc issues
