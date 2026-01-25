@@ -5,16 +5,7 @@
     "last_updated": "2026-01-24"
   },
   "queue": [
-        {
-      "id": "CLEANUP-01",
-      "name": "Remove Duplicate Terminal from Servers Tab",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Remove terminal/folder icons from Server card. Keep LLM-Dev panel terminal only.",
-      "test": "Server card has no terminal icon. LLM-Dev terminal still works."
-    },
-    {
+            {
       "id": "CLEANUP-02",
       "name": "Consolidate servers_db to One Location",
       "size": "M",
@@ -82,6 +73,7 @@
     }
   ],
   "completed": [
+    {"id": "CLEANUP-01", "name": "Remove Duplicate Terminal from Servers Tab", "completed": "2026-01-25"},
     {"id": "AUDIT-01", "name": "Map Workspace Terminal/Server Components", "completed": "2026-01-25"},
     {"id": "BUG-08", "name": "Site Hanging on Login", "completed": "2026-01-24"},
     {"id": "BUG-07", "name": "VPS Servers List Not Persisting", "completed": "2026-01-24"},

@@ -191,16 +191,6 @@ export default function Workspace({ project, model, apiKeys }) {
     console.log('Selected project:', selectedProject)
   }
 
-  const openTerminal = (server) => {
-    // Check if terminal already open for this server
-    if (!terminals.find(t => t.id === server.id)) {
-      setTerminals([...terminals, server])
-    }
-    setActiveServer(server)
-    setRightPanelContent('terminal')
-    setShowRightPanel(true)
-  }
-
   const closeTerminal = (serverId) => {
     setTerminals(terminals.filter(t => t.id !== serverId))
     if (activeServer?.id === serverId) {
@@ -209,12 +199,6 @@ export default function Workspace({ project, model, apiKeys }) {
     if (terminals.length <= 1) {
       setShowRightPanel(false)
     }
-  }
-
-  const openFiles = (server) => {
-    setActiveServer(server)
-    setRightPanelContent('files')
-    setShowRightPanel(true)
   }
 
   const openEditor = async (server, filePath) => {
@@ -353,8 +337,6 @@ export default function Workspace({ project, model, apiKeys }) {
               <ServerManager
                 project={project}
                 projectId={project?.id}
-                onOpenTerminal={openTerminal}
-                onOpenFiles={openFiles}
                 onConnectionChange={(server, connected) => {
                   setIsConnected(connected)
                   if (connected && server) {

@@ -5,8 +5,8 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 52 - 2026-01-25
-**Task**: AUDIT-01 - Map Workspace Terminal/Server Components
-**What**: Created component map documenting terminal/server wiring before cleanup
+**Task**: AUDIT-01 + CLEANUP-01
+**What**: Mapped component wiring, then removed duplicate terminal/files buttons from ServerManager
 
 **Key Findings**:
 1. **Two Terminal Paths (Duplication)**:
@@ -28,9 +28,17 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 **Deliverable**: harness/debug/workspace-component-map.md
 
-**CLEANUP-01 Prep**:
-- Remove ServerManager terminal/files buttons (lines 240-252)
-- Keep LLMDevPanel terminal as the canonical terminal UI
+**CLEANUP-01 Changes**:
+- Removed terminal/files buttons from ServerManager (lines 240-252)
+- Removed unused TerminalIcon, FolderOpen imports
+- Removed onOpenTerminal, onOpenFiles props from ServerManager
+- Removed orphaned openTerminal, openFiles functions from Workspace.jsx
+- Kept closeTerminal (still used by right panel)
+- Right panel still accessible via toggle when connected (separate removal candidate)
+
+**Files Modified**:
+- frontend/src/components/ServerManager.jsx
+- frontend/src/components/Workspace.jsx
 
 ---
 

@@ -2,9 +2,6 @@ import { useState, useEffect } from 'react'
 import {
   Server,
   Plus,
-  Trash2,
-  Terminal as TerminalIcon,
-  FolderOpen,
   Wifi,
   WifiOff,
   ExternalLink,
@@ -22,8 +19,6 @@ import { useNavigate } from 'react-router-dom'
 export default function ServerManager({
   project,
   projectId,
-  onOpenTerminal,
-  onOpenFiles,
   onConnectionChange,
   onServerLinked
 }) {
@@ -236,29 +231,13 @@ export default function ServerManager({
 
               <div className="flex items-center gap-2">
                 {linkedServer.connected ? (
-                  <>
-                    <button
-                      onClick={() => onOpenTerminal?.(linkedServer)}
-                      className="p-2 hover:bg-gray-700 rounded-lg transition"
-                      title="Open Terminal"
-                    >
-                      <TerminalIcon size={18} />
-                    </button>
-                    <button
-                      onClick={() => onOpenFiles?.(linkedServer)}
-                      className="p-2 hover:bg-gray-700 rounded-lg transition"
-                      title="Browse Files"
-                    >
-                      <FolderOpen size={18} />
-                    </button>
-                    <button
-                      onClick={disconnectServer}
-                      className="p-2 hover:bg-gray-700 rounded-lg transition text-yellow-500"
-                      title="Disconnect"
-                    >
-                      <WifiOff size={18} />
-                    </button>
-                  </>
+                  <button
+                    onClick={disconnectServer}
+                    className="p-2 hover:bg-gray-700 rounded-lg transition text-yellow-500"
+                    title="Disconnect"
+                  >
+                    <WifiOff size={18} />
+                  </button>
                 ) : (
                   <button
                     onClick={connectServer}
