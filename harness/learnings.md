@@ -5,25 +5,30 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 59 - 2026-01-25 EST
-**Task**: UI-01 (S) - Simplify Top Bar
-**What**: Removed VPS badge and connection status from top bar for cleaner UI
+**Task**: UI-01 (S) + UI-02 (S) - Simplify Workspace UI
 
-**Changes**:
-1. Removed W-06 (Location Badge) - showed "VPS: Digital Ocean (IP)"
-2. Removed W-07 (Divider)
-3. Removed W-08 (Connection Status) - showed "Connected/Disconnected"
-4. Removed unused props: `isConnected`, `isConnecting`, `onConnectionToggle`
-5. Removed unused state: `vpsInfo`, `fetchVpsInfo()`
-6. Removed unused imports: `Server`, `ChevronUp`, `ChevronDown`
+**UI-01: Simplify Top Bar**
+- Removed W-06 (Location Badge) - showed "VPS: Digital Ocean (IP)"
+- Removed W-07 (Divider)
+- Removed W-08 (Connection Status) - showed "Connected/Disconnected"
+- Removed unused props and state for VPS info
+
+**UI-02: Remove Servers and Codespaces Tabs**
+- Removed entire tab bar (Chat, Servers, Codespaces)
+- Main area now shows Chat directly without tabs
+- Removed imports: `ServerManager`, `CodespacesManager`, `Server`, `Cloud`, `MessageSquare`
+- Removed state: `activeTab`, `previewUrl`
 
 **Result**:
-- Top bar now shows: Project Name (left) | Model Selector + Export (right)
-- VPS connection status will move to sidebar project dot (UI-03)
-- VPS details accessible via Settings page
+- Top bar: Project Name (left) | Model Selector + Export (right)
+- Main area: Chat only (no tab switching needed)
+- Server config → Settings page
+- Codespaces config → Settings page
+- VPS connection status will show via sidebar project dot (UI-03)
 
 **Files Modified**:
-- frontend/src/components/WorkspaceTopBar.jsx (simplified, removed VPS/connection UI)
-- frontend/src/components/Workspace.jsx (removed unused props from WorkspaceTopBar)
+- frontend/src/components/WorkspaceTopBar.jsx (UI-01)
+- frontend/src/components/Workspace.jsx (UI-01, UI-02)
 
 ---
 

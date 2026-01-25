@@ -32,21 +32,10 @@
   },
   "queue": [
     {
-      "id": "UI-02",
-      "name": "Remove Servers and Codespaces Tabs",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Main area should be Chat only",
-      "remove": ["Servers tab", "Codespaces tab"],
-      "keep": ["Chat (main workspace area)"],
-      "why": "Servers config → Settings. Codespaces → Settings. Less clutter."
-    },
-    {
       "id": "UI-03",
       "name": "Project Status Dots in Sidebar",
       "size": "S",
-      "priority": 3,
+      "priority": 1,
       "status": "pending",
       "description": "Show VPS connection status on each project",
       "states": {
@@ -142,6 +131,7 @@
     }
   ],
   "completed": [
+    {"id": "UI-02", "name": "Remove Servers and Codespaces Tabs", "completed": "2026-01-25"},
     {"id": "UI-01", "name": "Simplify Top Bar", "completed": "2026-01-25"},
     {"id": "FEAT-05", "name": "Left Sidebar: Expandable Project File Tree", "completed": "2026-01-25"},
     {"id": "FEAT-02", "name": "Project Creates Folder on VPS", "completed": "2026-01-25"},

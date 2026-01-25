@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import Chat from './Chat'
 import Terminal from './Terminal'
 import FileBrowser from './FileBrowser'
-import ServerManager from './ServerManager'
-import CodespacesManager from './CodespacesManager'
 import CodeEditor from './CodeEditor'
 import PreviewPanel from './PreviewPanel'
 import WorkspaceTopBar from './WorkspaceTopBar'
@@ -12,37 +10,33 @@ import WorkspaceIconSidebar from './WorkspaceIconSidebar'
 import WorkspaceFileExplorer from './WorkspaceFileExplorer'
 import LLMDevPanel from './LLMDevPanel'
 import {
-  MessageSquare,
-  Server,
   Terminal as TerminalIcon,
   FolderOpen,
   PanelLeftClose,
   PanelLeft,
-  Cloud,
   Code
 } from 'lucide-react'
 
 /**
  * Workspace Component
  *
+ * UI-02: Simplified - Servers and Codespaces tabs removed
+ * - Server config now in Settings page
+ * - Codespaces config now in Settings page
+ *
  * Main workspace that integrates:
- * - Workspace Top Bar (W-03): Project info, model selector, connection status
- * - AI Chat with voice
- * - SSH Terminal
- * - File Browser
- * - Server Management
- * - GitHub Codespaces
- * - Code Editor
+ * - Workspace Top Bar (W-03): Project info, model selector
+ * - AI Chat (main area)
+ * - LLM-Dev Panel (Terminal, Editor, Docker, Logs)
+ * - File Explorer (left sidebar)
  */
 export default function Workspace({ project, model, apiKeys }) {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('chat') // 'chat', 'servers', 'codespaces'
   const [activeServer, setActiveServer] = useState(null)
   const [terminals, setTerminals] = useState([]) // Multiple terminals
   const [showRightPanel, setShowRightPanel] = useState(false)
   const [rightPanelContent, setRightPanelContent] = useState(null) // 'files', 'terminal', 'editor'
   const [editingFile, setEditingFile] = useState(null) // { path, content }
-  const [previewUrl, setPreviewUrl] = useState('') // Codespaces preview URL
   const [previewCollapsed, setPreviewCollapsed] = useState(true)
 
   // W-31: Icon Sidebar state
@@ -334,110 +328,27 @@ export default function Workspace({ project, model, apiKeys }) {
           onSelectProject={handleSelectProject}
         />
 
-        {/* Left side - Main content */}
+        {/* Left side - Main content (UI-02: Chat only, no tabs) */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Tab Bar */}
-          <div className="flex items-center gap-1 px-2 py-1 bg-gray-800/50 border-b border-gray-700">
-          <button
-            onClick={() => setActiveTab('chat')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
-              activeTab === 'chat' 
-                ? 'bg-gray-700 text-white' 
-                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-            }`}
-          >
-            <MessageSquare size={16} />
-            Chat
-          </button>
-          <button
-            onClick={() => setActiveTab('servers')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
-              activeTab === 'servers' 
-                ? 'bg-gray-700 text-white' 
-                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-            }`}
-          >
-            <Server size={16} />
-            Servers
-          </button>
-          <button
-            onClick={() => setActiveTab('codespaces')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
-              activeTab === 'codespaces' 
-                ? 'bg-gray-700 text-white' 
-                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-            }`}
-          >
-            <Cloud size={16} />
-            Codespaces
-          </button>
-          
-          <div className="flex-1" />
-          
-          {/* Right panel toggle */}
-          {(activeServer || editingFile) && (
-            <button
-              onClick={() => setShowRightPanel(!showRightPanel)}
-              className="p-1.5 hover:bg-gray-700 rounded transition"
-              title={showRightPanel ? 'Hide panel' : 'Show panel'}
-            >
-              {showRightPanel ? <PanelLeftClose size={18} /> : <PanelLeft size={18} />}
-            </button>
-          )}
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Content area */}
-          <div className={`overflow-hidden ${activeTab === 'chat' && !previewCollapsed ? 'flex-1' : 'flex-1'}`}>
-            {activeTab === 'chat' && (
+          {/* Main Content - Chat */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Chat area */}
+            <div className="flex-1 overflow-hidden">
               <Chat
                 project={project}
                 model={model}
                 apiKeys={apiKeys}
               />
-            )}
+            </div>
 
-            {activeTab === 'servers' && (
-              <ServerManager
-                project={project}
-                projectId={project?.id}
-                isConnected={isConnected}
-                onConnectionChange={(server, connected) => {
-                  setIsConnected(connected)
-                  if (connected && server) {
-                    setActiveServer(server)
-                  } else if (!connected) {
-                    setActiveServer(null)
-                  }
-                }}
-                onServerLinked={(serverId) => {
-                  setLinkedServerId(serverId)
-                }}
-              />
-            )}
-
-            {activeTab === 'codespaces' && (
-              <CodespacesManager
-                githubToken={apiKeys.github}
-                onPreview={(url) => {
-                  setPreviewUrl(url)
-                  setPreviewCollapsed(false)
-                }}
-              />
-            )}
-          </div>
-
-          {/* Preview Panel (visible in chat mode) */}
-          {activeTab === 'chat' && (
+            {/* Preview Panel */}
             <PreviewPanel
-              previewUrl={previewUrl}
+              previewUrl=""
               defaultCollapsed={previewCollapsed}
               onCollapsedChange={setPreviewCollapsed}
             />
-          )}
+          </div>
         </div>
-      </div>
 
       {/* Right Panel - Terminal, Files, or Editor */}
       {showRightPanel && (activeServer || editingFile) && (
