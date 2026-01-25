@@ -15,16 +15,6 @@
     "vps_folder": "/root/llm-hub-projects/{project-slug}/"
   },
   "queue": [
-        {
-      "id": "FEAT-02",
-      "name": "Project Creates Folder on VPS",
-      "size": "M",
-      "priority": 4,
-      "status": "pending",
-      "description": "On project creation with VPS: create /root/llm-hub-projects/{project-slug}/",
-      "why": "Keeps LLM-Hub projects separate from existing server files",
-      "test": "Create project 'My App' with VPS → /root/llm-hub-projects/my-app/ exists"
-    },
     {
       "id": "FEAT-05",
       "name": "Left Sidebar: Project File Tree",
@@ -82,6 +72,7 @@
     }
   ],
   "completed": [
+    {"id": "FEAT-02", "name": "Project Creates Folder on VPS", "completed": "2026-01-25"},
     {"id": "REFACTOR-01", "name": "Move Data from localStorage to Database", "completed": "2026-01-25"},
     {"id": "CLEANUP-02", "name": "Consolidate servers_db to One Location", "completed": "2026-01-25"},
     {"id": "BUG-09", "name": "VPS Connection Not Persisting from Project Creation", "completed": "2026-01-25"},

@@ -4,6 +4,37 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 57 - 2026-01-25 EST
+**Task**: FEAT-02 (M) - Project Creates Folder on VPS
+**What**: When creating a project with VPS connection, automatically creates `/root/llm-hub-projects/{project-slug}/` on the VPS
+
+**Implementation**:
+1. Added `create_vps_project_folder()` helper function in `routers/projects.py`
+2. Called after project creation when `connection_type == "vps"` and `vps_server_id` is set
+3. Uses existing SSH service (`get_connection`, `create_directory`)
+
+**Key Details**:
+- Base path: `/root/llm-hub-projects/` (created if doesn't exist)
+- Project folder: `/root/llm-hub-projects/{project-slug}/`
+- Uses timeouts (10s for connection, 5s for mkdir) to avoid hanging
+- Non-blocking: folder creation failure doesn't fail project creation (logged instead)
+- Loads server into cache before connecting (required by `get_connection()`)
+
+**Pattern - Async Timeout for SSH Operations**:
+```python
+import asyncio
+try:
+    conn = await asyncio.wait_for(get_connection(server_id), timeout=10.0)
+    await asyncio.wait_for(conn.create_directory(path), timeout=5.0)
+except asyncio.TimeoutError:
+    logger.warning("SSH operation timed out")
+```
+
+**Files Modified**:
+- backend/routers/projects.py (added VPS folder creation on project create)
+
+---
+
 ### Session 56 - 2026-01-25 EST
 **Task**: Post-REFACTOR-01 Bugfixes
 **What**: Fixed signup 500 error and workspace sidebar not showing database projects

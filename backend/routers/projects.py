@@ -10,8 +10,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 import json
 import re
+import logging
+import asyncio
 
-from models import Project as ProjectModel, ChatMessage as ChatMessageModel, async_session
+from models import Project as ProjectModel, ChatMessage as ChatMessageModel, VPSServer as VPSServerModel, async_session
+from services.ssh import get_connection, load_server_to_cache
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -23,6 +28,55 @@ def slugify(name: str) -> str:
     slug = re.sub(r'[\s_-]+', '-', slug)
     slug = slug.strip('-')
     return slug or 'project'
+
+
+# VPS project folder base path
+VPS_PROJECT_BASE = "/root/llm-hub-projects"
+
+
+async def create_vps_project_folder(vps_server_id: str, project_slug: str) -> bool:
+    """
+    Create project folder on VPS: /root/llm-hub-projects/{project_slug}/
+
+    Returns True if successful, False otherwise.
+    Does not raise exceptions - logs errors instead.
+    """
+    try:
+        # Ensure server is loaded in cache
+        async with async_session() as session:
+            result = await session.execute(
+                select(VPSServerModel).where(VPSServerModel.id == vps_server_id)
+            )
+            server = result.scalar_one_or_none()
+            if not server:
+                logger.warning(f"VPS server {vps_server_id} not found for folder creation")
+                return False
+            await load_server_to_cache(server)
+
+        # Get SSH connection with timeout
+        conn = await asyncio.wait_for(get_connection(vps_server_id), timeout=10.0)
+
+        project_path = f"{VPS_PROJECT_BASE}/{project_slug}"
+
+        # Create base directory if it doesn't exist
+        try:
+            await asyncio.wait_for(conn.create_directory(VPS_PROJECT_BASE), timeout=5.0)
+            logger.info(f"Created base directory: {VPS_PROJECT_BASE}")
+        except Exception:
+            # Directory likely already exists
+            pass
+
+        # Create project directory
+        await asyncio.wait_for(conn.create_directory(project_path), timeout=5.0)
+        logger.info(f"Created VPS project folder: {project_path}")
+        return True
+
+    except asyncio.TimeoutError:
+        logger.warning(f"Timeout creating VPS folder for project {project_slug}")
+        return False
+    except Exception as e:
+        logger.warning(f"Failed to create VPS folder for {project_slug}: {e}")
+        return False
 
 
 class ProjectContext(BaseModel):
@@ -167,7 +221,13 @@ async def create_project(project: ProjectCreate):
         session.add(new_project)
         await session.commit()
         await session.refresh(new_project)
-        return db_to_response(new_project)
+        response = db_to_response(new_project)
+
+    # Create folder on VPS if VPS connection type
+    if project.connection_type == "vps" and project.vps_server_id:
+        await create_vps_project_folder(project.vps_server_id, slug)
+
+    return response
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
