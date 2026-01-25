@@ -32,16 +32,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-04",
-      "name": "Terminal Opens in Project Directory",
-      "size": "XS",
-      "priority": 9,
-      "status": "pending",
-      "description": "Terminal should cd to project folder on connect",
-      "command": "cd /root/llm-hub-projects/{project-slug}",
-      "test": "Connect terminal → run pwd → shows project folder"
-    },
-    {
       "id": "BUG-10",
       "name": "Terminal Auto-Scroll to Bottom",
       "size": "XS",
@@ -62,6 +52,7 @@
     }
   ],
   "completed": [
+    {"id": "FEAT-04", "name": "Terminal Opens in Project Directory", "completed": "2026-01-25"},
     {"id": "FEAT-03", "name": "Remove Explorer from LLM-Dev Panel", "completed": "2026-01-25"},
     {"id": "FEAT-06", "name": "LLM-Dev Editor Tab", "completed": "2026-01-25"},
     {"id": "UI-06", "name": "Delete Confirmation with Archive Option", "completed": "2026-01-25"},

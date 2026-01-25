@@ -7,6 +7,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 ### Session 60 - 2026-01-25 EST
 **Task**: UI-03, UI-04, UI-05, UI-06, FEAT-06 - Major UI Session
 
+**FEAT-04: Terminal Opens in Project Directory (XS)**
+- Added `projectSlug` prop to WorkspaceTerminal
+- After 'connected' message, auto-sends `cd /root/llm-hub-projects/{slug}\n`
+- Terminal now starts in project folder
+
 **FEAT-03: Remove Explorer from LLM-Dev Panel (S)**
 - Removed Explorer sidebar and old embedded Editor from Terminal tab content
 - Terminal tab now shows just the terminal at full width

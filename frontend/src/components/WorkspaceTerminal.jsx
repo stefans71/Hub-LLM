@@ -16,7 +16,7 @@ import { RefreshCw } from 'lucide-react'
  * 6. Server sends: { type: 'error', message }
  * 7. Server sends: { type: 'disconnected' }
  */
-export default function WorkspaceTerminal({ projectId, serverId, className = '' }) {
+export default function WorkspaceTerminal({ projectId, serverId, projectSlug, className = '' }) {
   const terminalRef = useRef(null)
   const xtermRef = useRef(null)
   const wsRef = useRef(null)
@@ -70,6 +70,11 @@ export default function WorkspaceTerminal({ projectId, serverId, className = '' 
             if (xtermRef.current) {
               xtermRef.current.writeln(`\x1b[32mConnected to ${message.server} (${message.host})\x1b[0m`)
               xtermRef.current.writeln('')
+            }
+            // FEAT-04: Auto-cd to project directory if slug provided
+            if (projectSlug && ws.readyState === WebSocket.OPEN) {
+              const cdCommand = `cd /root/llm-hub-projects/${projectSlug}\n`
+              ws.send(JSON.stringify({ type: 'input', data: cdCommand }))
             }
             break
 

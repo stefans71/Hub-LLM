@@ -534,6 +534,7 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
               <WorkspaceTerminal
                 projectId={project?.id}
                 serverId={serverId}
+                projectSlug={project?.slug}
                 className="dev-terminal-content"
                 style={{ flex: 1 }}
               />
