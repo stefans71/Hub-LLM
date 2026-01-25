@@ -334,14 +334,14 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onSt
         )}
       </div>
 
-      {/* Terminal Container */}
+      {/* Terminal Container - BUG-12: maxWidth caps at ~80 columns for readability */}
       <div
         ref={terminalRef}
         style={{
           flex: 1,
           minHeight: 0,
           width: '100%',
-          maxWidth: '100%',
+          maxWidth: '700px',  // ~80 columns at 13px font (~8px/char + padding)
           padding: '8px',
           overflow: 'hidden',
           boxSizing: 'border-box'
