@@ -7,10 +7,14 @@ Track discoveries, patterns, and friction points for harness improvement.
 ### Session 60 - 2026-01-25 EST
 **Task**: UI-03, UI-04, UI-05, UI-06, FEAT-06 - Major UI Session
 
-**BUG-10: Terminal Auto-Scroll to Bottom (XS)**
-- Added `scrollToBottom()` call after each output write
-- Also scroll after connected message
-- xterm.js method: `terminal.scrollToBottom()`
+**BUG-10: Terminal Content Cut Off at Bottom (XS)**
+- Issue: Terminal content was cut off, couldn't scroll to see all text
+- Root cause: Flex containers missing `minHeight: 0` causing height calc issues
+- Fix: Added `minHeight: 0` to:
+  - WorkspaceTerminal outer div
+  - WorkspaceTerminal terminal container div
+  - LLMDevPanel terminal tab container
+- Also added `scrollToBottom()` for auto-scroll on new output
 
 **FEAT-04: Terminal Opens in Project Directory (XS)**
 - Added `projectSlug` prop to WorkspaceTerminal
