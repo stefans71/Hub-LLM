@@ -1,66 +1,84 @@
 {
-  "meta": {
-    "version": "4.5",
-    "phase": "Vision UI - Simplified",
-    "last_updated": "2026-01-25"
-  },
+  "version": "4.6",
+  "updated": "2026-01-25",
   "vision": {
-    "summary": "Clean, project-focused workspace. Chat + File visible simultaneously.",
-    "left_sidebar": {
-      "projects": "Expandable file trees from /root/llm-hub-projects/{slug}/",
-      "status_dot": "● green=connected, ○ gray=disconnected, 🔴 red=error",
-      "project_name": "Truncate with ellipsis, full name on hover tooltip",
-      "menu": "3-dot menu on right: Rename, Settings, Disconnect VPS, Delete"
-    },
-    "top_bar": {
-      "left": "Project name only",
-      "right": "Model selector only",
-      "removed": ["VPS badge", "Connected badge", "VPS IP display"]
-    },
-    "main_area": {
-      "content": "Chat only (no tabs needed)",
-      "removed": ["Servers tab", "Codespaces tab", "Editor tab"]
-    },
+    "summary": "Chat-focused workspace with LLM-Dev panel for dev tools",
+    "main_area": "Chat ONLY (no tabs)",
     "llm_dev_panel": {
       "tabs": ["Terminal", "Editor", "Docker", "Logs", "Project Context"],
-      "editor": "Click file in sidebar → opens here (view alongside chat)",
-      "explorer": "REMOVE - file browsing now in left sidebar only"
+      "terminal": "Multi-terminal with responsive layout (FEAT-07)"
+    },
+    "left_sidebar": {
+      "status_dots": "● green=connected, ○ gray=disconnected, 🔴 red=error",
+      "project_menu": "3-dot menu (Rename, Settings, Disconnect, Delete)",
+      "truncation": "Names truncate with hover tooltip"
     },
     "settings_page": {
       "moved_here": ["VPS Connections (from Servers tab)", "Codespaces config"]
     }
   },
-  "queue": [],
+  "queue": [
+    {
+      "id": "BUG-12",
+      "name": "xterm-screen Width Calculation Broken",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "xterm-screen div has width: 350554px causing text to bunch on left side",
+      "current": "In inspector: div.xterm-screen has width: 350554px (absurd). Terminal text confined to ~50 columns and wraps prematurely. fitAddon not working correctly.",
+      "change": [
+        "In MultiTerminal.jsx: ensure fitAddon.fit() is called AFTER container is mounted and visible",
+        "May need ResizeObserver or requestAnimationFrame delay",
+        "Target ~70-80 columns max for readability on wide screens",
+        "Check div.xterm-viewport and div.xterm-screen sizing"
+      ],
+      "test": "Inspect div.xterm-screen - width should be reasonable (not 350k px). Terminal text fills ~70 columns, readable width, no premature wrapping."
+    },
+    {
+      "id": "BUG-13",
+      "name": "TERMINALS Sidebar Not Visible",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Right sidebar with terminal list exists in DOM but not rendering visibly",
+      "current": "In inspector: div with width:140px exists at bottom of terminal structure but not visible on screen. Should show TERMINALS header, terminal tabs (bash ✕), and + New button.",
+      "change": [
+        "In MultiTerminal.jsx: check sidebar div CSS - display, visibility, position, z-index",
+        "Sidebar may be positioned outside viewport or behind terminal",
+        "Check flex layout - sidebar should be flex-shrink: 0 with fixed width",
+        "Verify responsive breakpoint logic (>768px = sidebar visible)"
+      ],
+      "test": "Open Terminal tab on desktop - TERMINALS sidebar visible on right side with terminal list and + button"
+    },
+    {
+      "id": "BUG-14",
+      "name": "Editor Tab Not Loading Selected File",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "description": "Clicking file in left sidebar doesn't load content in Editor tab",
+      "current": "User clicks README.md in sidebar, switches to Editor tab, but Editor still shows 'Select a file from the sidebar to view'. File selection not reaching editor.",
+      "change": [
+        "Check callback chain: WorkspaceFileExplorer → LLMDevPanel → Editor tab",
+        "Verify onFileSelect prop is being passed and called",
+        "Check if Editor tab component receives the selected file path",
+        "May need to auto-switch to Editor tab when file is selected"
+      ],
+      "test": "Click any file in left sidebar - Editor tab shows file content (or auto-switches to Editor and shows content)"
+    }
+  ],
   "completed": [
     {"id": "FEAT-07", "name": "Multiple Terminal Tabs", "completed": "2026-01-25"},
-    {"id": "BUG-11", "name": "LLM-Dev Tabs Don't Switch Content", "completed": "2026-01-25", "note": "Verified working - no fix needed"},
-    {"id": "BUG-10", "name": "Terminal Auto-Scroll to Bottom", "completed": "2026-01-25"},
+    {"id": "BUG-11", "name": "LLM-Dev Tabs Don't Switch Content", "completed": "2026-01-25"},
+    {"id": "BUG-10", "name": "Terminal Content Cutoff", "completed": "2026-01-25"},
     {"id": "FEAT-04", "name": "Terminal Opens in Project Directory", "completed": "2026-01-25"},
     {"id": "FEAT-03", "name": "Remove Explorer from LLM-Dev Panel", "completed": "2026-01-25"},
     {"id": "FEAT-06", "name": "LLM-Dev Editor Tab", "completed": "2026-01-25"},
-    {"id": "UI-06", "name": "Delete Confirmation with Archive Option", "completed": "2026-01-25"},
+    {"id": "UI-06", "name": "Delete Confirmation Modal", "completed": "2026-01-25"},
     {"id": "UI-05", "name": "Project 3-Dot Menu", "completed": "2026-01-25"},
-    {"id": "UI-04", "name": "Project Name Truncation + Hover Tooltip", "completed": "2026-01-25"},
-    {"id": "UI-03", "name": "Project Status Dots in Sidebar", "completed": "2026-01-25"},
-    {"id": "UI-02", "name": "Remove Servers and Codespaces Tabs", "completed": "2026-01-25"},
-    {"id": "UI-01", "name": "Simplify Top Bar", "completed": "2026-01-25"},
-    {"id": "FEAT-05", "name": "Left Sidebar: Expandable Project File Tree", "completed": "2026-01-25"},
-    {"id": "FEAT-02", "name": "Project Creates Folder on VPS", "completed": "2026-01-25"},
-    {"id": "REFACTOR-01", "name": "Move Data from localStorage to Database", "completed": "2026-01-25"},
-    {"id": "CLEANUP-02", "name": "Consolidate servers_db to One Location", "completed": "2026-01-25"},
-    {"id": "CLEANUP-01", "name": "Remove Duplicate Terminal from Servers Tab", "completed": "2026-01-25"},
-    {"id": "BUG-09", "name": "VPS Connection Not Persisting from Project Creation", "completed": "2026-01-25"},
-    {"id": "AUDIT-01", "name": "Map Workspace Terminal/Server Components", "completed": "2026-01-24"},
-    {"id": "BUG-08", "name": "Site Hanging on Login", "completed": "2026-01-24"},
-    {"id": "BUG-07", "name": "VPS Servers List Not Persisting", "completed": "2026-01-24"},
-    {"id": "BUG-06", "name": "Top Bar VPS Status Never Updates", "completed": "2026-01-24"},
-    {"id": "BUG-05-REOPEN", "name": "LLM-Dev Panel Drag Resize", "completed": "2026-01-24"},
-    {"id": "BUG-02-REOPEN", "name": "Create Project Button Hidden", "completed": "2026-01-24"},
-    {"id": "BUG-03-REOPEN", "name": "VPS Connection Wired to Wrong Components", "completed": "2026-01-24"},
-    {"id": "FEAT-01", "name": "Model Selector Smart Filtering", "completed": "2026-01-24"}
-  ],
-  "notes": {
-    "key_change": "Editor tab moves to LLM-Dev (not main area) so user sees Chat + File simultaneously",
-    "task_order": "UI cleanup first → LLM-Dev Editor → Remove Explorer → Terminal fixes"
-  }
+    {"id": "UI-04", "name": "Project Name Truncation", "completed": "2026-01-25"},
+    {"id": "UI-03", "name": "Project Status Dots", "completed": "2026-01-25"},
+    {"id": "UI-02", "name": "Remove Servers/Codespaces Tabs", "completed": "2026-01-25"},
+    {"id": "UI-01", "name": "Simplify Top Bar", "completed": "2026-01-25"}
+  ]
 }
