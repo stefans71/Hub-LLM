@@ -401,6 +401,9 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
 
   // FEAT-09: Divider drag state - track which divider is being dragged
   const [draggingDividerId, setDraggingDividerId] = useState(null)
+  // BUG-16: Track drag start position and initial width for reliable resizing
+  const [dragStartX, setDragStartX] = useState(null)
+  const [dragStartWidth, setDragStartWidth] = useState(null)
   const containerRef = useRef(null)
 
   // Track window width for responsive layout
@@ -413,36 +416,36 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
   }, [])
 
   // FEAT-09: Handle divider drag for resizing terminal panes
+  // BUG-16: Record start position and width for delta-based resizing
   const handleDividerMouseDown = useCallback((terminalId, e) => {
     e.preventDefault()
     setDraggingDividerId(terminalId)
-  }, [])
+    setDragStartX(e.clientX)
+    const terminal = terminals.find(t => t.id === terminalId)
+    setDragStartWidth(terminal?.width || 300)
+  }, [terminals])
 
+  // BUG-16: Use delta-based calculation for reliable resizing in both directions
   const handleDividerMouseMove = useCallback((e) => {
-    if (!draggingDividerId || !containerRef.current) return
+    if (!draggingDividerId || dragStartX === null || dragStartWidth === null) return
 
-    const containerRect = containerRef.current.getBoundingClientRect()
-    const terminalIndex = terminals.findIndex(t => t.id === draggingDividerId)
-    if (terminalIndex === -1) return
-
-    // Calculate cumulative width of terminals before this one
-    let prevWidth = 0
-    for (let i = 0; i < terminalIndex; i++) {
-      prevWidth += terminals[i].width + 4 // +4 for divider
-    }
-
-    // New width = mouse position - previous terminals width - container left
-    const newWidth = e.clientX - containerRect.left - prevWidth
+    // Calculate how far the mouse moved from the start position
+    const delta = e.clientX - dragStartX
+    // Add delta to the starting width (drag right = larger, drag left = smaller)
+    const newWidth = dragStartWidth + delta
     // Clamp between 150px and 600px
     const clampedWidth = Math.max(150, Math.min(600, newWidth))
 
     setTerminals(prev => prev.map(t =>
       t.id === draggingDividerId ? { ...t, width: clampedWidth } : t
     ))
-  }, [draggingDividerId, terminals])
+  }, [draggingDividerId, dragStartX, dragStartWidth])
 
+  // BUG-16: Reset all drag state on mouse up
   const handleDividerMouseUp = useCallback(() => {
     setDraggingDividerId(null)
+    setDragStartX(null)
+    setDragStartWidth(null)
   }, [])
 
   useEffect(() => {

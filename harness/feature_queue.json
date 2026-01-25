@@ -16,27 +16,11 @@
     }
   },
   "queue": [
-    {
-      "id": "BUG-16",
-      "name": "Terminal Pane Can't Resize Smaller",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Dragging divider to make terminal pane smaller doesn't work properly",
-      "current": "Can drag divider to make terminal larger, but dragging to make it smaller hits minimum too early or doesn't respond",
-      "change": [
-        "Check min-width constraint in MultiTerminal.jsx (currently 150px min)",
-        "Review drag calculation logic - may be calculating from wrong reference point",
-        "Test with console.log to see actual width values during drag",
-        "Reference: harness/TERMINAL_WORKSPACE.md 'Split Pane Divider Drag' pattern"
-      ],
-      "test": "Drag divider left - terminal shrinks smoothly down to 150px minimum"
-    },
-    {
+        {
       "id": "FEAT-08",
       "name": "Chat File Drop and Paste",
       "size": "M",
-      "priority": 2,
+      "priority": 1,
       "status": "pending",
       "description": "Drag/drop files or CTRL+V paste images into chat area",
       "current": "No way to add files/images to chat",
@@ -51,6 +35,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-16", "name": "Terminal Pane Can't Resize Smaller", "completed": "2026-01-25"},
     {"id": "BUG-15", "name": "Terminal Connection Drops on Panel Toggle", "completed": "2026-01-25"},
     {"id": "FEAT-09", "name": "Multi-Terminal Split Panes with Color Coding", "completed": "2026-01-25"},
     {"id": "BUG-14", "name": "Editor Tab Not Loading Selected File", "completed": "2026-01-25"},

@@ -5,7 +5,9 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 65 - 2026-01-25 EST
-**Task**: BUG-15 - Terminal Connection Drops on Panel Toggle
+**Task**: BUG-15, BUG-16 - Terminal Bugs
+
+**BUG-15: Terminal Connection Drops on Panel Toggle**
 
 **What**: Fixed terminal connections dropping when LLM-Dev panel is collapsed and reopened
 
@@ -32,6 +34,44 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 **Files Modified**:
 - frontend/src/components/LLMDevPanel.jsx (lines 515-526)
+
+---
+
+**BUG-16: Terminal Pane Can't Resize Smaller**
+
+**What**: Fixed terminal pane divider not allowing resize to make pane smaller
+
+**Root Cause**:
+- The drag calculation used absolute container-relative positioning
+- Calculated width from container left edge to mouse position, subtracting previous terminals' widths
+- This approach was fragile and could calculate incorrect widths during rapid drags
+- Stale closures from `terminals` dependency could also cause issues
+
+**Solution**:
+- Changed to delta-based calculation approach
+- On mousedown: record starting X position and current terminal width
+- On mousemove: calculate delta (mouseX - startX) and add to starting width
+- This is more reliable: drag right = positive delta = larger, drag left = negative delta = smaller
+
+**Key Pattern - Delta-based Drag Resize**:
+```javascript
+// On mousedown - record start position and initial size
+const handleDividerMouseDown = (terminalId, e) => {
+  setDragStartX(e.clientX)
+  setDragStartWidth(terminal.width)
+}
+
+// On mousemove - calculate delta and add to initial size
+const handleDividerMouseMove = (e) => {
+  const delta = e.clientX - dragStartX
+  const newWidth = dragStartWidth + delta
+  const clampedWidth = Math.max(150, Math.min(600, newWidth))
+  // Update width
+}
+```
+
+**Files Modified**:
+- frontend/src/components/MultiTerminal.jsx (lines 403-449)
 
 ---
 

@@ -113,11 +113,12 @@ div.llm-dev-content          # Main panel content area
 - **Fix:** Changed to `display: isExpanded ? 'flex' : 'none'` to keep components mounted but hidden
 - **Status:** RESOLVED (2026-01-25)
 
-### BUG-16: Terminal Pane Can't Resize Smaller
+### BUG-16: Terminal Pane Can't Resize Smaller (RESOLVED)
 - **Symptom:** Dragging divider to make terminal larger works, but dragging to make it smaller doesn't work (hits minimum too early?)
 - **Expected:** Should be able to resize panes in both directions within min/max bounds
-- **Likely cause:** Check min-width constraints and drag calculation in `handleDividerMouseMove`
-- **Status:** Open
+- **Root cause:** Absolute container-relative positioning was fragile; stale closures from terminals dependency
+- **Fix:** Changed to delta-based calculation: record start position/width on mousedown, calculate delta on mousemove
+- **Status:** RESOLVED (2026-01-25)
 
 ### Scrollbar (Minor)
 - Click-drag on scrollbar is finicky - hard to grab
@@ -272,34 +273,37 @@ const TERMINAL_COLORS = [
 | `handleTerminalContextMenu()` | Opens color picker at mouse position |
 | `handleDividerMouseDown/Move/Up` | Split pane resize handlers |
 
-#### FEAT-09 Pattern: Split Pane Divider Drag
+#### FEAT-09 Pattern: Split Pane Divider Drag (BUG-16 Fix)
 
 ```javascript
-// Track which divider is being dragged (not a single sidebar divider)
+// Track drag state: which divider, start position, and initial width
 const [draggingDividerId, setDraggingDividerId] = useState(null)
+const [dragStartX, setDragStartX] = useState(null)
+const [dragStartWidth, setDragStartWidth] = useState(null)
 
+// On mousedown: record start position and current terminal width
+const handleDividerMouseDown = useCallback((terminalId, e) => {
+  e.preventDefault()
+  setDraggingDividerId(terminalId)
+  setDragStartX(e.clientX)
+  const terminal = terminals.find(t => t.id === terminalId)
+  setDragStartWidth(terminal?.width || 300)
+}, [terminals])
+
+// On mousemove: calculate delta and add to starting width
 const handleDividerMouseMove = useCallback((e) => {
-  if (!draggingDividerId || !containerRef.current) return
+  if (!draggingDividerId || dragStartX === null || dragStartWidth === null) return
 
-  const containerRect = containerRef.current.getBoundingClientRect()
-  const terminalIndex = terminals.findIndex(t => t.id === draggingDividerId)
-  if (terminalIndex === -1) return
-
-  // Calculate cumulative width of terminals before this one
-  let prevWidth = 0
-  for (let i = 0; i < terminalIndex; i++) {
-    prevWidth += terminals[i].width + 4 // +4 for divider width
-  }
-
-  // New width = mouse position - previous terminals - container left
-  const newWidth = e.clientX - containerRect.left - prevWidth
+  // Delta = how far mouse moved from start (positive = right, negative = left)
+  const delta = e.clientX - dragStartX
+  // Add delta to starting width
+  const newWidth = dragStartWidth + delta
   const clampedWidth = Math.max(150, Math.min(600, newWidth))
 
-  // Update only the terminal being dragged
   setTerminals(prev => prev.map(t =>
     t.id === draggingDividerId ? { ...t, width: clampedWidth } : t
   ))
-}, [draggingDividerId, terminals])
+}, [draggingDividerId, dragStartX, dragStartWidth])
 ```
 
 #### FEAT-09 Pattern: Context Menu Color Picker
