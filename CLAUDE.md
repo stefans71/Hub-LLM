@@ -134,6 +134,26 @@ async with sftp.open(path, "rb") as f:
 
 <!-- ADD NEW CRITICAL PATTERNS ABOVE THIS LINE -->
 
+## Documentation Rule - Document Patterns DURING Implementation
+
+When completing a feature that adds new interaction patterns:
+
+1. **Universal patterns** → Add to CLAUDE.md "Critical Patterns" section
+   - Examples: fetch timeout, stale closures, isMounted ref
+   - Pattern applies across multiple areas
+
+2. **Area-specific patterns** → Add to relevant workspace doc
+   - Terminal patterns → `harness/TERMINAL_WORKSPACE.md`
+   - Editor patterns → `harness/EDITOR_WORKSPACE.md` (create if needed)
+   - Chat patterns → `harness/CHAT_WORKSPACE.md` (create if needed)
+
+3. **Required for patterns:**
+   - Working code snippet (copy from implementation)
+   - Why this approach (1-2 sentences)
+   - Any gotchas discovered
+
+**Do this DURING feature implementation, not after bugs.**
+
 ## Before EVERY Commit
 1. If you discovered a CRITICAL pattern → Add it to "Critical Patterns" section above
 2. Write session notes to `harness/learnings.md`:
