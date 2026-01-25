@@ -16,16 +16,6 @@
   },
   "queue": [
     {
-      "id": "BUG-09",
-      "name": "VPS Connection Not Persisting from Project Creation",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Connect VPS during Create Project → Go to workspace → VPS shows but NOT connected. Have to click Connect again.",
-      "expected": "If VPS was connected during project creation, should already be connected when entering workspace",
-      "test": "Create project + connect VPS → Enter workspace → VPS already connected (no need to click Connect)"
-    },
-    {
       "id": "CLEANUP-02",
       "name": "Consolidate servers_db to One Location",
       "size": "M",
@@ -116,6 +106,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-09", "name": "VPS Connection Not Persisting from Project Creation", "completed": "2026-01-25"},
     {"id": "CLEANUP-01", "name": "Remove Duplicate Terminal from Servers Tab", "completed": "2026-01-25"},
     {"id": "AUDIT-01", "name": "Map Workspace Terminal/Server Components", "completed": "2026-01-25"},
     {"id": "BUG-08", "name": "Site Hanging on Login", "completed": "2026-01-24"},

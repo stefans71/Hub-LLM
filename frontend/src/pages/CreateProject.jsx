@@ -614,6 +614,44 @@ export default function CreateProject({ onCancel, onCreateProject }) {
 
       const data = await response.json()
       setVpsTestResult(data)
+
+      // If test succeeded, ensure server is saved with lastTestSuccess flag
+      if (data.success) {
+        const savedServers = localStorage.getItem('vps_servers')
+        const servers = savedServers ? JSON.parse(savedServers) : []
+
+        if (formData.vpsServerId) {
+          // Update existing server's lastTestSuccess flag
+          const serverIndex = servers.findIndex(s => s.id === formData.vpsServerId)
+          if (serverIndex >= 0) {
+            servers[serverIndex].lastTestSuccess = true
+            servers[serverIndex].serverInfo = data.server_info || servers[serverIndex].serverInfo
+            localStorage.setItem('vps_servers', JSON.stringify(servers))
+            setSavedVpsServers(servers)
+          }
+        } else {
+          // Create new server entry
+          const newServerId = `vps_${Date.now()}`
+          const newServer = {
+            id: newServerId,
+            name: data.server_info?.hostname || formData.vpsIp.trim(),
+            host: formData.vpsIp.trim(),
+            port: formData.vpsPort || '22',
+            username: 'root',
+            privateKey: formData.vpsKey.trim() || '',
+            lastTestSuccess: true,
+            serverInfo: data.server_info || null,
+            createdAt: new Date().toISOString()
+          }
+
+          servers.push(newServer)
+          localStorage.setItem('vps_servers', JSON.stringify(servers))
+          setSavedVpsServers(servers)
+
+          // Update form to use the new server ID so project gets linked
+          setFormData(prev => ({ ...prev, vpsServerId: newServerId }))
+        }
+      }
     } catch (error) {
       setVpsTestResult({
         success: false,

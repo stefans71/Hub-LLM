@@ -4,6 +4,31 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 53 - 2026-01-25 EST
+**Task**: BUG-09 (S) - VPS Connection Not Persisting from Project Creation
+**What**: Fixed auto-connect when entering workspace with linked VPS
+
+**Root Cause**:
+1. When user tests VPS during project creation, connection only tested but not persisted
+2. `checkConnectionStatus()` in Workspace.jsx only checked backend state, didn't auto-connect
+3. If user entered VPS details manually (not selecting saved server), server wasn't saved to localStorage with ID
+
+**Solution Pattern**:
+1. **CreateProject.jsx** - Save new VPS servers to localStorage on successful test:
+   - If no `vpsServerId` selected, create new entry with `lastTestSuccess: true`
+   - If saved server re-tested, update its `lastTestSuccess` flag
+   - Set `vpsServerId` in form so project gets linked to server
+2. **Workspace.jsx** - Auto-connect on workspace entry:
+   - Check localStorage for server with matching ID
+   - If server has `lastTestSuccess: true`, sync to backend and auto-connect
+   - Use timeout (15s) and proper error handling
+
+**Files Modified**:
+- frontend/src/components/Workspace.jsx (checkAndAutoConnect replaces checkConnectionStatus)
+- frontend/src/pages/CreateProject.jsx (handleTestVps saves server to localStorage)
+
+---
+
 ### Session 52 - 2026-01-25
 **Task**: AUDIT-01 + CLEANUP-01
 **What**: Mapped component wiring, then removed duplicate terminal/files buttons from ServerManager

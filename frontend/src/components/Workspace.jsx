@@ -57,24 +57,92 @@ export default function Workspace({ project, model, apiKeys }) {
   // Track the currently linked server ID (may differ from project.vps_server_id if just linked)
   const [linkedServerId, setLinkedServerId] = useState(project?.vps_server_id || null)
 
-  // Check initial connection status when project changes
+  // Check initial connection status when project changes - auto-connect if VPS was verified
   useEffect(() => {
     if (project?.vps_server_id) {
-      checkConnectionStatus()
+      checkAndAutoConnect()
     } else {
       setIsConnected(false)
     }
   }, [project?.vps_server_id])
 
-  const checkConnectionStatus = async () => {
+  const checkAndAutoConnect = async () => {
     if (!project?.vps_server_id) return
+
+    const serverId = project.vps_server_id
+
     try {
+      // Check if already connected in backend
       const res = await fetch('/api/ssh/servers')
-      const servers = await res.json()
-      const server = servers.find(s => s.id === project.vps_server_id)
-      setIsConnected(server?.connected || false)
+      const backendServers = await res.json()
+      const backendServer = backendServers.find(s => s.id === serverId)
+
+      if (backendServer?.connected) {
+        setIsConnected(true)
+        return
+      }
+
+      // Not connected - check localStorage for server details
+      const savedServers = localStorage.getItem('vps_servers')
+      const localServers = savedServers ? JSON.parse(savedServers) : []
+      const localServer = localServers.find(s => s.id === serverId)
+
+      if (!localServer) {
+        // Server not found in localStorage, can't auto-connect
+        setIsConnected(false)
+        return
+      }
+
+      // Server was verified during project creation (lastTestSuccess flag)
+      // Auto-connect to provide seamless experience
+      if (localServer.lastTestSuccess) {
+        setIsConnecting(true)
+
+        try {
+          // Sync to backend if needed
+          if (!backendServer) {
+            await fetch('/api/ssh/servers', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: serverId,
+                name: localServer.name,
+                host: localServer.host,
+                port: parseInt(localServer.port) || 22,
+                username: localServer.username || 'root',
+                auth_type: localServer.privateKey ? 'key' : 'password',
+                private_key: localServer.privateKey || null
+              })
+            })
+          }
+
+          // Auto-connect with timeout
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 15000)
+
+          const connectRes = await fetch(`/api/ssh/servers/${serverId}/connect`, {
+            method: 'POST',
+            signal: controller.signal
+          })
+          clearTimeout(timeoutId)
+
+          if (connectRes.ok) {
+            setIsConnected(true)
+          } else {
+            setIsConnected(false)
+          }
+        } catch (err) {
+          console.error('Auto-connect failed:', err)
+          setIsConnected(false)
+        } finally {
+          setIsConnecting(false)
+        }
+      } else {
+        setIsConnected(false)
+      }
     } catch (err) {
       console.error('Failed to check connection status:', err)
+      setIsConnected(false)
     }
   }
 
