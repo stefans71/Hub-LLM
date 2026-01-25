@@ -377,8 +377,8 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
 
-  // Draggable sidebar state
-  const [sidebarWidth, setSidebarWidth] = useState(140)
+  // Draggable sidebar state - default 200px, range 140-400px
+  const [sidebarWidth, setSidebarWidth] = useState(200)
   const [isDraggingSidebar, setIsDraggingSidebar] = useState(false)
   const dividerRef = useRef(null)
 
@@ -414,8 +414,8 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
     if (!containerRect) return
 
     const newWidth = containerRect.right - e.clientX
-    // Clamp between 80px and 300px
-    setSidebarWidth(Math.max(80, Math.min(300, newWidth)))
+    // Clamp between 140px and 400px
+    setSidebarWidth(Math.max(140, Math.min(400, newWidth)))
   }, [isDraggingSidebar])
 
   const handleSidebarMouseUp = useCallback(() => {

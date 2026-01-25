@@ -799,14 +799,23 @@
   padding: 0;
 }
 
-/* Make xterm scrollbar draggable - use native scrollbar behavior */
+/* Ensure xterm-viewport scrollbar is accessible and draggable */
 .xterm-container .xterm-viewport {
   overflow-y: scroll !important;
+  /* Ensure scrollbar is always visible and wide enough to click */
+  scrollbar-width: auto;
 }
 
-/* Style the xterm scrollbar to match app theme */
+/* Prevent xterm-screen from blocking scrollbar mouse events */
+.xterm-container .xterm-screen {
+  pointer-events: auto;
+  /* Leave room for scrollbar on right side */
+  width: calc(100% - 14px) !important;
+}
+
+/* Style the xterm scrollbar to match app theme - wider for easier clicking */
 .xterm-container .xterm-viewport::-webkit-scrollbar {
-  width: 10px;
+  width: 14px;
 }
 
 .xterm-container .xterm-viewport::-webkit-scrollbar-track {
@@ -816,8 +825,14 @@
 .xterm-container .xterm-viewport::-webkit-scrollbar-thumb {
   background: #4b5563;
   border-radius: 4px;
+  border: 2px solid #1a2028;
 }
 
 .xterm-container .xterm-viewport::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
+}
+
+/* Ensure scrollbar thumb is always visible when there's content to scroll */
+.xterm-container .xterm-viewport::-webkit-scrollbar-thumb:active {
+  background: #9ca3af;
 }
