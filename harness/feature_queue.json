@@ -32,16 +32,6 @@
   },
   "queue": [
     {
-      "id": "UI-05",
-      "name": "Project 3-Dot Menu",
-      "size": "S",
-      "priority": 5,
-      "status": "pending",
-      "description": "Add settings menu to each project row in sidebar",
-      "menu_items": ["Rename", "Settings", "Disconnect VPS", "Delete"],
-      "placement": "Right side of project row"
-    },
-    {
       "id": "UI-06",
       "name": "Delete Confirmation with Archive Option",
       "size": "S",
@@ -107,6 +97,7 @@
     }
   ],
   "completed": [
+    {"id": "UI-05", "name": "Project 3-Dot Menu", "completed": "2026-01-25"},
     {"id": "UI-04", "name": "Project Name Truncation + Hover Tooltip", "completed": "2026-01-25"},
     {"id": "UI-03", "name": "Project Status Dots in Sidebar", "completed": "2026-01-25"},
     {"id": "UI-02", "name": "Remove Servers and Codespaces Tabs", "completed": "2026-01-25"},

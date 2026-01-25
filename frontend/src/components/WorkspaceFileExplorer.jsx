@@ -42,6 +42,9 @@ export default function WorkspaceFileExplorer({
   // UI-03: VPS connection status per server
   const [serverStatuses, setServerStatuses] = useState({})
 
+  // UI-05: Project menu state
+  const [openMenuProjectId, setOpenMenuProjectId] = useState(null)
+
   // Fetch projects from API
   useEffect(() => {
     loadProjects()
@@ -266,6 +269,57 @@ export default function WorkspaceFileExplorer({
     }
   }
 
+  // UI-05: Project menu handlers
+  const handleMenuToggle = (e, projectId) => {
+    e.stopPropagation()
+    setOpenMenuProjectId(openMenuProjectId === projectId ? null : projectId)
+  }
+
+  const handleMenuClose = () => {
+    setOpenMenuProjectId(null)
+  }
+
+  const handleRename = (project) => {
+    handleMenuClose()
+    // TODO: Implement rename modal
+    console.log('Rename project:', project.name)
+  }
+
+  const handleProjectSettings = (project) => {
+    handleMenuClose()
+    // Navigate to project settings
+    navigate(`/settings?project=${project.id}`)
+  }
+
+  const handleDisconnectVps = async (project) => {
+    handleMenuClose()
+    if (!project.vps_server_id) return
+
+    // Update project to remove VPS link
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify({ vps_server_id: null })
+      })
+      if (res.ok) {
+        // Refresh projects list
+        loadProjects()
+      }
+    } catch (err) {
+      console.error('Failed to disconnect VPS:', err)
+    }
+  }
+
+  const handleDelete = (project) => {
+    handleMenuClose()
+    // TODO: UI-06 will implement delete confirmation modal
+    console.log('Delete project:', project.name)
+  }
+
   // Get file icon based on extension
   const getFileIcon = (filename, isFolder = false) => {
     if (isFolder) {
@@ -370,6 +424,12 @@ export default function WorkspaceFileExplorer({
 
   return (
     <div id="file-explorer-panel" className="file-explorer">
+      {/* UI-05: CSS for showing menu button on hover */}
+      <style>{`
+        .project-item:hover .project-menu-btn {
+          opacity: 1 !important;
+        }
+      `}</style>
       {/* W-39: File Explorer Header */}
       <div className="file-explorer-header">
         {/* W-40: Explorer Title */}
@@ -526,6 +586,161 @@ export default function WorkspaceFileExplorer({
                             >
                               {project.name}
                             </span>
+                          </div>
+
+                          {/* UI-05: 3-dot menu */}
+                          <div style={{ position: 'relative' }}>
+                            <button
+                              onClick={(e) => handleMenuToggle(e, project.id)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '2px 4px',
+                                borderRadius: '4px',
+                                color: 'var(--text-secondary)',
+                                opacity: openMenuProjectId === project.id ? 1 : 0,
+                                transition: 'opacity 0.15s'
+                              }}
+                              className="project-menu-btn"
+                              title="Project options"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="5" r="2" />
+                                <circle cx="12" cy="12" r="2" />
+                                <circle cx="12" cy="19" r="2" />
+                              </svg>
+                            </button>
+
+                            {/* Dropdown menu */}
+                            {openMenuProjectId === project.id && (
+                              <>
+                                {/* Backdrop to close menu */}
+                                <div
+                                  style={{
+                                    position: 'fixed',
+                                    inset: 0,
+                                    zIndex: 40
+                                  }}
+                                  onClick={handleMenuClose}
+                                />
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    right: 0,
+                                    top: '100%',
+                                    marginTop: '4px',
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: '6px',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                                    minWidth: '140px',
+                                    zIndex: 50,
+                                    overflow: 'hidden'
+                                  }}
+                                >
+                                  <button
+                                    onClick={() => handleRename(project)}
+                                    style={{
+                                      width: '100%',
+                                      padding: '8px 12px',
+                                      background: 'transparent',
+                                      border: 'none',
+                                      textAlign: 'left',
+                                      cursor: 'pointer',
+                                      fontSize: '13px',
+                                      color: 'var(--text-primary)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                    </svg>
+                                    Rename
+                                  </button>
+                                  <button
+                                    onClick={() => handleProjectSettings(project)}
+                                    style={{
+                                      width: '100%',
+                                      padding: '8px 12px',
+                                      background: 'transparent',
+                                      border: 'none',
+                                      textAlign: 'left',
+                                      cursor: 'pointer',
+                                      fontSize: '13px',
+                                      color: 'var(--text-primary)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <circle cx="12" cy="12" r="3" />
+                                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                                    </svg>
+                                    Settings
+                                  </button>
+                                  {hasVps && (
+                                    <button
+                                      onClick={() => handleDisconnectVps(project)}
+                                      style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        textAlign: 'left',
+                                        cursor: 'pointer',
+                                        fontSize: '13px',
+                                        color: 'var(--text-primary)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                      }}
+                                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                    >
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                                        <line x1="12" y1="2" x2="12" y2="12" />
+                                      </svg>
+                                      Disconnect VPS
+                                    </button>
+                                  )}
+                                  <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+                                  <button
+                                    onClick={() => handleDelete(project)}
+                                    style={{
+                                      width: '100%',
+                                      padding: '8px 12px',
+                                      background: 'transparent',
+                                      border: 'none',
+                                      textAlign: 'left',
+                                      cursor: 'pointer',
+                                      fontSize: '13px',
+                                      color: '#ef4444',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <polyline points="3 6 5 6 21 6" />
+                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    </svg>
+                                    Delete
+                                  </button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
 

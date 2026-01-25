@@ -7,6 +7,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 ### Session 60 - 2026-01-25 EST
 **Task**: UI-03 (S) + UI-04 (XS) - Sidebar Improvements
 
+**UI-05: Project 3-Dot Menu**
+- Added 3-dot (⋮) menu button to project rows in WorkspaceFileExplorer
+- Menu appears on hover, shows dropdown on click
+- Menu items: Rename, Settings, Disconnect VPS (if VPS linked), Delete (red)
+- Used inline styles with CSS-in-JS for hover show/hide
+- Handlers: handleRename (TODO), handleProjectSettings (navigates), handleDisconnectVps (API call), handleDelete (TODO for UI-06)
+
 **UI-04: Project Name Truncation + Hover Tooltip**
 - Added `title={project.name}` attribute to all project name spans
 - CSS truncation already in place: `text-overflow: ellipsis; overflow: hidden; white-space: nowrap;`
