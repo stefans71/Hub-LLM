@@ -32,18 +32,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-03",
-      "name": "Remove Explorer from LLM-Dev Panel",
-      "size": "S",
-      "priority": 8,
-      "status": "pending",
-      "depends_on": ["FEAT-06"],
-      "description": "Remove the Explorer sidebar from LLM-Dev",
-      "current": "LLM-Dev has Explorer showing VPS files on left side",
-      "change": "Remove Explorer entirely - file browsing now in left sidebar only",
-      "keep_tabs": ["Terminal", "Editor", "Docker", "Logs", "Project Context"]
-    },
-    {
       "id": "FEAT-04",
       "name": "Terminal Opens in Project Directory",
       "size": "XS",
@@ -74,6 +62,7 @@
     }
   ],
   "completed": [
+    {"id": "FEAT-03", "name": "Remove Explorer from LLM-Dev Panel", "completed": "2026-01-25"},
     {"id": "FEAT-06", "name": "LLM-Dev Editor Tab", "completed": "2026-01-25"},
     {"id": "UI-06", "name": "Delete Confirmation with Archive Option", "completed": "2026-01-25"},
     {"id": "UI-05", "name": "Project 3-Dot Menu", "completed": "2026-01-25"},

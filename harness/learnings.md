@@ -7,6 +7,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 ### Session 60 - 2026-01-25 EST
 **Task**: UI-03, UI-04, UI-05, UI-06, FEAT-06 - Major UI Session
 
+**FEAT-03: Remove Explorer from LLM-Dev Panel (S)**
+- Removed Explorer sidebar and old embedded Editor from Terminal tab content
+- Terminal tab now shows just the terminal at full width
+- Cleaned up unused state: fileTree, currentPath, loading
+- Cleaned up unused functions: fetchFiles, navigateToFolder
+- Editor remains available in dedicated Editor tab (from FEAT-06)
+
 **FEAT-06: LLM-Dev Editor Tab (M)**
 - Added Editor tab to LLM-Dev panel alongside Terminal, Docker, Logs, Project Context
 - Wired sidebar file clicks to open in Editor tab via callback pattern:

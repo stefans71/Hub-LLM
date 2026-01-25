@@ -29,20 +29,16 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
   const [activeFile, setActiveFile] = useState(null)
   const [activeTerminalTab, setActiveTerminalTab] = useState('terminal')
   const [serverInfo, setServerInfo] = useState(null)
-  const [fileTree, setFileTree] = useState([])
-  const [currentPath, setCurrentPath] = useState('~')
+  // FEAT-03: Removed fileTree, currentPath, loading (were for Explorer)
   const [openEditors, setOpenEditors] = useState([])
   const [codeContent, setCodeContent] = useState('')
-  const [loading, setLoading] = useState(false)
 
   // Fetch VPS server info when project changes
   useEffect(() => {
     if (serverId) {
       fetchServerInfo(serverId)
-      fetchFiles(serverId, '~')
     } else {
       setServerInfo(null)
-      setFileTree([])
     }
   }, [serverId])
 
@@ -95,29 +91,7 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
     }
   }
 
-  const fetchFiles = async (serverId, path) => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/files?serverId=${encodeURIComponent(serverId)}&path=${encodeURIComponent(path)}`)
-      if (res.ok) {
-        const data = await res.json()
-        // Transform API response to file tree format
-        const tree = data.files.map(f => ({
-          name: f.name,
-          path: f.path,
-          type: f.is_dir ? 'folder' : 'file',
-          expanded: false,
-          children: f.is_dir ? [] : undefined
-        }))
-        setFileTree(tree)
-        setCurrentPath(data.path || path)
-      }
-    } catch (err) {
-      console.error('Failed to fetch files:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // FEAT-03: Removed fetchFiles (was for Explorer)
 
   const openFile = async (filePath) => {
     if (!serverId) return
@@ -143,10 +117,7 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
     }
   }
 
-  const navigateToFolder = async (folderPath) => {
-    if (!serverId) return
-    await fetchFiles(serverId, folderPath)
-  }
+  // FEAT-03: Removed navigateToFolder (was for Explorer)
 
   // Mock docker containers (will be real in future)
   const containers = [
@@ -549,382 +520,24 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
             minHeight: 0
           }}
         >
-          {/* Terminal Tab Content */}
+          {/* FEAT-03: Terminal Tab Content - Simplified (Explorer removed) */}
           {activeTab === 'terminal' && (
-            <>
-              {/* W-98: Dev File Explorer */}
-              <div
-                className="dev-file-explorer"
-                style={{
-                  width: '220px',
-                  minWidth: '150px',
-                  maxWidth: '400px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  background: 'var(--bg-secondary)',
-                  overflowY: 'auto',
-                  flexShrink: 0
-                }}
-              >
-                {/* Explorer Header */}
-                <div
-                  className="dev-file-explorer-header"
-                  style={{
-                    padding: '8px 12px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: 'var(--text-muted)',
-                    textTransform: 'uppercase',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    borderBottom: '1px solid var(--border)'
-                  }}
-                >
-                  <span>Explorer</span>
-                  <div style={{ display: 'flex', gap: '2px' }}>
-                    <button onClick={() => serverId && fetchFiles(serverId, '~')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '2px 4px', borderRadius: '3px' }} title="Go to Home Directory">🏠</button>
-                    <button onClick={() => serverId && currentPath !== '~' && fetchFiles(serverId, currentPath.split('/').slice(0, -1).join('/') || '~')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '11px', padding: '2px 4px', borderRadius: '3px' }} title="Go Up One Level">⬆️</button>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="Go Back">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                      </svg>
-                    </button>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="Go Forward">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                      </svg>
-                    </button>
-                    <button onClick={() => serverId && fetchFiles(serverId, currentPath)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="Refresh">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="23 4 23 10 17 10"></polyline>
-                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Action buttons */}
-                <div style={{ display: 'flex', gap: '4px', padding: '4px 8px', borderBottom: '1px solid var(--border)' }}>
-                  <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="New File">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                      <line x1="12" y1="18" x2="12" y2="12"></line>
-                      <line x1="9" y1="15" x2="15" y2="15"></line>
-                    </svg>
-                  </button>
-                  <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="New Folder">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                      <line x1="12" y1="11" x2="12" y2="17"></line>
-                      <line x1="9" y1="14" x2="15" y2="14"></line>
-                    </svg>
-                  </button>
-                  <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', borderRadius: '3px' }} title="Collapse All">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="4 14 10 14 10 20"></polyline>
-                      <polyline points="20 10 14 10 14 4"></polyline>
-                      <line x1="14" y1="10" x2="21" y2="3"></line>
-                      <line x1="3" y1="21" x2="10" y2="14"></line>
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Path bar */}
-                <div style={{ padding: '4px 8px', fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border)' }}>
-                  {currentPath}
-                </div>
-
-                {/* W-99: Dev File Tree */}
-                <div className="dev-file-tree" style={{ flex: 1, overflowY: 'auto', padding: '8px', borderBottom: '1px solid var(--border)' }}>
-                  {loading && (
-                    <div style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>Loading...</div>
-                  )}
-                  {!loading && fileTree.length === 0 && serverId && (
-                    <div style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>No files found</div>
-                  )}
-                  {!loading && !serverId && (
-                    <div style={{ padding: '8px', color: 'var(--text-muted)', fontSize: '12px' }}>No VPS connected</div>
-                  )}
-                  {fileTree.map((item, index) => (
-                    <div key={index}>
-                      <div
-                        className={`dev-file-item ${item.type === 'folder' ? 'folder' : ''} ${activeFile === item.name ? 'active' : ''}`}
-                        onClick={() => item.type === 'folder' ? navigateToFolder(item.path) : openFile(item.path)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          color: item.type === 'folder' ? 'var(--text-primary)' : activeFile === item.name ? 'var(--primary)' : 'var(--text-secondary)',
-                          fontFamily: "'Monaco', 'Consolas', monospace",
-                          fontWeight: item.type === 'folder' ? 500 : 400,
-                          background: activeFile === item.name ? 'rgba(59, 130, 246, 0.2)' : 'transparent'
-                        }}
-                      >
-                        {getFileIcon(item.name, item.type === 'folder')}
-                        {item.name}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* W-100: Open Editors Section */}
-                <div>
-                  <div
-                    className="dev-file-explorer-header"
-                    style={{
-                      padding: '8px 12px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      color: 'var(--text-muted)',
-                      textTransform: 'uppercase',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <span>Open Editors</span>
-                    <button onClick={() => setOpenEditors([])} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="dev-file-tree" style={{ padding: '8px' }}>
-                    {openEditors.length === 0 && (
-                      <div style={{ padding: '4px 8px', fontSize: '11px', color: 'var(--text-muted)' }}>No open files</div>
-                    )}
-                    {openEditors.map((editor, index) => (
-                      <div
-                        key={index}
-                        className={`dev-file-item ${editor.active ? 'active' : ''}`}
-                        onClick={() => openFile(editor.path)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          color: editor.active ? 'var(--primary)' : 'var(--text-secondary)',
-                          fontFamily: "'Monaco', 'Consolas', monospace",
-                          background: editor.active ? 'rgba(59, 130, 246, 0.2)' : 'transparent'
-                        }}
-                      >
-                        {getFileIcon(editor.name)}
-                        {editor.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* W-101: Dev Editor Resizer */}
-              <div className="resizer-vertical" style={{ width: '4px', background: 'var(--border)', cursor: 'col-resize' }}></div>
-
-              {/* W-102: Dev Editor Area */}
-              <div
-                className="dev-editor-area"
-                style={{
-                  flex: 1,
-                  minWidth: '200px',
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-              >
-                {/* W-103: Editor Tabs */}
-                <div
-                  className="dev-editor-tabs"
-                  style={{
-                    display: 'flex',
-                    background: 'var(--bg-secondary)',
-                    borderBottom: '1px solid var(--border)'
-                  }}
-                >
-                  {openEditors.length === 0 && (
-                    <div style={{ padding: '8px 16px', fontSize: '12px', color: 'var(--text-muted)' }}>No open files</div>
-                  )}
-                  {openEditors.map((editor, index) => (
-                    <div
-                      key={index}
-                      className={`dev-editor-tab ${editor.active ? 'active' : ''}`}
-                      onClick={() => openFile(editor.path)}
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '12px',
-                        color: editor.active ? 'var(--text-primary)' : 'var(--text-secondary)',
-                        background: editor.active ? 'var(--bg-primary)' : 'transparent',
-                        border: 'none',
-                        borderRight: '1px solid var(--border)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <span>{editor.name}</span>
-                      <span
-                        className="close"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setOpenEditors(openEditors.filter((_, i) => i !== index))
-                          if (editor.active && openEditors.length > 1) {
-                            setActiveFile(openEditors[index === 0 ? 1 : 0].name)
-                          } else if (openEditors.length === 1) {
-                            setActiveFile(null)
-                            setCodeContent('')
-                          }
-                        }}
-                        style={{ opacity: 0.5, fontSize: '10px' }}
-                      >✕</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* W-104: Editor Content */}
-                <div
-                  className="dev-editor-content"
-                  style={{
-                    flex: 1,
-                    padding: '16px',
-                    fontFamily: "'Monaco', 'Consolas', monospace",
-                    fontSize: '13px',
-                    overflow: 'auto',
-                    lineHeight: 1.5
-                  }}
-                >
-                  {!codeContent && (
-                    <div style={{ color: 'var(--text-muted)', textAlign: 'center', paddingTop: '40px' }}>
-                      Select a file to view its contents
-                    </div>
-                  )}
-                  {codeContent && codeContent.split('\n').map((line, index) => (
-                    <div key={index}>
-                      <span className="line-number" style={{ color: 'var(--text-muted)', marginRight: '16px', userSelect: 'none' }}>{index + 1}</span>
-                      <span dangerouslySetInnerHTML={{
-                        __html: line
-                          .replace(/(const|require|get|send|listen|import|export|function|return|if|else|for|while)/g, '<span style="color: #c678dd;">$1</span>')
-                          .replace(/('.*?'|".*?")/g, '<span style="color: #98c379;">$1</span>')
-                          .replace(/(\d+)/g, '<span style="color: #d19a66;">$1</span>')
-                      }} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* W-105: Terminal Resizer */}
-              <div className="resizer-vertical" style={{ width: '4px', background: 'var(--border)', cursor: 'col-resize' }}></div>
-
-              {/* W-106: Dev Terminal Area */}
-              <div
-                className="dev-terminal-area"
-                style={{
-                  width: '35%',
-                  minWidth: '200px',
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-              >
-                {/* W-107: Terminal Tabs */}
-                <div
-                  className="dev-terminal-tabs"
-                  style={{
-                    display: 'flex',
-                    background: 'var(--bg-secondary)',
-                    borderBottom: '1px solid var(--border)',
-                    padding: '0 8px'
-                  }}
-                >
-                  <div
-                    className={`dev-terminal-tab ${activeTerminalTab === 'terminal' ? 'active' : ''}`}
-                    onClick={() => setActiveTerminalTab('terminal')}
-                    style={{
-                      padding: '8px 12px',
-                      fontSize: '12px',
-                      color: activeTerminalTab === 'terminal' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      background: 'transparent',
-                      border: 'none',
-                      borderBottom: activeTerminalTab === 'terminal' ? '2px solid var(--primary)' : '2px solid transparent',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: '4px' }}>
-                      <polyline points="4 17 10 11 4 5"></polyline>
-                      <line x1="12" y1="19" x2="20" y2="19"></line>
-                    </svg>
-                    Terminal
-                  </div>
-                  <div
-                    className={`dev-terminal-tab ${activeTerminalTab === 'output' ? 'active' : ''}`}
-                    onClick={() => setActiveTerminalTab('output')}
-                    style={{
-                      padding: '8px 12px',
-                      fontSize: '12px',
-                      color: activeTerminalTab === 'output' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      background: 'transparent',
-                      border: 'none',
-                      borderBottom: activeTerminalTab === 'output' ? '2px solid var(--primary)' : '2px solid transparent',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: '4px' }}>
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                    </svg>
-                    Output
-                  </div>
-                  <div
-                    className={`dev-terminal-tab ${activeTerminalTab === 'problems' ? 'active' : ''}`}
-                    onClick={() => setActiveTerminalTab('problems')}
-                    style={{
-                      padding: '8px 12px',
-                      fontSize: '12px',
-                      color: activeTerminalTab === 'problems' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      background: 'transparent',
-                      border: 'none',
-                      borderBottom: activeTerminalTab === 'problems' ? '2px solid var(--primary)' : '2px solid transparent',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: '4px', color: '#f97316' }}>
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="8" x2="12" y2="12"></line>
-                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    Problems
-                  </div>
-                  <button style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                  </button>
-                </div>
-
-                {/* W-108: Terminal Content - Real xterm.js terminal connected to VPS */}
-                <WorkspaceTerminal
-                  projectId={project?.id}
-                  serverId={serverId}
-                  className="dev-terminal-content"
-                />
-              </div>
-            </>
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Terminal Content - Full width */}
+              <WorkspaceTerminal
+                projectId={project?.id}
+                serverId={serverId}
+                className="dev-terminal-content"
+                style={{ flex: 1 }}
+              />
+            </div>
           )}
 
           {/* FEAT-06: Editor Tab Content */}
