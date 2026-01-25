@@ -4,6 +4,62 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 51 - 2026-01-24
+**Task**: BUG-08 (M) - Site Hanging on Login
+
+**Root Cause Analysis**:
+1. Backend was stuck in reload state ("Waiting for background tasks to complete") causing frontend fetches to hang indefinitely
+2. No timeout on auth API calls - UI would wait forever if backend unresponsive
+3. Potential infinite loop: `fetchUser()` → 401 → `refreshAccessToken()` → `fetchUser()` without guard
+4. No cleanup on unmount could cause state updates after component unmounted
+
+**Solution Pattern**:
+```javascript
+// 1. Fetch with timeout using AbortController
+const fetchWithTimeout = async (url, options = {}, timeout = 10000) => {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal })
+    clearTimeout(timeoutId)
+    return res
+  } catch (err) {
+    clearTimeout(timeoutId)
+    if (err.name === 'AbortError') throw new Error('Request timed out')
+    throw err
+  }
+}
+
+// 2. Recursion guard to prevent infinite loops
+const fetchUser = async (isRetry = false) => {
+  // ...
+  if (res.status === 401 && !isRetry) {
+    const refreshed = await refreshAccessToken()
+    if (refreshed) return fetchUser(true) // Mark as retry
+  }
+}
+
+// 3. isMounted ref for cleanup
+const isMounted = useRef(true)
+useEffect(() => {
+  isMounted.current = true
+  return () => { isMounted.current = false }
+}, [])
+// Before setState: if (isMounted.current) setState(...)
+```
+
+**Key Learnings**:
+- **CRITICAL**: Always add timeout to API calls that could hang (AbortController + setTimeout)
+- **CRITICAL**: Add recursion guards (`isRetry` flag) to prevent infinite refresh loops
+- Use `isMounted` ref pattern to prevent state updates after unmount
+- On auth timeout/error, clear tokens and show login (graceful degradation)
+- Wrap async handlers with `useCallback` for proper dependency tracking
+
+**Files Modified**:
+- frontend/src/contexts/AuthContext.jsx
+
+---
+
 ### Session 50 - 2026-01-24
 **Tasks**: BUG-06 (S) + BUG-07 (M) - VPS persistence issues
 
