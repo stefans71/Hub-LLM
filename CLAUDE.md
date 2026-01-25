@@ -69,3 +69,17 @@ Cleanup: `git add -A && git commit -m "chore: cleanup" || true`
 ## Files
 - `harness/feature_queue.json` - tasks
 - `harness/learnings.md` - session notes
+
+## Testing (REQUIRED for UI/bug tasks)
+After code changes, verify with agent-browser:
+```bash
+agent-browser open http://localhost:5173/[page]
+agent-browser screenshot verify.png
+```
+Do NOT mark task complete without testing.
+
+## After Cleanup Commit
+ALWAYS push:
+```bash
+git push
+```
