@@ -1,5 +1,5 @@
 {
-  "version": "4.7",
+  "version": "4.8",
   "updated": "2026-01-25",
   "session_docs": ["CLAUDE.md", "harness/TERMINAL_WORKSPACE.md", "harness/feature_queue.json"],
   "vision": {
@@ -7,7 +7,7 @@
     "main_area": "Chat ONLY (no tabs)",
     "llm_dev_panel": {
       "tabs": ["Terminal", "Editor", "Docker", "Logs", "Project Context"],
-      "terminal": "Multi-terminal split panes with color coding (FEAT-09 target)"
+      "terminal": "Multi-terminal split panes with color coding (FEAT-09 complete)"
     },
     "left_sidebar": {
       "status_dots": "● green=connected, ○ gray=disconnected, 🔴 red=error",
@@ -16,6 +16,38 @@
     }
   },
   "queue": [
+    {
+      "id": "BUG-15",
+      "name": "Terminal Connection Drops on Panel Toggle",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Terminal connections drop and restart when LLM-Dev panel is collapsed and reopened",
+      "current": "Collapse LLM-Dev panel, reopen it - terminal connections are lost, SSH reconnects",
+      "change": [
+        "Check if component unmounts when panel collapses - may need to keep mounted but hidden",
+        "Preserve WebSocket connections through panel toggle",
+        "Consider using CSS visibility:hidden instead of unmounting",
+        "Reference: harness/TERMINAL_WORKSPACE.md for component structure"
+      ],
+      "test": "Collapse LLM-Dev panel, wait 5 seconds, reopen - terminal still connected, no reconnection message"
+    },
+    {
+      "id": "BUG-16",
+      "name": "Terminal Pane Can't Resize Smaller",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Dragging divider to make terminal pane smaller doesn't work properly",
+      "current": "Can drag divider to make terminal larger, but dragging to make it smaller hits minimum too early or doesn't respond",
+      "change": [
+        "Check min-width constraint in MultiTerminal.jsx (currently 150px min)",
+        "Review drag calculation logic - may be calculating from wrong reference point",
+        "Test with console.log to see actual width values during drag",
+        "Reference: harness/TERMINAL_WORKSPACE.md 'Split Pane Divider Drag' pattern"
+      ],
+      "test": "Drag divider left - terminal shrinks smoothly down to 150px minimum"
+    },
     {
       "id": "FEAT-08",
       "name": "Chat File Drop and Paste",
