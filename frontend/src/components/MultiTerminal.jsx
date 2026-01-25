@@ -377,6 +377,11 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
 
+  // Draggable sidebar state
+  const [sidebarWidth, setSidebarWidth] = useState(140)
+  const [isDraggingSidebar, setIsDraggingSidebar] = useState(false)
+  const dividerRef = useRef(null)
+
   // Track window width for responsive layout
   useEffect(() => {
     const handleResize = () => {
@@ -385,6 +390,53 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Native mousedown on divider (more reliable than React synthetic events)
+  useEffect(() => {
+    const divider = dividerRef.current
+    if (!divider) return
+
+    const onMouseDown = (e) => {
+      e.preventDefault()
+      setIsDraggingSidebar(true)
+    }
+
+    divider.addEventListener('mousedown', onMouseDown)
+    return () => divider.removeEventListener('mousedown', onMouseDown)
+  }, [])
+
+  // Global mouse events for sidebar dragging
+  const handleSidebarMouseMove = useCallback((e) => {
+    if (!isDraggingSidebar) return
+
+    // Calculate new width based on mouse position from right edge
+    const containerRect = dividerRef.current?.parentElement?.getBoundingClientRect()
+    if (!containerRect) return
+
+    const newWidth = containerRect.right - e.clientX
+    // Clamp between 80px and 300px
+    setSidebarWidth(Math.max(80, Math.min(300, newWidth)))
+  }, [isDraggingSidebar])
+
+  const handleSidebarMouseUp = useCallback(() => {
+    setIsDraggingSidebar(false)
+  }, [])
+
+  useEffect(() => {
+    if (isDraggingSidebar) {
+      document.addEventListener('mousemove', handleSidebarMouseMove)
+      document.addEventListener('mouseup', handleSidebarMouseUp)
+      document.body.style.cursor = 'ew-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleSidebarMouseMove)
+      document.removeEventListener('mouseup', handleSidebarMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isDraggingSidebar, handleSidebarMouseMove, handleSidebarMouseUp])
 
   const createTerminal = () => {
     const newTerminal = {
@@ -561,7 +613,7 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
     )
   }
 
-  // Desktop layout: right sidebar
+  // Desktop layout: right sidebar with draggable divider
   return (
     <div style={{
       display: 'flex',
@@ -570,7 +622,7 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
       overflow: 'hidden'
     }}>
       {/* Terminal instances - position:relative needed for absolute children */}
-      <div style={{ flex: 1, minHeight: 0, minWidth: 0, width: '100%', position: 'relative' }}>
+      <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
         {terminals.map(terminal => (
           <TerminalInstance
             key={terminal.id}
@@ -584,14 +636,28 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
         ))}
       </div>
 
+      {/* Draggable divider */}
+      <div
+        ref={dividerRef}
+        style={{
+          width: '4px',
+          background: isDraggingSidebar ? 'var(--primary)' : 'var(--border)',
+          cursor: 'ew-resize',
+          flexShrink: 0,
+          transition: isDraggingSidebar ? 'none' : 'background 0.15s ease'
+        }}
+        onMouseEnter={(e) => !isDraggingSidebar && (e.currentTarget.style.background = 'var(--primary)')}
+        onMouseLeave={(e) => !isDraggingSidebar && (e.currentTarget.style.background = 'var(--border)')}
+      />
+
       {/* Right sidebar - terminal list */}
       <div style={{
-        width: '140px',
+        width: `${sidebarWidth}px`,
         background: 'var(--bg-secondary)',
-        borderLeft: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
-        flexShrink: 0
+        flexShrink: 0,
+        transition: isDraggingSidebar ? 'none' : 'width 0.1s ease'
       }}>
         {/* Sidebar header */}
         <div style={{
