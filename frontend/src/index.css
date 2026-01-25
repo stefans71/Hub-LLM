@@ -802,15 +802,7 @@
 /* Ensure xterm-viewport scrollbar is accessible and draggable */
 .xterm-container .xterm-viewport {
   overflow-y: scroll !important;
-  /* Ensure scrollbar is always visible and wide enough to click */
   scrollbar-width: auto;
-}
-
-/* Prevent xterm-screen from blocking scrollbar mouse events */
-.xterm-container .xterm-screen {
-  pointer-events: auto;
-  /* Leave room for scrollbar on right side */
-  width: calc(100% - 14px) !important;
 }
 
 /* Style the xterm scrollbar to match app theme - wider for easier clicking */
