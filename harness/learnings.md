@@ -4,6 +4,47 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 58 - 2026-01-25 EST
+**Task**: FEAT-05 (M) - Left Sidebar: Expandable Project File Tree
+**What**: Added expandable file trees to projects in left sidebar that show VPS files from /root/llm-hub-projects/{slug}/
+
+**Implementation**:
+1. Modified `WorkspaceFileExplorer.jsx` to support project expansion
+2. Added state for expanded projects, file trees per project, directory expansion
+3. Fetch files from `/api/files?serverId=...&path=/root/llm-hub-projects/{slug}/`
+4. Recursive file tree rendering with folder expand/collapse
+5. Filter out `.` and `..` directory entries
+
+**Key Details**:
+- Projects with VPS connection show expand arrow (▶/▼)
+- Projects without VPS show circle indicator (○)
+- File tree loads lazily when project is first expanded
+- Subdirectories also expand lazily on click
+- Color-coded file icons by extension (JS=yellow, TS=blue, etc.)
+
+**Gotcha - React Strict Mode with useRef**:
+- Initial approach using `isMounted.current` ref caused loading to never complete
+- In Strict Mode, components mount→unmount→remount, leaving ref as `false`
+- Solution: Removed isMounted pattern entirely (original working code didn't need it)
+
+**Pattern - Fetch with Timeout for API Calls**:
+```javascript
+const controller = new AbortController()
+const timeout = setTimeout(() => controller.abort(), 5000)
+try {
+  const res = await fetch(url, { signal: controller.signal })
+  clearTimeout(timeout)
+} catch (err) {
+  clearTimeout(timeout)
+  if (err.name !== 'AbortError') console.error(err)
+}
+```
+
+**Files Modified**:
+- frontend/src/components/WorkspaceFileExplorer.jsx
+
+---
+
 ### Session 57 - 2026-01-25 EST
 **Task**: FEAT-02 (M) - Project Creates Folder on VPS
 **What**: When creating a project with VPS connection, automatically creates `/root/llm-hub-projects/{project-slug}/` on the VPS

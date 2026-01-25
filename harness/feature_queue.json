@@ -1,82 +1,64 @@
 {
   "meta": {
-    "version": "4.3",
-    "phase": "Cleanup + Refactor + Vision UI",
+    "version": "4.4",
+    "phase": "Vision UI Implementation",
     "last_updated": "2026-01-25"
   },
   "vision": {
-    "layout": "Option C - Tabbed Main Area",
-    "description": "Chat-first with file editing capability",
-    "structure": {
-      "left_sidebar": "Projects + nested File Explorer (files show under each project)",
-      "main_area": "Tabs: [Chat] [Editor] - click file opens Editor tab",
-      "bottom_panel": "LLM-Dev: Terminal | Output | Logs (NO file explorer here)"
-    },
-    "vps_folder": "/root/llm-hub-projects/{project-slug}/"
+    "layout": "Option C - Chat-first with tabbed Editor",
+    "left_sidebar": "Projects list, each expandable to show file tree from /root/llm-hub-projects/{slug}/",
+    "main_area_tabs": ["Chat", "Editor"],
+    "llm_dev_panel": "Terminal | Docker | Logs | Project Context (NO file explorer)",
+    "note": "File explorer MOVES from LLM-Dev to left sidebar under each project"
   },
   "queue": [
-    {
-      "id": "FEAT-05",
-      "name": "Left Sidebar: Project File Tree",
-      "size": "M",
-      "priority": 5,
-      "status": "pending",
-      "depends_on": ["FEAT-02"],
-      "description": "Left sidebar shows projects with expandable file tree underneath each",
-      "current": "Left sidebar shows only project names",
-      "change": "Click project → expands to show files from /root/llm-hub-projects/{project}/",
-      "ui": {
-        "example": [
-          "▼ □ pizza-app4",
-          "    ├── src/",
-          "    │   ├── App.jsx",
-          "    │   └── index.js",
-          "    └── package.json",
-          "▶ □ api-backend"
-        ]
-      },
-      "test": "Click project in left nav → File tree expands showing project files"
-    },
     {
       "id": "FEAT-06",
       "name": "Main Area: Chat + Editor Tabs",
       "size": "M",
-      "priority": 6,
+      "priority": 2,
       "status": "pending",
-      "depends_on": ["FEAT-05"],
       "description": "Main area has tabs: [Chat] [Editor]. Click file in sidebar → opens in Editor tab",
-      "current": "Main area is only Chat",
-      "change": "Add tab bar. Editor tab shows file content with syntax highlighting",
+      "current": "Main area is Chat only (plus Servers, Codespaces tabs)",
+      "change": [
+        "Add tab bar above main content: Chat | Editor",
+        "Editor tab shows file content with syntax highlighting",
+        "Click file in left sidebar → switches to Editor tab, shows file"
+      ],
       "test": "Click file in sidebar → Editor tab opens with file content"
     },
     {
       "id": "FEAT-03",
-      "name": "Remove File Explorer from LLM-Dev Panel",
+      "name": "Remove Explorer from LLM-Dev Panel",
       "size": "S",
-      "priority": 7,
+      "priority": 3,
       "status": "pending",
       "depends_on": ["FEAT-05", "FEAT-06"],
-      "description": "LLM-Dev panel should only have: Terminal | Output | Logs. Remove EXPLORER sidebar.",
-      "why": "File explorer moved to left sidebar (FEAT-05). No duplication.",
-      "test": "LLM-Dev has no file explorer. Only Terminal, Output, Logs tabs."
+      "description": "LLM-Dev panel should only have: Terminal | Docker | Logs | Project Context. Remove EXPLORER sidebar.",
+      "current": "LLM-Dev has Explorer sidebar on left showing VPS files",
+      "change": "Remove Explorer component from LLM-Dev. File browsing now in left sidebar (FEAT-05).",
+      "why": "No duplicate file explorers. Left sidebar = files, LLM-Dev = terminal/logs only.",
+      "test": "LLM-Dev panel has no file explorer. Only Terminal, Docker, Logs, Project Context tabs."
     },
     {
       "id": "FEAT-04",
       "name": "Terminal Opens in Project Directory",
       "size": "XS",
-      "priority": 8,
+      "priority": 4,
       "status": "pending",
-      "depends_on": ["FEAT-02"],
-      "description": "Terminal cd's to project folder on connect",
-      "test": "Connect → pwd shows /root/llm-hub-projects/{project-name}"
+      "description": "Terminal should cd to project folder on connect",
+      "current": "Terminal opens at /root or ~",
+      "change": "On connect, run: cd /root/llm-hub-projects/{project-slug}",
+      "test": "Connect terminal → run pwd → shows /root/llm-hub-projects/{project-slug}"
     }
   ],
   "completed": [
+    {"id": "FEAT-05", "name": "Left Sidebar: Expandable Project File Tree", "completed": "2026-01-25"},
     {"id": "FEAT-02", "name": "Project Creates Folder on VPS", "completed": "2026-01-25"},
     {"id": "REFACTOR-01", "name": "Move Data from localStorage to Database", "completed": "2026-01-25"},
     {"id": "CLEANUP-02", "name": "Consolidate servers_db to One Location", "completed": "2026-01-25"},
-    {"id": "BUG-09", "name": "VPS Connection Not Persisting from Project Creation", "completed": "2026-01-25"},
     {"id": "CLEANUP-01", "name": "Remove Duplicate Terminal from Servers Tab", "completed": "2026-01-25"},
+    {"id": "BUG-09", "name": "VPS Connection Not Persisting from Project Creation", "completed": "2026-01-25"},
     {"id": "AUDIT-01", "name": "Map Workspace Terminal/Server Components", "completed": "2026-01-25"},
     {"id": "BUG-08", "name": "Site Hanging on Login", "completed": "2026-01-24"},
     {"id": "BUG-07", "name": "VPS Servers List Not Persisting", "completed": "2026-01-24"},
@@ -84,11 +66,10 @@
     {"id": "BUG-05-REOPEN", "name": "LLM-Dev Panel Drag Resize", "completed": "2026-01-24"},
     {"id": "BUG-02-REOPEN", "name": "Create Project Button Hidden", "completed": "2026-01-24"},
     {"id": "BUG-03-REOPEN", "name": "VPS Connection Wired to Wrong Components", "completed": "2026-01-24"},
-    {"id": "FEAT-01", "name": "Model Selector Smart Filtering", "completed": "2026-01-24"},
-    {"id": "BUG-04", "name": "Model Selector Dropdown Not Opening", "completed": "2026-01-24"}
+    {"id": "FEAT-01", "name": "Model Selector Smart Filtering", "completed": "2026-01-24"}
   ],
   "notes": {
-    "ui_decision": "Option C - Chat-first with tabbed Editor. File tree in left sidebar, not LLM-Dev.",
-    "vps_path": "/root/llm-hub-projects/ keeps projects separate from server system files"
+    "vision": "File explorer MOVES from LLM-Dev to left sidebar. Main area gets Editor tab.",
+    "order": "FEAT-05 (sidebar files) → FEAT-06 (editor tab) → FEAT-03 (remove LLM-Dev explorer) → FEAT-04 (terminal cd)"
   }
 }

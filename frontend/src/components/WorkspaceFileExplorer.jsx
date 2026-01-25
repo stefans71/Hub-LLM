@@ -5,21 +5,39 @@ import { useAuth } from '../contexts/AuthContext'
 /**
  * WorkspaceFileExplorer Component (W-38)
  *
- * Collapsible workspaces panel showing project tree from database
+ * Collapsible workspaces panel showing project tree from database.
+ * Projects expand to show VPS file tree from /root/llm-hub-projects/{slug}/
  */
+
+// VPS project folder base path
+const VPS_PROJECT_BASE = '/root/llm-hub-projects'
+
 export default function WorkspaceFileExplorer({
   isOpen = true,
   onToggle,
   currentProject,
-  onSelectProject
+  onSelectProject,
+  onFileSelect  // New: callback when a file is clicked
 }) {
   const navigate = useNavigate()
   const { getAuthHeader } = useAuth()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Tree state for folder expansion
+  // Tree state for workspace folder expansion
   const [expandedFolders, setExpandedFolders] = useState({})
+
+  // Project expansion state (shows VPS file tree)
+  const [expandedProjects, setExpandedProjects] = useState({})
+
+  // VPS file trees per project
+  const [projectFileTrees, setProjectFileTrees] = useState({})
+
+  // Loading state per project
+  const [projectLoading, setProjectLoading] = useState({})
+
+  // Expanded subdirectories within project file trees
+  const [expandedDirs, setExpandedDirs] = useState({})
 
   // Fetch projects from API
   useEffect(() => {
@@ -27,10 +45,17 @@ export default function WorkspaceFileExplorer({
   }, [])
 
   const loadProjects = async () => {
+    // Add timeout to prevent hanging
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+
     try {
       const res = await fetch('/api/projects/', {
-        headers: { ...getAuthHeader() }
+        headers: { ...getAuthHeader() },
+        signal: controller.signal
       })
+      clearTimeout(timeout)
+
       if (res.ok) {
         const data = await res.json()
         setProjects(data)
@@ -42,9 +67,111 @@ export default function WorkspaceFileExplorer({
         }
       }
     } catch (err) {
-      console.error('Failed to load projects:', err)
+      clearTimeout(timeout)
+      if (err.name !== 'AbortError') {
+        console.error('Failed to load projects:', err)
+      }
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Fetch VPS files for a project
+  const fetchProjectFiles = async (project, subPath = '') => {
+    if (!project.vps_server_id) return
+
+    const projectKey = project.id
+    const basePath = `${VPS_PROJECT_BASE}/${project.slug}`
+    const fullPath = subPath ? `${basePath}/${subPath}` : basePath
+
+    setProjectLoading(prev => ({ ...prev, [projectKey]: true }))
+
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
+
+      const res = await fetch(
+        `/api/files?serverId=${encodeURIComponent(project.vps_server_id)}&path=${encodeURIComponent(fullPath)}`,
+        { signal: controller.signal }
+      )
+      clearTimeout(timeout)
+
+      if (res.ok) {
+        const data = await res.json()
+        // Filter out . and .. directory entries
+        const tree = data.files
+          .filter(f => f.name !== '.' && f.name !== '..')
+          .map(f => ({
+            name: f.name,
+            path: f.path,
+            relativePath: f.path.replace(basePath + '/', ''),
+            type: f.is_dir ? 'folder' : 'file',
+            children: f.is_dir ? null : undefined  // null = not loaded yet
+          }))
+
+        if (subPath) {
+          // Update subtree within existing tree
+          setProjectFileTrees(prev => ({
+            ...prev,
+            [projectKey]: updateTreeAtPath(prev[projectKey] || [], subPath, tree)
+          }))
+        } else {
+          // Set root tree
+          setProjectFileTrees(prev => ({ ...prev, [projectKey]: tree }))
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Failed to fetch project files:', err)
+      }
+    } finally {
+      setProjectLoading(prev => ({ ...prev, [projectKey]: false }))
+    }
+  }
+
+  // Helper to update a subtree at a specific path
+  const updateTreeAtPath = (tree, targetPath, newChildren) => {
+    return tree.map(item => {
+      if (item.relativePath === targetPath && item.type === 'folder') {
+        return { ...item, children: newChildren }
+      }
+      if (item.children && Array.isArray(item.children)) {
+        return { ...item, children: updateTreeAtPath(item.children, targetPath, newChildren) }
+      }
+      return item
+    })
+  }
+
+  // Toggle project expansion (show/hide file tree)
+  const toggleProjectExpansion = (project) => {
+    const projectKey = project.id
+    const isExpanding = !expandedProjects[projectKey]
+
+    setExpandedProjects(prev => ({ ...prev, [projectKey]: isExpanding }))
+
+    // Fetch files if expanding and not already loaded
+    if (isExpanding && !projectFileTrees[projectKey] && project.vps_server_id) {
+      fetchProjectFiles(project)
+    }
+  }
+
+  // Toggle directory expansion within a project's file tree
+  const toggleDirExpansion = (project, item) => {
+    const dirKey = `${project.id}:${item.relativePath}`
+    const isExpanding = !expandedDirs[dirKey]
+
+    setExpandedDirs(prev => ({ ...prev, [dirKey]: isExpanding }))
+
+    // Fetch children if expanding and not already loaded
+    if (isExpanding && item.children === null) {
+      fetchProjectFiles(project, item.relativePath)
+    }
+  }
+
+  // Handle file click
+  const handleFileClick = (project, file) => {
+    if (onFileSelect) {
+      onFileSelect(project, file)
     }
   }
 
@@ -73,6 +200,102 @@ export default function WorkspaceFileExplorer({
     if (onSelectProject) {
       onSelectProject(project)
     }
+  }
+
+  // Get file icon based on extension
+  const getFileIcon = (filename, isFolder = false) => {
+    if (isFolder) {
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#e8a838', flexShrink: 0 }}>
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+      )
+    }
+
+    const ext = filename.split('.').pop()?.toLowerCase()
+    let color = '#9ca3af'
+    if (['js', 'jsx', 'mjs'].includes(ext)) color = '#f7df1e'
+    if (['ts', 'tsx'].includes(ext)) color = '#3178c6'
+    if (['json'].includes(ext)) color = '#cb3837'
+    if (['md', 'mdx'].includes(ext)) color = '#519aba'
+    if (['py'].includes(ext)) color = '#3572A5'
+    if (['html', 'htm'].includes(ext)) color = '#e34c26'
+    if (['css', 'scss', 'sass'].includes(ext)) color = '#563d7c'
+
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color, flexShrink: 0 }}>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+      </svg>
+    )
+  }
+
+  // Recursive file tree renderer
+  const renderFileTree = (project, items, depth = 0) => {
+    if (!items || items.length === 0) return null
+
+    // Sort: folders first, then files, alphabetically
+    const sorted = [...items].sort((a, b) => {
+      if (a.type === 'folder' && b.type !== 'folder') return -1
+      if (a.type !== 'folder' && b.type === 'folder') return 1
+      return a.name.localeCompare(b.name)
+    })
+
+    return sorted.map((item, index) => {
+      const dirKey = `${project.id}:${item.relativePath}`
+      const isExpanded = expandedDirs[dirKey]
+
+      return (
+        <div key={`${item.path}-${index}`}>
+          <div
+            className={`file-tree-item ${item.type === 'folder' ? 'folder' : 'file'}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (item.type === 'folder') {
+                toggleDirExpansion(project, item)
+              } else {
+                handleFileClick(project, item)
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '3px 8px',
+              paddingLeft: `${12 + depth * 12}px`,
+              fontSize: '12px',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              borderRadius: '3px'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            {item.type === 'folder' && (
+              <span style={{ fontSize: '8px', opacity: 0.6, width: '8px' }}>
+                {isExpanded ? '▼' : '▶'}
+              </span>
+            )}
+            {item.type !== 'folder' && <span style={{ width: '8px' }}></span>}
+            {getFileIcon(item.name, item.type === 'folder')}
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {item.name}
+            </span>
+          </div>
+          {item.type === 'folder' && isExpanded && (
+            <div className="file-tree-children">
+              {item.children === null ? (
+                <div style={{ paddingLeft: `${24 + depth * 12}px`, fontSize: '11px', color: 'var(--text-muted)', padding: '4px 0' }}>
+                  Loading...
+                </div>
+              ) : (
+                renderFileTree(project, item.children, depth + 1)
+              )}
+            </div>
+          )}
+        </div>
+      )
+    })
   }
 
   const handleCreateProject = () => {
@@ -157,23 +380,96 @@ export default function WorkspaceFileExplorer({
               {/* Children container */}
               {expandedFolders[folderId] && (
                 <div className="file-tree-children">
-                  {folder.projects.map(project => (
-                    <div
-                      key={project.id}
-                      className={`file-tree-item ${currentProject?.id === project.id ? 'active' : ''}`}
-                      onClick={() => handleProjectClick(project)}
-                      style={currentProject?.id === project.id ? {
-                        background: 'rgba(59, 130, 246, 0.2)',
-                        color: 'var(--primary)'
-                      } : {}}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                      </svg>
-                      <span>{project.name}</span>
-                    </div>
-                  ))}
+                  {folder.projects.map(project => {
+                    const isProjectExpanded = expandedProjects[project.id]
+                    const hasVps = !!project.vps_server_id
+                    const fileTree = projectFileTrees[project.id]
+                    const isLoadingFiles = projectLoading[project.id]
+
+                    return (
+                      <div key={project.id}>
+                        {/* Project row */}
+                        <div
+                          className={`file-tree-item project-item ${currentProject?.id === project.id ? 'active' : ''}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            ...(currentProject?.id === project.id ? {
+                              background: 'rgba(59, 130, 246, 0.2)',
+                              color: 'var(--primary)'
+                            } : {})
+                          }}
+                        >
+                          {/* Expand arrow (only if VPS connected) */}
+                          {hasVps ? (
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleProjectExpansion(project)
+                              }}
+                              style={{
+                                fontSize: '8px',
+                                opacity: 0.6,
+                                cursor: 'pointer',
+                                padding: '2px',
+                                width: '12px',
+                                textAlign: 'center'
+                              }}
+                            >
+                              {isProjectExpanded ? '▼' : '▶'}
+                            </span>
+                          ) : (
+                            <span style={{ width: '12px' }}></span>
+                          )}
+
+                          {/* Project icon and name */}
+                          <div
+                            onClick={() => handleProjectClick(project)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              flex: 1,
+                              cursor: 'pointer',
+                              overflow: 'hidden'
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
+                              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {project.name}
+                            </span>
+                          </div>
+
+                          {/* No VPS indicator */}
+                          {!hasVps && (
+                            <span style={{ fontSize: '10px', opacity: 0.4, marginLeft: 'auto' }} title="No VPS connected">
+                              ○
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Project file tree (when expanded) */}
+                        {isProjectExpanded && hasVps && (
+                          <div className="project-file-tree" style={{ marginLeft: '4px' }}>
+                            {isLoadingFiles && !fileTree && (
+                              <div style={{ paddingLeft: '24px', fontSize: '11px', color: 'var(--text-muted)', padding: '4px 0' }}>
+                                Loading files...
+                              </div>
+                            )}
+                            {fileTree && fileTree.length === 0 && (
+                              <div style={{ paddingLeft: '24px', fontSize: '11px', color: 'var(--text-muted)', padding: '4px 0' }}>
+                                Empty project folder
+                              </div>
+                            )}
+                            {fileTree && renderFileTree(project, fileTree, 1)}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
