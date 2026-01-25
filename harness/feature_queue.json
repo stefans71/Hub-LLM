@@ -1,41 +1,18 @@
 {
   "meta": {
-    "version": "4.1",
-    "phase": "Discovery + Cleanup + Vision",
+    "version": "4.2",
+    "phase": "Audit + Cleanup + Refactor + Vision",
     "last_updated": "2026-01-24"
   },
   "queue": [
     {
-      "id": "BUG-08",
-      "name": "Site Hanging on Login",
-      "size": "M",
-      "priority": 1,
-      "status": "complete",
-      "description": "Site is hanging when trying to log in. May be related to recent VPS persistence fixes.",
-      "debug": [
-        "Check browser console for errors",
-        "Check backend logs",
-        "Check if recent changes to localStorage sync are causing infinite loop",
-        "Check network tab for stuck requests"
-      ],
-      "test": "Can log in and reach dashboard without hanging",
-      "fix": "Added 10-second timeout to auth requests, recursion guard for token refresh, and proper cleanup on unmount"
-    },
-    {
       "id": "AUDIT-01",
       "name": "Map Workspace Terminal/Server Components",
       "size": "S",
-      "priority": 2,
+      "priority": 1,
       "status": "pending",
-      "description": "Before cleanup, map how terminal components are wired. Use Chrome DevTools React inspector or code review.",
-      "output": "Create harness/debug/workspace-component-map.md documenting:",
-      "deliverable": [
-        "1. List all components that touch terminal/server state",
-        "2. Show data flow: which component OWNS the WebSocket connection?",
-        "3. Show props flow: ServerCard → ? → LLMDevPanel → Terminal",
-        "4. Identify: Are Servers tab terminal and LLM-Dev terminal SAME connection or DIFFERENT?",
-        "5. Recommend: Safe way to remove Server card terminal icons without breaking LLM-Dev"
-      ],
+      "description": "Before cleanup, map how terminal components are wired.",
+      "deliverable": "Create harness/debug/workspace-component-map.md",
       "files_to_check": [
         "frontend/src/components/ServerManager.jsx",
         "frontend/src/components/Workspace.jsx",
@@ -48,22 +25,48 @@
       "id": "CLEANUP-01",
       "name": "Remove Duplicate Terminal from Servers Tab",
       "size": "S",
-      "priority": 3,
+      "priority": 2,
       "status": "pending",
       "depends_on": ["AUDIT-01"],
-      "description": "AFTER audit: Remove terminal/folder icons from Server card. Keep LLM-Dev panel terminal only.",
-      "caution": "DO NOT break LLM-Dev terminal - check audit first!",
+      "description": "Remove terminal/folder icons from Server card. Keep LLM-Dev panel terminal only.",
       "test": "Server card has no terminal icon. LLM-Dev terminal still works."
     },
     {
       "id": "CLEANUP-02",
       "name": "Consolidate servers_db to One Location",
       "size": "M",
+      "priority": 3,
+      "status": "pending",
+      "description": "servers_db exists in TWO files. Keep ONE in services/ssh.py.",
+      "files": ["backend/routers/ssh.py", "backend/services/ssh.py"],
+      "test": "Only one servers_db definition. API still works."
+    },
+    {
+      "id": "REFACTOR-01",
+      "name": "Move Data from localStorage to Database",
+      "size": "L",
       "priority": 4,
       "status": "pending",
-      "description": "servers_db exists in TWO files. Keep ONE in services/ssh.py, import into routers/ssh.py.",
-      "files": ["backend/routers/ssh.py", "backend/services/ssh.py"],
-      "test": "Only one servers_db definition exists. API still works."
+      "description": "localStorage is wrong architecture. Data should be in database on server, not in user's browser.",
+      "why": [
+        "Data lost when browser cache cleared",
+        "Can't access from different device/browser",
+        "Claude can't see user's localStorage during testing",
+        "Not production-ready"
+      ],
+      "tasks": [
+        "1. Create SQLite database schema (projects, vps_servers, user_settings)",
+        "2. Create backend CRUD endpoints for each table",
+        "3. Update frontend to fetch from API instead of localStorage",
+        "4. Create migration script to import existing localStorage data",
+        "5. Keep localStorage as fallback/cache only"
+      ],
+      "schema": {
+        "projects": "id, name, slug, vps_server_id, created_at",
+        "vps_servers": "id, name, host, port, username, auth_type, created_at",
+        "user_settings": "id, key, value"
+      },
+      "test": "Create project → Refresh → Project still there. Clear localStorage → Project still there."
     },
     {
       "id": "FEAT-02",
@@ -110,7 +113,7 @@
     {"id": "BUG-01", "name": "Workspace Blank Page Crash", "completed": "2026-01-24"}
   ],
   "notes": {
-    "order": "BUG-08 (login fix) → AUDIT-01 (map components) → CLEANUP (safe removal) → FEATURES",
-    "caution": "Don't remove Server card terminal until we understand the wiring"
+    "order": "AUDIT → CLEANUP → REFACTOR (localStorage→DB) → FEATURES",
+    "refactor_note": "REFACTOR-01 is L size - one full session. Fixes root cause of data loss issues."
   }
 }
