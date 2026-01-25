@@ -405,6 +405,7 @@ export default function Workspace({ project, model, apiKeys }) {
               <ServerManager
                 project={project}
                 projectId={project?.id}
+                isConnected={isConnected}
                 onConnectionChange={(server, connected) => {
                   setIsConnected(connected)
                   if (connected && server) {

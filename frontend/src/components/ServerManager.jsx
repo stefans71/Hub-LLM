@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom'
 export default function ServerManager({
   project,
   projectId,
+  isConnected: parentIsConnected,
   onConnectionChange,
   onServerLinked
 }) {
@@ -34,6 +35,13 @@ export default function ServerManager({
     loadServerInfo()
   }, [project?.vps_server_id, projectId])
 
+  // Update linkedServer.connected when parent connection state changes
+  useEffect(() => {
+    if (linkedServer && parentIsConnected !== undefined) {
+      setLinkedServer(prev => prev ? { ...prev, connected: parentIsConnected } : prev)
+    }
+  }, [parentIsConnected])
+
   const loadServerInfo = async () => {
     setLoading(true)
     try {
@@ -45,18 +53,22 @@ export default function ServerManager({
       // Find the project's linked server
       const serverId = project?.vps_server_id
       if (serverId) {
-        // First try localStorage (primary source)
+        // First try localStorage (primary source for server config)
         const localServer = servers.find(s => s.id === serverId)
+
+        // Also check backend for actual connection status
+        const res = await fetch('/api/ssh/servers')
+        const backendServers = await res.json()
+        const backendServer = backendServers.find(s => s.id === serverId)
+
         if (localServer) {
-          setLinkedServer(localServer)
-        } else {
-          // Fallback: try backend API
-          const res = await fetch('/api/ssh/servers')
-          const backendServers = await res.json()
-          const backendServer = backendServers.find(s => s.id === serverId)
-          if (backendServer) {
-            setLinkedServer(backendServer)
-          }
+          // Merge local config with backend connection status
+          setLinkedServer({
+            ...localServer,
+            connected: backendServer?.connected || false
+          })
+        } else if (backendServer) {
+          setLinkedServer(backendServer)
         }
       }
     } catch (err) {
