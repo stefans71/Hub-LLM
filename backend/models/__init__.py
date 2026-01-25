@@ -42,16 +42,33 @@ class AuthProvider(enum.Enum):
 
 
 class User(Base):
-    """User account model (minimal for auth compatibility)"""
+    """User account model"""
     __tablename__ = "users"
 
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, default=lambda: __import__('uuid').uuid4().hex)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    # Profile
     name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    auth_provider: Mapped[str] = mapped_column(String(50), default="local")
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    # OAuth
+    auth_provider: Mapped[AuthProvider] = mapped_column(SQLEnum(AuthProvider), default=AuthProvider.LOCAL)
     oauth_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    # Email verification
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    verification_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    verification_expires: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # Password reset
+    reset_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    reset_expires: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
 def slugify(name: str) -> str:
