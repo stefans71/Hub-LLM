@@ -4,6 +4,44 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 56 - 2026-01-25 EST
+**Task**: Post-REFACTOR-01 Bugfixes
+**What**: Fixed signup 500 error and workspace sidebar not showing database projects
+
+**Bug 1: Signup 500 Error**
+- **Root Cause 1**: User model missing fields that `services/auth.py` expects (verification_token, verification_expires, email_verified, reset_token, reset_expires, avatar_url, last_login)
+- **Root Cause 2**: `get_session()` was returning session directly, but FastAPI's `Depends()` requires async generator
+- **Root Cause 3**: Old database schema didn't have new User columns (had to delete hubllm.db and recreate)
+
+**Solution**:
+1. Added all missing User model fields to `models/__init__.py`
+2. Changed `get_session()` to async generator that yields session
+3. Updated routers to use `async_session()` directly for context manager pattern
+4. Deleted old hubllm.db and let it recreate with new schema
+
+**Bug 2: Workspace Sidebar Showing Mock Data**
+- **Root Cause**: `WorkspaceFileExplorer.jsx` had hardcoded mock projects (Customers, Personal, Archives folders with fake projects)
+- **Solution**: Updated to fetch from `/api/projects/` and group by workspace dynamically
+
+**Pattern - Two Ways to Use Database Sessions**:
+```python
+# For FastAPI Depends():
+async def get_session():
+    async with async_session() as session:
+        yield session
+
+# For direct usage in functions:
+async with async_session() as session:
+    # use session
+```
+
+**Files Modified**:
+- backend/models/__init__.py (User model fields, get_session as generator)
+- backend/routers/*.py (use async_session() for context manager)
+- frontend/src/components/WorkspaceFileExplorer.jsx (fetch from API)
+
+---
+
 ### Session 55 - 2026-01-25 EST
 **Task**: REFACTOR-01 (L) - Move Data from localStorage to Database
 **What**: Migrated backend from in-memory storage to SQLite database
