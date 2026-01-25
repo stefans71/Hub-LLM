@@ -50,6 +50,14 @@ requestAnimationFrame(() => {
 })
 ```
 
+**Key Pattern - Max Width for Readability**:
+```jsx
+// Cap terminal at ~80 columns for readability on wide screens
+// At 13px font, monospace chars are ~8px wide
+// 80 chars × 8px + padding ≈ 700px
+maxWidth: '700px'
+```
+
 **Files Modified**:
 - frontend/src/components/MultiTerminal.jsx
 - frontend/src/components/LLMDevPanel.jsx
