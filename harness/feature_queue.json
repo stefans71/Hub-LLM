@@ -1,44 +1,26 @@
 {
-  "version": "4.6",
+  "version": "4.7",
   "updated": "2026-01-25",
+  "session_docs": ["CLAUDE.md", "harness/TERMINAL_WORKSPACE.md", "harness/feature_queue.json"],
   "vision": {
     "summary": "Chat-focused workspace with LLM-Dev panel for dev tools",
     "main_area": "Chat ONLY (no tabs)",
     "llm_dev_panel": {
       "tabs": ["Terminal", "Editor", "Docker", "Logs", "Project Context"],
-      "terminal": "Multi-terminal with responsive layout (FEAT-07)"
+      "terminal": "Multi-terminal split panes with color coding (FEAT-09 target)"
     },
     "left_sidebar": {
       "status_dots": "● green=connected, ○ gray=disconnected, 🔴 red=error",
       "project_menu": "3-dot menu (Rename, Settings, Disconnect, Delete)",
       "truncation": "Names truncate with hover tooltip"
-    },
-    "settings_page": {
-      "moved_here": ["VPS Connections (from Servers tab)", "Codespaces config"]
     }
   },
   "queue": [
     {
-      "id": "BUG-13",
-      "name": "TERMINALS Sidebar Not Visible",
-      "size": "S",
-      "priority": 2,
-      "status": "pending",
-      "description": "Right sidebar with terminal list exists in DOM but not rendering visibly",
-      "current": "In inspector: div with width:140px exists at bottom of terminal structure but not visible on screen. Should show TERMINALS header, terminal tabs (bash ✕), and + New button.",
-      "change": [
-        "In MultiTerminal.jsx: check sidebar div CSS - display, visibility, position, z-index",
-        "Sidebar may be positioned outside viewport or behind terminal",
-        "Check flex layout - sidebar should be flex-shrink: 0 with fixed width",
-        "Verify responsive breakpoint logic (>768px = sidebar visible)"
-      ],
-      "test": "Open Terminal tab on desktop - TERMINALS sidebar visible on right side with terminal list and + button"
-    },
-    {
       "id": "BUG-14",
       "name": "Editor Tab Not Loading Selected File",
       "size": "S",
-      "priority": 3,
+      "priority": 1,
       "status": "pending",
       "description": "Clicking file in left sidebar doesn't load content in Editor tab",
       "current": "User clicks README.md in sidebar, switches to Editor tab, but Editor still shows 'Select a file from the sidebar to view'. File selection not reaching editor.",
@@ -49,9 +31,56 @@
         "May need to auto-switch to Editor tab when file is selected"
       ],
       "test": "Click any file in left sidebar - Editor tab shows file content (or auto-switches to Editor and shows content)"
+    },
+    {
+      "id": "FEAT-09",
+      "name": "Multi-Terminal Split Panes with Color Coding",
+      "size": "L",
+      "priority": 2,
+      "status": "pending",
+      "description": "Multiple terminal panes visible simultaneously with color-coded identification",
+      "reference": "READ harness/TERMINAL_WORKSPACE.md for full spec",
+      "current": "Single active terminal with tabbed switching, TERMINALS sidebar on right",
+      "change": [
+        "Terminal 1 (main): Left-justified, opens in project dir, 200px default width",
+        "Click +: New terminal appears to RIGHT of existing terminals (side-by-side, not tabs)",
+        "Each terminal pane has draggable right edge for resizing",
+        "TERMINALS sidebar: Fixed far-right, narrow (~100px), contains + and terminal list",
+        "Color coding: Right-click terminal in sidebar → pick color (8 options)",
+        "Color shows on sidebar dot AND tab header: [● Term 1][● Term 2]",
+        "Tab header shows all terminals with colored dots, click to focus that pane",
+        "All terminals visible simultaneously (not hidden/tabbed)"
+      ],
+      "test": [
+        "Open Terminal tab - Term 1 appears left-justified at 200px",
+        "Click + - Term 2 appears to right of Term 1",
+        "Drag divider between Term 1 and Term 2 - both resize",
+        "Right-click term in sidebar - color picker appears",
+        "Select red - sidebar dot and tab header show red",
+        "Add 3-4 terminals - all visible side by side",
+        "Click tab header - focuses that pane"
+      ]
+    },
+    {
+      "id": "FEAT-08",
+      "name": "Chat File Drop and Paste",
+      "size": "M",
+      "priority": 3,
+      "status": "pending",
+      "description": "Drag/drop files or CTRL+V paste images into chat area",
+      "current": "No way to add files/images to chat",
+      "change": [
+        "Add drop zone overlay to chat area",
+        "Handle paste event for images (CTRL+V)",
+        "Limit to 3-4 images in memory (FIFO queue) to prevent memory bloat",
+        "Store as base64 or blob URLs",
+        "Show image thumbnails in chat input area"
+      ],
+      "test": "Drop image into chat - appears as thumbnail. Paste 5 images - oldest removed, only 4 remain"
     }
   ],
   "completed": [
+    {"id": "BUG-13", "name": "TERMINALS Sidebar Not Visible", "completed": "2026-01-25"},
     {"id": "BUG-12", "name": "xterm-screen Width Calculation", "completed": "2026-01-25"},
     {"id": "FEAT-07", "name": "Multiple Terminal Tabs", "completed": "2026-01-25"},
     {"id": "BUG-11", "name": "LLM-Dev Tabs Don't Switch Content", "completed": "2026-01-25"},
