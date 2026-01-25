@@ -245,18 +245,19 @@ export default function ServerManager({
                 {linkedServer.connected ? (
                   <button
                     onClick={disconnectServer}
-                    className="p-2 hover:bg-gray-700 rounded-lg transition text-yellow-500"
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
                     title="Disconnect"
                   >
-                    <WifiOff size={18} />
+                    <Wifi size={16} className="text-green-500" />
+                    Disconnect
                   </button>
                 ) : (
                   <button
                     onClick={connectServer}
                     disabled={connecting}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition disabled:opacity-50"
                   >
-                    <Wifi size={16} />
+                    <WifiOff size={16} className="text-gray-400" />
                     {connecting ? 'Connecting...' : 'Connect'}
                   </button>
                 )}
