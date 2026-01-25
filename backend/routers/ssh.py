@@ -13,7 +13,7 @@ import asyncio
 import uuid
 import asyncssh
 
-from services.ssh import SSHCredentials, ssh_manager
+from services.ssh import SSHCredentials, ssh_manager, servers_db
 
 router = APIRouter()
 
@@ -72,8 +72,7 @@ class TestConnectionResponse(BaseModel):
     server_info: Optional[dict] = None
 
 
-# === In-memory storage (replace with DB later) ===
-servers_db: dict[str, dict] = {}
+# servers_db is now imported from services/ssh.py (single source of truth)
 
 
 # === Server Management ===

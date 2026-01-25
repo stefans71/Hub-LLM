@@ -4,6 +4,43 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 54 - 2026-01-25 EST
+**Task**: CLEANUP-02 (M) - Consolidate servers_db to One Location
+**What**: Unified duplicate `servers_db` definitions from routers/ssh.py and services/ssh.py
+
+**Root Cause**:
+Two completely separate server databases existed:
+1. `routers/ssh.py:76` - `servers_db: dict[str, dict]` - used by ssh, files, terminal routers
+2. `services/ssh.py:262` - `servers_db: dict[str, ServerCredentials]` - used by servers router
+
+These were disconnected - adding a server via one API didn't appear in the other.
+
+**Solution**:
+1. Keep single `servers_db` in `services/ssh.py` using dict format (more flexible)
+2. Updated all routers to import from `services/ssh.py`
+3. Updated `routers/servers.py` to work with dict format instead of ServerCredentials dataclass
+4. Updated `get_connection()` to read from dict-based servers_db
+5. Fixed `SSHConnection` instantiation in servers router terminal websocket
+
+**Files Modified**:
+- backend/services/ssh.py (unified servers_db, updated get_connection)
+- backend/routers/ssh.py (import servers_db from services/ssh.py)
+- backend/routers/servers.py (use dict format instead of ServerCredentials)
+- backend/routers/files.py (import from services/ssh.py)
+- backend/routers/terminal.py (import from services/ssh.py)
+
+**Pattern**:
+```python
+# Single source of truth for server storage
+# services/ssh.py
+servers_db: dict[str, dict] = {}  # {server_id: {name, host, port, ...}}
+
+# All routers import from here
+from services.ssh import servers_db
+```
+
+---
+
 ### Session 53 - 2026-01-25 EST
 **Task**: BUG-09 (S) - VPS Connection Not Persisting from Project Creation
 **What**: Fixed auto-connect when entering workspace with linked VPS

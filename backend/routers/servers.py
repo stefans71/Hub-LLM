@@ -9,11 +9,11 @@ import uuid
 import asyncio
 
 from services.ssh import (
-    ServerCredentials, 
-    servers_db, 
-    get_connection, 
+    servers_db,
+    get_connection,
     close_connection,
-    SSHConnection
+    SSHConnection,
+    SSHCredentials
 )
 
 router = APIRouter()
@@ -57,19 +57,19 @@ class ServerUpdate(BaseModel):
 async def list_servers(project_id: Optional[str] = None) -> list[ServerResponse]:
     """List all servers, optionally filtered by project"""
     servers = []
-    for server in servers_db.values():
-        if project_id and server.project_id != project_id:
+    for server_id, server in servers_db.items():
+        if project_id and server.get("project_id") != project_id:
             continue
         servers.append(ServerResponse(
-            id=server.id,
-            name=server.name,
-            host=server.host,
-            port=server.port,
-            username=server.username,
-            project_id=server.project_id,
-            has_password=bool(server.password),
-            has_key=bool(server.private_key),
-            created_at=server.created_at
+            id=server_id,
+            name=server["name"],
+            host=server["host"],
+            port=server["port"],
+            username=server["username"],
+            project_id=server.get("project_id"),
+            has_password=bool(server.get("password")),
+            has_key=bool(server.get("private_key")),
+            created_at=server.get("created_at")
         ))
     return servers
 
@@ -78,31 +78,32 @@ async def list_servers(project_id: Optional[str] = None) -> list[ServerResponse]
 async def create_server(server: ServerCreate):
     """Add a new SSH server"""
     server_id = str(uuid.uuid4())
-    
-    credentials = ServerCredentials(
+    created_at = datetime.utcnow()
+
+    # Store as dict (unified format)
+    servers_db[server_id] = {
+        "name": server.name,
+        "host": server.host,
+        "port": server.port,
+        "username": server.username,
+        "auth_type": "key" if server.private_key else "password",
+        "password": server.password,
+        "private_key": server.private_key,
+        "passphrase": None,
+        "project_id": server.project_id,
+        "created_at": created_at
+    }
+
+    return ServerResponse(
         id=server_id,
         name=server.name,
         host=server.host,
         port=server.port,
         username=server.username,
-        password=server.password,
-        private_key=server.private_key,
         project_id=server.project_id,
-        created_at=datetime.utcnow()
-    )
-    
-    servers_db[server_id] = credentials
-    
-    return ServerResponse(
-        id=server_id,
-        name=credentials.name,
-        host=credentials.host,
-        port=credentials.port,
-        username=credentials.username,
-        project_id=credentials.project_id,
-        has_password=bool(credentials.password),
-        has_key=bool(credentials.private_key),
-        created_at=credentials.created_at
+        has_password=bool(server.password),
+        has_key=bool(server.private_key),
+        created_at=created_at
     )
 
 
@@ -111,18 +112,18 @@ async def get_server(server_id: str):
     """Get server details"""
     if server_id not in servers_db:
         raise HTTPException(status_code=404, detail="Server not found")
-    
+
     server = servers_db[server_id]
     return ServerResponse(
-        id=server.id,
-        name=server.name,
-        host=server.host,
-        port=server.port,
-        username=server.username,
-        project_id=server.project_id,
-        has_password=bool(server.password),
-        has_key=bool(server.private_key),
-        created_at=server.created_at
+        id=server_id,
+        name=server["name"],
+        host=server["host"],
+        port=server["port"],
+        username=server["username"],
+        project_id=server.get("project_id"),
+        has_password=bool(server.get("password")),
+        has_key=bool(server.get("private_key")),
+        created_at=server.get("created_at")
     )
 
 
@@ -131,26 +132,30 @@ async def update_server(server_id: str, update: ServerUpdate):
     """Update server details"""
     if server_id not in servers_db:
         raise HTTPException(status_code=404, detail="Server not found")
-    
+
     server = servers_db[server_id]
     update_data = update.model_dump(exclude_unset=True)
-    
+
     for field, value in update_data.items():
-        setattr(server, field, value)
-    
+        server[field] = value
+
+    # Update auth_type if credentials changed
+    if "private_key" in update_data or "password" in update_data:
+        server["auth_type"] = "key" if server.get("private_key") else "password"
+
     # Close existing connection if credentials changed
     await close_connection(server_id)
-    
+
     return ServerResponse(
-        id=server.id,
-        name=server.name,
-        host=server.host,
-        port=server.port,
-        username=server.username,
-        project_id=server.project_id,
-        has_password=bool(server.password),
-        has_key=bool(server.private_key),
-        created_at=server.created_at
+        id=server_id,
+        name=server["name"],
+        host=server["host"],
+        port=server["port"],
+        username=server["username"],
+        project_id=server.get("project_id"),
+        has_password=bool(server.get("password")),
+        has_key=bool(server.get("private_key")),
+        created_at=server.get("created_at")
     )
 
 
@@ -272,7 +277,16 @@ async def terminal_websocket(websocket: WebSocket, server_id: str):
     conn = None
     try:
         # Create new connection for this terminal session
-        conn = SSHConnection(servers_db[server_id])
+        server = servers_db[server_id]
+        credentials = SSHCredentials(
+            host=server["host"],
+            port=server["port"],
+            username=server["username"],
+            password=server.get("password"),
+            private_key=server.get("private_key"),
+            passphrase=server.get("passphrase")
+        )
+        conn = SSHConnection(credentials)
         await conn.connect()
         
         # Get initial terminal size from client

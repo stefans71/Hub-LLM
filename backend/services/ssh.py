@@ -241,27 +241,28 @@ class SSHManager:
 ssh_manager = SSHManager()
 
 
-# ============ Server Credentials Storage ============
-# Used by routers/servers.py
+# ============ Unified Server Storage ============
+# Single source of truth for all server data (in-memory, replace with DB later)
+# Used by: routers/ssh.py, routers/servers.py, routers/files.py, routers/terminal.py
 
-@dataclass
-class ServerCredentials:
-    """Server credentials with metadata"""
-    id: str
-    name: str
-    host: str
-    port: int = 22
-    username: str = "root"
-    password: Optional[str] = None
-    private_key: Optional[str] = None
-    project_id: Optional[str] = None
-    created_at: Optional[object] = None  # datetime
+servers_db: dict[str, dict] = {}
+"""
+Server data structure:
+{
+    "name": str,
+    "host": str,
+    "port": int,
+    "username": str,
+    "auth_type": str,  # "password" or "key"
+    "password": Optional[str],
+    "private_key": Optional[str],
+    "passphrase": Optional[str],
+    "project_id": Optional[str],
+    "created_at": Optional[datetime]
+}
+"""
 
-
-# In-memory storage for server credentials (MVP)
-servers_db: dict[str, ServerCredentials] = {}
-
-# Active connections cache
+# Active connections cache (separate from SSHManager for backward compat)
 _connections: dict[str, SSHConnection] = {}
 
 
@@ -274,14 +275,15 @@ async def get_connection(server_id: str) -> SSHConnection:
     if server_id in _connections:
         return _connections[server_id]
 
-    # Create new connection
+    # Create new connection from dict-based server data
     server = servers_db[server_id]
     credentials = SSHCredentials(
-        host=server.host,
-        port=server.port,
-        username=server.username,
-        password=server.password,
-        private_key=server.private_key
+        host=server["host"],
+        port=server["port"],
+        username=server["username"],
+        password=server.get("password"),
+        private_key=server.get("private_key"),
+        passphrase=server.get("passphrase")
     )
 
     conn = SSHConnection(credentials)

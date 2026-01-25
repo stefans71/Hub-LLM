@@ -10,8 +10,7 @@ from fastapi import APIRouter, Query, HTTPException, Body
 from typing import Optional
 from pydantic import BaseModel
 
-from services.ssh import SSHConnection, SSHCredentials
-from routers.ssh import servers_db  # Use the same servers_db as the ssh router
+from services.ssh import SSHConnection, SSHCredentials, servers_db  # Single source of truth
 from routers.projects import projects_db
 
 router = APIRouter()
@@ -29,7 +28,7 @@ async def get_file_connection(server_id: str) -> SSHConnection:
     if server_id in _file_connections:
         return _file_connections[server_id]
 
-    # Create new connection using data from routers/ssh.py servers_db
+    # Create new connection using data from unified servers_db
     server = servers_db[server_id]
     credentials = SSHCredentials(
         host=server.get("host"),

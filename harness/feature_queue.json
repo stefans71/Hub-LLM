@@ -16,16 +16,6 @@
   },
   "queue": [
     {
-      "id": "CLEANUP-02",
-      "name": "Consolidate servers_db to One Location",
-      "size": "M",
-      "priority": 2,
-      "status": "pending",
-      "description": "servers_db exists in TWO files. Keep ONE in services/ssh.py.",
-      "files": ["backend/routers/ssh.py", "backend/services/ssh.py"],
-      "test": "Only one servers_db definition. API still works."
-    },
-    {
       "id": "REFACTOR-01",
       "name": "Move Data from localStorage to Database",
       "size": "L",
@@ -106,6 +96,7 @@
     }
   ],
   "completed": [
+    {"id": "CLEANUP-02", "name": "Consolidate servers_db to One Location", "completed": "2026-01-25"},
     {"id": "BUG-09", "name": "VPS Connection Not Persisting from Project Creation", "completed": "2026-01-25"},
     {"id": "CLEANUP-01", "name": "Remove Duplicate Terminal from Servers Tab", "completed": "2026-01-25"},
     {"id": "AUDIT-01", "name": "Map Workspace Terminal/Server Components", "completed": "2026-01-25"},

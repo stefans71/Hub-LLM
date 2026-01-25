@@ -11,8 +11,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from typing import Optional
 import asyncio
 
-from services.ssh import SSHConnection, SSHCredentials, ServerCredentials
-from routers.ssh import servers_db  # Use the same servers_db as the ssh router
+from services.ssh import SSHConnection, SSHCredentials, servers_db  # Single source of truth
 from routers.projects import projects_db
 
 router = APIRouter()
