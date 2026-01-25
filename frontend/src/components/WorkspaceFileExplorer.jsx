@@ -1,17 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 /**
  * WorkspaceFileExplorer Component (W-38)
  *
- * Collapsible workspaces panel showing project tree:
- * - W-39: File Explorer Header
- * - W-40: Explorer Title
- * - W-41: Explorer Actions
- * - W-42: Create Project Button
- * - W-43: Collapse Panel Button
- * - W-44: File Tree
- * - W-45-W-51: Folder items and project items
+ * Collapsible workspaces panel showing project tree from database
  */
 export default function WorkspaceFileExplorer({
   isOpen = true,
@@ -20,41 +14,53 @@ export default function WorkspaceFileExplorer({
   onSelectProject
 }) {
   const navigate = useNavigate()
+  const { getAuthHeader } = useAuth()
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading] = useState(true)
 
   // Tree state for folder expansion
-  const [expandedFolders, setExpandedFolders] = useState({
-    customers: true,
-    personal: false,
-    archives: false
-  })
+  const [expandedFolders, setExpandedFolders] = useState({})
 
-  // Sample workspaces data (would come from API in real implementation)
-  const workspaces = {
-    customers: {
-      name: 'Customers',
-      icon: 'folder',
-      projects: [
-        { id: 'api-backend', name: 'API Backend Optimization' },
-        { id: 'acme-corp', name: 'Acme Corp Website' },
-        { id: 'beta-inc', name: 'Beta Inc Dashboard' }
-      ]
-    },
-    personal: {
-      name: 'Personal',
-      icon: 'folder',
-      projects: [
-        { id: 'side-project', name: 'Side Project' },
-        { id: 'learning', name: 'Learning Notes' }
-      ]
-    },
-    archives: {
-      name: 'Archives',
-      icon: 'archive',
-      projects: [
-        { id: 'old-client', name: 'Old Client Project' }
-      ]
+  // Fetch projects from API
+  useEffect(() => {
+    loadProjects()
+  }, [])
+
+  const loadProjects = async () => {
+    try {
+      const res = await fetch('/api/projects/', {
+        headers: { ...getAuthHeader() }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setProjects(data)
+
+        // Auto-expand first workspace
+        if (data.length > 0) {
+          const firstWorkspace = data[0].workspace || 'Default'
+          setExpandedFolders({ [firstWorkspace]: true })
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load projects:', err)
+    } finally {
+      setLoading(false)
     }
   }
+
+  // Group projects by workspace
+  const workspaces = projects.reduce((acc, project) => {
+    const workspace = project.workspace || 'Default'
+    if (!acc[workspace]) {
+      acc[workspace] = {
+        name: workspace.charAt(0).toUpperCase() + workspace.slice(1),
+        icon: workspace === 'archives' ? 'archive' : 'folder',
+        projects: []
+      }
+    }
+    acc[workspace].projects.push(project)
+    return acc
+  }, {})
 
   const toggleFolder = (folderId) => {
     setExpandedFolders(prev => ({
@@ -114,52 +120,65 @@ export default function WorkspaceFileExplorer({
 
       {/* W-44: File Tree */}
       <div className="file-tree">
-        {Object.entries(workspaces).map(([folderId, folder]) => (
-          <div key={folderId}>
-            {/* Folder item (W-45, W-50, W-51) */}
-            <div
-              className="file-tree-item folder"
-              onClick={() => toggleFolder(folderId)}
-            >
-              <span>{expandedFolders[folderId] ? '▼' : '▶'}</span>
-              {folder.icon === 'archive' ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.6 }}>
-                  <polyline points="21 8 21 21 3 21 3 8"></polyline>
-                  <rect x="1" y="3" width="22" height="5"></rect>
-                  <line x1="10" y1="12" x2="14" y2="12"></line>
-                </svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                </svg>
-              )}
-              <span>{folder.name}</span>
-            </div>
-
-            {/* Children container (W-46) */}
-            {expandedFolders[folderId] && (
-              <div className="file-tree-children">
-                {folder.projects.map(project => (
-                  <div
-                    key={project.id}
-                    className={`file-tree-item ${currentProject?.id === project.id ? 'active' : ''}`}
-                    onClick={() => handleProjectClick(project)}
-                    style={currentProject?.id === project.id ? {
-                      background: 'rgba(59, 130, 246, 0.2)',
-                      color: 'var(--primary)'
-                    } : {}}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                    </svg>
-                    <span>{project.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+        {loading ? (
+          <div className="file-tree-item" style={{ opacity: 0.6 }}>
+            Loading...
           </div>
-        ))}
+        ) : Object.keys(workspaces).length === 0 ? (
+          <div className="file-tree-item" style={{ opacity: 0.6 }}>
+            No projects yet
+          </div>
+        ) : (
+          Object.entries(workspaces).map(([folderId, folder]) => (
+            <div key={folderId}>
+              {/* Folder item */}
+              <div
+                className="file-tree-item folder"
+                onClick={() => toggleFolder(folderId)}
+              >
+                <span>{expandedFolders[folderId] ? '▼' : '▶'}</span>
+                {folder.icon === 'archive' ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.6 }}>
+                    <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                    <rect x="1" y="3" width="22" height="5"></rect>
+                    <line x1="10" y1="12" x2="14" y2="12"></line>
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                )}
+                <span>{folder.name}</span>
+                <span style={{ marginLeft: 'auto', fontSize: '11px', opacity: 0.5 }}>
+                  {folder.projects.length}
+                </span>
+              </div>
+
+              {/* Children container */}
+              {expandedFolders[folderId] && (
+                <div className="file-tree-children">
+                  {folder.projects.map(project => (
+                    <div
+                      key={project.id}
+                      className={`file-tree-item ${currentProject?.id === project.id ? 'active' : ''}`}
+                      onClick={() => handleProjectClick(project)}
+                      style={currentProject?.id === project.id ? {
+                        background: 'rgba(59, 130, 246, 0.2)',
+                        color: 'var(--primary)'
+                      } : {}}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                      </svg>
+                      <span>{project.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
     </div>
   )
