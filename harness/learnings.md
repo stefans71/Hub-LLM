@@ -5,7 +5,14 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 60 - 2026-01-25 EST
-**Task**: UI-03 (S) - Project Status Dots in Sidebar
+**Task**: UI-03 (S) + UI-04 (XS) - Sidebar Improvements
+
+**UI-04: Project Name Truncation + Hover Tooltip**
+- Added `title={project.name}` attribute to all project name spans
+- CSS truncation already in place: `text-overflow: ellipsis; overflow: hidden; white-space: nowrap;`
+- Files: WorkspaceFileExplorer.jsx, DashboardSidebar.jsx, ProjectSidebar.jsx
+
+**UI-03: Project Status Dots in Sidebar**
 
 **What**: Added VPS connection status dots to projects in sidebar showing real-time connection state
 

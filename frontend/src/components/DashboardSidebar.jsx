@@ -81,7 +81,7 @@ function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProj
                   title={statusDot.title}
                 />
                 <FileText size={14} className="flex-shrink-0 opacity-60" />
-                <span className="truncate">{project.name}</span>
+                <span className="truncate" title={project.name}>{project.name}</span>
               </div>
             )
           })}
