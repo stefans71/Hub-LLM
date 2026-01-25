@@ -1,17 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
-import { Package, ChevronUp, ChevronDown, Server, Search, Key } from 'lucide-react'
+import { Package, Search, Key } from 'lucide-react'
 import ModelNotification from './ModelNotification'
 
 /**
  * WorkspaceTopBar Component (W-03)
  *
+ * UI-01 Simplified: VPS badge and connection status removed
+ * - Status now shown via sidebar project dot
+ * - VPS info accessible via Settings
+ *
  * Contains:
- * - W-04: Project Info Container (W-05: Project Name, W-06: Location Badge)
- * - W-07: Divider
- * - W-08: Connection Status
+ * - W-05: Project Name (left)
  * - W-09/W-10: Header Toggle Button
- * - W-11 to W-28: Model Selector with Dropdown
- * - W-29: Export Button
+ * - W-11 to W-28: Model Selector with Dropdown (right)
+ * - W-29: Export Button (right)
  * - FEAT-01: Smart filtering based on API keys
  */
 
@@ -88,9 +90,6 @@ export default function WorkspaceTopBar({
   project,
   model,
   onModelChange,
-  isConnected = false,
-  isConnecting = false,
-  onConnectionToggle,
   onExport
 }) {
   const [collapsed, setCollapsed] = useState(false)
@@ -98,7 +97,6 @@ export default function WorkspaceTopBar({
   const [selectedModel, setSelectedModel] = useState(() => getModelDisplay(model))
   const [showNotification, setShowNotification] = useState(false)
   const [pendingModel, setPendingModel] = useState(null)
-  const [vpsInfo, setVpsInfo] = useState(null)
   const [searchFilter, setSearchFilter] = useState('')
   const [apiKeys, setApiKeys] = useState({ openrouter: false, anthropic: true })
   const dropdownRef = useRef(null)
@@ -130,42 +128,6 @@ export default function WorkspaceTopBar({
       setSearchFilter('')
     }
   }, [dropdownOpen])
-
-  // Fetch VPS server info when project has vps_server_id
-  useEffect(() => {
-    if (project?.vps_server_id) {
-      fetchVpsInfo(project.vps_server_id)
-    } else {
-      setVpsInfo(null)
-    }
-  }, [project?.vps_server_id])
-
-  const fetchVpsInfo = async (serverId) => {
-    try {
-      // First check localStorage (primary source of truth for VPS servers)
-      const savedServers = localStorage.getItem('vps_servers')
-      if (savedServers) {
-        const localServers = JSON.parse(savedServers)
-        const localServer = localServers.find(s => s.id === serverId)
-        if (localServer) {
-          setVpsInfo({ name: localServer.name, ip: localServer.host })
-          return // Found in localStorage, no need to check backend
-        }
-      }
-
-      // Fallback: try backend API
-      const res = await fetch('/api/ssh/servers')
-      if (res.ok) {
-        const servers = await res.json()
-        const server = servers.find(s => s.id === serverId)
-        if (server) {
-          setVpsInfo({ name: server.name, ip: server.host })
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch VPS info:', err)
-    }
-  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -257,25 +219,6 @@ export default function WorkspaceTopBar({
     setCollapsed(!collapsed)
   }
 
-  // Determine location type from project
-  const getLocationType = () => {
-    if (!project) return { type: 'local', label: 'Local', icon: null }
-    // Check for VPS connection (either from fetched info or project data)
-    if (project.vps_server_id) {
-      if (vpsInfo) {
-        return { type: 'vps', label: `VPS: ${vpsInfo.name} (${vpsInfo.ip})`, icon: 'server' }
-      }
-      return { type: 'vps', label: 'VPS: Loading...', icon: 'server' }
-    }
-    // Legacy support for project.vps object
-    if (project.vps) return { type: 'vps', label: `VPS: ${project.vps.name} (${project.vps.ip})`, icon: 'server' }
-    if (project.github_repo) return { type: 'github', label: `GitHub: ${project.github_repo}`, icon: 'github' }
-    if (project.github) return { type: 'github', label: `GitHub: ${project.github}`, icon: 'github' }
-    return { type: 'local', label: 'Local', icon: null }
-  }
-
-  const location = getLocationType()
-
   // Get filtered and grouped models
   const groupedModels = getFilteredModels()
 
@@ -297,77 +240,11 @@ export default function WorkspaceTopBar({
         transition: 'height 0.2s ease, padding 0.2s ease'
       }}
     >
-      {/* W-04: Project Info Container */}
+      {/* W-05: Project Name (left side) */}
       {!collapsed && (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* W-05: Project Name */}
-            <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-primary)' }}>
-              {project?.name || 'Untitled Project'}
-            </span>
-
-            {/* W-06: Location Badge */}
-            <span
-              className={`workspace-location ${location.type}`}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                background: location.type === 'vps' ? 'rgba(139, 92, 246, 0.2)' :
-                           location.type === 'github' ? 'rgba(59, 130, 246, 0.2)' :
-                           'rgba(34, 197, 94, 0.2)',
-                color: location.type === 'vps' ? '#a78bfa' :
-                       location.type === 'github' ? 'var(--primary)' :
-                       'var(--success)'
-              }}
-            >
-              {location.type === 'vps' && (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-                  <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-                  <line x1="6" y1="6" x2="6.01" y2="6"></line>
-                  <line x1="6" y1="18" x2="6.01" y2="18"></line>
-                </svg>
-              )}
-              {location.label}
-            </span>
-          </div>
-
-          {/* W-07: Divider */}
-          <div style={{ width: '1px', height: '24px', background: 'var(--border)' }}></div>
-
-          {/* W-08: Connection Status */}
-          <div
-            className={`connection-status ${isConnecting ? 'connecting' : isConnected ? 'connected' : 'disconnected'}`}
-            onClick={!isConnecting ? onConnectionToggle : undefined}
-            title={isConnecting ? 'Connecting...' : isConnected ? 'Click to disconnect' : 'Click to connect'}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '20px',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: isConnecting ? 'wait' : 'pointer',
-              background: isConnecting ? 'rgba(251, 191, 36, 0.15)' : isConnected ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              color: isConnecting ? 'var(--warning, #fbbf24)' : isConnected ? 'var(--success)' : 'var(--error)',
-              opacity: isConnecting ? 0.8 : 1
-            }}
-          >
-            <span style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: 'currentColor',
-              animation: isConnecting ? 'pulse 1s infinite' : 'none'
-            }}></span>
-            {isConnecting ? 'Connecting...' : isConnected ? 'Connected' : 'Disconnected'}
-          </div>
-        </>
+        <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-primary)' }}>
+          {project?.name || 'Untitled Project'}
+        </span>
       )}
 
       {/* W-09/W-10: Header Toggle Button */}

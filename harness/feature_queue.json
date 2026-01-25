@@ -32,21 +32,10 @@
   },
   "queue": [
     {
-      "id": "UI-01",
-      "name": "Simplify Top Bar",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Remove clutter from top bar",
-      "remove": ["VPS: Digital Ocean (IP) badge", "Connected badge/button"],
-      "keep": ["Project name (left)", "Model selector (right)", "Export button"],
-      "why": "Status moves to sidebar project dot, VPS info is in Settings"
-    },
-    {
       "id": "UI-02",
       "name": "Remove Servers and Codespaces Tabs",
       "size": "S",
-      "priority": 2,
+      "priority": 1,
       "status": "pending",
       "description": "Main area should be Chat only",
       "remove": ["Servers tab", "Codespaces tab"],
@@ -153,6 +142,7 @@
     }
   ],
   "completed": [
+    {"id": "UI-01", "name": "Simplify Top Bar", "completed": "2026-01-25"},
     {"id": "FEAT-05", "name": "Left Sidebar: Expandable Project File Tree", "completed": "2026-01-25"},
     {"id": "FEAT-02", "name": "Project Creates Folder on VPS", "completed": "2026-01-25"},
     {"id": "REFACTOR-01", "name": "Move Data from localStorage to Database", "completed": "2026-01-25"},

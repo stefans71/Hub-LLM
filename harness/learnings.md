@@ -4,6 +4,29 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 59 - 2026-01-25 EST
+**Task**: UI-01 (S) - Simplify Top Bar
+**What**: Removed VPS badge and connection status from top bar for cleaner UI
+
+**Changes**:
+1. Removed W-06 (Location Badge) - showed "VPS: Digital Ocean (IP)"
+2. Removed W-07 (Divider)
+3. Removed W-08 (Connection Status) - showed "Connected/Disconnected"
+4. Removed unused props: `isConnected`, `isConnecting`, `onConnectionToggle`
+5. Removed unused state: `vpsInfo`, `fetchVpsInfo()`
+6. Removed unused imports: `Server`, `ChevronUp`, `ChevronDown`
+
+**Result**:
+- Top bar now shows: Project Name (left) | Model Selector + Export (right)
+- VPS connection status will move to sidebar project dot (UI-03)
+- VPS details accessible via Settings page
+
+**Files Modified**:
+- frontend/src/components/WorkspaceTopBar.jsx (simplified, removed VPS/connection UI)
+- frontend/src/components/Workspace.jsx (removed unused props from WorkspaceTopBar)
+
+---
+
 ### Session 58 - 2026-01-25 EST
 **Task**: FEAT-05 (M) - Left Sidebar: Expandable Project File Tree
 **What**: Added expandable file trees to projects in left sidebar that show VPS files from /root/llm-hub-projects/{slug}/

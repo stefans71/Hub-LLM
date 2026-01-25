@@ -309,14 +309,11 @@ export default function Workspace({ project, model, apiKeys }) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden h-full" style={{ background: 'var(--bg-primary)' }}>
-      {/* W-03: Workspace Top Bar */}
+      {/* W-03: Workspace Top Bar (UI-01: Simplified - VPS badge & connection status removed) */}
       <WorkspaceTopBar
         project={project}
         model={selectedModel}
         onModelChange={handleModelChange}
-        isConnected={isConnected}
-        isConnecting={isConnecting}
-        onConnectionToggle={handleConnectionToggle}
         onExport={handleExport}
       />
 
