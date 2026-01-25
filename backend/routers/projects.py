@@ -39,8 +39,9 @@ async def create_vps_project_folder(vps_server_id: str, project_slug: str) -> bo
     Create project folder on VPS: /root/llm-hub-projects/{project_slug}/
 
     Returns True if successful, False otherwise.
-    Does not raise exceptions - logs errors instead.
+    Does not raise exceptions - prints errors instead.
     """
+    print(f"Creating VPS folder: {VPS_PROJECT_BASE}/{project_slug}")
     try:
         # Ensure server is loaded in cache
         async with async_session() as session:
@@ -49,7 +50,7 @@ async def create_vps_project_folder(vps_server_id: str, project_slug: str) -> bo
             )
             server = result.scalar_one_or_none()
             if not server:
-                logger.warning(f"VPS server {vps_server_id} not found for folder creation")
+                print(f"VPS server {vps_server_id} not found for folder creation")
                 return False
             await load_server_to_cache(server)
 
@@ -61,21 +62,19 @@ async def create_vps_project_folder(vps_server_id: str, project_slug: str) -> bo
         # Create base directory if it doesn't exist
         try:
             await asyncio.wait_for(conn.create_directory(VPS_PROJECT_BASE), timeout=5.0)
-            logger.info(f"Created base directory: {VPS_PROJECT_BASE}")
         except Exception:
-            # Directory likely already exists
-            pass
+            pass  # Directory likely already exists
 
         # Create project directory
         await asyncio.wait_for(conn.create_directory(project_path), timeout=5.0)
-        logger.info(f"Created VPS project folder: {project_path}")
+        print(f"Created VPS folder: {project_path}")
         return True
 
     except asyncio.TimeoutError:
-        logger.warning(f"Timeout creating VPS folder for project {project_slug}")
+        print(f"Timeout creating VPS folder for {project_slug}")
         return False
     except Exception as e:
-        logger.warning(f"Failed to create VPS folder for {project_slug}: {e}")
+        print(f"Failed to create VPS folder for {project_slug}: {e}")
         return False
 
 
@@ -223,8 +222,8 @@ async def create_project(project: ProjectCreate):
         await session.refresh(new_project)
         response = db_to_response(new_project)
 
-    # Create folder on VPS if VPS connection type
-    if project.connection_type == "vps" and project.vps_server_id:
+    # Create folder on VPS if VPS server is linked
+    if project.vps_server_id:
         await create_vps_project_folder(project.vps_server_id, slug)
 
     return response
