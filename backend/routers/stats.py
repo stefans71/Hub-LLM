@@ -4,10 +4,11 @@ Stats Router - Dashboard statistics and usage metrics
 from fastapi import APIRouter, Header
 from pydantic import BaseModel
 from typing import Optional
+from sqlalchemy import select, func
 import httpx
 import os
 
-from routers.projects import projects_db
+from models import Project as ProjectModel, get_session
 
 router = APIRouter()
 
@@ -49,9 +50,13 @@ async def get_dashboard_stats(
         - github_projects: Number of GitHub-connected projects
         - local_projects: Number of local projects
     """
-    # Count projects
-    projects_count = len(projects_db)
-    github_projects = sum(1 for p in projects_db.values() if getattr(p, 'github_repo', None))
+    # Count projects from database
+    async with get_session() as session:
+        result = await session.execute(select(ProjectModel))
+        projects = result.scalars().all()
+
+    projects_count = len(projects)
+    github_projects = sum(1 for p in projects if p.github_repo)
     local_projects = projects_count - github_projects
 
     # Get token usage from OpenRouter if key provided

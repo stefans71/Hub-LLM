@@ -241,13 +241,13 @@ class SSHManager:
 ssh_manager = SSHManager()
 
 
-# ============ Unified Server Storage ============
-# Single source of truth for all server data (in-memory, replace with DB later)
-# Used by: routers/ssh.py, routers/servers.py, routers/files.py, routers/terminal.py
+# ============ Server Cache (loaded from database) ============
+# In-memory cache for fast SSH operations
+# Loaded from SQLite database by routers/servers.py
 
-servers_db: dict[str, dict] = {}
+servers_cache: dict[str, dict] = {}
 """
-Server data structure:
+Server data structure (cached from database):
 {
     "name": str,
     "host": str,
@@ -257,26 +257,44 @@ Server data structure:
     "password": Optional[str],
     "private_key": Optional[str],
     "passphrase": Optional[str],
-    "project_id": Optional[str],
-    "created_at": Optional[datetime]
 }
 """
 
-# Active connections cache (separate from SSHManager for backward compat)
+# Active connections cache
 _connections: dict[str, SSHConnection] = {}
+
+
+async def load_server_to_cache(server) -> None:
+    """Load a server from database model into cache"""
+    servers_cache[server.id] = {
+        "name": server.name,
+        "host": server.host,
+        "port": server.port,
+        "username": server.username,
+        "auth_type": server.auth_type,
+        "password": server.password,
+        "private_key": server.private_key,
+        "passphrase": server.passphrase,
+    }
+
+
+def remove_from_cache(server_id: str) -> None:
+    """Remove a server from cache"""
+    if server_id in servers_cache:
+        del servers_cache[server_id]
 
 
 async def get_connection(server_id: str) -> SSHConnection:
     """Get or create an SSH connection for a server"""
-    if server_id not in servers_db:
-        raise ValueError(f"Server {server_id} not found")
+    if server_id not in servers_cache:
+        raise ValueError(f"Server {server_id} not found in cache. Load from database first.")
 
     # Return existing connection if available
     if server_id in _connections:
         return _connections[server_id]
 
-    # Create new connection from dict-based server data
-    server = servers_db[server_id]
+    # Create new connection from cached server data
+    server = servers_cache[server_id]
     credentials = SSHCredentials(
         host=server["host"],
         port=server["port"],

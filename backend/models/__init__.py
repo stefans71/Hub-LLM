@@ -1,33 +1,28 @@
 """
 SQLAlchemy Database Models for HubLLM
 
-Models:
-- User: User accounts with auth
-- Project: User projects/workspaces
-- ChatMessage: Chat history per project
-- APIKey: Encrypted API keys per user
-- Server: SSH server credentials per user
+Uses SQLite for simplicity. Tables:
+- vps_servers: VPS server configurations
+- projects: Development projects
+- chat_messages: Chat history per project
+- user_settings: Key-value user settings
 """
 from datetime import datetime
 from typing import Optional
-import uuid
+import os
+import json
+import re
 
 from sqlalchemy import (
-    Column, String, Text, DateTime, Boolean, ForeignKey,
-    UniqueConstraint, Index, Enum as SQLEnum
+    Column, String, Text, DateTime, Boolean, Integer, ForeignKey,
+    create_engine, Enum as SQLEnum
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy.orm import DeclarativeBase, relationship, Mapped, mapped_column
 import enum
-import os
 
-
-# Database URL from environment
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://hubllm:hubllm@localhost:5432/hubllm"
-)
+# Database URL - SQLite for simplicity
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./hubllm.db")
 
 # Async engine and session
 engine = create_async_engine(DATABASE_URL, echo=False)
@@ -46,157 +41,160 @@ class AuthProvider(enum.Enum):
     GOOGLE = "google"
 
 
-class APIKeyProvider(enum.Enum):
-    """API key provider types"""
-    OPENROUTER = "openrouter"
-    CLAUDE = "claude"
-    OPENAI = "openai"
-    GITHUB = "github"
-
-
 class User(Base):
-    """User account model"""
+    """User account model (minimal for auth compatibility)"""
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=True)  # Null for OAuth users
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    auth_provider: Mapped[str] = mapped_column(String(50), default="local")
+    oauth_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    # Profile
-    name = Column(String(255), nullable=True)
-    avatar_url = Column(String(500), nullable=True)
 
-    # OAuth
-    auth_provider = Column(SQLEnum(AuthProvider), default=AuthProvider.LOCAL)
-    oauth_id = Column(String(255), nullable=True)  # Provider-specific user ID
+def slugify(name: str) -> str:
+    """Convert name to URL-friendly slug"""
+    slug = name.lower().strip()
+    slug = re.sub(r'[^\w\s-]', '', slug)
+    slug = re.sub(r'[\s_-]+', '-', slug)
+    slug = slug.strip('-')
+    return slug or 'project'
 
-    # Email verification
-    email_verified = Column(Boolean, default=False)
-    verification_token = Column(String(255), nullable=True)
-    verification_expires = Column(DateTime, nullable=True)
 
-    # Password reset
-    reset_token = Column(String(255), nullable=True)
-    reset_expires = Column(DateTime, nullable=True)
+class VPSServer(Base):
+    """VPS Server configuration"""
+    __tablename__ = "vps_servers"
 
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    last_login = Column(DateTime, nullable=True)
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    host: Mapped[str] = mapped_column(String(255), nullable=False)
+    port: Mapped[int] = mapped_column(Integer, default=22)
+    username: Mapped[str] = mapped_column(String(255), default="root")
+    auth_type: Mapped[str] = mapped_column(String(50), default="key")  # "password" or "key"
+    password: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    private_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    passphrase: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    last_test_success: Mapped[bool] = mapped_column(Boolean, default=False)
+    server_info: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON string
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    # Relationships
-    projects = relationship("Project", back_populates="user", cascade="all, delete-orphan")
-    api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
-    servers = relationship("Server", back_populates="user", cascade="all, delete-orphan")
+    # Relationship with projects
+    projects: Mapped[list["Project"]] = relationship("Project", back_populates="vps_server")
 
-    __table_args__ = (
-        UniqueConstraint('auth_provider', 'oauth_id', name='uq_oauth_user'),
-        Index('ix_users_oauth', 'auth_provider', 'oauth_id'),
-    )
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "host": self.host,
+            "port": self.port,
+            "username": self.username,
+            "auth_type": self.auth_type,
+            "password": self.password,
+            "private_key": self.private_key,
+            "passphrase": self.passphrase,
+            "lastTestSuccess": self.last_test_success,
+            "serverInfo": json.loads(self.server_info) if self.server_info else None,
+            "createdAt": self.created_at.isoformat() if self.created_at else None
+        }
 
 
 class Project(Base):
-    """Project/workspace model"""
+    """Development project"""
     __tablename__ = "projects"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    brief: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    workspace: Mapped[str] = mapped_column(String(255), default="default")
+    color: Mapped[str] = mapped_column(String(7), default="#3B82F6")
 
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    color = Column(String(7), default="#3B82F6")  # Hex color
-    context = Column(Text, nullable=True)  # System prompt/context for AI
+    # Connection
+    connection_type: Mapped[str] = mapped_column(String(50), default="github")  # "github" or "vps"
+    github_repo: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    vps_server_id: Mapped[Optional[str]] = mapped_column(String(64), ForeignKey("vps_servers.id"), nullable=True)
+
+    # Context (JSON string)
+    context: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Agents and MCP servers (JSON arrays)
+    agent_ids: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    mcp_server_ids: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Status
+    status: Mapped[str] = mapped_column(String(50), default="active")
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    user = relationship("User", back_populates="projects")
-    messages = relationship("ChatMessage", back_populates="project", cascade="all, delete-orphan")
+    vps_server: Mapped[Optional["VPSServer"]] = relationship("VPSServer", back_populates="projects")
+    messages: Mapped[list["ChatMessage"]] = relationship("ChatMessage", back_populates="project", cascade="all, delete-orphan")
 
-    __table_args__ = (
-        Index('ix_projects_user', 'user_id'),
-    )
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "slug": self.slug,
+            "description": self.description,
+            "brief": self.brief,
+            "workspace": self.workspace,
+            "color": self.color,
+            "connection_type": self.connection_type,
+            "github_repo": self.github_repo,
+            "vps_server_id": self.vps_server_id,
+            "context": json.loads(self.context) if self.context else None,
+            "agent_ids": json.loads(self.agent_ids) if self.agent_ids else [],
+            "mcp_server_ids": json.loads(self.mcp_server_ids) if self.mcp_server_ids else [],
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        }
 
 
 class ChatMessage(Base):
-    """Chat message history model"""
+    """Chat history for projects"""
     __tablename__ = "chat_messages"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[str] = mapped_column(String(64), ForeignKey("projects.id"), nullable=False)
+    role: Mapped[str] = mapped_column(String(50), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    model: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    role = Column(String(20), nullable=False)  # 'user', 'assistant', 'system'
-    content = Column(Text, nullable=False)
-    model = Column(String(100), nullable=True)  # Model used for this response
+    # Relationship
+    project: Mapped["Project"] = relationship("Project", back_populates="messages")
 
-    # Token usage tracking
-    prompt_tokens = Column(String(20), nullable=True)
-    completion_tokens = Column(String(20), nullable=True)
-
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    # Relationships
-    project = relationship("Project", back_populates="messages")
-
-    __table_args__ = (
-        Index('ix_chat_messages_project', 'project_id'),
-        Index('ix_chat_messages_created', 'created_at'),
-    )
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "project_id": self.project_id,
+            "role": self.role,
+            "content": self.content,
+            "model": self.model,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None
+        }
 
 
-class APIKey(Base):
-    """Encrypted API key storage model"""
-    __tablename__ = "api_keys"
+class UserSetting(Base):
+    """User settings storage"""
+    __tablename__ = "user_settings"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    value: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    provider = Column(SQLEnum(APIKeyProvider), nullable=False)
-    key_encrypted = Column(Text, nullable=False)  # Encrypted with user's secret
-    key_hint = Column(String(20), nullable=True)  # Last 4 chars for display
-
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    user = relationship("User", back_populates="api_keys")
-
-    __table_args__ = (
-        UniqueConstraint('user_id', 'provider', name='uq_user_provider'),
-        Index('ix_api_keys_user', 'user_id'),
-    )
-
-
-class Server(Base):
-    """SSH server credentials model"""
-    __tablename__ = "servers"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-
-    name = Column(String(255), nullable=False)
-    host = Column(String(255), nullable=False)
-    port = Column(String(10), default="22")
-    username = Column(String(255), nullable=False)
-
-    # Auth (encrypted in production)
-    password_encrypted = Column(Text, nullable=True)
-    private_key_encrypted = Column(Text, nullable=True)
-
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    last_connected = Column(DateTime, nullable=True)
-
-    # Relationships
-    user = relationship("User", back_populates="servers")
-
-    __table_args__ = (
-        Index('ix_servers_user', 'user_id'),
-    )
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "key": self.key,
+            "value": self.value
+        }
 
 
 # Database initialization functions
@@ -204,30 +202,30 @@ async def init_db():
     """Create all tables"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("Database tables created successfully")
+    print(f"Database initialized: {DATABASE_URL}")
 
 
 async def close_db():
     """Close database engine"""
     await engine.dispose()
+    print("Database connection closed")
 
 
-async def get_session() -> AsyncSession:
-    """Get a database session"""
-    async with async_session() as session:
-        yield session
+def get_session() -> AsyncSession:
+    """Get a database session context manager"""
+    return async_session()
 
 
 # Export all models
 __all__ = [
     "Base",
     "User",
+    "AuthProvider",
+    "VPSServer",
     "Project",
     "ChatMessage",
-    "APIKey",
-    "Server",
-    "AuthProvider",
-    "APIKeyProvider",
+    "UserSetting",
+    "slugify",
     "engine",
     "async_session",
     "init_db",

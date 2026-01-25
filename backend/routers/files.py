@@ -9,9 +9,10 @@ Provides endpoints for:
 from fastapi import APIRouter, Query, HTTPException, Body
 from typing import Optional
 from pydantic import BaseModel
+from sqlalchemy import select
 
-from services.ssh import SSHConnection, SSHCredentials, servers_db  # Single source of truth
-from routers.projects import projects_db
+from services.ssh import SSHConnection, SSHCredentials, servers_cache, load_server_to_cache
+from models import VPSServer as VPSServerModel, Project as ProjectModel, get_session
 
 router = APIRouter()
 
@@ -20,16 +21,22 @@ _file_connections: dict[str, SSHConnection] = {}
 
 
 async def get_file_connection(server_id: str) -> SSHConnection:
-    """Get or create an SSH connection for file operations using the correct servers_db"""
-    if server_id not in servers_db:
-        raise ValueError(f"Server {server_id} not found")
+    """Get or create an SSH connection for file operations"""
+    # Load from database if not in cache
+    if server_id not in servers_cache:
+        async with get_session() as session:
+            result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
+            server = result.scalar_one_or_none()
+            if not server:
+                raise ValueError(f"Server {server_id} not found")
+            await load_server_to_cache(server)
 
     # Return existing connection if available and connected
     if server_id in _file_connections:
         return _file_connections[server_id]
 
-    # Create new connection using data from unified servers_db
-    server = servers_db[server_id]
+    # Create new connection using cached data
+    server = servers_cache[server_id]
     credentials = SSHCredentials(
         host=server.get("host"),
         port=server.get("port", 22),
@@ -49,6 +56,35 @@ class FileWriteRequest(BaseModel):
     """Request body for writing a file"""
     path: str
     content: str
+
+
+async def resolve_server_id(server_id: Optional[str], project_id: Optional[str]) -> str:
+    """Resolve server ID from either direct ID or project ID"""
+    if server_id:
+        return server_id
+
+    if project_id:
+        async with get_session() as session:
+            result = await session.execute(select(ProjectModel).where(ProjectModel.id == project_id))
+            project = result.scalar_one_or_none()
+            if not project:
+                raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+            if not project.vps_server_id:
+                raise HTTPException(status_code=400, detail="Project has no VPS server configured")
+            return project.vps_server_id
+
+    raise HTTPException(status_code=400, detail="Either serverId or projectId is required")
+
+
+async def ensure_server_exists(server_id: str) -> None:
+    """Ensure server exists in database and cache"""
+    if server_id not in servers_cache:
+        async with get_session() as session:
+            result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
+            server = result.scalar_one_or_none()
+            if not server:
+                raise HTTPException(status_code=404, detail=f"Server {server_id} not found")
+            await load_server_to_cache(server)
 
 
 @router.get("")
@@ -72,24 +108,8 @@ async def list_files(
         - modified: Last modified timestamp
         - permissions: Unix permissions (octal)
     """
-    # Resolve server ID
-    resolved_server_id = None
-
-    if serverId:
-        resolved_server_id = serverId
-    elif projectId:
-        if projectId not in projects_db:
-            raise HTTPException(status_code=404, detail=f"Project {projectId} not found")
-        project = projects_db[projectId]
-        resolved_server_id = project.vps_server_id
-        if not resolved_server_id:
-            raise HTTPException(status_code=400, detail="Project has no VPS server configured")
-    else:
-        raise HTTPException(status_code=400, detail="Either serverId or projectId is required")
-
-    # Check server exists
-    if resolved_server_id not in servers_db:
-        raise HTTPException(status_code=404, detail=f"Server {resolved_server_id} not found")
+    resolved_server_id = await resolve_server_id(serverId, projectId)
+    await ensure_server_exists(resolved_server_id)
 
     try:
         conn = await get_file_connection(resolved_server_id)
@@ -130,24 +150,8 @@ async def read_file(
 
     Note: Binary files are not supported (will return with replacement characters)
     """
-    # Resolve server ID
-    resolved_server_id = None
-
-    if serverId:
-        resolved_server_id = serverId
-    elif projectId:
-        if projectId not in projects_db:
-            raise HTTPException(status_code=404, detail=f"Project {projectId} not found")
-        project = projects_db[projectId]
-        resolved_server_id = project.vps_server_id
-        if not resolved_server_id:
-            raise HTTPException(status_code=400, detail="Project has no VPS server configured")
-    else:
-        raise HTTPException(status_code=400, detail="Either serverId or projectId is required")
-
-    # Check server exists
-    if resolved_server_id not in servers_db:
-        raise HTTPException(status_code=404, detail=f"Server {resolved_server_id} not found")
+    resolved_server_id = await resolve_server_id(serverId, projectId)
+    await ensure_server_exists(resolved_server_id)
 
     try:
         conn = await get_file_connection(resolved_server_id)
@@ -202,24 +206,8 @@ async def write_file(
         - size: Bytes written
         - success: True if successful
     """
-    # Resolve server ID
-    resolved_server_id = None
-
-    if serverId:
-        resolved_server_id = serverId
-    elif projectId:
-        if projectId not in projects_db:
-            raise HTTPException(status_code=404, detail=f"Project {projectId} not found")
-        project = projects_db[projectId]
-        resolved_server_id = project.vps_server_id
-        if not resolved_server_id:
-            raise HTTPException(status_code=400, detail="Project has no VPS server configured")
-    else:
-        raise HTTPException(status_code=400, detail="Either serverId or projectId is required")
-
-    # Check server exists
-    if resolved_server_id not in servers_db:
-        raise HTTPException(status_code=404, detail=f"Server {resolved_server_id} not found")
+    resolved_server_id = await resolve_server_id(serverId, projectId)
+    await ensure_server_exists(resolved_server_id)
 
     try:
         conn = await get_file_connection(resolved_server_id)
@@ -244,23 +232,8 @@ async def create_directory(
     path: str = Query(..., description="Directory path to create")
 ):
     """Create a new directory"""
-    # Resolve server ID
-    resolved_server_id = None
-
-    if serverId:
-        resolved_server_id = serverId
-    elif projectId:
-        if projectId not in projects_db:
-            raise HTTPException(status_code=404, detail=f"Project {projectId} not found")
-        project = projects_db[projectId]
-        resolved_server_id = project.vps_server_id
-        if not resolved_server_id:
-            raise HTTPException(status_code=400, detail="Project has no VPS server configured")
-    else:
-        raise HTTPException(status_code=400, detail="Either serverId or projectId is required")
-
-    if resolved_server_id not in servers_db:
-        raise HTTPException(status_code=404, detail=f"Server {resolved_server_id} not found")
+    resolved_server_id = await resolve_server_id(serverId, projectId)
+    await ensure_server_exists(resolved_server_id)
 
     try:
         conn = await get_file_connection(resolved_server_id)
@@ -280,23 +253,8 @@ async def delete_file_or_dir(
     is_dir: bool = Query(False, description="True if deleting a directory")
 ):
     """Delete a file or empty directory"""
-    # Resolve server ID
-    resolved_server_id = None
-
-    if serverId:
-        resolved_server_id = serverId
-    elif projectId:
-        if projectId not in projects_db:
-            raise HTTPException(status_code=404, detail=f"Project {projectId} not found")
-        project = projects_db[projectId]
-        resolved_server_id = project.vps_server_id
-        if not resolved_server_id:
-            raise HTTPException(status_code=400, detail="Project has no VPS server configured")
-    else:
-        raise HTTPException(status_code=400, detail="Either serverId or projectId is required")
-
-    if resolved_server_id not in servers_db:
-        raise HTTPException(status_code=404, detail=f"Server {resolved_server_id} not found")
+    resolved_server_id = await resolve_server_id(serverId, projectId)
+    await ensure_server_exists(resolved_server_id)
 
     try:
         conn = await get_file_connection(resolved_server_id)

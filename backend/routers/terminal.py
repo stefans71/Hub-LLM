@@ -9,10 +9,11 @@ Provides /api/terminal/ws endpoint that:
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from typing import Optional
+from sqlalchemy import select
 import asyncio
 
-from services.ssh import SSHConnection, SSHCredentials, servers_db  # Single source of truth
-from routers.projects import projects_db
+from services.ssh import SSHConnection, SSHCredentials, servers_cache, load_server_to_cache
+from models import VPSServer as VPSServerModel, Project as ProjectModel, get_session
 
 router = APIRouter()
 
@@ -55,17 +56,19 @@ async def terminal_websocket(
         resolved_server_id = serverId
     elif projectId:
         # Look up project to get its vps_server_id
-        if projectId in projects_db:
-            project = projects_db[projectId]
-            resolved_server_id = project.vps_server_id
-            server_name = project.name
-        else:
-            await websocket.send_json({
-                "type": "error",
-                "message": f"Project {projectId} not found"
-            })
-            await websocket.close(code=4004)
-            return
+        async with get_session() as session:
+            result = await session.execute(select(ProjectModel).where(ProjectModel.id == projectId))
+            project = result.scalar_one_or_none()
+            if project:
+                resolved_server_id = project.vps_server_id
+                server_name = project.name
+            else:
+                await websocket.send_json({
+                    "type": "error",
+                    "message": f"Project {projectId} not found"
+                })
+                await websocket.close(code=4004)
+                return
     else:
         await websocket.send_json({
             "type": "error",
@@ -82,39 +85,34 @@ async def terminal_websocket(
         await websocket.close(code=4004)
         return
 
-    # Get server credentials
-    if resolved_server_id not in servers_db:
-        await websocket.send_json({
-            "type": "error",
-            "message": f"Server {resolved_server_id} not found"
-        })
-        await websocket.close(code=4004)
-        return
+    # Get server from database
+    async with get_session() as session:
+        result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == resolved_server_id))
+        server_model = result.scalar_one_or_none()
+        if not server_model:
+            await websocket.send_json({
+                "type": "error",
+                "message": f"Server {resolved_server_id} not found"
+            })
+            await websocket.close(code=4004)
+            return
 
-    server = servers_db[resolved_server_id]
-    server_name = server.name if hasattr(server, 'name') else server.get('name', server.get('host', 'Unknown'))
+        # Load into cache
+        await load_server_to_cache(server_model)
 
-    # Build credentials from server data
-    if isinstance(server, ServerCredentials):
-        credentials = SSHCredentials(
-            host=server.host,
-            port=server.port,
-            username=server.username,
-            password=server.password,
-            private_key=server.private_key
-        )
-        server_host = server.host
-    else:
-        # Dict-style storage from ssh.py router
-        credentials = SSHCredentials(
-            host=server.get("host"),
-            port=server.get("port", 22),
-            username=server.get("username"),
-            password=server.get("password"),
-            private_key=server.get("private_key"),
-            passphrase=server.get("passphrase")
-        )
-        server_host = server.get("host")
+    server = servers_cache[resolved_server_id]
+    server_name = server.get('name', server.get('host', 'Unknown'))
+    server_host = server.get("host")
+
+    # Build credentials from cached server data
+    credentials = SSHCredentials(
+        host=server.get("host"),
+        port=server.get("port", 22),
+        username=server.get("username"),
+        password=server.get("password"),
+        private_key=server.get("private_key"),
+        passphrase=server.get("passphrase")
+    )
 
     # Create SSH connection
     conn = SSHConnection(credentials)

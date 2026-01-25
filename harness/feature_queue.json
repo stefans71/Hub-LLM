@@ -15,21 +15,7 @@
     "vps_folder": "/root/llm-hub-projects/{project-slug}/"
   },
   "queue": [
-    {
-      "id": "REFACTOR-01",
-      "name": "Move Data from localStorage to Database",
-      "size": "L",
-      "priority": 3,
-      "status": "pending",
-      "description": "localStorage is wrong architecture. Move to SQLite database.",
-      "schema": {
-        "projects": "id, name, slug, vps_server_id, created_at",
-        "vps_servers": "id, name, host, port, username, auth_type, created_at",
-        "user_settings": "id, key, value"
-      },
-      "test": "Create project → Clear localStorage → Refresh → Project still there"
-    },
-    {
+        {
       "id": "FEAT-02",
       "name": "Project Creates Folder on VPS",
       "size": "M",
@@ -96,6 +82,7 @@
     }
   ],
   "completed": [
+    {"id": "REFACTOR-01", "name": "Move Data from localStorage to Database", "completed": "2026-01-25"},
     {"id": "CLEANUP-02", "name": "Consolidate servers_db to One Location", "completed": "2026-01-25"},
     {"id": "BUG-09", "name": "VPS Connection Not Persisting from Project Creation", "completed": "2026-01-25"},
     {"id": "CLEANUP-01", "name": "Remove Duplicate Terminal from Servers Tab", "completed": "2026-01-25"},

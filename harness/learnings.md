@@ -4,6 +4,66 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 55 - 2026-01-25 EST
+**Task**: REFACTOR-01 (L) - Move Data from localStorage to Database
+**What**: Migrated backend from in-memory storage to SQLite database
+
+**Changes Made**:
+1. Updated `models/__init__.py` with SQLite-based models:
+   - VPSServer: id, name, host, port, username, auth_type, password, private_key, passphrase
+   - Project: id, name, slug, vps_server_id, created_at + all existing fields
+   - ChatMessage: project chat history
+   - UserSetting: key-value user settings
+   - User/AuthProvider: minimal for auth compatibility
+
+2. Updated all routers to use SQLAlchemy async sessions:
+   - `routers/projects.py` - CRUD via database
+   - `routers/servers.py` - VPS servers from database
+   - `routers/ssh.py` - Uses database + cache
+   - `routers/terminal.py` - Loads servers from database
+   - `routers/files.py` - Loads servers from database
+   - `routers/stats.py` - Counts from database
+   - `routers/settings.py` - NEW: User settings API
+
+3. Updated `services/ssh.py`:
+   - Changed `servers_db` to `servers_cache` (in-memory cache loaded from DB)
+   - Added `load_server_to_cache()` and `remove_from_cache()` functions
+   - Connection cache remains in-memory for performance
+
+4. Removed old `services/database.py` (was unused stub)
+
+5. Added aiosqlite to requirements.txt
+
+**Database Schema**:
+```sql
+-- vps_servers: id, name, host, port, username, auth_type, password, private_key, ...
+-- projects: id, name, slug, description, vps_server_id, connection_type, ...
+-- chat_messages: id, project_id, role, content, model, timestamp
+-- user_settings: id, key, value
+```
+
+**Key Architecture**:
+- SQLite file: `./hubllm.db` (created on first run)
+- Servers loaded from DB into cache on first access
+- Projects, chat history, settings persisted to DB
+- Data survives backend restart
+
+**Files Modified**:
+- backend/models/__init__.py (complete rewrite)
+- backend/routers/projects.py
+- backend/routers/servers.py
+- backend/routers/ssh.py
+- backend/routers/terminal.py
+- backend/routers/files.py
+- backend/routers/stats.py
+- backend/routers/settings.py (new)
+- backend/services/ssh.py
+- backend/services/__init__.py
+- backend/main.py
+- backend/requirements.txt
+
+---
+
 ### Session 54 - 2026-01-25 EST
 **Task**: CLEANUP-02 (M) - Consolidate servers_db to One Location
 **What**: Unified duplicate `servers_db` definitions from routers/ssh.py and services/ssh.py

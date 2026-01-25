@@ -9,11 +9,21 @@ Provides:
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from pydantic import BaseModel
 from typing import Optional
+from sqlalchemy import select
 import asyncio
 import uuid
 import asyncssh
+import json
 
-from services.ssh import SSHCredentials, ssh_manager, servers_db
+from models import VPSServer as VPSServerModel, get_session
+from services.ssh import (
+    SSHCredentials,
+    SSHConnection,
+    ssh_manager,
+    servers_cache,
+    load_server_to_cache,
+    remove_from_cache
+)
 
 router = APIRouter()
 
@@ -72,49 +82,77 @@ class TestConnectionResponse(BaseModel):
     server_info: Optional[dict] = None
 
 
-# servers_db is now imported from services/ssh.py (single source of truth)
-
-
 # === Server Management ===
 
 @router.get("/servers")
 async def list_servers(project_id: Optional[str] = None) -> list[Server]:
-    """List all configured servers"""
-    servers = []
-    for server_id, data in servers_db.items():
-        if project_id and data.get("project_id") != project_id:
-            continue
-        servers.append(Server(
-            id=server_id,
-            name=data["name"],
-            host=data["host"],
-            port=data["port"],
-            username=data["username"],
-            auth_type=data["auth_type"],
-            project_id=data.get("project_id"),
-            connected=ssh_manager.get(server_id) is not None
-        ))
-    return servers
+    """List all configured servers from database"""
+    async with get_session() as session:
+        query = select(VPSServerModel)
+        result = await session.execute(query)
+        db_servers = result.scalars().all()
+
+        servers = []
+        for server in db_servers:
+            # Load into cache
+            await load_server_to_cache(server)
+            servers.append(Server(
+                id=server.id,
+                name=server.name,
+                host=server.host,
+                port=server.port,
+                username=server.username,
+                auth_type=server.auth_type,
+                project_id=None,
+                connected=ssh_manager.get(server.id) is not None
+            ))
+        return servers
 
 
 @router.post("/servers", response_model=Server)
 async def add_server(server: ServerCreate):
     """Add a new server configuration. If id is provided, use it (for syncing from localStorage)."""
-    # Use provided ID or generate new one
+    from datetime import datetime
+
     server_id = server.id if server.id else str(uuid.uuid4())
 
-    servers_db[server_id] = {
-        "name": server.name,
-        "host": server.host,
-        "port": server.port,
-        "username": server.username,
-        "auth_type": server.auth_type,
-        "password": server.password,  # TODO: Encrypt in production
-        "private_key": server.private_key,
-        "passphrase": server.passphrase,
-        "project_id": server.project_id
-    }
-    
+    async with get_session() as session:
+        # Check if exists
+        result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
+        existing = result.scalar_one_or_none()
+
+        if existing:
+            # Update
+            existing.name = server.name
+            existing.host = server.host
+            existing.port = server.port
+            existing.username = server.username
+            existing.auth_type = server.auth_type
+            existing.password = server.password
+            existing.private_key = server.private_key
+            existing.passphrase = server.passphrase
+            await session.commit()
+            await session.refresh(existing)
+            await load_server_to_cache(existing)
+        else:
+            # Create new
+            new_server = VPSServerModel(
+                id=server_id,
+                name=server.name,
+                host=server.host,
+                port=server.port,
+                username=server.username,
+                auth_type=server.auth_type,
+                password=server.password,
+                private_key=server.private_key,
+                passphrase=server.passphrase,
+                created_at=datetime.utcnow()
+            )
+            session.add(new_server)
+            await session.commit()
+            await session.refresh(new_server)
+            await load_server_to_cache(new_server)
+
     return Server(
         id=server_id,
         name=server.name,
@@ -130,23 +168,35 @@ async def add_server(server: ServerCreate):
 @router.delete("/servers/{server_id}")
 async def remove_server(server_id: str):
     """Remove a server configuration"""
-    if server_id not in servers_db:
-        raise HTTPException(status_code=404, detail="Server not found")
-    
-    # Disconnect if connected
-    await ssh_manager.disconnect(server_id)
-    del servers_db[server_id]
-    
+    async with get_session() as session:
+        result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
+        server = result.scalar_one_or_none()
+        if not server:
+            raise HTTPException(status_code=404, detail="Server not found")
+
+        # Disconnect if connected
+        await ssh_manager.disconnect(server_id)
+        remove_from_cache(server_id)
+
+        await session.delete(server)
+        await session.commit()
+
     return {"status": "deleted"}
 
 
 @router.post("/servers/{server_id}/connect")
 async def connect_server(server_id: str):
     """Establish SSH connection to a server"""
-    if server_id not in servers_db:
-        raise HTTPException(status_code=404, detail="Server not found")
-    
-    data = servers_db[server_id]
+    if server_id not in servers_cache:
+        # Try to load from database
+        async with get_session() as session:
+            result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
+            server = result.scalar_one_or_none()
+            if not server:
+                raise HTTPException(status_code=404, detail="Server not found")
+            await load_server_to_cache(server)
+
+    data = servers_cache[server_id]
     credentials = SSHCredentials(
         host=data["host"],
         port=data["port"],
@@ -155,7 +205,7 @@ async def connect_server(server_id: str):
         private_key=data.get("private_key"),
         passphrase=data.get("passphrase")
     )
-    
+
     try:
         await ssh_manager.connect(server_id, credentials)
         return {"status": "connected"}
@@ -178,8 +228,6 @@ async def test_connection(request: TestConnectionRequest):
     Test SSH connection without storing credentials.
     Used in Create Project flow to validate VPS settings.
     """
-    from services.ssh import SSHConnection, SSHCredentials
-
     credentials = SSHCredentials(
         host=request.host,
         port=request.port,
@@ -280,22 +328,28 @@ async def test_connection(request: TestConnectionRequest):
 async def terminal_websocket(websocket: WebSocket, server_id: str):
     """
     WebSocket endpoint for interactive terminal
-    
+
     Client sends: {"type": "input", "data": "ls -la\n"}
     Client sends: {"type": "resize", "cols": 120, "rows": 40}
     Server sends: {"type": "output", "data": "..."}
     """
     await websocket.accept()
-    
-    if server_id not in servers_db:
-        await websocket.send_json({"type": "error", "message": "Server not found"})
-        await websocket.close()
-        return
-    
+
+    # Load server from database if not in cache
+    if server_id not in servers_cache:
+        async with get_session() as session:
+            result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
+            server = result.scalar_one_or_none()
+            if not server:
+                await websocket.send_json({"type": "error", "message": "Server not found"})
+                await websocket.close()
+                return
+            await load_server_to_cache(server)
+
     # Get or create connection
     conn = ssh_manager.get(server_id)
     if not conn:
-        data = servers_db[server_id]
+        data = servers_cache[server_id]
         credentials = SSHCredentials(
             host=data["host"],
             port=data["port"],
@@ -310,7 +364,7 @@ async def terminal_websocket(websocket: WebSocket, server_id: str):
             await websocket.send_json({"type": "error", "message": str(e)})
             await websocket.close()
             return
-    
+
     # Start shell
     try:
         await conn.start_shell()
@@ -318,7 +372,7 @@ async def terminal_websocket(websocket: WebSocket, server_id: str):
         await websocket.send_json({"type": "error", "message": f"Shell failed: {str(e)}"})
         await websocket.close()
         return
-    
+
     # Handle bidirectional communication
     async def read_terminal():
         """Read from terminal and send to WebSocket"""
@@ -330,13 +384,13 @@ async def terminal_websocket(websocket: WebSocket, server_id: str):
                 })
         except Exception as e:
             print(f"Terminal read error: {e}")
-    
+
     async def write_terminal():
         """Read from WebSocket and write to terminal"""
         try:
             while True:
                 message = await websocket.receive_json()
-                
+
                 if message["type"] == "input":
                     await conn.write_input(message["data"])
                 elif message["type"] == "resize":
@@ -348,7 +402,7 @@ async def terminal_websocket(websocket: WebSocket, server_id: str):
             pass
         except Exception as e:
             print(f"Terminal write error: {e}")
-    
+
     # Run both tasks concurrently
     try:
         await asyncio.gather(read_terminal(), write_terminal())
@@ -366,12 +420,12 @@ async def list_files(server_id: str, path: str = "~") -> list[FileItem]:
     conn = ssh_manager.get(server_id)
     if not conn:
         raise HTTPException(status_code=400, detail="Not connected. Connect first.")
-    
+
     try:
         # Expand ~ to home directory
         if path == "~":
             path = "."
-        
+
         files = await conn.list_directory(path)
         return [FileItem(**f) for f in files]
     except Exception as e:
@@ -384,7 +438,7 @@ async def read_file(server_id: str, path: str) -> FileContent:
     conn = ssh_manager.get(server_id)
     if not conn:
         raise HTTPException(status_code=400, detail="Not connected")
-    
+
     try:
         content = await conn.read_file(path)
         return FileContent(path=path, content=content)
@@ -398,7 +452,7 @@ async def write_file(server_id: str, file: FileContent):
     conn = ssh_manager.get(server_id)
     if not conn:
         raise HTTPException(status_code=400, detail="Not connected")
-    
+
     try:
         await conn.write_file(file.path, file.content)
         return {"status": "saved", "path": file.path}
@@ -412,7 +466,7 @@ async def delete_file(server_id: str, path: str):
     conn = ssh_manager.get(server_id)
     if not conn:
         raise HTTPException(status_code=400, detail="Not connected")
-    
+
     try:
         info = await conn.get_file_info(path)
         if info["is_dir"]:
@@ -430,7 +484,7 @@ async def create_directory(server_id: str, path: str):
     conn = ssh_manager.get(server_id)
     if not conn:
         raise HTTPException(status_code=400, detail="Not connected")
-    
+
     try:
         await conn.create_directory(path)
         return {"status": "created", "path": path}
@@ -444,7 +498,7 @@ async def rename_file(server_id: str, old_path: str, new_path: str):
     conn = ssh_manager.get(server_id)
     if not conn:
         raise HTTPException(status_code=400, detail="Not connected")
-    
+
     try:
         await conn.rename(old_path, new_path)
         return {"status": "renamed", "old_path": old_path, "new_path": new_path}
