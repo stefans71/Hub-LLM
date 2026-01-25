@@ -10,16 +10,62 @@ Auth is verified. Skip any login screens. Use localStorage injection if needed.
 - XS/S = can do multiple
 - M/L = ONE only, stop after
 
-## After EVERY Commit
-Do a cleanup commit:
-```bash
-# Remove your test data
-# Remove your console.logs  
-# Remove commented code you added
-git add -A && git commit -m "chore: cleanup" || true
+## Critical Patterns (Claude: ADD NEW PATTERNS HERE)
+
+### API Calls - Always add timeout
+```javascript
+const controller = new AbortController()
+const timeout = setTimeout(() => controller.abort(), 5000)
+try {
+  const res = await fetch(url, { signal: controller.signal })
+} finally {
+  clearTimeout(timeout)
+}
 ```
 
-## Files to Read
-- `harness/feature_queue.json` - your tasks
-- `harness/learnings.md` - patterns that work
-- `harness/TECH_DEBT.md` - don't make it worse
+### Prevent Infinite Refresh Loops
+```javascript
+const fetchData = async (isRetry = false) => {
+  // if 401 and !isRetry → refresh token, then fetchData(true)
+  // if 401 and isRetry → give up (no infinite loop)
+}
+```
+
+### Prevent State Updates After Unmount
+```javascript
+const isMounted = useRef(true)
+useEffect(() => () => { isMounted.current = false }, [])
+// In async: if (isMounted.current) setState(...)
+```
+
+### Drag Handles - Use Native Events
+```javascript
+useEffect(() => {
+  const handle = dragHandleRef.current
+  handle.addEventListener('mousedown', onMouseDown)
+  return () => handle.removeEventListener('mousedown', onMouseDown)
+}, [])
+```
+
+### localStorage is Source of Truth for VPS
+- Frontend localStorage = persistent
+- Backend servers_db = in-memory (lost on restart)
+- Check localStorage FIRST, then sync to backend
+
+<!-- ADD NEW CRITICAL PATTERNS ABOVE THIS LINE -->
+
+## Before EVERY Commit
+1. If you discovered a CRITICAL pattern → Add it to "Critical Patterns" section above
+2. Write session notes to `harness/learnings.md`:
+```markdown
+### Session [N] - $(TZ='America/New_York' date '+%Y-%m-%d %H:%M %Z')
+**Task**: [ID] 
+**What**: [brief summary]
+```
+
+## After EVERY Commit
+Cleanup: `git add -A && git commit -m "chore: cleanup" || true`
+
+## Files
+- `harness/feature_queue.json` - tasks
+- `harness/learnings.md` - session notes
