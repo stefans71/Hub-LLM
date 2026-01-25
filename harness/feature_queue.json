@@ -17,26 +17,10 @@
   },
   "queue": [
     {
-      "id": "BUG-15",
-      "name": "Terminal Connection Drops on Panel Toggle",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Terminal connections drop and restart when LLM-Dev panel is collapsed and reopened",
-      "current": "Collapse LLM-Dev panel, reopen it - terminal connections are lost, SSH reconnects",
-      "change": [
-        "Check if component unmounts when panel collapses - may need to keep mounted but hidden",
-        "Preserve WebSocket connections through panel toggle",
-        "Consider using CSS visibility:hidden instead of unmounting",
-        "Reference: harness/TERMINAL_WORKSPACE.md for component structure"
-      ],
-      "test": "Collapse LLM-Dev panel, wait 5 seconds, reopen - terminal still connected, no reconnection message"
-    },
-    {
       "id": "BUG-16",
       "name": "Terminal Pane Can't Resize Smaller",
       "size": "S",
-      "priority": 2,
+      "priority": 1,
       "status": "pending",
       "description": "Dragging divider to make terminal pane smaller doesn't work properly",
       "current": "Can drag divider to make terminal larger, but dragging to make it smaller hits minimum too early or doesn't respond",
@@ -52,7 +36,7 @@
       "id": "FEAT-08",
       "name": "Chat File Drop and Paste",
       "size": "M",
-      "priority": 3,
+      "priority": 2,
       "status": "pending",
       "description": "Drag/drop files or CTRL+V paste images into chat area",
       "current": "No way to add files/images to chat",
@@ -67,6 +51,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-15", "name": "Terminal Connection Drops on Panel Toggle", "completed": "2026-01-25"},
     {"id": "FEAT-09", "name": "Multi-Terminal Split Panes with Color Coding", "completed": "2026-01-25"},
     {"id": "BUG-14", "name": "Editor Tab Not Loading Selected File", "completed": "2026-01-25"},
     {"id": "BUG-13", "name": "TERMINALS Sidebar Not Visible", "completed": "2026-01-25"},

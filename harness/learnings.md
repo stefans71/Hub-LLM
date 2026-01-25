@@ -4,6 +4,37 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 65 - 2026-01-25 EST
+**Task**: BUG-15 - Terminal Connection Drops on Panel Toggle
+
+**What**: Fixed terminal connections dropping when LLM-Dev panel is collapsed and reopened
+
+**Root Cause**:
+- LLMDevPanel.jsx used conditional rendering `{isExpanded && (...)}` for the content area
+- When panel collapsed, the entire content including `<MultiTerminal>` component was unmounted from DOM
+- This killed all WebSocket connections, requiring reconnection when panel reopened
+
+**Solution**:
+- Changed from conditional rendering to CSS-based hiding
+- Always render the content area but use `display: isExpanded ? 'flex' : 'none'`
+- Components stay mounted (preserving WebSocket connections) but hidden when collapsed
+
+**Key Pattern - Keep Components Mounted, Toggle Visibility**:
+```jsx
+// BAD: Conditional rendering unmounts component
+{isExpanded && <ComponentWithWebSocket />}
+
+// GOOD: CSS hiding keeps component mounted
+<div style={{ display: isExpanded ? 'flex' : 'none' }}>
+  <ComponentWithWebSocket />
+</div>
+```
+
+**Files Modified**:
+- frontend/src/components/LLMDevPanel.jsx (lines 515-526)
+
+---
+
 ### Session 64 - 2026-01-25 EST
 **Task**: FEAT-09 - Multi-Terminal Split Panes with Color Coding
 

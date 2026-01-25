@@ -106,11 +106,12 @@ div.llm-dev-content          # Main panel content area
 
 ## Known Issues (v4.7)
 
-### BUG-15: Terminal Connection Drops on Panel Toggle
+### BUG-15: Terminal Connection Drops on Panel Toggle (RESOLVED)
 - **Symptom:** When you collapse and re-open LLM-Dev panel, terminal connections drop and restart
 - **Expected:** Connections should persist through panel toggle
-- **Likely cause:** Component unmounting/remounting kills WebSocket connections
-- **Status:** Open
+- **Root cause:** LLMDevPanel used `{isExpanded && (...)}` conditional rendering, unmounting MultiTerminal
+- **Fix:** Changed to `display: isExpanded ? 'flex' : 'none'` to keep components mounted but hidden
+- **Status:** RESOLVED (2026-01-25)
 
 ### BUG-16: Terminal Pane Can't Resize Smaller
 - **Symptom:** Dragging divider to make terminal larger works, but dragging to make it smaller doesn't work (hits minimum too early?)

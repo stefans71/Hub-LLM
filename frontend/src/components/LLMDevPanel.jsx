@@ -512,19 +512,19 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
       </div>
 
       {/* W-97: Dev Panel Content */}
-      {isExpanded && (
-        <div
-          className="llm-dev-content"
-          style={{
-            flex: 1,
-            width: '100%',           // BUG-12: Explicit width constraint
-            minWidth: 0,             // BUG-12: Allow shrinking in flex context
-            display: 'flex',
-            background: 'var(--bg-primary)',
-            overflow: 'hidden',
-            minHeight: 0
-          }}
-        >
+      {/* BUG-15: Always render content (keep terminals mounted), hide with CSS when collapsed */}
+      <div
+        className="llm-dev-content"
+        style={{
+          flex: 1,
+          width: '100%',           // BUG-12: Explicit width constraint
+          minWidth: 0,             // BUG-12: Allow shrinking in flex context
+          display: isExpanded ? 'flex' : 'none',  // BUG-15: Hide instead of unmount
+          background: 'var(--bg-primary)',
+          overflow: 'hidden',
+          minHeight: 0
+        }}
+      >
           {/* FEAT-07: Terminal Tab Content - Multiple Terminals */}
           {activeTab === 'terminal' && (
             <div
@@ -845,7 +845,6 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
             </div>
           )}
         </div>
-      )}
 
       {/* Keyframe animation for cursor blink */}
       <style>{`
