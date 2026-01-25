@@ -4,6 +4,84 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 64 - 2026-01-25 EST
+**Task**: FEAT-09 - Multi-Terminal Split Panes with Color Coding
+
+**What**: Major refactor of MultiTerminal.jsx to show multiple terminal panes simultaneously with color-coded identification
+
+**Implementation**:
+1. **Split Panes**: Changed from single active terminal with tab switching to side-by-side panes
+   - Each terminal has its own width (default 300px, range 150-600px)
+   - Draggable dividers between each pane for resizing
+   - All terminals visible at once (up to 4 max)
+   - Empty space fills remaining width on right
+
+2. **Color Coding**: 8 colors available (Gray, Red, Orange, Yellow, Green, Cyan, Blue, Purple)
+   - Right-click terminal in tab header or sidebar → color picker popup
+   - Color shows on: tab header dot, sidebar dot, color bar at top of each pane
+   - Connected terminals get glow effect on dots
+
+3. **Tab Header**: New row above terminal panes
+   - Shows all terminals with `[● name]` format
+   - Click to focus that terminal
+   - Active terminal has underline indicator
+   - + button to add new terminal (max 4)
+
+4. **Narrow Sidebar**: Reduced from 200px to 120px
+   - Shows "Terms" header with + button
+   - Compact terminal list with colored dots
+   - Right-click for color picker
+
+5. **TerminalInstance Changes**:
+   - Added `isSplitPane` prop to control visibility
+   - In split mode: `position: relative`, always visible
+   - In tabbed mode (mobile): `position: absolute`, only active visible
+
+**Key Pattern - Split Pane Divider Drag**:
+```javascript
+// Track which divider is being dragged
+const [draggingDividerId, setDraggingDividerId] = useState(null)
+
+const handleDividerMouseMove = useCallback((e) => {
+  if (!draggingDividerId) return
+
+  // Calculate cumulative width of terminals before this one
+  let prevWidth = 0
+  for (let i = 0; i < terminalIndex; i++) {
+    prevWidth += terminals[i].width + 4 // +4 for divider
+  }
+
+  // New width = mouse position - previous terminals - container left
+  const newWidth = e.clientX - containerRect.left - prevWidth
+  // Update only the terminal being dragged
+  setTerminals(prev => prev.map(t =>
+    t.id === draggingDividerId ? { ...t, width: clampedWidth } : t
+  ))
+}, [draggingDividerId, terminals])
+```
+
+**Key Pattern - Context Menu Color Picker**:
+```javascript
+// Right-click opens color picker at mouse position
+const handleTerminalContextMenu = (e, terminalId) => {
+  e.preventDefault()
+  setColorPickerPosition({ x: e.clientX, y: e.clientY })
+  setColorPickerTerminalId(terminalId)
+}
+
+// Click outside closes picker
+useEffect(() => {
+  const handleClickOutside = () => setColorPickerTerminalId(null)
+  document.addEventListener('click', handleClickOutside)
+  return () => document.removeEventListener('click', handleClickOutside)
+}, [colorPickerTerminalId])
+```
+
+**Files Modified**:
+- frontend/src/components/MultiTerminal.jsx (major refactor, ~980 lines)
+
+---
+
 ### Session 63 - 2026-01-25 EST
 **Task**: BUG-14 - Editor Tab Not Loading Selected File
 

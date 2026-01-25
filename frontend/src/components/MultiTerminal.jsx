@@ -2,16 +2,30 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Plus, X, RefreshCw, Terminal } from 'lucide-react'
 
 /**
- * FEAT-07: MultiTerminal Component
+ * FEAT-09: MultiTerminal Split Panes with Color Coding
  *
- * Manages multiple terminal instances within the Terminal tab.
- * - Desktop (>768px): Right sidebar showing terminal list with + button
- * - Mobile (<768px): Horizontal sub-tabs below main LLM-Dev tabs
- * - Each terminal maintains its own SSH session to VPS
+ * Multiple terminal panes visible simultaneously:
+ * - Desktop: Side-by-side terminal panes with draggable dividers
+ * - Mobile: Horizontal tabs (unchanged from FEAT-07)
+ * - Each terminal has a color for visual identification
+ * - Tab header shows all terminals with colored dots
+ * - Right sidebar (narrow) for terminal list + new terminal button
  */
 
+// Available terminal colors
+const TERMINAL_COLORS = [
+  { name: 'Gray', value: 'var(--text-muted)' },
+  { name: 'Red', value: '#f7768e' },
+  { name: 'Orange', value: '#ff9e64' },
+  { name: 'Yellow', value: '#e0af68' },
+  { name: 'Green', value: '#9ece6a' },
+  { name: 'Cyan', value: '#7dcfff' },
+  { name: 'Blue', value: '#7aa2f7' },
+  { name: 'Purple', value: '#bb9af7' },
+]
+
 // Individual terminal instance component
-function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onStatusChange }) {
+function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, isSplitPane, onStatusChange }) {
   const terminalRef = useRef(null)
   const xtermRef = useRef(null)
   const wsRef = useRef(null)
@@ -279,18 +293,21 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onSt
     }
   }
 
+  // In split pane mode, all terminals are visible; in tabbed mode, only active is visible
+  const isVisible = isSplitPane || isActive
+
   return (
     <div style={{
-      display: isActive ? 'flex' : 'none',
+      display: isVisible ? 'flex' : 'none',
       flexDirection: 'column',
       height: '100%',
       width: '100%',
       minHeight: 0,
       minWidth: 0,
-      position: 'absolute',
-      inset: 0,
-      background: 'var(--bg-primary)'
-      // Note: removed overflow:hidden to allow xterm scrollbar interaction
+      position: isSplitPane ? 'relative' : 'absolute',
+      inset: isSplitPane ? undefined : 0,
+      background: 'var(--bg-primary)',
+      overflow: 'hidden'
     }}>
       {/* Terminal Status Bar */}
       <div style={{
@@ -368,8 +385,9 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onSt
 
 // Main MultiTerminal component
 export default function MultiTerminal({ projectId, serverId, projectSlug }) {
+  // FEAT-09: Terminal state now includes color and width for split panes
   const [terminals, setTerminals] = useState([
-    { id: 1, name: 'bash', status: 'disconnected' }
+    { id: 1, name: 'bash', status: 'disconnected', color: TERMINAL_COLORS[0].value, width: 300 }
   ])
   const [activeTerminalId, setActiveTerminalId] = useState(1)
   const [nextId, setNextId] = useState(2)
@@ -377,10 +395,13 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
 
-  // Draggable sidebar state - default 200px, range 140-400px
-  const [sidebarWidth, setSidebarWidth] = useState(200)
-  const [isDraggingSidebar, setIsDraggingSidebar] = useState(false)
-  const dividerRef = useRef(null)
+  // FEAT-09: Color picker context menu state
+  const [colorPickerTerminalId, setColorPickerTerminalId] = useState(null)
+  const [colorPickerPosition, setColorPickerPosition] = useState({ x: 0, y: 0 })
+
+  // FEAT-09: Divider drag state - track which divider is being dragged
+  const [draggingDividerId, setDraggingDividerId] = useState(null)
+  const containerRef = useRef(null)
 
   // Track window width for responsive layout
   useEffect(() => {
@@ -391,62 +412,94 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Native mousedown on divider (more reliable than React synthetic events)
-  useEffect(() => {
-    const divider = dividerRef.current
-    if (!divider) return
+  // FEAT-09: Handle divider drag for resizing terminal panes
+  const handleDividerMouseDown = useCallback((terminalId, e) => {
+    e.preventDefault()
+    setDraggingDividerId(terminalId)
+  }, [])
 
-    const onMouseDown = (e) => {
-      e.preventDefault()
-      setIsDraggingSidebar(true)
+  const handleDividerMouseMove = useCallback((e) => {
+    if (!draggingDividerId || !containerRef.current) return
+
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const terminalIndex = terminals.findIndex(t => t.id === draggingDividerId)
+    if (terminalIndex === -1) return
+
+    // Calculate cumulative width of terminals before this one
+    let prevWidth = 0
+    for (let i = 0; i < terminalIndex; i++) {
+      prevWidth += terminals[i].width + 4 // +4 for divider
     }
 
-    divider.addEventListener('mousedown', onMouseDown)
-    return () => divider.removeEventListener('mousedown', onMouseDown)
-  }, [])
+    // New width = mouse position - previous terminals width - container left
+    const newWidth = e.clientX - containerRect.left - prevWidth
+    // Clamp between 150px and 600px
+    const clampedWidth = Math.max(150, Math.min(600, newWidth))
 
-  // Global mouse events for sidebar dragging
-  const handleSidebarMouseMove = useCallback((e) => {
-    if (!isDraggingSidebar) return
+    setTerminals(prev => prev.map(t =>
+      t.id === draggingDividerId ? { ...t, width: clampedWidth } : t
+    ))
+  }, [draggingDividerId, terminals])
 
-    // Calculate new width based on mouse position from right edge
-    const containerRect = dividerRef.current?.parentElement?.getBoundingClientRect()
-    if (!containerRect) return
-
-    const newWidth = containerRect.right - e.clientX
-    // Clamp between 140px and 400px
-    setSidebarWidth(Math.max(140, Math.min(400, newWidth)))
-  }, [isDraggingSidebar])
-
-  const handleSidebarMouseUp = useCallback(() => {
-    setIsDraggingSidebar(false)
+  const handleDividerMouseUp = useCallback(() => {
+    setDraggingDividerId(null)
   }, [])
 
   useEffect(() => {
-    if (isDraggingSidebar) {
-      document.addEventListener('mousemove', handleSidebarMouseMove)
-      document.addEventListener('mouseup', handleSidebarMouseUp)
+    if (draggingDividerId) {
+      document.addEventListener('mousemove', handleDividerMouseMove)
+      document.addEventListener('mouseup', handleDividerMouseUp)
       document.body.style.cursor = 'ew-resize'
       document.body.style.userSelect = 'none'
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleSidebarMouseMove)
-      document.removeEventListener('mouseup', handleSidebarMouseUp)
+      document.removeEventListener('mousemove', handleDividerMouseMove)
+      document.removeEventListener('mouseup', handleDividerMouseUp)
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
     }
-  }, [isDraggingSidebar, handleSidebarMouseMove, handleSidebarMouseUp])
+  }, [draggingDividerId, handleDividerMouseMove, handleDividerMouseUp])
+
+  // FEAT-09: Close color picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (colorPickerTerminalId !== null) {
+        setColorPickerTerminalId(null)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [colorPickerTerminalId])
 
   const createTerminal = () => {
+    // FEAT-09: New terminals get default color (cycles through colors) and width
+    const colorIndex = terminals.length % TERMINAL_COLORS.length
     const newTerminal = {
       id: nextId,
-      name: 'bash',
-      status: 'disconnected'
+      name: `bash ${nextId}`,
+      status: 'disconnected',
+      color: TERMINAL_COLORS[colorIndex].value,
+      width: 300
     }
     setTerminals([...terminals, newTerminal])
     setActiveTerminalId(nextId)
     setNextId(nextId + 1)
+  }
+
+  // FEAT-09: Set terminal color
+  const setTerminalColor = (terminalId, color) => {
+    setTerminals(prev => prev.map(t =>
+      t.id === terminalId ? { ...t, color } : t
+    ))
+    setColorPickerTerminalId(null)
+  }
+
+  // FEAT-09: Right-click handler for color picker
+  const handleTerminalContextMenu = (e, terminalId) => {
+    e.preventDefault()
+    setColorPickerPosition({ x: e.clientX, y: e.clientY })
+    setColorPickerTerminalId(terminalId)
   }
 
   const closeTerminal = (id) => {
@@ -613,165 +666,318 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
     )
   }
 
-  // Desktop layout: right sidebar with draggable divider
+  // FEAT-09: Desktop layout with split panes, tab header, and narrow sidebar
   return (
     <div style={{
       display: 'flex',
+      flexDirection: 'column',
       height: '100%',
       minHeight: 0,
       overflow: 'hidden'
     }}>
-      {/* Terminal instances - position:relative needed for absolute children */}
-      <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
+      {/* FEAT-09: Tab header showing all terminals with colored dots */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border)',
+        padding: '0 8px',
+        gap: '2px',
+        flexShrink: 0,
+        minHeight: '32px'
+      }}>
         {terminals.map(terminal => (
-          <TerminalInstance
+          <div
             key={terminal.id}
-            id={terminal.id}
-            projectId={projectId}
-            serverId={serverId}
-            projectSlug={projectSlug}
-            isActive={terminal.id === activeTerminalId}
-            onStatusChange={handleStatusChange}
-          />
+            onClick={() => setActiveTerminalId(terminal.id)}
+            onContextMenu={(e) => handleTerminalContextMenu(e, terminal.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              background: activeTerminalId === terminal.id ? 'var(--bg-primary)' : 'transparent',
+              borderRadius: '4px 4px 0 0',
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: activeTerminalId === terminal.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+              borderBottom: activeTerminalId === terminal.id ? '2px solid var(--primary)' : '2px solid transparent',
+              marginBottom: '-1px'
+            }}
+            title="Right-click for color options"
+          >
+            <span style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: terminal.color,
+              flexShrink: 0,
+              boxShadow: terminal.status === 'connected' ? `0 0 4px ${terminal.color}` : 'none'
+            }} />
+            <span>{terminal.name}</span>
+          </div>
         ))}
+        <button
+          onClick={createTerminal}
+          disabled={terminals.length >= 4}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: terminals.length >= 4 ? 'var(--text-muted)' : 'var(--text-secondary)',
+            cursor: terminals.length >= 4 ? 'not-allowed' : 'pointer',
+            padding: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            marginLeft: '4px'
+          }}
+          title={terminals.length >= 4 ? 'Maximum 4 terminals' : 'New terminal'}
+        >
+          <Plus size={16} />
+        </button>
       </div>
 
-      {/* Draggable divider */}
-      <div
-        ref={dividerRef}
-        style={{
-          width: '4px',
-          background: isDraggingSidebar ? 'var(--primary)' : 'var(--border)',
-          cursor: 'ew-resize',
-          flexShrink: 0,
-          transition: isDraggingSidebar ? 'none' : 'background 0.15s ease'
-        }}
-        onMouseEnter={(e) => !isDraggingSidebar && (e.currentTarget.style.background = 'var(--primary)')}
-        onMouseLeave={(e) => !isDraggingSidebar && (e.currentTarget.style.background = 'var(--border)')}
-      />
-
-      {/* Right sidebar - terminal list */}
-      <div style={{
-        width: `${sidebarWidth}px`,
-        background: 'var(--bg-secondary)',
+      {/* Main content: split panes + sidebar */}
+      <div ref={containerRef} style={{
         display: 'flex',
-        flexDirection: 'column',
-        flexShrink: 0,
-        transition: isDraggingSidebar ? 'none' : 'width 0.1s ease'
+        flex: 1,
+        minHeight: 0,
+        overflow: 'hidden'
       }}>
-        {/* Sidebar header */}
+        {/* FEAT-09: Split terminal panes */}
         <div style={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 10px',
-          borderBottom: '1px solid var(--border)',
-          fontSize: '11px',
-          fontWeight: 600,
-          color: 'var(--text-secondary)',
-          textTransform: 'uppercase'
-        }}>
-          <span>Terminals</span>
-          <button
-            onClick={createTerminal}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              padding: '2px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-            title="New terminal"
-          >
-            <Plus size={14} />
-          </button>
-        </div>
-
-        {/* Terminal list */}
-        <div style={{
           flex: 1,
-          overflowY: 'auto',
-          padding: '4px'
+          minHeight: 0,
+          minWidth: 0,
+          overflow: 'hidden'
         }}>
-          {terminals.map(terminal => (
-            <div
-              key={terminal.id}
-              onClick={() => setActiveTerminalId(terminal.id)}
-              style={{
+          {terminals.map((terminal, index) => (
+            <div key={terminal.id} style={{ display: 'flex', flexShrink: 0 }}>
+              {/* Terminal pane */}
+              <div style={{
+                width: `${terminal.width}px`,
+                minWidth: '150px',
+                maxWidth: '600px',
                 display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px',
-                background: activeTerminalId === terminal.id ? 'var(--bg-primary)' : 'transparent',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                marginBottom: '2px',
-                fontSize: '12px',
-                color: activeTerminalId === terminal.id ? 'var(--text-primary)' : 'var(--text-secondary)'
-              }}
-            >
-              <span style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: getStatusColor(terminal.status),
-                flexShrink: 0
-              }} />
-              <Terminal size={12} style={{ flexShrink: 0, opacity: 0.7 }} />
-              {editingId === terminal.id ? (
-                <input
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  onBlur={finishRename}
-                  onKeyDown={(e) => e.key === 'Enter' && finishRename()}
-                  autoFocus
-                  style={{
-                    background: 'var(--bg-tertiary)',
-                    border: '1px solid var(--primary)',
-                    borderRadius: '3px',
-                    color: 'var(--text-primary)',
-                    fontSize: '11px',
-                    padding: '2px 4px',
-                    flex: 1,
-                    minWidth: 0
-                  }}
-                  onClick={(e) => e.stopPropagation()}
+                flexDirection: 'column',
+                borderRight: '1px solid var(--border)',
+                position: 'relative'
+              }}>
+                {/* Color indicator bar at top */}
+                <div style={{
+                  height: '3px',
+                  background: terminal.color,
+                  flexShrink: 0
+                }} />
+                <TerminalInstance
+                  id={terminal.id}
+                  projectId={projectId}
+                  serverId={serverId}
+                  projectSlug={projectSlug}
+                  isActive={terminal.id === activeTerminalId}
+                  isSplitPane={true}
+                  onStatusChange={handleStatusChange}
                 />
-              ) : (
-                <span
-                  style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                  onDoubleClick={() => startRename(terminal.id, terminal.name)}
-                  title={terminal.name}
-                >
-                  {terminal.name}
-                </span>
-              )}
-              {terminals.length > 1 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); closeTerminal(terminal.id); }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    padding: '2px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    opacity: 0.5
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}
-                  title="Close terminal"
-                >
-                  <X size={12} />
-                </button>
-              )}
+              </div>
+              {/* Draggable divider between terminals */}
+              <div
+                onMouseDown={(e) => handleDividerMouseDown(terminal.id, e)}
+                style={{
+                  width: '4px',
+                  background: draggingDividerId === terminal.id ? 'var(--primary)' : 'var(--border)',
+                  cursor: 'ew-resize',
+                  flexShrink: 0,
+                  transition: draggingDividerId === terminal.id ? 'none' : 'background 0.15s ease'
+                }}
+                onMouseEnter={(e) => !draggingDividerId && (e.currentTarget.style.background = 'var(--primary)')}
+                onMouseLeave={(e) => !draggingDividerId && (e.currentTarget.style.background = 'var(--border)')}
+              />
             </div>
           ))}
+          {/* Empty space to fill remaining width */}
+          <div style={{ flex: 1, background: 'var(--bg-tertiary)', minWidth: '50px' }} />
+        </div>
+
+        {/* FEAT-09: Narrow right sidebar (~120px) */}
+        <div style={{
+          width: '120px',
+          background: 'var(--bg-secondary)',
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
+          borderLeft: '1px solid var(--border)'
+        }}>
+          {/* Sidebar header */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '6px 8px',
+            borderBottom: '1px solid var(--border)',
+            fontSize: '10px',
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            textTransform: 'uppercase'
+          }}>
+            <span>Terms</span>
+            <button
+              onClick={createTerminal}
+              disabled={terminals.length >= 4}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: terminals.length >= 4 ? 'var(--text-muted)' : 'var(--text-secondary)',
+                cursor: terminals.length >= 4 ? 'not-allowed' : 'pointer',
+                padding: '2px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title={terminals.length >= 4 ? 'Maximum 4 terminals' : 'New terminal'}
+            >
+              <Plus size={12} />
+            </button>
+          </div>
+
+          {/* Terminal list */}
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '4px'
+          }}>
+            {terminals.map(terminal => (
+              <div
+                key={terminal.id}
+                onClick={() => setActiveTerminalId(terminal.id)}
+                onContextMenu={(e) => handleTerminalContextMenu(e, terminal.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '6px',
+                  background: activeTerminalId === terminal.id ? 'var(--bg-primary)' : 'transparent',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginBottom: '2px',
+                  fontSize: '11px',
+                  color: activeTerminalId === terminal.id ? 'var(--text-primary)' : 'var(--text-secondary)'
+                }}
+                title="Right-click for color options"
+              >
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: terminal.color,
+                  flexShrink: 0,
+                  boxShadow: terminal.status === 'connected' ? `0 0 4px ${terminal.color}` : 'none'
+                }} />
+                {editingId === terminal.id ? (
+                  <input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    onBlur={finishRename}
+                    onKeyDown={(e) => e.key === 'Enter' && finishRename()}
+                    autoFocus
+                    style={{
+                      background: 'var(--bg-tertiary)',
+                      border: '1px solid var(--primary)',
+                      borderRadius: '3px',
+                      color: 'var(--text-primary)',
+                      fontSize: '10px',
+                      padding: '2px 4px',
+                      flex: 1,
+                      minWidth: 0,
+                      width: '50px'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span
+                    style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                    onDoubleClick={() => startRename(terminal.id, terminal.name)}
+                    title={terminal.name}
+                  >
+                    {terminal.name}
+                  </span>
+                )}
+                {terminals.length > 1 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); closeTerminal(terminal.id); }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      opacity: 0.5
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}
+                    title="Close terminal"
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* FEAT-09: Color picker popup */}
+      {colorPickerTerminalId !== null && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            left: colorPickerPosition.x,
+            top: colorPickerPosition.y,
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            borderRadius: '8px',
+            padding: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            zIndex: 1000
+          }}
+        >
+          <div style={{
+            fontSize: '11px',
+            color: 'var(--text-secondary)',
+            marginBottom: '8px',
+            fontWeight: 500
+          }}>
+            Terminal Color
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '4px'
+          }}>
+            {TERMINAL_COLORS.map(color => (
+              <button
+                key={color.name}
+                onClick={() => setTerminalColor(colorPickerTerminalId, color.value)}
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: color.value,
+                  border: terminals.find(t => t.id === colorPickerTerminalId)?.color === color.value
+                    ? '2px solid white'
+                    : '2px solid transparent',
+                  cursor: 'pointer',
+                  transition: 'transform 0.1s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                title={color.name}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

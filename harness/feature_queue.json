@@ -17,35 +17,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-09",
-      "name": "Multi-Terminal Split Panes with Color Coding",
-      "size": "L",
-      "priority": 2,
-      "status": "pending",
-      "description": "Multiple terminal panes visible simultaneously with color-coded identification",
-      "reference": "READ harness/TERMINAL_WORKSPACE.md for full spec",
-      "current": "Single active terminal with tabbed switching, TERMINALS sidebar on right",
-      "change": [
-        "Terminal 1 (main): Left-justified, opens in project dir, 200px default width",
-        "Click +: New terminal appears to RIGHT of existing terminals (side-by-side, not tabs)",
-        "Each terminal pane has draggable right edge for resizing",
-        "TERMINALS sidebar: Fixed far-right, narrow (~100px), contains + and terminal list",
-        "Color coding: Right-click terminal in sidebar → pick color (8 options)",
-        "Color shows on sidebar dot AND tab header: [● Term 1][● Term 2]",
-        "Tab header shows all terminals with colored dots, click to focus that pane",
-        "All terminals visible simultaneously (not hidden/tabbed)"
-      ],
-      "test": [
-        "Open Terminal tab - Term 1 appears left-justified at 200px",
-        "Click + - Term 2 appears to right of Term 1",
-        "Drag divider between Term 1 and Term 2 - both resize",
-        "Right-click term in sidebar - color picker appears",
-        "Select red - sidebar dot and tab header show red",
-        "Add 3-4 terminals - all visible side by side",
-        "Click tab header - focuses that pane"
-      ]
-    },
-    {
       "id": "FEAT-08",
       "name": "Chat File Drop and Paste",
       "size": "M",
@@ -64,6 +35,7 @@
     }
   ],
   "completed": [
+    {"id": "FEAT-09", "name": "Multi-Terminal Split Panes with Color Coding", "completed": "2026-01-25"},
     {"id": "BUG-14", "name": "Editor Tab Not Loading Selected File", "completed": "2026-01-25"},
     {"id": "BUG-13", "name": "TERMINALS Sidebar Not Visible", "completed": "2026-01-25"},
     {"id": "BUG-12", "name": "xterm-screen Width Calculation", "completed": "2026-01-25"},
