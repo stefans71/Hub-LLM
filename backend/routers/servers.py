@@ -10,7 +10,7 @@ import uuid
 import asyncio
 import json
 
-from models import VPSServer as VPSServerModel, get_session
+from models import VPSServer as VPSServerModel, async_session
 from services.ssh import (
     get_connection,
     close_connection,
@@ -95,7 +95,7 @@ def db_to_response(server: VPSServerModel) -> ServerResponse:
 @router.get("/")
 async def list_servers(project_id: Optional[str] = None) -> list[ServerResponse]:
     """List all servers, optionally filtered by project"""
-    async with get_session() as session:
+    async with async_session() as session:
         query = select(VPSServerModel).order_by(VPSServerModel.created_at.desc())
         result = await session.execute(query)
         servers = result.scalars().all()
@@ -116,7 +116,7 @@ async def create_server(server: ServerCreate):
     server_id = server.id or str(uuid.uuid4())
     created_at = datetime.utcnow()
 
-    async with get_session() as session:
+    async with async_session() as session:
         # Check if server already exists (for upsert behavior)
         result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
         existing = result.scalar_one_or_none()
@@ -167,7 +167,7 @@ async def create_server(server: ServerCreate):
 @router.get("/{server_id}", response_model=ServerResponse)
 async def get_server(server_id: str):
     """Get server details"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
         server = result.scalar_one_or_none()
         if not server:
@@ -178,7 +178,7 @@ async def get_server(server_id: str):
 @router.patch("/{server_id}", response_model=ServerResponse)
 async def update_server(server_id: str, update: ServerUpdate):
     """Update server details"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
         server = result.scalar_one_or_none()
         if not server:
@@ -209,7 +209,7 @@ async def update_server(server_id: str, update: ServerUpdate):
 @router.delete("/{server_id}")
 async def delete_server(server_id: str):
     """Delete a server"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
         server = result.scalar_one_or_none()
         if not server:
@@ -226,7 +226,7 @@ async def delete_server(server_id: str):
 @router.post("/{server_id}/test")
 async def test_connection(server_id: str):
     """Test SSH connection to server"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
         server = result.scalar_one_or_none()
         if not server:
@@ -332,7 +332,7 @@ async def terminal_websocket(websocket: WebSocket, server_id: str):
     await websocket.accept()
 
     # Check if server exists in database
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
         server = result.scalar_one_or_none()
         if not server:
@@ -345,7 +345,7 @@ async def terminal_websocket(websocket: WebSocket, server_id: str):
     conn = None
     try:
         # Create new connection for this terminal session
-        async with get_session() as session:
+        async with async_session() as session:
             result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
             server = result.scalar_one_or_none()
 

@@ -228,9 +228,10 @@ async def close_db():
     print("Database connection closed")
 
 
-def get_session() -> AsyncSession:
-    """Get a database session context manager"""
-    return async_session()
+async def get_session():
+    """Async generator for FastAPI Depends - yields a database session"""
+    async with async_session() as session:
+        yield session
 
 
 # Export all models

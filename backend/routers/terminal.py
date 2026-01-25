@@ -13,7 +13,7 @@ from sqlalchemy import select
 import asyncio
 
 from services.ssh import SSHConnection, SSHCredentials, servers_cache, load_server_to_cache
-from models import VPSServer as VPSServerModel, Project as ProjectModel, get_session
+from models import VPSServer as VPSServerModel, Project as ProjectModel, async_session
 
 router = APIRouter()
 
@@ -56,7 +56,7 @@ async def terminal_websocket(
         resolved_server_id = serverId
     elif projectId:
         # Look up project to get its vps_server_id
-        async with get_session() as session:
+        async with async_session() as session:
             result = await session.execute(select(ProjectModel).where(ProjectModel.id == projectId))
             project = result.scalar_one_or_none()
             if project:
@@ -86,7 +86,7 @@ async def terminal_websocket(
         return
 
     # Get server from database
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == resolved_server_id))
         server_model = result.scalar_one_or_none()
         if not server_model:

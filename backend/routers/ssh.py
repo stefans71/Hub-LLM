@@ -15,7 +15,7 @@ import uuid
 import asyncssh
 import json
 
-from models import VPSServer as VPSServerModel, get_session
+from models import VPSServer as VPSServerModel, async_session
 from services.ssh import (
     SSHCredentials,
     SSHConnection,
@@ -87,7 +87,7 @@ class TestConnectionResponse(BaseModel):
 @router.get("/servers")
 async def list_servers(project_id: Optional[str] = None) -> list[Server]:
     """List all configured servers from database"""
-    async with get_session() as session:
+    async with async_session() as session:
         query = select(VPSServerModel)
         result = await session.execute(query)
         db_servers = result.scalars().all()
@@ -116,7 +116,7 @@ async def add_server(server: ServerCreate):
 
     server_id = server.id if server.id else str(uuid.uuid4())
 
-    async with get_session() as session:
+    async with async_session() as session:
         # Check if exists
         result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
         existing = result.scalar_one_or_none()
@@ -168,7 +168,7 @@ async def add_server(server: ServerCreate):
 @router.delete("/servers/{server_id}")
 async def remove_server(server_id: str):
     """Remove a server configuration"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
         server = result.scalar_one_or_none()
         if not server:
@@ -189,7 +189,7 @@ async def connect_server(server_id: str):
     """Establish SSH connection to a server"""
     if server_id not in servers_cache:
         # Try to load from database
-        async with get_session() as session:
+        async with async_session() as session:
             result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
             server = result.scalar_one_or_none()
             if not server:
@@ -337,7 +337,7 @@ async def terminal_websocket(websocket: WebSocket, server_id: str):
 
     # Load server from database if not in cache
     if server_id not in servers_cache:
-        async with get_session() as session:
+        async with async_session() as session:
             result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
             server = result.scalar_one_or_none()
             if not server:

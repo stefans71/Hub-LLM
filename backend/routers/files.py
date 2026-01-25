@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from services.ssh import SSHConnection, SSHCredentials, servers_cache, load_server_to_cache
-from models import VPSServer as VPSServerModel, Project as ProjectModel, get_session
+from models import VPSServer as VPSServerModel, Project as ProjectModel, async_session
 
 router = APIRouter()
 
@@ -24,7 +24,7 @@ async def get_file_connection(server_id: str) -> SSHConnection:
     """Get or create an SSH connection for file operations"""
     # Load from database if not in cache
     if server_id not in servers_cache:
-        async with get_session() as session:
+        async with async_session() as session:
             result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
             server = result.scalar_one_or_none()
             if not server:
@@ -64,7 +64,7 @@ async def resolve_server_id(server_id: Optional[str], project_id: Optional[str])
         return server_id
 
     if project_id:
-        async with get_session() as session:
+        async with async_session() as session:
             result = await session.execute(select(ProjectModel).where(ProjectModel.id == project_id))
             project = result.scalar_one_or_none()
             if not project:
@@ -79,7 +79,7 @@ async def resolve_server_id(server_id: Optional[str], project_id: Optional[str])
 async def ensure_server_exists(server_id: str) -> None:
     """Ensure server exists in database and cache"""
     if server_id not in servers_cache:
-        async with get_session() as session:
+        async with async_session() as session:
             result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
             server = result.scalar_one_or_none()
             if not server:

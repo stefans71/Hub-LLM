@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from sqlalchemy import select
 
-from models import UserSetting, get_session
+from models import UserSetting, async_session
 
 router = APIRouter()
 
@@ -27,7 +27,7 @@ class SettingsBulkUpdate(BaseModel):
 @router.get("/")
 async def list_settings() -> Dict[str, Optional[str]]:
     """Get all user settings as key-value pairs"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(UserSetting))
         settings = result.scalars().all()
         return {s.key: s.value for s in settings}
@@ -36,7 +36,7 @@ async def list_settings() -> Dict[str, Optional[str]]:
 @router.get("/{key}", response_model=SettingResponse)
 async def get_setting(key: str):
     """Get a specific setting by key"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(UserSetting).where(UserSetting.key == key))
         setting = result.scalar_one_or_none()
         if not setting:
@@ -47,7 +47,7 @@ async def get_setting(key: str):
 @router.put("/{key}", response_model=SettingResponse)
 async def set_setting(key: str, update: SettingUpdate):
     """Set a specific setting"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(UserSetting).where(UserSetting.key == key))
         setting = result.scalar_one_or_none()
 
@@ -65,7 +65,7 @@ async def set_setting(key: str, update: SettingUpdate):
 @router.delete("/{key}")
 async def delete_setting(key: str):
     """Delete a setting"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(UserSetting).where(UserSetting.key == key))
         setting = result.scalar_one_or_none()
         if not setting:
@@ -80,7 +80,7 @@ async def delete_setting(key: str):
 @router.post("/bulk")
 async def bulk_update_settings(bulk: SettingsBulkUpdate) -> Dict[str, Optional[str]]:
     """Update multiple settings at once"""
-    async with get_session() as session:
+    async with async_session() as session:
         for key, value in bulk.settings.items():
             result = await session.execute(select(UserSetting).where(UserSetting.key == key))
             setting = result.scalar_one_or_none()

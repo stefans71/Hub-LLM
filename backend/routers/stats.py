@@ -8,7 +8,7 @@ from sqlalchemy import select, func
 import httpx
 import os
 
-from models import Project as ProjectModel, get_session
+from models import Project as ProjectModel, async_session
 
 router = APIRouter()
 
@@ -51,7 +51,7 @@ async def get_dashboard_stats(
         - local_projects: Number of local projects
     """
     # Count projects from database
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(ProjectModel))
         projects = result.scalars().all()
 

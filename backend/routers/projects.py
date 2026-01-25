@@ -11,7 +11,7 @@ import uuid
 import json
 import re
 
-from models import Project as ProjectModel, ChatMessage as ChatMessageModel, get_session
+from models import Project as ProjectModel, ChatMessage as ChatMessageModel, async_session
 
 router = APIRouter()
 
@@ -131,7 +131,7 @@ def db_to_response(project: ProjectModel) -> ProjectResponse:
 @router.get("/")
 async def list_projects() -> list[ProjectResponse]:
     """List all projects"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(ProjectModel).order_by(ProjectModel.created_at.desc()))
         projects = result.scalars().all()
         return [db_to_response(p) for p in projects]
@@ -163,7 +163,7 @@ async def create_project(project: ProjectCreate):
         updated_at=now
     )
 
-    async with get_session() as session:
+    async with async_session() as session:
         session.add(new_project)
         await session.commit()
         await session.refresh(new_project)
@@ -173,7 +173,7 @@ async def create_project(project: ProjectCreate):
 @router.get("/{project_id}", response_model=ProjectResponse)
 async def get_project(project_id: str):
     """Get a specific project"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(ProjectModel).where(ProjectModel.id == project_id))
         project = result.scalar_one_or_none()
         if not project:
@@ -184,7 +184,7 @@ async def get_project(project_id: str):
 @router.patch("/{project_id}", response_model=ProjectResponse)
 async def update_project(project_id: str, update: ProjectUpdate):
     """Update a project"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(ProjectModel).where(ProjectModel.id == project_id))
         project = result.scalar_one_or_none()
         if not project:
@@ -213,7 +213,7 @@ async def update_project(project_id: str, update: ProjectUpdate):
 @router.delete("/{project_id}")
 async def delete_project(project_id: str):
     """Delete a project"""
-    async with get_session() as session:
+    async with async_session() as session:
         result = await session.execute(select(ProjectModel).where(ProjectModel.id == project_id))
         project = result.scalar_one_or_none()
         if not project:
@@ -238,7 +238,7 @@ class ChatMessage(BaseModel):
 @router.get("/{project_id}/history")
 async def get_chat_history(project_id: str, limit: int = 50) -> list[ChatMessage]:
     """Get chat history for a project"""
-    async with get_session() as session:
+    async with async_session() as session:
         # Verify project exists
         result = await session.execute(select(ProjectModel).where(ProjectModel.id == project_id))
         if not result.scalar_one_or_none():
@@ -268,7 +268,7 @@ async def get_chat_history(project_id: str, limit: int = 50) -> list[ChatMessage
 @router.post("/{project_id}/history")
 async def add_to_history(project_id: str, message: ChatMessage):
     """Add a message to project chat history"""
-    async with get_session() as session:
+    async with async_session() as session:
         # Verify project exists
         result = await session.execute(select(ProjectModel).where(ProjectModel.id == project_id))
         if not result.scalar_one_or_none():
@@ -290,7 +290,7 @@ async def add_to_history(project_id: str, message: ChatMessage):
 @router.delete("/{project_id}/history")
 async def clear_history(project_id: str):
     """Clear chat history for a project"""
-    async with get_session() as session:
+    async with async_session() as session:
         await session.execute(
             delete(ChatMessageModel).where(ChatMessageModel.project_id == project_id)
         )
