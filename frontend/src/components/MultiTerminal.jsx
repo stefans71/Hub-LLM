@@ -158,11 +158,23 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onSt
 
       term.open(terminalRef.current)
 
-      setTimeout(() => {
-        if (fitAddonRef.current && mounted) {
-          fitAddonRef.current.fit()
+      // BUG-12 FIX: Use requestAnimationFrame to ensure container is fully rendered,
+      // then fit with a secondary delayed fit as fallback
+      const doFit = () => {
+        if (fitAddonRef.current && mounted && terminalRef.current) {
+          // Only fit if container has valid dimensions
+          const rect = terminalRef.current.getBoundingClientRect()
+          if (rect.width > 0 && rect.height > 0) {
+            fitAddonRef.current.fit()
+          }
         }
-      }, 0)
+      }
+
+      requestAnimationFrame(() => {
+        doFit()
+        // Secondary fit after layout settles
+        setTimeout(doFit, 100)
+      })
 
       term.onData((data) => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -201,21 +213,26 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onSt
   // Handle resize - refit when becoming active or container resizes
   useEffect(() => {
     const handleResize = () => {
-      if (fitAddonRef.current && xtermRef.current && isActive) {
-        fitAddonRef.current.fit()
+      if (fitAddonRef.current && xtermRef.current && isActive && terminalRef.current) {
+        // BUG-12: Only fit if container has valid dimensions
+        const rect = terminalRef.current.getBoundingClientRect()
+        if (rect.width > 0 && rect.height > 0) {
+          fitAddonRef.current.fit()
 
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.send(JSON.stringify({
-            type: 'resize',
-            cols: xtermRef.current.cols,
-            rows: xtermRef.current.rows
-          }))
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({
+              type: 'resize',
+              cols: xtermRef.current.cols,
+              rows: xtermRef.current.rows
+            }))
+          }
         }
       }
     }
 
     const resizeObserver = new ResizeObserver(() => {
-      handleResize()
+      // Debounce resize events with requestAnimationFrame
+      requestAnimationFrame(handleResize)
     })
 
     if (terminalRef.current) {
@@ -266,8 +283,13 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onSt
       display: isActive ? 'flex' : 'none',
       flexDirection: 'column',
       height: '100%',
+      width: '100%',
       minHeight: 0,
-      background: 'var(--bg-primary)'
+      minWidth: 0,
+      position: 'absolute',
+      inset: 0,
+      background: 'var(--bg-primary)',
+      overflow: 'hidden'
     }}>
       {/* Terminal Status Bar */}
       <div style={{
@@ -318,8 +340,11 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, onSt
         style={{
           flex: 1,
           minHeight: 0,
+          width: '100%',
+          maxWidth: '100%',
           padding: '8px',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxSizing: 'border-box'
         }}
       />
 
@@ -520,7 +545,7 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
         </div>
 
         {/* Terminal instances */}
-        <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+        <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
           {terminals.map(terminal => (
             <TerminalInstance
               key={terminal.id}
@@ -542,10 +567,11 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
     <div style={{
       display: 'flex',
       height: '100%',
-      minHeight: 0
+      minHeight: 0,
+      overflow: 'hidden'
     }}>
       {/* Terminal instances */}
-      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+      <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
         {terminals.map(terminal => (
           <TerminalInstance
             key={terminal.id}

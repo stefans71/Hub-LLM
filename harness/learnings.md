@@ -4,6 +4,58 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 62 - 2026-01-25 EST
+**Task**: BUG-12 - xterm-screen Width Calculation Broken
+
+**What**: Fixed xterm fitAddon calculating absurd width (350554px) causing terminal text to bunch on left side
+
+**Root Cause**:
+1. Container divs were missing explicit width constraints (`width: 100%`, `minWidth: 0`)
+2. In flex layouts, children can grow beyond parent width without `minWidth: 0`
+3. Initial `fitAddon.fit()` called with `setTimeout(..., 0)` which was too early - container not fully rendered
+4. fitAddon calculates terminal dimensions from container, so unbounded container = huge width
+
+**Solution**:
+1. Added `width: 100%`, `minWidth: 0` to all container chain:
+   - LLMDevPanel `.llm-dev-content` container
+   - Terminal tab content wrapper
+   - MultiTerminal outer and inner containers
+   - TerminalInstance wrapper (changed to `position: absolute; inset: 0`)
+2. Changed initial fit to use `requestAnimationFrame` + secondary delayed fit
+3. Added validation: only call `fit()` if container has positive dimensions
+4. Used `requestAnimationFrame` in ResizeObserver callback for debouncing
+
+**Key Pattern - Flex Container Width Constraints**:
+```jsx
+// For flex children that contain xterm.js terminals:
+<div style={{
+  flex: 1,
+  width: '100%',      // Explicit width constraint
+  minWidth: 0,        // Allow shrinking below content width
+  minHeight: 0,       // Allow shrinking below content height
+  overflow: 'hidden'  // Prevent content overflow
+}}>
+```
+
+**Key Pattern - xterm.js FitAddon Initialization**:
+```javascript
+// After term.open(), wait for layout to complete before fitting
+requestAnimationFrame(() => {
+  const rect = containerRef.current.getBoundingClientRect()
+  if (rect.width > 0 && rect.height > 0) {
+    fitAddonRef.current.fit()
+  }
+  // Secondary fit after layout settles
+  setTimeout(doFit, 100)
+})
+```
+
+**Files Modified**:
+- frontend/src/components/MultiTerminal.jsx
+- frontend/src/components/LLMDevPanel.jsx
+
+---
+
 ### Session 61 - 2026-01-25 15:15 EST
 **Task**: FEAT-07 - Multiple Terminal Tabs
 

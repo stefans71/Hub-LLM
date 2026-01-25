@@ -514,6 +514,8 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
           className="llm-dev-content"
           style={{
             flex: 1,
+            width: '100%',           // BUG-12: Explicit width constraint
+            minWidth: 0,             // BUG-12: Allow shrinking in flex context
             display: 'flex',
             background: 'var(--bg-primary)',
             overflow: 'hidden',
@@ -525,7 +527,9 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
             <div
               style={{
                 flex: 1,
-                minHeight: 0,  // BUG-10: Critical for flex height calculation
+                width: '100%',           // BUG-12: Explicit width for xterm fit calculation
+                minWidth: 0,             // BUG-12: Allow flex shrink below content width
+                minHeight: 0,            // BUG-10: Critical for flex height calculation
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden'

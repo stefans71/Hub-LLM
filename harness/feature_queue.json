@@ -19,22 +19,6 @@
   },
   "queue": [
     {
-      "id": "BUG-12",
-      "name": "xterm-screen Width Calculation Broken",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "xterm-screen div has width: 350554px causing text to bunch on left side",
-      "current": "In inspector: div.xterm-screen has width: 350554px (absurd). Terminal text confined to ~50 columns and wraps prematurely. fitAddon not working correctly.",
-      "change": [
-        "In MultiTerminal.jsx: ensure fitAddon.fit() is called AFTER container is mounted and visible",
-        "May need ResizeObserver or requestAnimationFrame delay",
-        "Target ~70-80 columns max for readability on wide screens",
-        "Check div.xterm-viewport and div.xterm-screen sizing"
-      ],
-      "test": "Inspect div.xterm-screen - width should be reasonable (not 350k px). Terminal text fills ~70 columns, readable width, no premature wrapping."
-    },
-    {
       "id": "BUG-13",
       "name": "TERMINALS Sidebar Not Visible",
       "size": "S",
@@ -68,6 +52,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-12", "name": "xterm-screen Width Calculation", "completed": "2026-01-25"},
     {"id": "FEAT-07", "name": "Multiple Terminal Tabs", "completed": "2026-01-25"},
     {"id": "BUG-11", "name": "LLM-Dev Tabs Don't Switch Content", "completed": "2026-01-25"},
     {"id": "BUG-10", "name": "Terminal Content Cutoff", "completed": "2026-01-25"},
