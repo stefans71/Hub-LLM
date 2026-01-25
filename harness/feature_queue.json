@@ -1,55 +1,155 @@
 {
   "meta": {
-    "version": "4.4",
-    "phase": "Vision UI Implementation",
+    "version": "4.5",
+    "phase": "Vision UI - Simplified",
     "last_updated": "2026-01-25"
   },
   "vision": {
-    "layout": "Option C - Chat-first with tabbed Editor",
-    "left_sidebar": "Projects list, each expandable to show file tree from /root/llm-hub-projects/{slug}/",
-    "main_area_tabs": ["Chat", "Editor"],
-    "llm_dev_panel": "Terminal | Docker | Logs | Project Context (NO file explorer)",
-    "note": "File explorer MOVES from LLM-Dev to left sidebar under each project"
+    "summary": "Clean, project-focused workspace. Chat + File visible simultaneously.",
+    "left_sidebar": {
+      "projects": "Expandable file trees from /root/llm-hub-projects/{slug}/",
+      "status_dot": "● green=connected, ○ gray=disconnected, 🔴 red=error",
+      "project_name": "Truncate with ellipsis, full name on hover tooltip",
+      "menu": "3-dot menu on right: Rename, Settings, Disconnect VPS, Delete"
+    },
+    "top_bar": {
+      "left": "Project name only",
+      "right": "Model selector only",
+      "removed": ["VPS badge", "Connected badge", "VPS IP display"]
+    },
+    "main_area": {
+      "content": "Chat only (no tabs needed)",
+      "removed": ["Servers tab", "Codespaces tab", "Editor tab"]
+    },
+    "llm_dev_panel": {
+      "tabs": ["Terminal", "Editor", "Docker", "Logs", "Project Context"],
+      "editor": "Click file in sidebar → opens here (view alongside chat)",
+      "explorer": "REMOVE - file browsing now in left sidebar only"
+    },
+    "settings_page": {
+      "moved_here": ["VPS Connections (from Servers tab)", "Codespaces config"]
+    }
   },
   "queue": [
     {
-      "id": "FEAT-06",
-      "name": "Main Area: Chat + Editor Tabs",
-      "size": "M",
+      "id": "UI-01",
+      "name": "Simplify Top Bar",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Remove clutter from top bar",
+      "remove": ["VPS: Digital Ocean (IP) badge", "Connected badge/button"],
+      "keep": ["Project name (left)", "Model selector (right)", "Export button"],
+      "why": "Status moves to sidebar project dot, VPS info is in Settings"
+    },
+    {
+      "id": "UI-02",
+      "name": "Remove Servers and Codespaces Tabs",
+      "size": "S",
       "priority": 2,
       "status": "pending",
-      "description": "Main area has tabs: [Chat] [Editor]. Click file in sidebar → opens in Editor tab",
-      "current": "Main area is Chat only (plus Servers, Codespaces tabs)",
-      "change": [
-        "Add tab bar above main content: Chat | Editor",
-        "Editor tab shows file content with syntax highlighting",
-        "Click file in left sidebar → switches to Editor tab, shows file"
-      ],
-      "test": "Click file in sidebar → Editor tab opens with file content"
+      "description": "Main area should be Chat only",
+      "remove": ["Servers tab", "Codespaces tab"],
+      "keep": ["Chat (main workspace area)"],
+      "why": "Servers config → Settings. Codespaces → Settings. Less clutter."
+    },
+    {
+      "id": "UI-03",
+      "name": "Project Status Dots in Sidebar",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "description": "Show VPS connection status on each project",
+      "states": {
+        "green_dot": "VPS connected",
+        "gray_dot": "VPS not connected",
+        "red_dot": "Error or needs attention"
+      },
+      "placement": "Left of project name, before folder icon"
+    },
+    {
+      "id": "UI-04",
+      "name": "Project Name Truncation + Hover Tooltip",
+      "size": "XS",
+      "priority": 4,
+      "status": "pending",
+      "description": "Long project names truncate with ellipsis, full name on hover",
+      "css": "text-overflow: ellipsis; overflow: hidden; white-space: nowrap;",
+      "hover": "Tooltip shows full project name"
+    },
+    {
+      "id": "UI-05",
+      "name": "Project 3-Dot Menu",
+      "size": "S",
+      "priority": 5,
+      "status": "pending",
+      "description": "Add settings menu to each project row in sidebar",
+      "menu_items": ["Rename", "Settings", "Disconnect VPS", "Delete"],
+      "placement": "Right side of project row"
+    },
+    {
+      "id": "UI-06",
+      "name": "Delete Confirmation with Archive Option",
+      "size": "S",
+      "priority": 6,
+      "status": "pending",
+      "depends_on": ["UI-05"],
+      "description": "Delete shows confirmation modal with options",
+      "options": ["Archive (can restore later)", "Delete permanently"],
+      "checkbox": "Also delete VPS folder /root/llm-hub-projects/{slug}/ (unchecked by default)",
+      "buttons": ["Cancel", "Confirm"]
+    },
+    {
+      "id": "FEAT-06",
+      "name": "LLM-Dev Editor Tab",
+      "size": "M",
+      "priority": 7,
+      "status": "pending",
+      "description": "Add Editor tab to LLM-Dev panel for viewing/editing files",
+      "behavior": "Click file in left sidebar → opens in LLM-Dev Editor tab",
+      "features": ["Syntax highlighting", "Read-only or editable", "Tab shows filename"],
+      "why": "User can see Chat AND file at same time (no tab switching needed)"
     },
     {
       "id": "FEAT-03",
       "name": "Remove Explorer from LLM-Dev Panel",
       "size": "S",
-      "priority": 3,
+      "priority": 8,
       "status": "pending",
-      "depends_on": ["FEAT-05", "FEAT-06"],
-      "description": "LLM-Dev panel should only have: Terminal | Docker | Logs | Project Context. Remove EXPLORER sidebar.",
-      "current": "LLM-Dev has Explorer sidebar on left showing VPS files",
-      "change": "Remove Explorer component from LLM-Dev. File browsing now in left sidebar (FEAT-05).",
-      "why": "No duplicate file explorers. Left sidebar = files, LLM-Dev = terminal/logs only.",
-      "test": "LLM-Dev panel has no file explorer. Only Terminal, Docker, Logs, Project Context tabs."
+      "depends_on": ["FEAT-06"],
+      "description": "Remove the Explorer sidebar from LLM-Dev",
+      "current": "LLM-Dev has Explorer showing VPS files on left side",
+      "change": "Remove Explorer entirely - file browsing now in left sidebar only",
+      "keep_tabs": ["Terminal", "Editor", "Docker", "Logs", "Project Context"]
     },
     {
       "id": "FEAT-04",
       "name": "Terminal Opens in Project Directory",
       "size": "XS",
-      "priority": 4,
+      "priority": 9,
       "status": "pending",
       "description": "Terminal should cd to project folder on connect",
-      "current": "Terminal opens at /root or ~",
-      "change": "On connect, run: cd /root/llm-hub-projects/{project-slug}",
-      "test": "Connect terminal → run pwd → shows /root/llm-hub-projects/{project-slug}"
+      "command": "cd /root/llm-hub-projects/{project-slug}",
+      "test": "Connect terminal → run pwd → shows project folder"
+    },
+    {
+      "id": "BUG-10",
+      "name": "Terminal Auto-Scroll to Bottom",
+      "size": "XS",
+      "priority": 10,
+      "status": "pending",
+      "description": "Terminal should scroll to bottom on new output",
+      "current": "Terminal doesn't scroll all the way down on connect"
+    },
+    {
+      "id": "BUG-11",
+      "name": "LLM-Dev Tabs Don't Switch Content",
+      "size": "S",
+      "priority": 11,
+      "status": "pending",
+      "description": "Clicking Terminal/Docker/Logs tabs on left doesn't switch panel on right",
+      "expected": "Click 'Terminal' tab → Terminal panel shows",
+      "current": "Click does nothing"
     }
   ],
   "completed": [
@@ -59,7 +159,7 @@
     {"id": "CLEANUP-02", "name": "Consolidate servers_db to One Location", "completed": "2026-01-25"},
     {"id": "CLEANUP-01", "name": "Remove Duplicate Terminal from Servers Tab", "completed": "2026-01-25"},
     {"id": "BUG-09", "name": "VPS Connection Not Persisting from Project Creation", "completed": "2026-01-25"},
-    {"id": "AUDIT-01", "name": "Map Workspace Terminal/Server Components", "completed": "2026-01-25"},
+    {"id": "AUDIT-01", "name": "Map Workspace Terminal/Server Components", "completed": "2026-01-24"},
     {"id": "BUG-08", "name": "Site Hanging on Login", "completed": "2026-01-24"},
     {"id": "BUG-07", "name": "VPS Servers List Not Persisting", "completed": "2026-01-24"},
     {"id": "BUG-06", "name": "Top Bar VPS Status Never Updates", "completed": "2026-01-24"},
@@ -69,7 +169,7 @@
     {"id": "FEAT-01", "name": "Model Selector Smart Filtering", "completed": "2026-01-24"}
   ],
   "notes": {
-    "vision": "File explorer MOVES from LLM-Dev to left sidebar. Main area gets Editor tab.",
-    "order": "FEAT-05 (sidebar files) → FEAT-06 (editor tab) → FEAT-03 (remove LLM-Dev explorer) → FEAT-04 (terminal cd)"
+    "key_change": "Editor tab moves to LLM-Dev (not main area) so user sees Chat + File simultaneously",
+    "task_order": "UI cleanup first → LLM-Dev Editor → Remove Explorer → Terminal fixes"
   }
 }
