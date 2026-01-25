@@ -4,6 +4,38 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 61 - 2026-01-25 15:15 EST
+**Task**: FEAT-07 - Multiple Terminal Tabs
+
+**What**: Added support for multiple terminal instances within the Terminal tab
+
+**Implementation**:
+- Created new `MultiTerminal.jsx` component managing multiple terminal instances
+- Each terminal gets its own WebSocket SSH session to VPS
+- Tab management: create (+), close (✕), switch, rename (double-click)
+- Responsive layout:
+  - Desktop (>768px): Right sidebar "TERMINALS" with vertical list + button
+  - Mobile (<768px): Horizontal sub-tabs below main LLM-Dev tabs
+- Status indicators: green=connected, yellow=connecting, gray=disconnected
+- Active terminal visually highlighted
+- Terminals persist while switching (display:none vs display:flex)
+- `TerminalInstance` component extracted from WorkspaceTerminal logic
+
+**Key Pattern**: Managing multiple xterm.js instances
+```javascript
+// Keep instances mounted, toggle visibility
+display: isActive ? 'flex' : 'none'
+
+// Refit terminal when becoming active
+useEffect(() => {
+  if (isActive) {
+    setTimeout(() => fitAddonRef.current?.fit(), 50)
+  }
+}, [isActive])
+```
+
+---
+
 ### Session 60 - 2026-01-25 EST
 **Task**: UI-03, UI-04, UI-05, UI-06, FEAT-06 - Major UI Session
 

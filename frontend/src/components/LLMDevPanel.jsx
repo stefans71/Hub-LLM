@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import WorkspaceTerminal from './WorkspaceTerminal'
+import MultiTerminal from './MultiTerminal'
 
 /**
  * LLM-Dev Bottom Panel (W-88 to W-124)
@@ -520,7 +520,7 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
             minHeight: 0
           }}
         >
-          {/* FEAT-03: Terminal Tab Content - Simplified (Explorer removed) */}
+          {/* FEAT-07: Terminal Tab Content - Multiple Terminals */}
           {activeTab === 'terminal' && (
             <div
               style={{
@@ -531,13 +531,11 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
                 overflow: 'hidden'
               }}
             >
-              {/* Terminal Content - Full width */}
-              <WorkspaceTerminal
+              {/* FEAT-07: Multiple Terminal Tabs */}
+              <MultiTerminal
                 projectId={project?.id}
                 serverId={serverId}
                 projectSlug={project?.slug}
-                className="dev-terminal-content"
-                style={{ flex: 1 }}
               />
             </div>
           )}

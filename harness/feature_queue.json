@@ -32,6 +32,7 @@
   },
   "queue": [],
   "completed": [
+    {"id": "FEAT-07", "name": "Multiple Terminal Tabs", "completed": "2026-01-25"},
     {"id": "BUG-11", "name": "LLM-Dev Tabs Don't Switch Content", "completed": "2026-01-25", "note": "Verified working - no fix needed"},
     {"id": "BUG-10", "name": "Terminal Auto-Scroll to Bottom", "completed": "2026-01-25"},
     {"id": "FEAT-04", "name": "Terminal Opens in Project Directory", "completed": "2026-01-25"},
