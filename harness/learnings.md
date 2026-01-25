@@ -5,7 +5,16 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 60 - 2026-01-25 EST
-**Task**: UI-03 (S) + UI-04 (XS) - Sidebar Improvements
+**Task**: UI-03, UI-04, UI-05, UI-06, FEAT-06 - Major UI Session
+
+**FEAT-06: LLM-Dev Editor Tab (M)**
+- Added Editor tab to LLM-Dev panel alongside Terminal, Docker, Logs, Project Context
+- Wired sidebar file clicks to open in Editor tab via callback pattern:
+  - LLMDevPanel exposes `onEditorReady` callback with `openFile(path, serverId)` function
+  - Workspace.jsx holds ref and passes `handleFileSelect` to WorkspaceFileExplorer
+  - WorkspaceFileExplorer calls `onFileSelect(file, serverId)` when file clicked
+- Editor features: file tabs bar, syntax highlighting (JS/keywords/strings/numbers), line numbers
+- Note: Backend API `/api/files/content` has existing bug ('str' decode error) - separate issue
 
 **UI-06: Delete Confirmation Modal**
 - Added modal triggered by Delete in 3-dot menu

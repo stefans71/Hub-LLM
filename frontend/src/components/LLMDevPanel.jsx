@@ -17,7 +17,7 @@ import WorkspaceTerminal from './WorkspaceTerminal'
  * - W-110: Logs tab content
  * - W-111: Project Context tab content
  */
-export default function LLMDevPanel({ project, linkedServerId }) {
+export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) {
   // Use linkedServerId if provided (freshly linked), otherwise fall back to project's vps_server_id
   const serverId = linkedServerId || project?.vps_server_id
   const [isExpanded, setIsExpanded] = useState(false)
@@ -289,6 +289,53 @@ export default function LLMDevPanel({ project, linkedServerId }) {
     </svg>
   )
 
+  // FEAT-06: Editor Tab Icon
+  const EditorIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: '4px' }}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+      <polyline points="10 9 9 9 8 9"></polyline>
+    </svg>
+  )
+
+  // FEAT-06: Expose openFile function to parent for sidebar integration
+  useEffect(() => {
+    if (onEditorReady) {
+      onEditorReady({
+        openFile: (filePath, fileServerId) => {
+          // Use provided serverId or fall back to panel's serverId
+          const targetServerId = fileServerId || serverId
+          if (!targetServerId) return
+
+          // Switch to editor tab and open file
+          setActiveTab('editor')
+          setIsExpanded(true)
+
+          // Fetch and display file
+          fetch(`/api/files/content?serverId=${encodeURIComponent(targetServerId)}&path=${encodeURIComponent(filePath)}`)
+            .then(res => res.ok ? res.json() : Promise.reject('Failed to load file'))
+            .then(data => {
+              setCodeContent(data.content)
+              const fileName = filePath.split('/').pop()
+              setActiveFile(fileName)
+              // Add to open editors if not already there
+              if (!openEditors.find(e => e.path === filePath)) {
+                setOpenEditors(prev => [...prev, { name: fileName, path: filePath, active: true }].map(e => ({
+                  ...e,
+                  active: e.path === filePath
+                })))
+              } else {
+                setOpenEditors(prev => prev.map(e => ({ ...e, active: e.path === filePath })))
+              }
+            })
+            .catch(err => console.error('Failed to open file:', err))
+        }
+      })
+    }
+  }, [onEditorReady, serverId])
+
   return (
     <div
       ref={panelRef}
@@ -379,6 +426,27 @@ export default function LLMDevPanel({ project, linkedServerId }) {
           >
             <TerminalIcon />
             Terminal
+          </button>
+
+          {/* FEAT-06: Editor Tab */}
+          <button
+            className={activeTab === 'editor' ? 'active' : ''}
+            onClick={(e) => { e.stopPropagation(); handleTabClick('editor'); }}
+            style={{
+              padding: '8px 16px',
+              background: activeTab === 'editor' ? 'var(--bg-primary)' : 'transparent',
+              border: 'none',
+              color: activeTab === 'editor' ? 'var(--text-primary)' : 'var(--text-secondary)',
+              fontSize: '13px',
+              cursor: 'pointer',
+              borderRadius: '4px 4px 0 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <EditorIcon />
+            {activeFile ? activeFile : 'Editor'}
           </button>
 
           {/* W-93: Docker Tab */}
@@ -857,6 +925,150 @@ export default function LLMDevPanel({ project, linkedServerId }) {
                 />
               </div>
             </>
+          )}
+
+          {/* FEAT-06: Editor Tab Content */}
+          {activeTab === 'editor' && (
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Editor Tabs Bar */}
+              <div
+                style={{
+                  display: 'flex',
+                  background: 'var(--bg-secondary)',
+                  borderBottom: '1px solid var(--border)',
+                  minHeight: '36px'
+                }}
+              >
+                {openEditors.length === 0 && (
+                  <div style={{ padding: '8px 16px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                    Click a file in the sidebar to open it here
+                  </div>
+                )}
+                {openEditors.map((editor, index) => (
+                  <div
+                    key={index}
+                    onClick={() => openFile(editor.path)}
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      color: editor.active ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      background: editor.active ? 'var(--bg-primary)' : 'transparent',
+                      borderRight: '1px solid var(--border)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    {getFileIcon(editor.name)}
+                    <span>{editor.name}</span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const newEditors = openEditors.filter((_, i) => i !== index)
+                        setOpenEditors(newEditors)
+                        if (editor.active && newEditors.length > 0) {
+                          setActiveFile(newEditors[0].name)
+                          openFile(newEditors[0].path)
+                        } else if (newEditors.length === 0) {
+                          setActiveFile(null)
+                          setCodeContent('')
+                        }
+                      }}
+                      style={{
+                        opacity: 0.5,
+                        fontSize: '10px',
+                        padding: '2px',
+                        borderRadius: '3px'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      ✕
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Editor Content with Syntax Highlighting */}
+              <div
+                style={{
+                  flex: 1,
+                  overflow: 'auto',
+                  fontFamily: "'Monaco', 'Menlo', 'Consolas', monospace",
+                  fontSize: '13px',
+                  lineHeight: 1.6,
+                  background: 'var(--bg-primary)'
+                }}
+              >
+                {!codeContent && (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    color: 'var(--text-muted)'
+                  }}>
+                    <EditorIcon />
+                    <div style={{ marginTop: '12px' }}>Select a file from the sidebar to view</div>
+                  </div>
+                )}
+                {codeContent && (
+                  <div style={{ padding: '12px 0' }}>
+                    {codeContent.split('\n').map((line, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          minHeight: '20px'
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '50px',
+                            paddingRight: '12px',
+                            textAlign: 'right',
+                            color: 'var(--text-muted)',
+                            userSelect: 'none',
+                            flexShrink: 0,
+                            opacity: 0.5
+                          }}
+                        >
+                          {index + 1}
+                        </span>
+                        <pre
+                          style={{
+                            margin: 0,
+                            flex: 1,
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-all'
+                          }}
+                          dangerouslySetInnerHTML={{
+                            __html: line
+                              .replace(/&/g, '&amp;')
+                              .replace(/</g, '&lt;')
+                              .replace(/>/g, '&gt;')
+                              .replace(/(\/\/.*$|#.*$)/gm, '<span style="color: #6a737d;">$1</span>')
+                              .replace(/(["'`])(?:(?!\1)[^\\]|\\.)*\1/g, '<span style="color: #98c379;">$&</span>')
+                              .replace(/\b(const|let|var|function|return|if|else|for|while|class|import|export|from|default|async|await|try|catch|throw|new|this|typeof|instanceof)\b/g, '<span style="color: #c678dd;">$1</span>')
+                              .replace(/\b(true|false|null|undefined|NaN|Infinity)\b/g, '<span style="color: #d19a66;">$1</span>')
+                              .replace(/\b(\d+\.?\d*)\b/g, '<span style="color: #d19a66;">$1</span>')
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* W-109: Docker Tab Content */}

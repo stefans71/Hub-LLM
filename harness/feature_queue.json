@@ -32,17 +32,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-06",
-      "name": "LLM-Dev Editor Tab",
-      "size": "M",
-      "priority": 7,
-      "status": "pending",
-      "description": "Add Editor tab to LLM-Dev panel for viewing/editing files",
-      "behavior": "Click file in left sidebar → opens in LLM-Dev Editor tab",
-      "features": ["Syntax highlighting", "Read-only or editable", "Tab shows filename"],
-      "why": "User can see Chat AND file at same time (no tab switching needed)"
-    },
-    {
       "id": "FEAT-03",
       "name": "Remove Explorer from LLM-Dev Panel",
       "size": "S",
@@ -85,6 +74,7 @@
     }
   ],
   "completed": [
+    {"id": "FEAT-06", "name": "LLM-Dev Editor Tab", "completed": "2026-01-25"},
     {"id": "UI-06", "name": "Delete Confirmation with Archive Option", "completed": "2026-01-25"},
     {"id": "UI-05", "name": "Project 3-Dot Menu", "completed": "2026-01-25"},
     {"id": "UI-04", "name": "Project Name Truncation + Hover Tooltip", "completed": "2026-01-25"},

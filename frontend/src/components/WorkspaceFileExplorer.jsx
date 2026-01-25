@@ -244,10 +244,11 @@ export default function WorkspaceFileExplorer({
     }
   }
 
-  // Handle file click
+  // Handle file click - FEAT-06: pass file to LLM-Dev Editor
   const handleFileClick = (project, file) => {
     if (onFileSelect) {
-      onFileSelect(project, file)
+      // Pass file and the project's VPS server ID for the editor to fetch content
+      onFileSelect(file, project.vps_server_id)
     }
   }
 

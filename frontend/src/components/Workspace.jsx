@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Chat from './Chat'
 import Terminal from './Terminal'
@@ -50,6 +50,21 @@ export default function Workspace({ project, model, apiKeys }) {
   const [selectedModel, setSelectedModel] = useState(model || { name: 'Claude Opus 4.5', color: '#ef4444' })
   // Track the currently linked server ID (may differ from project.vps_server_id if just linked)
   const [linkedServerId, setLinkedServerId] = useState(project?.vps_server_id || null)
+
+  // FEAT-06: Reference to LLMDevPanel editor API
+  const editorApiRef = useRef(null)
+
+  // FEAT-06: Handler for when editor is ready
+  const handleEditorReady = (api) => {
+    editorApiRef.current = api
+  }
+
+  // FEAT-06: Handler for when a file is selected in the sidebar
+  const handleFileSelect = (file, serverId) => {
+    if (editorApiRef.current?.openFile) {
+      editorApiRef.current.openFile(file.path || file.relativePath, serverId)
+    }
+  }
 
   // Check initial connection status when project changes - auto-connect if VPS was verified
   useEffect(() => {
@@ -326,6 +341,7 @@ export default function Workspace({ project, model, apiKeys }) {
           onToggle={handleFileExplorerToggle}
           currentProject={project}
           onSelectProject={handleSelectProject}
+          onFileSelect={handleFileSelect}
         />
 
         {/* Left side - Main content (UI-02: Chat only, no tabs) */}
@@ -446,7 +462,7 @@ export default function Workspace({ project, model, apiKeys }) {
       </div>
 
       {/* W-88: LLM-Dev Bottom Panel */}
-      <LLMDevPanel project={project} linkedServerId={linkedServerId} />
+      <LLMDevPanel project={project} linkedServerId={linkedServerId} onEditorReady={handleEditorReady} />
     </div>
   )
 }
