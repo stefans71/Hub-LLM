@@ -1,15 +1,35 @@
 {
   "meta": {
-    "version": "4.2",
-    "phase": "Audit + Cleanup + Refactor + Vision",
-    "last_updated": "2026-01-24"
+    "version": "4.3",
+    "phase": "Cleanup + Refactor + Vision UI",
+    "last_updated": "2026-01-25"
+  },
+  "vision": {
+    "layout": "Option C - Tabbed Main Area",
+    "description": "Chat-first with file editing capability",
+    "structure": {
+      "left_sidebar": "Projects + nested File Explorer (files show under each project)",
+      "main_area": "Tabs: [Chat] [Editor] - click file opens Editor tab",
+      "bottom_panel": "LLM-Dev: Terminal | Output | Logs (NO file explorer here)"
+    },
+    "vps_folder": "/root/llm-hub-projects/{project-slug}/"
   },
   "queue": [
-            {
+    {
+      "id": "BUG-09",
+      "name": "VPS Connection Not Persisting from Project Creation",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Connect VPS during Create Project → Go to workspace → VPS shows but NOT connected. Have to click Connect again.",
+      "expected": "If VPS was connected during project creation, should already be connected when entering workspace",
+      "test": "Create project + connect VPS → Enter workspace → VPS already connected (no need to click Connect)"
+    },
+    {
       "id": "CLEANUP-02",
       "name": "Consolidate servers_db to One Location",
       "size": "M",
-      "priority": 3,
+      "priority": 2,
       "status": "pending",
       "description": "servers_db exists in TWO files. Keep ONE in services/ssh.py.",
       "files": ["backend/routers/ssh.py", "backend/services/ssh.py"],
@@ -19,57 +39,80 @@
       "id": "REFACTOR-01",
       "name": "Move Data from localStorage to Database",
       "size": "L",
-      "priority": 4,
+      "priority": 3,
       "status": "pending",
-      "description": "localStorage is wrong architecture. Data should be in database on server, not in user's browser.",
-      "why": [
-        "Data lost when browser cache cleared",
-        "Can't access from different device/browser",
-        "Claude can't see user's localStorage during testing",
-        "Not production-ready"
-      ],
-      "tasks": [
-        "1. Create SQLite database schema (projects, vps_servers, user_settings)",
-        "2. Create backend CRUD endpoints for each table",
-        "3. Update frontend to fetch from API instead of localStorage",
-        "4. Create migration script to import existing localStorage data",
-        "5. Keep localStorage as fallback/cache only"
-      ],
+      "description": "localStorage is wrong architecture. Move to SQLite database.",
       "schema": {
         "projects": "id, name, slug, vps_server_id, created_at",
         "vps_servers": "id, name, host, port, username, auth_type, created_at",
         "user_settings": "id, key, value"
       },
-      "test": "Create project → Refresh → Project still there. Clear localStorage → Project still there."
+      "test": "Create project → Clear localStorage → Refresh → Project still there"
     },
     {
       "id": "FEAT-02",
       "name": "Project Creates Folder on VPS",
       "size": "M",
+      "priority": 4,
+      "status": "pending",
+      "description": "On project creation with VPS: create /root/llm-hub-projects/{project-slug}/",
+      "why": "Keeps LLM-Hub projects separate from existing server files",
+      "test": "Create project 'My App' with VPS → /root/llm-hub-projects/my-app/ exists"
+    },
+    {
+      "id": "FEAT-05",
+      "name": "Left Sidebar: Project File Tree",
+      "size": "M",
       "priority": 5,
       "status": "pending",
-      "description": "Create /home/projects/{project-slug}/ folder on VPS when project is created",
-      "test": "Create project with VPS → folder exists on server"
+      "depends_on": ["FEAT-02"],
+      "description": "Left sidebar shows projects with expandable file tree underneath each",
+      "current": "Left sidebar shows only project names",
+      "change": "Click project → expands to show files from /root/llm-hub-projects/{project}/",
+      "ui": {
+        "example": [
+          "▼ □ pizza-app4",
+          "    ├── src/",
+          "    │   ├── App.jsx",
+          "    │   └── index.js",
+          "    └── package.json",
+          "▶ □ api-backend"
+        ]
+      },
+      "test": "Click project in left nav → File tree expands showing project files"
+    },
+    {
+      "id": "FEAT-06",
+      "name": "Main Area: Chat + Editor Tabs",
+      "size": "M",
+      "priority": 6,
+      "status": "pending",
+      "depends_on": ["FEAT-05"],
+      "description": "Main area has tabs: [Chat] [Editor]. Click file in sidebar → opens in Editor tab",
+      "current": "Main area is only Chat",
+      "change": "Add tab bar. Editor tab shows file content with syntax highlighting",
+      "test": "Click file in sidebar → Editor tab opens with file content"
     },
     {
       "id": "FEAT-03",
-      "name": "File Explorer Scoped to Project Folder",
+      "name": "Remove File Explorer from LLM-Dev Panel",
       "size": "S",
-      "priority": 6,
+      "priority": 7,
       "status": "pending",
-      "depends_on": ["FEAT-02"],
-      "description": "File explorer shows project folder only, not VPS root",
-      "test": "File explorer shows /home/projects/{project}/ not /"
+      "depends_on": ["FEAT-05", "FEAT-06"],
+      "description": "LLM-Dev panel should only have: Terminal | Output | Logs. Remove EXPLORER sidebar.",
+      "why": "File explorer moved to left sidebar (FEAT-05). No duplication.",
+      "test": "LLM-Dev has no file explorer. Only Terminal, Output, Logs tabs."
     },
     {
       "id": "FEAT-04",
       "name": "Terminal Opens in Project Directory",
       "size": "XS",
-      "priority": 7,
+      "priority": 8,
       "status": "pending",
       "depends_on": ["FEAT-02"],
       "description": "Terminal cd's to project folder on connect",
-      "test": "pwd shows /home/projects/{project-name}"
+      "test": "Connect → pwd shows /root/llm-hub-projects/{project-name}"
     }
   ],
   "completed": [
@@ -82,14 +125,10 @@
     {"id": "BUG-02-REOPEN", "name": "Create Project Button Hidden", "completed": "2026-01-24"},
     {"id": "BUG-03-REOPEN", "name": "VPS Connection Wired to Wrong Components", "completed": "2026-01-24"},
     {"id": "FEAT-01", "name": "Model Selector Smart Filtering", "completed": "2026-01-24"},
-    {"id": "BUG-04", "name": "Model Selector Dropdown Not Opening", "completed": "2026-01-24"},
-    {"id": "BUG-05", "name": "LLM-Dev Panel (1st attempt)", "completed": "2026-01-24"},
-    {"id": "BUG-03", "name": "Terminal WebSocket (1st attempt)", "completed": "2026-01-24"},
-    {"id": "BUG-02", "name": "Create Project Button (1st attempt)", "completed": "2026-01-24"},
-    {"id": "BUG-01", "name": "Workspace Blank Page Crash", "completed": "2026-01-24"}
+    {"id": "BUG-04", "name": "Model Selector Dropdown Not Opening", "completed": "2026-01-24"}
   ],
   "notes": {
-    "order": "AUDIT → CLEANUP → REFACTOR (localStorage→DB) → FEATURES",
-    "refactor_note": "REFACTOR-01 is L size - one full session. Fixes root cause of data loss issues."
+    "ui_decision": "Option C - Chat-first with tabbed Editor. File tree in left sidebar, not LLM-Dev.",
+    "vps_path": "/root/llm-hub-projects/ keeps projects separate from server system files"
   }
 }
