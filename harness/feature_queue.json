@@ -15,26 +15,9 @@
       "truncation": "Names truncate with hover tooltip"
     }
   },
-  "queue": [
-        {
-      "id": "FEAT-08",
-      "name": "Chat File Drop and Paste",
-      "size": "M",
-      "priority": 1,
-      "status": "pending",
-      "description": "Drag/drop files or CTRL+V paste images into chat area",
-      "current": "No way to add files/images to chat",
-      "change": [
-        "Add drop zone overlay to chat area",
-        "Handle paste event for images (CTRL+V)",
-        "Limit to 3-4 images in memory (FIFO queue) to prevent memory bloat",
-        "Store as base64 or blob URLs",
-        "Show image thumbnails in chat input area"
-      ],
-      "test": "Drop image into chat - appears as thumbnail. Paste 5 images - oldest removed, only 4 remain"
-    }
-  ],
+  "queue": [],
   "completed": [
+    {"id": "FEAT-08", "name": "Chat File Drop and Paste", "completed": "2026-01-25"},
     {"id": "BUG-16", "name": "Terminal Pane Can't Resize Smaller", "completed": "2026-01-25"},
     {"id": "BUG-15", "name": "Terminal Connection Drops on Panel Toggle", "completed": "2026-01-25"},
     {"id": "FEAT-09", "name": "Multi-Terminal Split Panes with Color Coding", "completed": "2026-01-25"},

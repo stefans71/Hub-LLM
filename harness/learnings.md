@@ -4,6 +4,47 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 66 - 2026-01-25 EST
+**Task**: FEAT-08 - Chat File Drop and Paste
+**What**: Added drag/drop and Ctrl+V paste support for images in chat
+
+**Implementation**:
+- Drop zone overlay appears when dragging files over chat panel
+- Paste event handler captures clipboard images
+- FIFO queue limits to 4 images max (oldest removed when exceeding)
+- Images stored as base64 data URLs
+- Thumbnails shown in input area with remove buttons
+- Images sent to Claude API in multimodal content format
+
+**Key Patterns**:
+
+**Drag counter for nested elements**:
+```javascript
+// Track drag enter/leave across nested children
+const dragCounterRef = useRef(0)
+
+const handleDragEnter = (e) => {
+  e.preventDefault()
+  dragCounterRef.current++
+  setIsDragging(true)
+}
+
+const handleDragLeave = (e) => {
+  e.preventDefault()
+  dragCounterRef.current--
+  if (dragCounterRef.current === 0) {
+    setIsDragging(false) // Only hide when truly leaving
+  }
+}
+```
+Why: dragenter/dragleave fire for every child element. Counter tracks net enters.
+
+**Files Modified**:
+- frontend/src/components/Chat.jsx - Added image state, drag/drop, paste handlers
+- frontend/src/index.css - Added drop overlay, thumbnail, user-images styles
+
+---
+
 ### Session 65 - 2026-01-25 EST
 **Task**: BUG-15, BUG-16 - Terminal Bugs
 
