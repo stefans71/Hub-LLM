@@ -17,22 +17,6 @@
   },
   "queue": [
     {
-      "id": "BUG-14",
-      "name": "Editor Tab Not Loading Selected File",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Clicking file in left sidebar doesn't load content in Editor tab",
-      "current": "User clicks README.md in sidebar, switches to Editor tab, but Editor still shows 'Select a file from the sidebar to view'. File selection not reaching editor.",
-      "change": [
-        "Check callback chain: WorkspaceFileExplorer → LLMDevPanel → Editor tab",
-        "Verify onFileSelect prop is being passed and called",
-        "Check if Editor tab component receives the selected file path",
-        "May need to auto-switch to Editor tab when file is selected"
-      ],
-      "test": "Click any file in left sidebar - Editor tab shows file content (or auto-switches to Editor and shows content)"
-    },
-    {
       "id": "FEAT-09",
       "name": "Multi-Terminal Split Panes with Color Coding",
       "size": "L",
@@ -80,6 +64,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-14", "name": "Editor Tab Not Loading Selected File", "completed": "2026-01-25"},
     {"id": "BUG-13", "name": "TERMINALS Sidebar Not Visible", "completed": "2026-01-25"},
     {"id": "BUG-12", "name": "xterm-screen Width Calculation", "completed": "2026-01-25"},
     {"id": "FEAT-07", "name": "Multiple Terminal Tabs", "completed": "2026-01-25"},

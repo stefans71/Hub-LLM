@@ -4,6 +4,70 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 63 - 2026-01-25 EST
+**Task**: BUG-14 - Editor Tab Not Loading Selected File
+
+**What**: Fixed file selection from sidebar not loading content in Editor tab
+
+**Root Causes Found**:
+1. **Frontend - Stale closure bug**: `openEditors` captured in useEffect closure was always `[]` instead of current state
+2. **Frontend - Non-memoized callback**: `handleEditorReady` recreated on every render causing useEffect to re-run
+3. **Backend - Python decode error**: SFTP read using text mode `"r"` returned string, then `.decode()` called on string
+
+**Solutions**:
+1. Changed `openEditors.find(...)` check to use functional update pattern inside `setOpenEditors(prev => ...)`
+2. Wrapped `handleEditorReady` in `useCallback` with empty deps
+3. Changed SFTP read to binary mode `"rb"` so content is bytes, then decode works
+
+**Key Pattern - Avoid Stale Closures in useEffect Callbacks**:
+```javascript
+// BAD: openEditors captured from closure - stale!
+useEffect(() => {
+  onEditorReady({
+    openFile: () => {
+      if (!openEditors.find(...)) { // Always sees initial []
+        setOpenEditors(prev => [...prev, item])
+      }
+    }
+  })
+}, [onEditorReady])
+
+// GOOD: Use functional update to read current state
+useEffect(() => {
+  onEditorReady({
+    openFile: () => {
+      setOpenEditors(prev => {
+        const exists = prev.find(...)
+        if (!exists) {
+          return [...prev, item]
+        }
+        return prev.map(...)
+      })
+    }
+  })
+}, [onEditorReady])
+```
+
+**Key Pattern - Memoize Callbacks Passed to Child useEffects**:
+```javascript
+// Parent component
+const handleReady = useCallback((api) => {
+  apiRef.current = api
+}, [])  // Stable reference
+
+// Child component
+useEffect(() => {
+  onReady({ openFile: ... })  // Only runs once now
+}, [onReady])
+```
+
+**Files Modified**:
+- frontend/src/components/Workspace.jsx (useCallback for handleEditorReady)
+- frontend/src/components/LLMDevPanel.jsx (functional update for openEditors)
+- backend/services/ssh.py (binary mode "rb" for SFTP read)
+
+---
+
 ### Session 62 - 2026-01-25 EST
 **Task**: BUG-12 - xterm-screen Width Calculation Broken
 

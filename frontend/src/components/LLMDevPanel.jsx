@@ -291,15 +291,18 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
               setCodeContent(data.content)
               const fileName = filePath.split('/').pop()
               setActiveFile(fileName)
-              // Add to open editors if not already there
-              if (!openEditors.find(e => e.path === filePath)) {
-                setOpenEditors(prev => [...prev, { name: fileName, path: filePath, active: true }].map(e => ({
-                  ...e,
-                  active: e.path === filePath
-                })))
-              } else {
-                setOpenEditors(prev => prev.map(e => ({ ...e, active: e.path === filePath })))
-              }
+              // BUG-14: Use functional update to avoid stale closure for openEditors
+              setOpenEditors(prev => {
+                const exists = prev.find(e => e.path === filePath)
+                if (!exists) {
+                  return [...prev, { name: fileName, path: filePath, active: true }].map(e => ({
+                    ...e,
+                    active: e.path === filePath
+                  }))
+                } else {
+                  return prev.map(e => ({ ...e, active: e.path === filePath }))
+                }
+              })
             })
             .catch(err => console.error('Failed to open file:', err))
         }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Chat from './Chat'
 import Terminal from './Terminal'
@@ -54,10 +54,10 @@ export default function Workspace({ project, model, apiKeys }) {
   // FEAT-06: Reference to LLMDevPanel editor API
   const editorApiRef = useRef(null)
 
-  // FEAT-06: Handler for when editor is ready
-  const handleEditorReady = (api) => {
+  // FEAT-06: Handler for when editor is ready (memoized to prevent unnecessary useEffect re-runs)
+  const handleEditorReady = useCallback((api) => {
     editorApiRef.current = api
-  }
+  }, [])
 
   // FEAT-06: Handler for when a file is selected in the sidebar
   const handleFileSelect = (file, serverId) => {

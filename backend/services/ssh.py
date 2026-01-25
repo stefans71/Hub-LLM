@@ -125,7 +125,8 @@ class SSHConnection:
     async def read_file(self, path: str) -> str:
         """Read file contents"""
         sftp = await self.get_sftp()
-        async with sftp.open(path, "r") as f:
+        # BUG-14: Use binary mode "rb" to get bytes, then decode
+        async with sftp.open(path, "rb") as f:
             content = await f.read()
             return content.decode("utf-8", errors="replace")
     
