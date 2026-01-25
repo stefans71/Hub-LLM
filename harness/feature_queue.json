@@ -15,24 +15,9 @@
       "truncation": "Names truncate with hover tooltip"
     }
   },
-  "queue": [
-    {
-      "id": "CLEANUP-03",
-      "name": "Fix Config Mismatch - Standardize on SQLite + Port 8000",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "init.sh expects PostgreSQL on port 8000, vite proxies to 3001, backend uses SQLite. Align everything.",
-      "change": [
-        "Change frontend/vite.config.js proxy target from 3001 to 8000",
-        "Remove PostgreSQL/Docker startup from init.sh (keep docker-compose.yml for future)",
-        "Update init.sh output messages to reflect SQLite, not PostgreSQL",
-        "Verify backend starts on port 8000 via init.sh"
-      ],
-      "test": "./init.sh → backend on 8000, frontend on 5173, API calls work, no docker db container"
-    }
-  ],
+  "queue": [],
   "completed": [
+    {"id": "CLEANUP-03", "name": "Fix Config Mismatch - Standardize on SQLite + Port 8000", "completed": "2026-01-25"},
     {"id": "FEAT-08", "name": "Chat File Drop and Paste", "completed": "2026-01-25"},
     {"id": "BUG-16", "name": "Terminal Pane Can't Resize Smaller", "completed": "2026-01-25"},
     {"id": "BUG-15", "name": "Terminal Connection Drops on Panel Toggle", "completed": "2026-01-25"},

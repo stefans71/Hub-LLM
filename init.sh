@@ -46,29 +46,9 @@ kill_port() {
     fi
 }
 
-# Step 1: Start PostgreSQL
+# Step 1: Start Backend
 echo ""
-echo -e "${GREEN}Step 1: Starting PostgreSQL...${NC}"
-if docker compose ps db 2>/dev/null | grep -q "running"; then
-    echo "  ✓ PostgreSQL already running"
-else
-    docker compose up db -d
-    echo "  ✓ PostgreSQL started"
-    sleep 3  # Wait for DB to be ready
-fi
-
-# Verify database connection
-echo "  Checking database connection..."
-if docker compose exec -T db pg_isready -U hubllm >/dev/null 2>&1; then
-    echo "  ✓ Database is ready"
-else
-    echo -e "${RED}  ✗ Database not ready, waiting...${NC}"
-    sleep 5
-fi
-
-# Step 2: Start Backend
-echo ""
-echo -e "${GREEN}Step 2: Starting Backend (FastAPI)...${NC}"
+echo -e "${GREEN}Step 1: Starting Backend (FastAPI)...${NC}"
 kill_port 8000
 
 cd backend
@@ -102,9 +82,9 @@ for i in {1..10}; do
     sleep 1
 done
 
-# Step 3: Start Frontend
+# Step 2: Start Frontend
 echo ""
-echo -e "${GREEN}Step 3: Starting Frontend (Vite)...${NC}"
+echo -e "${GREEN}Step 2: Starting Frontend (Vite)...${NC}"
 kill_port 5173
 
 cd frontend
@@ -133,9 +113,9 @@ for i in {1..10}; do
     sleep 1
 done
 
-# Step 4: Health Check
+# Step 3: Health Check
 echo ""
-echo -e "${GREEN}Step 4: Running Health Checks...${NC}"
+echo -e "${GREEN}Step 3: Running Health Checks...${NC}"
 
 # Backend health
 BACKEND_HEALTH=$(curl -s http://localhost:8000/health 2>/dev/null || echo '{"status":"error"}')
@@ -157,7 +137,7 @@ echo ""
 echo "  🌐 Frontend:  http://localhost:5173"
 echo "  🔧 Backend:   http://localhost:8000"
 echo "  📊 API Docs:  http://localhost:8000/docs"
-echo "  🗄️  Database:  postgresql://localhost:5432/hubllm"
+echo "  🗄️  Database:  SQLite (backend/hubllm.db)"
 echo ""
 echo "  Logs:"
 echo "    Backend:  tail -f backend.log"

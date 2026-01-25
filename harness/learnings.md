@@ -4,6 +4,26 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 67 - 2026-01-25 EST
+**Task**: CLEANUP-03 - Fix Config Mismatch - Standardize on SQLite + Port 8000
+**What**: Aligned configuration files - Vite proxy now points to port 8000, init.sh no longer starts PostgreSQL/Docker
+
+**Changes**:
+- `frontend/vite.config.js`: Changed proxy target from 3001 to 8000
+- `init.sh`: Removed PostgreSQL/Docker startup (Step 1), renumbered remaining steps
+- `init.sh`: Updated summary output to show "SQLite (backend/hubllm.db)" instead of PostgreSQL URL
+
+**Testing**:
+- Verified backend healthy on port 8000: `curl http://localhost:8000/health` → `{"status":"healthy"}`
+- Verified Vite proxy working: `curl http://localhost:5173/api/servers/` → returns server data (proxied to 8000)
+- Frontend restarted to pick up new vite.config.js
+
+**Files Modified**:
+- frontend/vite.config.js
+- init.sh
+
+---
+
 ### Session 66 - 2026-01-25 EST
 **Task**: FEAT-08 - Chat File Drop and Paste
 **What**: Added drag/drop and Ctrl+V paste support for images in chat
