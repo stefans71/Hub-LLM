@@ -525,6 +525,7 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
             <div
               style={{
                 flex: 1,
+                minHeight: 0,  // BUG-10: Critical for flex height calculation
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden'

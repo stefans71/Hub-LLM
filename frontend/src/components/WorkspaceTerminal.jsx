@@ -70,6 +70,8 @@ export default function WorkspaceTerminal({ projectId, serverId, projectSlug, cl
             if (xtermRef.current) {
               xtermRef.current.writeln(`\x1b[32mConnected to ${message.server} (${message.host})\x1b[0m`)
               xtermRef.current.writeln('')
+              // BUG-10: Auto-scroll to bottom
+              xtermRef.current.scrollToBottom()
             }
             // FEAT-04: Auto-cd to project directory if slug provided
             if (projectSlug && ws.readyState === WebSocket.OPEN) {
@@ -81,6 +83,8 @@ export default function WorkspaceTerminal({ projectId, serverId, projectSlug, cl
           case 'output':
             if (xtermRef.current && message.data) {
               xtermRef.current.write(message.data)
+              // BUG-10: Auto-scroll to bottom on new output
+              xtermRef.current.scrollToBottom()
             }
             break
 
@@ -268,6 +272,7 @@ export default function WorkspaceTerminal({ projectId, serverId, projectSlug, cl
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
+      minHeight: 0,  // BUG-10: Critical for flex height calculation
       background: 'var(--bg-primary)'
     }}>
       {/* Terminal Status Bar */}
@@ -318,8 +323,9 @@ export default function WorkspaceTerminal({ projectId, serverId, projectSlug, cl
         ref={terminalRef}
         style={{
           flex: 1,
+          minHeight: 0,  // BUG-10: Critical for flex height calculation
           padding: '8px',
-          overflow: 'hidden'
+          overflow: 'hidden'  // xterm handles its own scrolling
         }}
       />
 

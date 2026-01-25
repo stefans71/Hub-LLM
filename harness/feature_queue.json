@@ -32,15 +32,6 @@
   },
   "queue": [
     {
-      "id": "BUG-10",
-      "name": "Terminal Auto-Scroll to Bottom",
-      "size": "XS",
-      "priority": 10,
-      "status": "pending",
-      "description": "Terminal should scroll to bottom on new output",
-      "current": "Terminal doesn't scroll all the way down on connect"
-    },
-    {
       "id": "BUG-11",
       "name": "LLM-Dev Tabs Don't Switch Content",
       "size": "S",
@@ -52,6 +43,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-10", "name": "Terminal Auto-Scroll to Bottom", "completed": "2026-01-25"},
     {"id": "FEAT-04", "name": "Terminal Opens in Project Directory", "completed": "2026-01-25"},
     {"id": "FEAT-03", "name": "Remove Explorer from LLM-Dev Panel", "completed": "2026-01-25"},
     {"id": "FEAT-06", "name": "LLM-Dev Editor Tab", "completed": "2026-01-25"},

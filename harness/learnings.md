@@ -7,6 +7,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 ### Session 60 - 2026-01-25 EST
 **Task**: UI-03, UI-04, UI-05, UI-06, FEAT-06 - Major UI Session
 
+**BUG-10: Terminal Auto-Scroll to Bottom (XS)**
+- Added `scrollToBottom()` call after each output write
+- Also scroll after connected message
+- xterm.js method: `terminal.scrollToBottom()`
+
 **FEAT-04: Terminal Opens in Project Directory (XS)**
 - Added `projectSlug` prop to WorkspaceTerminal
 - After 'connected' message, auto-sends `cd /root/llm-hub-projects/{slug}\n`
