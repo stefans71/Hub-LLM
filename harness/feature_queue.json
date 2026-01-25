@@ -5,29 +5,12 @@
     "last_updated": "2026-01-24"
   },
   "queue": [
-    {
-      "id": "AUDIT-01",
-      "name": "Map Workspace Terminal/Server Components",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Before cleanup, map how terminal components are wired.",
-      "deliverable": "Create harness/debug/workspace-component-map.md",
-      "files_to_check": [
-        "frontend/src/components/ServerManager.jsx",
-        "frontend/src/components/Workspace.jsx",
-        "frontend/src/components/LLMDevPanel.jsx",
-        "frontend/src/components/WorkspaceTerminal.jsx"
-      ],
-      "test": "harness/debug/workspace-component-map.md exists with clear diagram"
-    },
-    {
+        {
       "id": "CLEANUP-01",
       "name": "Remove Duplicate Terminal from Servers Tab",
       "size": "S",
-      "priority": 2,
+      "priority": 1,
       "status": "pending",
-      "depends_on": ["AUDIT-01"],
       "description": "Remove terminal/folder icons from Server card. Keep LLM-Dev panel terminal only.",
       "test": "Server card has no terminal icon. LLM-Dev terminal still works."
     },
@@ -99,6 +82,7 @@
     }
   ],
   "completed": [
+    {"id": "AUDIT-01", "name": "Map Workspace Terminal/Server Components", "completed": "2026-01-25"},
     {"id": "BUG-08", "name": "Site Hanging on Login", "completed": "2026-01-24"},
     {"id": "BUG-07", "name": "VPS Servers List Not Persisting", "completed": "2026-01-24"},
     {"id": "BUG-06", "name": "Top Bar VPS Status Never Updates", "completed": "2026-01-24"},

@@ -4,6 +4,36 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 52 - 2026-01-25
+**Task**: AUDIT-01 - Map Workspace Terminal/Server Components
+**What**: Created component map documenting terminal/server wiring before cleanup
+
+**Key Findings**:
+1. **Two Terminal Paths (Duplication)**:
+   - Path 1: ServerManager → onOpenTerminal → Workspace right panel → Terminal.jsx
+   - Path 2: LLMDevPanel → WorkspaceTerminal.jsx (xterm.js + WebSocket)
+
+2. **Two Terminal Components**:
+   - `Terminal.jsx` - Used in right panel (simpler, older)
+   - `WorkspaceTerminal.jsx` - Used in LLMDevPanel (xterm.js + /api/terminal/ws)
+
+3. **Duplicate UI in ServerManager** (lines 240-252):
+   - Terminal button opens right panel terminal
+   - Files button opens right panel file browser
+   - These duplicate LLMDevPanel's functionality
+
+4. **Connection State Flow**:
+   - localStorage (vps_servers) → ServerManager, LLMDevPanel, Workspace
+   - Backend synced from localStorage on connect (preserving original UUID)
+
+**Deliverable**: harness/debug/workspace-component-map.md
+
+**CLEANUP-01 Prep**:
+- Remove ServerManager terminal/files buttons (lines 240-252)
+- Keep LLMDevPanel terminal as the canonical terminal UI
+
+---
+
 ### Session 51 - 2026-01-24
 **Task**: BUG-08 (M) - Site Hanging on Login
 
