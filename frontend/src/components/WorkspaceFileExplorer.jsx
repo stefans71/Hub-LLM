@@ -45,6 +45,15 @@ export default function WorkspaceFileExplorer({
   // UI-05: Project menu state
   const [openMenuProjectId, setOpenMenuProjectId] = useState(null)
 
+  // UI-06: Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    project: null,
+    mode: 'archive', // 'archive' or 'permanent'
+    deleteVpsFolder: false,
+    isDeleting: false
+  })
+
   // Fetch projects from API
   useEffect(() => {
     loadProjects()
@@ -316,8 +325,70 @@ export default function WorkspaceFileExplorer({
 
   const handleDelete = (project) => {
     handleMenuClose()
-    // TODO: UI-06 will implement delete confirmation modal
-    console.log('Delete project:', project.name)
+    // UI-06: Open delete confirmation modal
+    setDeleteModal({
+      open: true,
+      project,
+      mode: 'archive',
+      deleteVpsFolder: false,
+      isDeleting: false
+    })
+  }
+
+  // UI-06: Close delete modal
+  const handleDeleteModalClose = () => {
+    setDeleteModal(prev => ({ ...prev, open: false, project: null }))
+  }
+
+  // UI-06: Confirm delete/archive
+  const handleDeleteConfirm = async () => {
+    const { project, mode, deleteVpsFolder } = deleteModal
+    if (!project) return
+
+    setDeleteModal(prev => ({ ...prev, isDeleting: true }))
+
+    try {
+      if (mode === 'archive') {
+        // Archive: Update project workspace to 'archives'
+        const res = await fetch(`/api/projects/${project.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeader()
+          },
+          body: JSON.stringify({ workspace: 'archives' })
+        })
+        if (!res.ok) throw new Error('Failed to archive project')
+      } else {
+        // Permanent delete
+        const res = await fetch(`/api/projects/${project.id}`, {
+          method: 'DELETE',
+          headers: { ...getAuthHeader() }
+        })
+        if (!res.ok) throw new Error('Failed to delete project')
+      }
+
+      // Delete VPS folder if checked and project has VPS
+      if (deleteVpsFolder && project.vps_server_id && project.slug) {
+        try {
+          const folderPath = `${VPS_PROJECT_BASE}/${project.slug}`
+          await fetch(`/api/files/delete?serverId=${encodeURIComponent(project.vps_server_id)}&path=${encodeURIComponent(folderPath)}`, {
+            method: 'DELETE'
+          })
+        } catch (err) {
+          console.error('Failed to delete VPS folder:', err)
+          // Don't fail the whole operation if VPS folder delete fails
+        }
+      }
+
+      // Refresh projects list
+      loadProjects()
+      handleDeleteModalClose()
+    } catch (err) {
+      console.error('Delete failed:', err)
+      alert(err.message || 'Failed to delete project')
+      setDeleteModal(prev => ({ ...prev, isDeleting: false }))
+    }
   }
 
   // Get file icon based on extension
@@ -769,6 +840,167 @@ export default function WorkspaceFileExplorer({
           ))
         )}
       </div>
+
+      {/* UI-06: Delete Confirmation Modal */}
+      {deleteModal.open && deleteModal.project && (
+        <>
+          {/* Modal backdrop */}
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              zIndex: 100,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={handleDeleteModalClose}
+          >
+            {/* Modal content */}
+            <div
+              style={{
+                background: 'var(--bg-secondary)',
+                borderRadius: '12px',
+                border: '1px solid var(--border)',
+                padding: '24px',
+                width: '400px',
+                maxWidth: '90vw',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', color: 'var(--text-primary)' }}>
+                Delete Project
+              </h3>
+              <p style={{ margin: '0 0 20px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                What would you like to do with "{deleteModal.project.name}"?
+              </p>
+
+              {/* Options */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                {/* Archive option */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: `2px solid ${deleteModal.mode === 'archive' ? 'var(--primary)' : 'var(--border)'}`,
+                    cursor: 'pointer',
+                    background: deleteModal.mode === 'archive' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="deleteMode"
+                    checked={deleteModal.mode === 'archive'}
+                    onChange={() => setDeleteModal(prev => ({ ...prev, mode: 'archive' }))}
+                    style={{ marginTop: '2px' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                      Archive
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                      Move to Archives folder. You can restore it later.
+                    </div>
+                  </div>
+                </label>
+
+                {/* Delete permanently option */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: `2px solid ${deleteModal.mode === 'permanent' ? '#ef4444' : 'var(--border)'}`,
+                    cursor: 'pointer',
+                    background: deleteModal.mode === 'permanent' ? 'rgba(239, 68, 68, 0.1)' : 'transparent'
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="deleteMode"
+                    checked={deleteModal.mode === 'permanent'}
+                    onChange={() => setDeleteModal(prev => ({ ...prev, mode: 'permanent' }))}
+                    style={{ marginTop: '2px' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500, color: '#ef4444', marginBottom: '4px' }}>
+                      Delete permanently
+                    </div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                      This cannot be undone. Project data will be lost.
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {/* VPS folder checkbox (only show if project has VPS) */}
+              {deleteModal.project.vps_server_id && (
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '20px',
+                    fontSize: '13px',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={deleteModal.deleteVpsFolder}
+                    onChange={(e) => setDeleteModal(prev => ({ ...prev, deleteVpsFolder: e.target.checked }))}
+                  />
+                  Also delete VPS folder <code style={{ background: 'var(--bg-tertiary)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>/root/llm-hub-projects/{deleteModal.project.slug}/</code>
+                </label>
+              )}
+
+              {/* Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button
+                  onClick={handleDeleteModalClose}
+                  disabled={deleteModal.isDeleting}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border)',
+                    background: 'transparent',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleteModal.isDeleting}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: deleteModal.mode === 'permanent' ? '#ef4444' : 'var(--primary)',
+                    color: 'white',
+                    cursor: deleteModal.isDeleting ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    opacity: deleteModal.isDeleting ? 0.7 : 1
+                  }}
+                >
+                  {deleteModal.isDeleting ? 'Processing...' : (deleteModal.mode === 'archive' ? 'Archive' : 'Delete')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

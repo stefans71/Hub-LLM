@@ -7,12 +7,20 @@ Track discoveries, patterns, and friction points for harness improvement.
 ### Session 60 - 2026-01-25 EST
 **Task**: UI-03 (S) + UI-04 (XS) - Sidebar Improvements
 
+**UI-06: Delete Confirmation Modal**
+- Added modal triggered by Delete in 3-dot menu
+- Two options: Archive (move to archives workspace) or Delete permanently
+- Checkbox to also delete VPS folder (only shows if project has VPS)
+- Archive: PATCH /api/projects/{id} with {workspace: 'archives'}
+- Delete: DELETE /api/projects/{id}
+- VPS folder delete: DELETE /api/files/delete?serverId=...&path=...
+
 **UI-05: Project 3-Dot Menu**
 - Added 3-dot (⋮) menu button to project rows in WorkspaceFileExplorer
 - Menu appears on hover, shows dropdown on click
 - Menu items: Rename, Settings, Disconnect VPS (if VPS linked), Delete (red)
 - Used inline styles with CSS-in-JS for hover show/hide
-- Handlers: handleRename (TODO), handleProjectSettings (navigates), handleDisconnectVps (API call), handleDelete (TODO for UI-06)
+- Handlers: handleRename (TODO), handleProjectSettings (navigates), handleDisconnectVps (API call), handleDelete opens modal
 
 **UI-04: Project Name Truncation + Hover Tooltip**
 - Added `title={project.name}` attribute to all project name spans

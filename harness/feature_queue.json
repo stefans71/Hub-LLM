@@ -32,18 +32,6 @@
   },
   "queue": [
     {
-      "id": "UI-06",
-      "name": "Delete Confirmation with Archive Option",
-      "size": "S",
-      "priority": 6,
-      "status": "pending",
-      "depends_on": ["UI-05"],
-      "description": "Delete shows confirmation modal with options",
-      "options": ["Archive (can restore later)", "Delete permanently"],
-      "checkbox": "Also delete VPS folder /root/llm-hub-projects/{slug}/ (unchecked by default)",
-      "buttons": ["Cancel", "Confirm"]
-    },
-    {
       "id": "FEAT-06",
       "name": "LLM-Dev Editor Tab",
       "size": "M",
@@ -97,6 +85,7 @@
     }
   ],
   "completed": [
+    {"id": "UI-06", "name": "Delete Confirmation with Archive Option", "completed": "2026-01-25"},
     {"id": "UI-05", "name": "Project 3-Dot Menu", "completed": "2026-01-25"},
     {"id": "UI-04", "name": "Project Name Truncation + Hover Tooltip", "completed": "2026-01-25"},
     {"id": "UI-03", "name": "Project Status Dots in Sidebar", "completed": "2026-01-25"},
