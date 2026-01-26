@@ -552,6 +552,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  /* BUG-22: Constrain width for readability when sidebar is closed */
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto; /* Center when constrained */
 }
 
 .claude-code-status-bar {
@@ -617,8 +621,34 @@
   height: 100%;
 }
 
+/* BUG-22: Fix scrollbar - make it visible and draggable */
 .claude-code-terminal-area .xterm-viewport {
-  overflow-y: auto !important;
+  overflow-y: scroll !important;
+  scrollbar-width: auto;
+}
+
+/* Style the xterm scrollbar in Claude Code terminal */
+.claude-code-terminal-area .xterm-viewport::-webkit-scrollbar {
+  width: 14px;
+}
+
+.claude-code-terminal-area .xterm-viewport::-webkit-scrollbar-track {
+  background: #1a2028;
+}
+
+.claude-code-terminal-area .xterm-viewport::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+  border: 2px solid #1a2028;
+  min-height: 40px; /* Ensure thumb is always grabbable */
+}
+
+.claude-code-terminal-area .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+.claude-code-terminal-area .xterm-viewport::-webkit-scrollbar-thumb:active {
+  background: #9ca3af;
 }
 
 /* W-69: Preview Panel */
