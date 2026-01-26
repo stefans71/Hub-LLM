@@ -4,6 +4,40 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 78 - 2026-01-26 EST
+**Task**: PHASE-2 polish - Thinking indicator
+**What**: Added visual feedback when Claude is processing
+
+**Problem**: In bubble view, no way to tell if Claude is working or stuck
+- User sends message, sees nothing
+- Have to switch to terminal view to see spinner
+- Connection timeout not reflected in chat status
+
+**Solution**: Processing state + thinking indicator
+1. Track `isProcessing` state - true after sending, false when prompt detected
+2. Detect spinner words in output (channeling, catapulting, etc.) → update `processingText`
+3. Show animated "thinking" indicator with bouncing dots + spinner word
+4. Reset processing state on error/disconnect/reconnect
+
+**Key Pattern - Processing Detection**:
+```javascript
+// In output handler, detect spinner and update text
+const spinnerPatterns = ['channeling', 'catapulting', 'thinking', ...]
+for (const pattern of spinnerPatterns) {
+  if (lowerData.includes(pattern)) {
+    setProcessingText(pattern.charAt(0).toUpperCase() + pattern.slice(1) + '...')
+    break
+  }
+}
+
+// When prompt detected, processing complete
+if (hasPromptAtEnd) {
+  setIsProcessing(false)
+}
+```
+
+---
+
 ### Session 77 - 2026-01-26 EST
 **Task**: PHASE-2 polish - Echo handling and styling
 **What**: Fixed user input appearing as Claude response, improved bubble visuals
