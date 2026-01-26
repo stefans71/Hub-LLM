@@ -82,7 +82,9 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, isSp
             setStatus('connected')
             setServerInfo({ server: message.server, host: message.host })
             if (xtermRef.current) {
-              xtermRef.current.writeln(`\x1b[32mConnected to ${message.server} (${message.host})\x1b[0m`)
+              const channelInfo = message.channel_id ? ` [channel ${message.channel_id.slice(0,8)}]` : ''
+              const connInfo = message.connection_channels ? ` (${message.connection_channels} active)` : ''
+              xtermRef.current.writeln(`\x1b[32mConnected to ${message.server} (${message.host})${channelInfo}${connInfo}\x1b[0m`)
               xtermRef.current.writeln('')
               xtermRef.current.scrollToBottom()
             }
@@ -97,6 +99,29 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, isSp
             if (xtermRef.current && message.data) {
               xtermRef.current.write(message.data)
               xtermRef.current.scrollToBottom()
+            }
+            break
+
+          case 'connection_status':
+            // INFRA-01: Handle shared connection status changes
+            // When the VPS connection status changes, all terminals sharing it are notified
+            if (message.status === 'disconnected' || message.status === 'error') {
+              setStatus(message.status === 'error' ? 'error' : 'disconnected')
+              if (message.message) {
+                setError(message.message)
+              }
+              if (xtermRef.current) {
+                const statusText = message.status === 'error'
+                  ? `\x1b[31mVPS connection error: ${message.message || 'unknown'}\x1b[0m`
+                  : '\x1b[33mVPS connection lost - all terminals affected\x1b[0m'
+                xtermRef.current.writeln('')
+                xtermRef.current.writeln(statusText)
+              }
+            } else if (message.status === 'connected') {
+              setStatus('connected')
+              setError(null)
+            } else if (message.status === 'connecting') {
+              setStatus('connecting')
             }
             break
 

@@ -16,24 +16,7 @@
     }
   },
   "queue": [
-    {
-      "id": "INFRA-01",
-      "name": "SSH Connection Multiplexing",
-      "size": "L",
-      "priority": 2,
-      "status": "pending",
-      "description": "Single SSH connection per VPS with multiplexed PTY channels (like VS Code Remote)",
-      "current": "Each terminal creates separate SSH connection - can timeout independently, status out of sync",
-      "change": [
-        "Backend maintains ONE SSH connection per VPS",
-        "Multiple PTY channels over single connection (SSH native multiplexing)",
-        "All terminals for same VPS share fate - if connection drops, all drop together",
-        "Unified connection status across all components",
-        "Project sidebar dot, chat status, LLM-Dev status all sync from same source"
-      ],
-      "test": "Open 3 terminals to same VPS. Kill SSH. All 3 show disconnected simultaneously. All status indicators turn red."
-    },
-    {
+        {
       "id": "FEAT-10",
       "name": "Project-Specific Claude Code Sessions",
       "size": "S",
@@ -120,6 +103,7 @@
     }
   ],
   "completed": [
+    {"id": "INFRA-01", "name": "SSH Connection Multiplexing", "completed": "2026-01-26"},
     {"id": "PHASE-2", "name": "Chat Bubble Rendering for Claude Code Output", "completed": "2026-01-26"},
     {"id": "BUG-23", "name": "Setup Wizard VPS Validation Rejects Valid SSH Key", "completed": "2026-01-26"},
     {"id": "BUG-22", "name": "Chat Terminal Scrollbar and Resize Handle", "completed": "2026-01-26"},

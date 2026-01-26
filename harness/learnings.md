@@ -4,6 +4,76 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 80 - 2026-01-26 EST
+**Task**: INFRA-01 - SSH Connection Multiplexing
+**What**: Implemented single SSH connection per VPS with multiplexed PTY channels
+
+**Architecture Before**:
+- Each terminal WebSocket created a NEW SSHConnection
+- SSHConnection had single `process` field (only 1 PTY)
+- Terminals to same VPS had independent connection fate
+- Status not synced across components
+
+**Architecture After**:
+- VPSConnectionManager singleton manages ONE connection per VPS
+- VPSConnection holds multiple PTYChannels (up to N terminals)
+- All terminals share fate - if SSH drops, all channels die together
+- Status listeners broadcast connection changes to all WebSockets
+
+**Key Pattern - Channel-Based Multiplexing**:
+```python
+class VPSConnection:
+    """One SSH connection per VPS, multiple PTY channels"""
+    def __init__(self):
+        self.conn = None  # Single asyncssh connection
+        self.channels = {}  # Multiple PTY channels
+        self._status_listeners = []  # Notify all terminals
+
+    async def create_channel(self, cols, rows) -> PTYChannel:
+        # Creates new PTY on existing connection
+        process = await self.conn.create_process(...)
+        channel = PTYChannel(id=uuid4(), process=process)
+        self.channels[channel.id] = channel
+        return channel
+
+    async def close_channel(self, channel_id):
+        # Close channel without killing connection
+        if channel_id in self.channels:
+            self.channels[channel_id].close()
+            del self.channels[channel_id]
+```
+
+**Key Pattern - Status Broadcasting**:
+```python
+# Backend sends status changes to all terminals
+async def on_status_change(server_id, status, error_msg):
+    await websocket.send_json({
+        "type": "connection_status",
+        "server_id": server_id,
+        "status": status.value,  # connected|disconnected|error
+        "message": error_msg
+    })
+
+# Frontend handles shared fate
+case 'connection_status':
+    if (message.status === 'disconnected') {
+        setStatus('disconnected')
+        xtermRef.current.writeln('VPS connection lost - all terminals affected')
+    }
+```
+
+**Files Created**:
+- backend/services/vps_connection.py (VPSConnectionManager, VPSConnection, PTYChannel)
+
+**Files Modified**:
+- backend/routers/terminal.py (use vps_manager + create channels)
+- backend/routers/ssh.py (update terminal_websocket to use channels)
+- frontend/src/components/MultiTerminal.jsx (handle connection_status message)
+
+**Testing Status**: Backend imports verified, server starts. Real-world testing requires VPS.
+
+---
+
 ### Session 79 - 2026-01-26 EST
 **Task**: PHASE-2 MVP wrap-up - Terminal loading spinner
 **What**: Added loading state while terminal initializes

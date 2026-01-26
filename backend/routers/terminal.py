@@ -4,7 +4,7 @@ Terminal Router - WebSocket endpoint for workspace terminal connections
 Provides /api/terminal/ws endpoint that:
 - Accepts projectId or serverId query params
 - Looks up VPS credentials from project if projectId given
-- Creates SSH terminal session
+- Uses multiplexed SSH connection (one per VPS, multiple PTY channels)
 - Handles bidirectional communication
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
@@ -12,14 +12,21 @@ from typing import Optional
 from sqlalchemy import select
 import asyncio
 
-from services.ssh import SSHConnection, SSHCredentials, servers_cache, load_server_to_cache
+from services.vps_connection import (
+    vps_manager,
+    VPSConnection,
+    PTYChannel,
+    SSHCredentials,
+    ConnectionStatus
+)
+from services.ssh import servers_cache, load_server_to_cache
 from models import VPSServer as VPSServerModel, Project as ProjectModel, async_session
 
 router = APIRouter()
 
 
-# Track active terminal sessions
-_terminal_sessions: dict[str, SSHConnection] = {}
+# Track active terminal sessions (channel_id -> websocket info)
+_terminal_sessions: dict[str, dict] = {}
 
 
 @router.websocket("/ws")
@@ -31,6 +38,9 @@ async def terminal_websocket(
     """
     WebSocket endpoint for interactive terminal
 
+    Uses multiplexed SSH - ONE connection per VPS with multiple PTY channels.
+    All terminals to the same VPS share fate (if connection drops, all drop).
+
     Query params:
         - projectId: Project ID (will look up vps_server_id from project)
         - serverId: Direct server ID
@@ -41,8 +51,9 @@ async def terminal_websocket(
         {"type": "resize", "cols": 120, "rows": 40}
 
     Server messages:
-        {"type": "connected", "server": "hostname"}
+        {"type": "connected", "server": "hostname", "channel_id": "..."}
         {"type": "output", "data": "..."}
+        {"type": "connection_status", "status": "connected|disconnected|error", "message": "..."}
         {"type": "error", "message": "..."}
         {"type": "disconnected"}
     """
@@ -114,9 +125,10 @@ async def terminal_websocket(
         passphrase=server.get("passphrase")
     )
 
-    # Create SSH connection
-    conn = SSHConnection(credentials)
-    session_id = f"{resolved_server_id}:{id(websocket)}"
+    # Variables for cleanup
+    vps_conn: Optional[VPSConnection] = None
+    channel: Optional[PTYChannel] = None
+    status_listener = None
 
     try:
         # Wait for init message with terminal size
@@ -132,9 +144,27 @@ async def terminal_websocket(
             await websocket.close(code=4008)
             return
 
-        # Connect to SSH server
+        # Get or create multiplexed VPS connection
+        vps_conn = await vps_manager.get_connection(resolved_server_id, credentials)
+
+        # Status listener - broadcasts connection status changes to this WebSocket
+        async def on_status_change(server_id: str, status: ConnectionStatus, error_msg: Optional[str]):
+            try:
+                await websocket.send_json({
+                    "type": "connection_status",
+                    "server_id": server_id,
+                    "status": status.value,
+                    "message": error_msg
+                })
+            except Exception:
+                pass
+
+        status_listener = on_status_change
+        vps_conn.add_status_listener(status_listener)
+
+        # Connect if not already connected (multiplexed - reuses existing connection)
         try:
-            await asyncio.wait_for(conn.connect(), timeout=15.0)
+            await vps_conn.connect(timeout=15.0)
         except asyncio.TimeoutError:
             await websocket.send_json({
                 "type": "error",
@@ -150,50 +180,59 @@ async def terminal_websocket(
             await websocket.close(code=4003)
             return
 
-        # Start interactive shell
-        await conn.create_terminal(cols, rows)
-        _terminal_sessions[session_id] = conn
+        # Create a NEW PTY channel on the existing connection
+        channel = await vps_conn.create_channel(cols, rows)
+        session_id = channel.id
+
+        # Track session
+        _terminal_sessions[session_id] = {
+            "server_id": resolved_server_id,
+            "channel_id": channel.id,
+            "websocket_id": id(websocket)
+        }
 
         # Notify client of successful connection
         await websocket.send_json({
             "type": "connected",
             "server": server_name,
-            "host": server_host
+            "host": server_host,
+            "channel_id": channel.id,
+            "connection_channels": vps_conn.channel_count
         })
 
         # Handle bidirectional communication
         async def read_from_terminal():
-            """Read SSH output and send to WebSocket"""
+            """Read PTY channel output and send to WebSocket"""
             try:
-                async for data in conn.read_output():
+                async for data in channel.read_output():
                     if isinstance(data, bytes):
                         data = data.decode("utf-8", errors="replace")
                     await websocket.send_json({
                         "type": "output",
                         "data": data
                     })
-            except Exception as e:
-                # Connection closed or error
+            except Exception:
+                # Channel closed or error
                 pass
 
         async def write_to_terminal():
-            """Read WebSocket messages and send to SSH"""
+            """Read WebSocket messages and send to PTY channel"""
             try:
                 while True:
                     msg = await websocket.receive_json()
                     msg_type = msg.get("type")
 
                     if msg_type == "input":
-                        await conn.send_input(msg.get("data", ""))
+                        await channel.write_input(msg.get("data", ""))
 
                     elif msg_type == "resize":
-                        await conn.resize_terminal(
+                        await channel.resize(
                             msg.get("cols", 80),
                             msg.get("rows", 24)
                         )
             except WebSocketDisconnect:
                 pass
-            except Exception as e:
+            except Exception:
                 pass
 
         # Run both tasks concurrently
@@ -214,13 +253,19 @@ async def terminal_websocket(
         except:
             pass
     finally:
-        # Cleanup
-        if session_id in _terminal_sessions:
-            del _terminal_sessions[session_id]
-        try:
-            await conn.disconnect()
-        except:
-            pass
+        # Cleanup - close the CHANNEL, not the connection
+        # Other terminals on this VPS keep working
+        if channel:
+            session_id = channel.id
+            if session_id in _terminal_sessions:
+                del _terminal_sessions[session_id]
+            if vps_conn:
+                await vps_conn.close_channel(channel.id)
+
+        # Remove status listener
+        if vps_conn and status_listener:
+            vps_conn.remove_status_listener(status_listener)
+
         try:
             await websocket.send_json({"type": "disconnected"})
         except:
@@ -229,8 +274,22 @@ async def terminal_websocket(
 
 @router.get("/status")
 async def terminal_status():
-    """Get status of active terminal sessions"""
+    """Get status of active terminal sessions and VPS connections"""
     return {
         "active_sessions": len(_terminal_sessions),
-        "sessions": list(_terminal_sessions.keys())
+        "sessions": list(_terminal_sessions.keys()),
+        "connections": vps_manager.get_all_statuses()
+    }
+
+
+@router.get("/connections/{server_id}")
+async def get_connection_status(server_id: str):
+    """Get status of a specific VPS connection"""
+    status, error = vps_manager.get_status(server_id)
+    conn = vps_manager.get_existing_connection(server_id)
+    return {
+        "server_id": server_id,
+        "status": status.value,
+        "error": error,
+        "channel_count": conn.channel_count if conn else 0
     }

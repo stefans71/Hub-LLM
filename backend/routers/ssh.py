@@ -17,12 +17,17 @@ import json
 
 from models import VPSServer as VPSServerModel, async_session
 from services.ssh import (
-    SSHCredentials,
+    SSHCredentials as LegacySSHCredentials,
     SSHConnection,
     ssh_manager,
     servers_cache,
     load_server_to_cache,
     remove_from_cache
+)
+from services.vps_connection import (
+    vps_manager,
+    SSHCredentials,
+    ConnectionStatus
 )
 
 router = APIRouter()
@@ -197,7 +202,7 @@ async def connect_server(server_id: str):
             await load_server_to_cache(server)
 
     data = servers_cache[server_id]
-    credentials = SSHCredentials(
+    credentials = LegacySSHCredentials(
         host=data["host"],
         port=data["port"],
         username=data["username"],
@@ -293,7 +298,7 @@ async def test_connection(request: TestConnectionRequest):
     Test SSH connection without storing credentials.
     Used in Create Project flow to validate VPS settings.
     """
-    credentials = SSHCredentials(
+    credentials = LegacySSHCredentials(
         host=request.host,
         port=request.port,
         username=request.username,
@@ -392,11 +397,15 @@ async def test_connection(request: TestConnectionRequest):
 @router.websocket("/servers/{server_id}/terminal")
 async def terminal_websocket(websocket: WebSocket, server_id: str):
     """
-    WebSocket endpoint for interactive terminal
+    WebSocket endpoint for interactive terminal (multiplexed).
+
+    Uses VPSConnectionManager for shared connection - all terminals to
+    same VPS share one SSH connection with multiple PTY channels.
 
     Client sends: {"type": "input", "data": "ls -la\n"}
     Client sends: {"type": "resize", "cols": 120, "rows": 40}
     Server sends: {"type": "output", "data": "..."}
+    Server sends: {"type": "connection_status", "status": "..."}
     """
     await websocket.accept()
 
@@ -411,70 +420,104 @@ async def terminal_websocket(websocket: WebSocket, server_id: str):
                 return
             await load_server_to_cache(server)
 
-    # Get or create connection
-    conn = ssh_manager.get(server_id)
-    if not conn:
-        data = servers_cache[server_id]
-        credentials = SSHCredentials(
-            host=data["host"],
-            port=data["port"],
-            username=data["username"],
-            password=data.get("password"),
-            private_key=data.get("private_key"),
-            passphrase=data.get("passphrase")
-        )
+    data = servers_cache[server_id]
+    credentials = SSHCredentials(
+        host=data["host"],
+        port=data["port"],
+        username=data["username"],
+        password=data.get("password"),
+        private_key=data.get("private_key"),
+        passphrase=data.get("passphrase")
+    )
+
+    vps_conn = None
+    channel = None
+    status_listener = None
+
+    try:
+        # Get or create multiplexed VPS connection
+        vps_conn = await vps_manager.get_connection(server_id, credentials)
+
+        # Status listener for connection changes
+        async def on_status_change(sid: str, status: ConnectionStatus, error_msg):
+            try:
+                await websocket.send_json({
+                    "type": "connection_status",
+                    "server_id": sid,
+                    "status": status.value,
+                    "message": error_msg
+                })
+            except Exception:
+                pass
+
+        status_listener = on_status_change
+        vps_conn.add_status_listener(status_listener)
+
+        # Connect if needed
         try:
-            conn = await ssh_manager.connect(server_id, credentials)
+            await vps_conn.connect(timeout=15.0)
         except Exception as e:
             await websocket.send_json({"type": "error", "message": str(e)})
             await websocket.close()
             return
 
-    # Start shell
-    try:
-        await conn.start_shell()
-    except Exception as e:
-        await websocket.send_json({"type": "error", "message": f"Shell failed: {str(e)}"})
-        await websocket.close()
-        return
+        # Create PTY channel (default size, will be resized)
+        channel = await vps_conn.create_channel(120, 40)
 
-    # Handle bidirectional communication
-    async def read_terminal():
-        """Read from terminal and send to WebSocket"""
-        try:
-            async for data in conn.read_output():
-                await websocket.send_json({
-                    "type": "output",
-                    "data": data.decode("utf-8", errors="replace")
-                })
-        except Exception as e:
-            print(f"Terminal read error: {e}")
+        await websocket.send_json({
+            "type": "connected",
+            "server_id": server_id,
+            "channel_id": channel.id
+        })
 
-    async def write_terminal():
-        """Read from WebSocket and write to terminal"""
-        try:
-            while True:
-                message = await websocket.receive_json()
+        # Handle bidirectional communication
+        async def read_terminal():
+            """Read from PTY channel and send to WebSocket"""
+            try:
+                async for output in channel.read_output():
+                    await websocket.send_json({
+                        "type": "output",
+                        "data": output.decode("utf-8", errors="replace")
+                    })
+            except Exception:
+                pass
 
-                if message["type"] == "input":
-                    await conn.write_input(message["data"])
-                elif message["type"] == "resize":
-                    await conn.resize_terminal(
-                        message.get("cols", 120),
-                        message.get("rows", 40)
-                    )
-        except WebSocketDisconnect:
-            pass
-        except Exception as e:
-            print(f"Terminal write error: {e}")
+        async def write_terminal():
+            """Read from WebSocket and write to PTY channel"""
+            try:
+                while True:
+                    message = await websocket.receive_json()
 
-    # Run both tasks concurrently
-    try:
+                    if message["type"] == "input":
+                        await channel.write_input(message["data"])
+                    elif message["type"] == "resize":
+                        await channel.resize(
+                            message.get("cols", 120),
+                            message.get("rows", 40)
+                        )
+            except WebSocketDisconnect:
+                pass
+            except Exception:
+                pass
+
+        # Run both tasks concurrently
         await asyncio.gather(read_terminal(), write_terminal())
+
     except Exception as e:
-        print(f"Terminal session ended: {e}")
+        try:
+            await websocket.send_json({"type": "error", "message": str(e)})
+        except:
+            pass
     finally:
-        await websocket.close()
+        # Close the channel (not the connection)
+        if channel and vps_conn:
+            await vps_conn.close_channel(channel.id)
+        if vps_conn and status_listener:
+            vps_conn.remove_status_listener(status_listener)
+        try:
+            await websocket.close()
+        except:
+            pass
 
 
 # === File Browser API ===
