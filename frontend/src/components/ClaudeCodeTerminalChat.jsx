@@ -234,10 +234,18 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
               xtermRef.current.write(message.data)
               xtermRef.current.scrollToBottom()
 
-              // Detect when Claude Code is ready (shows the > prompt)
-              if (!claudeStartedRef.current && message.data.includes('>')) {
-                claudeStartedRef.current = true
-                setStatus('claude_ready')
+              // Detect when Claude Code is ready for input
+              // Strip ANSI codes first, then check for prompt patterns
+              if (!claudeStartedRef.current) {
+                const cleanData = stripAnsi(message.data)
+                // Check for various Claude Code prompt patterns
+                const hasPrompt = cleanData.includes('>') ||
+                                  cleanData.includes('❯') ||
+                                  cleanData.includes('?') // Claude often asks questions
+                if (hasPrompt) {
+                  claudeStartedRef.current = true
+                  setStatus('claude_ready')
+                }
               }
 
               // PHASE-2: Parse output for chat bubbles
@@ -365,6 +373,15 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       }
 
       wsRef.current.send(JSON.stringify({ type: 'input', data: command }))
+
+      // Fallback: enable input after 3 seconds if prompt detection didn't trigger
+      // This handles cases where Claude Code's prompt pattern isn't detected
+      setTimeout(() => {
+        if (!claudeStartedRef.current) {
+          claudeStartedRef.current = true
+          setStatus('claude_ready')
+        }
+      }, 3000)
     }
   }, [projectSlug])
 
