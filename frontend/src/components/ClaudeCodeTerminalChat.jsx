@@ -71,32 +71,38 @@ function ChatBubble({ message, isUser }) {
     display: 'flex',
     flexDirection: isUser ? 'row-reverse' : 'row',
     alignItems: 'flex-start',
-    gap: '12px',
-    marginBottom: '16px',
-    maxWidth: '100%'
+    gap: '14px',
+    marginBottom: '20px',
+    maxWidth: '100%',
+    padding: '0 8px'
   }
 
   const avatarStyle = {
-    width: '32px',
-    height: '32px',
+    width: '36px',
+    height: '36px',
     borderRadius: '50%',
-    background: isUser ? '#3b82f6' : '#bb9af7',
+    background: isUser
+      ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+      : 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0
+    flexShrink: 0,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
   }
 
   const contentStyle = {
-    maxWidth: '80%',
-    padding: '12px 16px',
-    borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-    background: isUser ? '#3b82f6' : '#1e1e2e',
-    color: '#e4e4e7',
+    maxWidth: '85%',
+    padding: '14px 18px',
+    borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+    background: isUser ? '#3b82f6' : '#1a1a2e',
+    color: '#f0f0f5',
     fontSize: '14px',
-    lineHeight: 1.6,
+    lineHeight: 1.7,
     whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word'
+    wordBreak: 'break-word',
+    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.25)',
+    border: isUser ? 'none' : '1px solid rgba(255, 255, 255, 0.05)'
   }
 
   // Simple markdown-like rendering for code blocks
@@ -191,6 +197,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
   const outputBufferRef = useRef('')
   const messagesEndRef = useRef(null)
   const lastUserInputRef = useRef(null) // Track last user input to avoid duplicates
+  const waitingForEchoRef = useRef(false) // Skip output until echo completes
+  const echoTimeoutRef = useRef(null) // Timer to detect echo completion
 
   // Connect to WebSocket
   const connect = useCallback(async () => {
@@ -265,12 +273,36 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
 
               // PHASE-2: Parse output for chat bubbles
               if (claudeStartedRef.current) {
-                // Strip ANSI codes and append to buffer
+                // Strip ANSI codes
                 const cleanData = stripAnsi(message.data)
+
+                // If waiting for user input echo to complete, check for response start
+                if (waitingForEchoRef.current) {
+                  // Look for indicators that Claude started responding (spinner started)
+                  const lowerData = cleanData.toLowerCase()
+                  const responseIndicators = [
+                    'catapulting', 'pollinating', 'percolating', 'thinking',
+                    '●', '○', '◐', '◑', '⠋', '⠙', '⠹', '⠸' // spinner chars
+                  ]
+                  const hasResponseStart = responseIndicators.some(i => lowerData.includes(i))
+
+                  if (hasResponseStart) {
+                    // Echo complete, Claude is responding
+                    waitingForEchoRef.current = false
+                    outputBufferRef.current = '' // Clear any accumulated echo
+                    if (echoTimeoutRef.current) {
+                      clearTimeout(echoTimeoutRef.current)
+                      echoTimeoutRef.current = null
+                    }
+                  }
+                  // Still waiting for echo to complete - skip this output
+                  return
+                }
+
+                // Append to buffer
                 outputBufferRef.current += cleanData
 
-
-                // Simple approach: accumulate response and update in real-time
+                // Accumulate response and update in real-time
                 const buffer = outputBufferRef.current
 
                 // Check if buffer contains a prompt line (indicates response complete)
@@ -295,7 +327,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                   // Skip spinner/loading animation text and fragments
                   // Claude Code uses creative spinner words - be very comprehensive
                   const spinnerWords = [
-                    // -ating words
+                    // -ating/-ulting words
                     'evaporating', 'pollinating', 'percolating', 'bamboozling', 'schmoozling',
                     'actualizing', 'crystallizing', 'ruminating', 'cogitating', 'deliberating',
                     'pondering', 'contemplating', 'meditating', 'reflecting', 'musing',
@@ -303,11 +335,13 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                     'formulating', 'generating', 'synthesizing', 'analyzing', 'evaluating',
                     'calibrating', 'activating', 'orchestrating', 'incubating', 'marinating',
                     'hibernating', 'germinating', 'simulating', 'cascading', 'brewing',
+                    'catapulting', 'consulting', 'exulting', 'insulting', 'resulting',
                     // -ing words
                     'gathering', 'assembling', 'compiling', 'warming', 'charging', 'spinning',
                     'dreaming', 'scheming', 'plotting', 'hatching', 'concocting', 'manifesting',
+                    'crunching', 'munching', 'scrunching',
                     // UI fragments
-                    'app opinion', 'fetching', 'working', 'preparing', 'crunching'
+                    'app opinion', 'fetching', 'working', 'preparing'
                   ]
                   if (spinnerWords.some(word => lowerLine.includes(word))) return false
 
@@ -332,9 +366,11 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                   if (trimmed.match(/↑\s*\d+\s*tokens/)) return false  // Token count with arrow
 
                   // Skip Claude Code status bar (DO project-name Model tokens LIVE)
+                  if (lowerLine === 'live' || trimmed === '● LIVE' || trimmed === '○ LIVE') return false
                   if (lowerLine.includes('live') && /\d+%/.test(trimmed)) return false
                   if (/\d+k\/\d+k/.test(trimmed)) return false  // Token counts like 18k/200k
                   if (trimmed.includes('█') || trimmed.includes('▓') || trimmed.includes('░')) return false  // Progress bar chars
+                  if (trimmed.startsWith('●') || trimmed.startsWith('○')) return false  // Status indicators
 
                   // Skip welcome screen and session picker
                   if (lowerLine.includes('welcome back')) return false
@@ -476,8 +512,16 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       lastUserInputRef.current = userMessage
       setChatMessages(prev => [...prev, { role: 'user', content: userMessage }])
 
-      // Clear output buffer before sending - we only want Claude's response to THIS message
+      // Clear output buffer and set flag to wait for echo to complete
       outputBufferRef.current = ''
+      waitingForEchoRef.current = true
+
+      // Fallback: if no response indicator seen within 500ms, assume echo done
+      if (echoTimeoutRef.current) clearTimeout(echoTimeoutRef.current)
+      echoTimeoutRef.current = setTimeout(() => {
+        waitingForEchoRef.current = false
+        outputBufferRef.current = '' // Clear accumulated echo
+      }, 500)
 
       // Send message text first
       wsRef.current.send(JSON.stringify({ type: 'input', data: userMessage }))
@@ -572,6 +616,10 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       if (xtermRef.current) {
         xtermRef.current.dispose()
         xtermRef.current = null
+      }
+      if (echoTimeoutRef.current) {
+        clearTimeout(echoTimeoutRef.current)
+        echoTimeoutRef.current = null
       }
     }
   }, []) // Only run once on mount
