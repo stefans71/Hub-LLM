@@ -322,6 +322,28 @@ export default function Chat({ project, model, apiKeys, serverId, claudeCodeStat
     )
   }
 
+  // Check if we should show loading while waiting for Claude Code check
+  // Show loading when: Anthropic model + serverId + check is actively running
+  const isAnthropicModel = model?.provider === 'anthropic' ||
+    (typeof model === 'string' && model.toLowerCase().includes('claude'))
+
+  // Show loading only when check is actively running (checking === true)
+  // OR when check hasn't run yet (no 'checking' field exists in status)
+  const isCheckingOrPending = claudeCodeStatus?.checking === true ||
+    !('checking' in (claudeCodeStatus || {}))
+
+  const showVpsLoading = isAnthropicModel && serverId && isCheckingOrPending
+
+  // Show loading state while checking Claude Code status
+  if (showVpsLoading) {
+    return (
+      <div className="chat-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
+        <div className="terminal-loading-spinner" style={{ width: '40px', height: '40px', border: '3px solid #1a1a2e', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'terminal-spin 1s linear infinite' }}></div>
+        <p style={{ color: '#9ca3af', fontSize: '14px', margin: 0 }}>Connecting to VPS...</p>
+      </div>
+    )
+  }
+
   return (
     <div
       className="chat-panel"
