@@ -17,32 +17,6 @@
   },
   "queue": [
     {
-      "id": "PHASE-2",
-      "name": "Chat Bubble Rendering for Claude Code Output",
-      "size": "M",
-      "priority": 1,
-      "status": "pending",
-      "description": "Render Claude Code terminal output as pretty chat bubbles in chat area",
-      "current": "Chat area shows raw terminal output (Phase 1 complete)",
-      "approach": [
-        "From CLAUDE-02-REWORK investigation:",
-        "- Wrap term.write() to intercept output before rendering",
-        "- Parse patterns: lines starting with > = user input",
-        "- Strip ANSI codes with util.stripVTControlCharacters()",
-        "- Alternative: Use --output-format stream-json for structured parsing"
-      ],
-      "change": [
-        "Create chat bubble renderer component",
-        "Intercept xterm.js output stream",
-        "Detect user input (> prompt) vs Claude response",
-        "Render user messages as right-aligned bubbles",
-        "Render Claude responses as left-aligned bubbles with avatar",
-        "Keep raw terminal available (toggle or in LLM-Dev panel)",
-        "Handle code blocks, markdown rendering in bubbles"
-      ],
-      "test": "Chat shows pretty bubbles for conversation. User messages right, Claude left. Code blocks formatted. Can toggle to raw terminal view."
-    },
-    {
       "id": "FEAT-10",
       "name": "Share Claude Code Session Between Chat and LLM-Dev Terminal",
       "size": "M",
@@ -113,6 +87,7 @@
     }
   ],
   "completed": [
+    {"id": "PHASE-2", "name": "Chat Bubble Rendering for Claude Code Output", "completed": "2026-01-26"},
     {"id": "BUG-23", "name": "Setup Wizard VPS Validation Rejects Valid SSH Key", "completed": "2026-01-26"},
     {"id": "BUG-22", "name": "Chat Terminal Scrollbar and Resize Handle", "completed": "2026-01-26"},
     {"id": "BUG-21", "name": "Project Switch/Refresh Doesn't Reconnect VPS", "completed": "2026-01-26"},

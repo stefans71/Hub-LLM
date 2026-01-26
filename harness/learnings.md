@@ -5,21 +5,34 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 75 - 2026-01-26 EST
-**Task**: BUG-23 - Setup Wizard VPS Validation Rejects Valid SSH Key
-**What**: Fixed button staying disabled by matching CreateProject.jsx behavior
+**Task**: BUG-23 + PHASE-2
 
-**Root Cause**:
-- Setup.jsx required username field to be filled for button to enable: `disabled={!host || !username}`
-- CreateProject.jsx only requires host: `disabled={!formData.vpsIp.trim()}`
-- CreateProject defaults username to `'root'` in the API call
-- Setup.jsx had empty default: `useState('')`
+**BUG-23: Setup Wizard VPS Validation**
+- Root cause: Setup.jsx required username field filled, CreateProject.jsx defaults to 'root'
+- Fix: Default username to 'root', add .trim() to API call values
 
-**Fix**:
-1. Changed `useState('')` to `useState('root')` for username field
-2. Added `.trim()` to host, username, and privateKey in API call (matching CreateProject)
+**PHASE-2: Chat Bubble Rendering for Claude Code Output**
+- Added view mode toggle in status bar (bubbles/terminal icons)
+- Created ChatBubble component with user (right, blue) and Claude (left, purple avatar)
+- Strip ANSI codes from terminal output for clean text
+- Parse output by detecting `> ` prompt pattern for user input
+- Accumulate Claude responses until next user prompt
+- Render markdown code blocks and inline code
+- Auto-scroll to bottom on new messages
+- Keep raw terminal always mounted (hidden when in bubbles mode)
+
+**Key Pattern - View Mode Toggle**:
+```javascript
+// Keep component mounted, toggle visibility
+<div style={{ display: viewMode === 'terminal' ? 'block' : 'none' }}>
+  <terminal />
+</div>
+```
 
 **Files Modified**:
-- frontend/src/pages/Setup.jsx (line 459 default username, lines 497-502 trim values)
+- frontend/src/pages/Setup.jsx (BUG-23)
+- frontend/src/components/ClaudeCodeTerminalChat.jsx (PHASE-2)
+- frontend/src/index.css (PHASE-2 styles)
 
 ---
 

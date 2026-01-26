@@ -1,19 +1,155 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Plus, Mic, Send, Terminal as TerminalIcon, RefreshCw } from 'lucide-react'
+import { Plus, Mic, Send, Terminal as TerminalIcon, RefreshCw, MessageSquare, Sparkles } from 'lucide-react'
 
 /**
- * ClaudeCodeTerminalChat Component (CLAUDE-02-REWORK)
+ * ClaudeCodeTerminalChat Component (CLAUDE-02-REWORK + PHASE-2)
  *
  * Phase 1: Terminal-based chat for Claude Code on VPS.
+ * Phase 2: Chat bubble rendering for Claude Code output.
+ *
  * Shows xterm.js in the chat area when Anthropic model + Claude Code authenticated.
  * Auto-runs `claude` command on connect, wires chat input to terminal stdin.
+ * Parses output to render as chat bubbles (user messages right, Claude left).
  *
  * Protocol:
  * 1. Connect to VPS via WebSocket terminal
  * 2. Auto-run `claude` to start interactive Claude Code session
  * 3. User types in chat input → sends to terminal stdin
- * 4. Terminal output displays in chat area
+ * 4. Terminal output displays in chat area (raw or bubbles)
  */
+
+// PHASE-2: Strip ANSI escape codes from text
+const stripAnsi = (text) => {
+  // eslint-disable-next-line no-control-regex
+  return text.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '')
+}
+
+// PHASE-2: Parse a chunk of output to extract messages
+// Returns { userInput: string|null, claudeResponse: string|null, remaining: string }
+const parseOutputChunk = (buffer) => {
+  // Look for the `> ` prompt pattern that indicates user input
+  // User input is what appears after `> ` until newline
+  const promptRegex = /^> (.+)$/m
+  const match = buffer.match(promptRegex)
+
+  if (match) {
+    const promptIndex = match.index
+    const userInput = match[1].trim()
+
+    // Everything before the prompt could be Claude's response
+    const beforePrompt = buffer.slice(0, promptIndex).trim()
+    // Everything after the user input line is remaining
+    const afterUserLine = buffer.slice(promptIndex + match[0].length).trim()
+
+    return {
+      claudeResponse: beforePrompt || null,
+      userInput: userInput || null,
+      remaining: afterUserLine
+    }
+  }
+
+  return { userInput: null, claudeResponse: null, remaining: buffer }
+}
+
+// PHASE-2: Chat Bubble Component
+function ChatBubble({ message, isUser }) {
+  const bubbleStyle = {
+    display: 'flex',
+    flexDirection: isUser ? 'row-reverse' : 'row',
+    alignItems: 'flex-start',
+    gap: '12px',
+    marginBottom: '16px',
+    maxWidth: '100%'
+  }
+
+  const avatarStyle = {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    background: isUser ? '#3b82f6' : '#bb9af7',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0
+  }
+
+  const contentStyle = {
+    maxWidth: '80%',
+    padding: '12px 16px',
+    borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+    background: isUser ? '#3b82f6' : '#1e1e2e',
+    color: '#e4e4e7',
+    fontSize: '14px',
+    lineHeight: 1.6,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word'
+  }
+
+  // Simple markdown-like rendering for code blocks
+  const renderContent = (text) => {
+    // Handle code blocks ```...```
+    const parts = text.split(/(```[\s\S]*?```)/g)
+
+    return parts.map((part, i) => {
+      if (part.startsWith('```')) {
+        // Extract language and code
+        const lines = part.slice(3, -3).split('\n')
+        const lang = lines[0] || ''
+        const code = lines.slice(1).join('\n') || lines[0]
+
+        return (
+          <pre key={i} style={{
+            background: '#0a0a0f',
+            padding: '12px',
+            borderRadius: '8px',
+            marginTop: i > 0 ? '8px' : 0,
+            marginBottom: '8px',
+            overflow: 'auto',
+            fontSize: '13px',
+            fontFamily: "'Monaco', 'Consolas', monospace"
+          }}>
+            {lang && <div style={{ color: '#6b7280', marginBottom: '4px', fontSize: '11px' }}>{lang}</div>}
+            <code>{code}</code>
+          </pre>
+        )
+      }
+
+      // Handle inline code `...`
+      const inlineParts = part.split(/(`[^`]+`)/g)
+      return inlineParts.map((inlinePart, j) => {
+        if (inlinePart.startsWith('`') && inlinePart.endsWith('`')) {
+          return (
+            <code key={`${i}-${j}`} style={{
+              background: '#0a0a0f',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontFamily: "'Monaco', 'Consolas', monospace",
+              fontSize: '13px'
+            }}>
+              {inlinePart.slice(1, -1)}
+            </code>
+          )
+        }
+        return <span key={`${i}-${j}`}>{inlinePart}</span>
+      })
+    })
+  }
+
+  return (
+    <div style={bubbleStyle}>
+      <div style={avatarStyle}>
+        {isUser ? (
+          <span style={{ fontSize: '14px' }}>U</span>
+        ) : (
+          <Sparkles size={16} color="#fff" />
+        )}
+      </div>
+      <div style={contentStyle}>
+        {renderContent(message.content)}
+      </div>
+    </div>
+  )
+}
 export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug }) {
   const terminalRef = useRef(null)
   const xtermRef = useRef(null)
@@ -33,6 +169,13 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
   const dragStartXRef = useRef(null)
   const dragStartWidthRef = useRef(null)
   const resizeHandleRef = useRef(null)
+
+  // PHASE-2: Chat bubble rendering state
+  const [viewMode, setViewMode] = useState('bubbles') // 'bubbles' | 'terminal'
+  const [chatMessages, setChatMessages] = useState([])
+  const outputBufferRef = useRef('')
+  const messagesEndRef = useRef(null)
+  const lastUserInputRef = useRef(null) // Track last user input to avoid duplicates
 
   // Connect to WebSocket
   const connect = useCallback(async () => {
@@ -96,6 +239,80 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                 claudeStartedRef.current = true
                 setStatus('claude_ready')
               }
+
+              // PHASE-2: Parse output for chat bubbles
+              if (claudeStartedRef.current) {
+                // Strip ANSI codes and append to buffer
+                const cleanData = stripAnsi(message.data)
+                outputBufferRef.current += cleanData
+
+                // Process buffer for complete messages
+                // Look for the `> ` prompt pattern at start of line
+                const buffer = outputBufferRef.current
+
+                // Split by lines to process
+                const lines = buffer.split('\n')
+                let newMessages = []
+                let currentResponse = ''
+                let processedUpTo = 0
+
+                for (let i = 0; i < lines.length; i++) {
+                  const line = lines[i]
+                  const trimmedLine = line.trim()
+
+                  // Detect user input line (starts with `> `)
+                  if (trimmedLine.startsWith('> ') && trimmedLine.length > 2) {
+                    // If we have accumulated response, add it
+                    if (currentResponse.trim()) {
+                      newMessages.push({ role: 'assistant', content: currentResponse.trim() })
+                    }
+
+                    // Extract user input (after `> `)
+                    const userInput = trimmedLine.slice(2).trim()
+
+                    // Only add if it's new (not duplicate of last input)
+                    if (userInput && userInput !== lastUserInputRef.current) {
+                      lastUserInputRef.current = userInput
+                      newMessages.push({ role: 'user', content: userInput })
+                    }
+
+                    currentResponse = ''
+                    processedUpTo = lines.slice(0, i + 1).join('\n').length + 1
+                  } else if (claudeStartedRef.current) {
+                    // Accumulate Claude response
+                    // Skip empty lines at the start, skip the `> ` prompt line itself
+                    if (line.trim() !== '>' && line.trim() !== '') {
+                      currentResponse += line + '\n'
+                    }
+                  }
+                }
+
+                // If we processed some messages, update state
+                if (newMessages.length > 0) {
+                  setChatMessages(prev => {
+                    // Avoid duplicate messages
+                    const combined = [...prev]
+                    for (const msg of newMessages) {
+                      // Check if this exact message already exists
+                      const exists = combined.some(m =>
+                        m.role === msg.role && m.content === msg.content
+                      )
+                      if (!exists) {
+                        combined.push(msg)
+                      }
+                    }
+                    return combined
+                  })
+                }
+
+                // Keep unprocessed part in buffer (last incomplete line)
+                // Only keep the last line if it doesn't end with newline
+                if (!buffer.endsWith('\n') && lines.length > 0) {
+                  outputBufferRef.current = lines[lines.length - 1]
+                } else {
+                  outputBufferRef.current = ''
+                }
+              }
             }
             break
 
@@ -156,6 +373,12 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
     if (!input.trim() || status !== 'claude_ready') return
 
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      const userMessage = input.trim()
+
+      // PHASE-2: Add user message immediately for responsive UI
+      lastUserInputRef.current = userMessage
+      setChatMessages(prev => [...prev, { role: 'user', content: userMessage }])
+
       // Send the message followed by newline to Claude Code's stdin
       wsRef.current.send(JSON.stringify({ type: 'input', data: input + '\n' }))
       setInput('')
@@ -291,8 +514,19 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       xtermRef.current.clear()
       xtermRef.current.writeln('\x1b[33mReconnecting...\x1b[0m')
     }
+    // PHASE-2: Clear chat messages on reconnect
+    setChatMessages([])
+    outputBufferRef.current = ''
+    lastUserInputRef.current = null
     connect()
   }
+
+  // PHASE-2: Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (viewMode === 'bubbles' && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [chatMessages, viewMode])
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
@@ -415,20 +649,61 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
               <span className="claude-code-server-name">• {serverInfo.server}</span>
             )}
           </div>
-          {(status === 'disconnected' || status === 'error') && serverId && (
-            <button className="claude-code-reconnect-btn" onClick={reconnect}>
-              <RefreshCw size={12} />
-              Reconnect
-            </button>
-          )}
+          <div className="claude-code-status-right">
+            {/* PHASE-2: View mode toggle */}
+            <div className="claude-code-view-toggle">
+              <button
+                className={`view-toggle-btn ${viewMode === 'bubbles' ? 'active' : ''}`}
+                onClick={() => setViewMode('bubbles')}
+                title="Chat bubbles view"
+              >
+                <MessageSquare size={14} />
+              </button>
+              <button
+                className={`view-toggle-btn ${viewMode === 'terminal' ? 'active' : ''}`}
+                onClick={() => setViewMode('terminal')}
+                title="Terminal view"
+              >
+                <TerminalIcon size={14} />
+              </button>
+            </div>
+            {(status === 'disconnected' || status === 'error') && serverId && (
+              <button className="claude-code-reconnect-btn" onClick={reconnect}>
+                <RefreshCw size={12} />
+                Reconnect
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Terminal Display Area (replaces chat-messages) */}
+        {/* PHASE-2: Chat Bubbles View */}
+        {viewMode === 'bubbles' && (
+          <div className="claude-code-bubbles-area">
+            {chatMessages.length === 0 ? (
+              <div className="claude-code-empty-state">
+                <Sparkles size={32} style={{ color: '#bb9af7', marginBottom: '12px' }} />
+                <p style={{ color: '#9ca3af', fontSize: '14px' }}>
+                  {status === 'claude_ready'
+                    ? 'Start a conversation with Claude Code'
+                    : 'Connecting to Claude Code...'}
+                </p>
+              </div>
+            ) : (
+              chatMessages.map((msg, i) => (
+                <ChatBubble key={i} message={msg} isUser={msg.role === 'user'} />
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+
+        {/* Terminal Display Area - always rendered but hidden when in bubbles mode */}
         {/* BUG-18 FIX: Click to focus terminal for keyboard input */}
         <div
           ref={terminalRef}
           className="claude-code-terminal-area"
           onClick={handleTerminalClick}
+          style={{ display: viewMode === 'terminal' ? 'block' : 'none' }}
         />
 
         {/* Chat Input Area (same as regular Chat) */}
@@ -473,7 +748,9 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
           {/* Input Hint */}
           <div className="chat-input-hint">
             {status === 'claude_ready'
-              ? 'Click terminal to type directly • Or use input box below'
+              ? viewMode === 'bubbles'
+                ? 'Type your message and press Enter'
+                : 'Click terminal to type directly • Or use input box'
               : 'Connecting to Claude Code on VPS...'}
           </div>
         </div>
