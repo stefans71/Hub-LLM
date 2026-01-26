@@ -268,9 +268,6 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                 const cleanData = stripAnsi(message.data)
                 outputBufferRef.current += cleanData
 
-                // DEBUG: Log raw and clean data to see what we're receiving
-                console.log('[BUBBLE DEBUG] Raw:', JSON.stringify(message.data))
-                console.log('[BUBBLE DEBUG] Clean:', JSON.stringify(cleanData))
 
                 // Simple approach: accumulate response and update in real-time
                 const buffer = outputBufferRef.current
@@ -294,11 +291,21 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                   // Skip Claude Code UI elements - be very aggressive
                   const lowerLine = trimmed.toLowerCase()
 
-                  // Skip spinner/loading animation text
+                  // Skip spinner/loading animation text and fragments
                   if (lowerLine.includes('evaporating')) return false
                   if (lowerLine.includes('app opinion')) return false
+                  if (lowerLine.includes('actualizing')) return false
                   if (trimmed.match(/^[0●•\*\+;]+$/)) return false  // Spinner frames
                   if (trimmed.match(/^[\d;]+$/)) return false  // Leftover escape params
+                  // Skip partial spinner fragments (ng..., *liz, ctal, *Au, etc.)
+                  if (trimmed.match(/^[\*\-]?[a-z]{1,4}\.{0,3}$/i)) return false
+                  if (trimmed.match(/^\*?[A-Za-z]{1,3}$/)) return false  // Very short text fragments
+                  if (trimmed.includes('ought for')) return false  // "...ought for 1s)" spinner fragment
+
+                  // Skip Claude Code status bar (DO project-name Model tokens LIVE)
+                  if (lowerLine.includes('live') && /\d+%/.test(trimmed)) return false
+                  if (/\d+k\/\d+k/.test(trimmed)) return false  // Token counts like 18k/200k
+                  if (trimmed.includes('█') || trimmed.includes('▓') || trimmed.includes('░')) return false  // Progress bar chars
 
                   // Skip welcome screen and session picker
                   if (lowerLine.includes('welcome back')) return false
@@ -342,9 +349,6 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                 })
 
                 const responseText = responseLines.join('\n').trim()
-
-                // DEBUG: Log filtered result
-                console.log('[BUBBLE DEBUG] Filtered lines:', responseLines.length, 'Response:', JSON.stringify(responseText.slice(0, 200)))
 
                 // Update or add assistant message if we have response content
                 if (responseText.length > 0) {
