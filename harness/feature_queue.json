@@ -17,22 +17,6 @@
   },
   "queue": [
     {
-      "id": "BUG-23",
-      "name": "Setup Wizard VPS Validation Rejects Valid SSH Key",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Setup Wizard Test Connection button stays disabled even with valid SSH key",
-      "current": "Same SSH key that works in Settings and Create Project is rejected in Setup Wizard. Button stays disabled.",
-      "change": [
-        "Compare Setup.jsx VPS validation logic to CreateProject.jsx",
-        "Match validation exactly - same regex, same conditions",
-        "Ensure textarea value is being read correctly (no trimming issues)",
-        "Test with actual SSH key that works in other forms"
-      ],
-      "test": "Same SSH key that works in Settings/Create Project also enables Test Connection in Setup Wizard"
-    },
-    {
       "id": "PHASE-2",
       "name": "Chat Bubble Rendering for Claude Code Output",
       "size": "M",
@@ -129,6 +113,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-23", "name": "Setup Wizard VPS Validation Rejects Valid SSH Key", "completed": "2026-01-26"},
     {"id": "BUG-22", "name": "Chat Terminal Scrollbar and Resize Handle", "completed": "2026-01-26"},
     {"id": "BUG-21", "name": "Project Switch/Refresh Doesn't Reconnect VPS", "completed": "2026-01-26"},
     {"id": "BUG-20", "name": "Create Project Fails When Adding New VPS Inline (already fixed)", "completed": "2026-01-26"},

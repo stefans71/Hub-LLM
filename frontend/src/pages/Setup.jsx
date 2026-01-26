@@ -456,7 +456,7 @@ function OpenRouterStep({ onBack, onComplete }) {
 function AnthropicStep({ onBack, onComplete }) {
   const [host, setHost] = useState('')
   const [port, setPort] = useState('22')
-  const [username, setUsername] = useState('')
+  const [username, setUsername] = useState('root')
   const [authMode, setAuthMode] = useState('password')
   const [password, setPassword] = useState('')
   const [privateKey, setPrivateKey] = useState('')
@@ -495,11 +495,11 @@ function AnthropicStep({ onBack, onComplete }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          host,
+          host: host.trim(),
           port: parseInt(port) || 22,
-          username,
+          username: username.trim(),
           password: authMode === 'password' ? password : null,
-          private_key: authMode === 'key' ? privateKey : null
+          private_key: authMode === 'key' ? privateKey.trim() : null
         }),
         signal: controller.signal
       })

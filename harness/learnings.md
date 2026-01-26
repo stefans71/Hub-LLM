@@ -4,6 +4,25 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 75 - 2026-01-26 EST
+**Task**: BUG-23 - Setup Wizard VPS Validation Rejects Valid SSH Key
+**What**: Fixed button staying disabled by matching CreateProject.jsx behavior
+
+**Root Cause**:
+- Setup.jsx required username field to be filled for button to enable: `disabled={!host || !username}`
+- CreateProject.jsx only requires host: `disabled={!formData.vpsIp.trim()}`
+- CreateProject defaults username to `'root'` in the API call
+- Setup.jsx had empty default: `useState('')`
+
+**Fix**:
+1. Changed `useState('')` to `useState('root')` for username field
+2. Added `.trim()` to host, username, and privateKey in API call (matching CreateProject)
+
+**Files Modified**:
+- frontend/src/pages/Setup.jsx (line 459 default username, lines 497-502 trim values)
+
+---
+
 ### Session 74 - 2026-01-26 EST
 **Task**: BUG-17, BUG-19, BUG-20 - Setup Wizard and Create Project VPS Issues
 **What**: Fixed Setup Wizard VPS test and verified CreateProject VPS save
