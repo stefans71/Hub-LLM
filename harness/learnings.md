@@ -4,6 +4,61 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 72 - 2026-01-26 EST
+**Task**: CLAUDE-02-REWORK (Phase 1) - Terminal-based Chat for Claude Code
+**What**: Replace one-shot `claude -p` approach with live terminal session in chat area
+
+**Investigation Findings**:
+1. **Claude Code Output Patterns**: User input uses `>` marker, supports `--output-format` (text/json/stream-json), Ink-based rendering
+2. **ANSI Codes**: Claude Code uses ANSI for styling but doesn't filter them (can consume tokens)
+3. **xterm.js Interception**: Can wrap `term.write()`, use `onWriteParsed`, Buffer API, or parser hooks
+4. **Resume Functionality**: `claude --resume` shows picker, `claude -c` continues most recent, history in `~/.claude/`
+
+**Implementation (Phase 1)**:
+1. Created `ClaudeCodeTerminalChat.jsx`:
+   - xterm.js in chat area (reuses existing WebSocket terminal approach)
+   - Auto-runs `claude` command on VPS connect
+   - Wires chat input to terminal stdin via WebSocket
+   - Status tracking: disconnected → connecting → connected → claude_starting → claude_ready
+   - Detects Claude Code ready by watching for `>` prompt in output
+
+2. Modified `Chat.jsx`:
+   - Added `useClaudeCodeTerminal` memoized flag
+   - When Anthropic model + claudeCodeStatus.authenticated + serverId → render ClaudeCodeTerminalChat
+   - Otherwise render normal chat
+
+3. Added CSS in `index.css`:
+   - `.claude-code-terminal-chat` styling
+   - Status bar with dot indicators
+   - Terminal area styling to match chat background
+
+**Key Pattern - Conditional Chat Mode**:
+```javascript
+const useClaudeCodeTerminal = useMemo(() => {
+  const isAnthropicModel = model?.provider === 'anthropic' ||
+    (typeof model === 'string' && model.toLowerCase().includes('claude'))
+  return isAnthropicModel && claudeCodeStatus?.authenticated && serverId
+}, [model, claudeCodeStatus, serverId])
+
+if (useClaudeCodeTerminal) {
+  return <ClaudeCodeTerminalChat project={project} serverId={serverId} />
+}
+```
+
+**Files Created**:
+- frontend/src/components/ClaudeCodeTerminalChat.jsx
+
+**Files Modified**:
+- frontend/src/components/Chat.jsx
+- frontend/src/index.css
+
+**Phase 2 TODO** (not yet implemented):
+- Parse terminal output for chat bubble rendering
+- User messages → right bubbles, Claude responses → left bubbles
+- Strip ANSI codes for clean text display
+
+---
+
 ### Session 71 - 2026-01-26 EST
 **Task**: ONBOARD-01 - Setup Wizard Skeleton
 **What**: Post-signup wizard to configure API keys and VPS

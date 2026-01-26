@@ -21,7 +21,7 @@
       "name": "Chat Area as Terminal Mirror for Claude Code",
       "size": "L",
       "priority": 1,
-      "status": "pending",
+      "status": "phase1-complete",
       "description": "Replace one-shot `claude -p` approach with live terminal session. Chat area becomes a styled terminal view into VPS where Claude Code runs. Zero processing on our side - just display.",
       "current": "CLAUDE-02 runs `claude -p 'prompt'` one-shot commands via SSH. No conversation context, no streaming, no interactive features.",
       "context": "When user selects Anthropic model + has VPS with Claude Code authenticated, the chat should connect to a live Claude Code session on their VPS, not run one-shot commands.",

@@ -547,6 +547,80 @@
   object-fit: cover;
 }
 
+/* CLAUDE-02-REWORK: Claude Code Terminal Chat */
+.claude-code-terminal-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.claude-code-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.claude-code-status-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.claude-code-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.claude-code-status-text {
+  font-weight: 500;
+}
+
+.claude-code-server-name {
+  color: var(--text-muted);
+}
+
+.claude-code-reconnect-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--primary);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.claude-code-reconnect-btn:hover {
+  background: var(--primary-hover);
+}
+
+.claude-code-terminal-area {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px;
+  background: #0a0a0f;
+}
+
+/* Ensure xterm fills container */
+.claude-code-terminal-area .xterm {
+  height: 100%;
+}
+
+.claude-code-terminal-area .xterm-viewport {
+  overflow-y: auto !important;
+}
+
 /* W-69: Preview Panel */
 .preview-panel {
   display: flex;

@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Plus, Mic, Send, Copy, X, Image as ImageIcon } from 'lucide-react'
+import ClaudeCodeTerminalChat from './ClaudeCodeTerminalChat'
 
 const MAX_IMAGES = 4 // FIFO queue limit to prevent memory bloat
 
@@ -16,8 +17,15 @@ const MAX_IMAGES = 4 // FIFO queue limit to prevent memory bloat
  * - W-61-67: Chat Input Area with voice input
  * - FEAT-08: File drop and paste support
  * - CLAUDE-02: Routes to Claude Code on VPS when available
+ * - CLAUDE-02-REWORK: Terminal-based chat when Claude Code mode active
  */
 export default function Chat({ project, model, apiKeys, serverId, claudeCodeStatus }) {
+  // CLAUDE-02-REWORK: Check if we should use terminal-based Claude Code chat
+  const useClaudeCodeTerminal = useMemo(() => {
+    const isAnthropicModel = model?.provider === 'anthropic' ||
+      (typeof model === 'string' && model.toLowerCase().includes('claude'))
+    return isAnthropicModel && claudeCodeStatus?.authenticated && serverId
+  }, [model, claudeCodeStatus, serverId])
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -301,6 +309,17 @@ export default function Chat({ project, model, apiKeys, serverId, claudeCodeStat
   const getLanguage = (className) => {
     const match = /language-(\w+)/.exec(className || '')
     return match ? match[1] : 'text'
+  }
+
+  // CLAUDE-02-REWORK: Render terminal-based chat when Claude Code mode is active
+  if (useClaudeCodeTerminal) {
+    return (
+      <ClaudeCodeTerminalChat
+        project={project}
+        serverId={serverId}
+        projectSlug={project?.slug}
+      />
+    )
   }
 
   return (
