@@ -1,5 +1,5 @@
 {
-  "version": "5.4",
+  "version": "5.5",
   "updated": "2026-01-26",
   "session_docs": ["CLAUDE.md", "harness/feature_queue.json"],
   "vision": {
@@ -17,6 +17,48 @@
   },
   "queue": [
     {
+      "id": "BUG-23",
+      "name": "Setup Wizard VPS Validation Rejects Valid SSH Key",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Setup Wizard Test Connection button stays disabled even with valid SSH key",
+      "current": "Same SSH key that works in Settings and Create Project is rejected in Setup Wizard. Button stays disabled.",
+      "change": [
+        "Compare Setup.jsx VPS validation logic to CreateProject.jsx",
+        "Match validation exactly - same regex, same conditions",
+        "Ensure textarea value is being read correctly (no trimming issues)",
+        "Test with actual SSH key that works in other forms"
+      ],
+      "test": "Same SSH key that works in Settings/Create Project also enables Test Connection in Setup Wizard"
+    },
+    {
+      "id": "PHASE-2",
+      "name": "Chat Bubble Rendering for Claude Code Output",
+      "size": "M",
+      "priority": 1,
+      "status": "pending",
+      "description": "Render Claude Code terminal output as pretty chat bubbles in chat area",
+      "current": "Chat area shows raw terminal output (Phase 1 complete)",
+      "approach": [
+        "From CLAUDE-02-REWORK investigation:",
+        "- Wrap term.write() to intercept output before rendering",
+        "- Parse patterns: lines starting with > = user input",
+        "- Strip ANSI codes with util.stripVTControlCharacters()",
+        "- Alternative: Use --output-format stream-json for structured parsing"
+      ],
+      "change": [
+        "Create chat bubble renderer component",
+        "Intercept xterm.js output stream",
+        "Detect user input (> prompt) vs Claude response",
+        "Render user messages as right-aligned bubbles",
+        "Render Claude responses as left-aligned bubbles with avatar",
+        "Keep raw terminal available (toggle or in LLM-Dev panel)",
+        "Handle code blocks, markdown rendering in bubbles"
+      ],
+      "test": "Chat shows pretty bubbles for conversation. User messages right, Claude left. Code blocks formatted. Can toggle to raw terminal view."
+    },
+    {
       "id": "FEAT-10",
       "name": "Share Claude Code Session Between Chat and LLM-Dev Terminal",
       "size": "M",
@@ -32,24 +74,6 @@
         "Input from chat goes to shared session, output appears in both views"
       ],
       "test": "Type in chat → appears in LLM-Dev terminal. Type in LLM-Dev → appears in chat. Same conversation."
-    },
-    {
-      "id": "PHASE-2",
-      "name": "Chat Bubble Rendering for Claude Code Output",
-      "size": "M",
-      "priority": 2,
-      "status": "pending",
-      "description": "Render Claude Code terminal output as pretty chat bubbles in chat area",
-      "current": "Chat area shows raw terminal output (Phase 1 complete)",
-      "change": [
-        "Intercept terminal output via term.write() wrapper",
-        "Parse patterns: lines starting with > = user input",
-        "Strip ANSI codes with util.stripVTControlCharacters()",
-        "Render user messages as right-aligned bubbles",
-        "Render Claude responses as left-aligned bubbles with avatar",
-        "Keep raw terminal in LLM-Dev as fallback view"
-      ],
-      "test": "Chat shows pretty bubbles, LLM-Dev shows raw terminal, same session data"
     },
     {
       "id": "SETTINGS-01",
@@ -88,32 +112,34 @@
     },
     {
       "id": "CLAUDE-03",
-      "name": "Claude Resume Conversation Support",
-      "size": "M",
+      "name": "Claude Resume Conversation Support (UI Enhancement)",
+      "size": "S",
       "priority": 3,
       "status": "pending",
-      "description": "Support resuming previous Claude Code conversations",
-      "current": "Each chat session starts fresh, no history",
+      "description": "Add UI for resuming Claude Code conversations - core functionality already working via --resume",
+      "current": "claude --resume runs automatically on reconnect. User sees terminal picker.",
       "change": [
-        "Add 'Resume conversation' option in chat header or menu",
-        "Run `claude --resume` or `claude --continue` on VPS",
-        "Show conversation picker if multiple sessions",
-        "Store last conversation ID per project for quick resume"
+        "Add 'Resume conversation' button/menu in chat header",
+        "Show conversation list in prettier UI (not just terminal picker)",
+        "Display conversation metadata: name, date, message count",
+        "Quick-resume last conversation option",
+        "Store last conversation ID per project"
       ],
-      "test": "Have existing Claude conversation on VPS → Resume → continue where left off."
+      "test": "Click Resume → see pretty list of past conversations → select one → continues in chat"
     }
   ],
   "completed": [
-    {"id": "BUG-20", "name": "Create Project Fails When Adding New VPS Inline (was already fixed)", "completed": "2026-01-26"},
-    {"id": "BUG-19", "name": "Setup Wizard VPS Form Different Validation Than Settings", "completed": "2026-01-26"},
+    {"id": "BUG-22", "name": "Chat Terminal Scrollbar and Resize Handle", "completed": "2026-01-26"},
+    {"id": "BUG-21", "name": "Project Switch/Refresh Doesn't Reconnect VPS", "completed": "2026-01-26"},
+    {"id": "BUG-20", "name": "Create Project Fails When Adding New VPS Inline (already fixed)", "completed": "2026-01-26"},
+    {"id": "BUG-19", "name": "Setup Wizard VPS Form Different Validation", "completed": "2026-01-26"},
     {"id": "BUG-17", "name": "Setup Wizard VPS Test Connection Not Working", "completed": "2026-01-26"},
-    {"id": "BUG-21", "name": "Project Switch/Refresh Doesn't Reconnect VPS or Load Chat Terminal", "completed": "2026-01-26"},
     {"id": "BUG-18", "name": "Claude Code Terminal in Chat Not Receiving Keyboard Input", "completed": "2026-01-26"},
     {"id": "CLAUDE-02-REWORK", "name": "Chat Area as Terminal Mirror for Claude Code (Phase 1)", "completed": "2026-01-26"},
     {"id": "ONBOARD-01", "name": "Setup Wizard Skeleton", "completed": "2026-01-25"},
     {"id": "MODEL-03", "name": "Billing Switch Warning Popup", "completed": "2026-01-25"},
     {"id": "MODEL-02", "name": "Billing Source Detection and Display", "completed": "2026-01-25"},
-    {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS (one-shot - replaced by rework)", "completed": "2026-01-25"},
+    {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS (replaced by rework)", "completed": "2026-01-25"},
     {"id": "MODEL-01", "name": "Per-Project Model Persistence", "completed": "2026-01-25"},
     {"id": "CLAUDE-01", "name": "Detect Claude Code on VPS", "completed": "2026-01-25"},
     {"id": "AUTH-01", "name": "Password Validation Rules", "completed": "2026-01-25"},
