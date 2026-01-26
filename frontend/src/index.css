@@ -647,25 +647,21 @@
   scrollbar-width: auto;
 }
 
-/* BUG-22: Prevent xterm-screen from blocking scrollbar clicks */
-/* The screen element captures mouse events - shrink it to not cover scrollbar */
-.claude-code-terminal-area .xterm-screen {
-  width: calc(100% - 14px) !important; /* Leave room for 14px scrollbar */
-}
-
-/* BUG-22: Make scrollbar area receive pointer events */
-/* The xterm element needs to allow scrollbar clicks through */
+/* BUG-22: Fix scrollbar dragging - the xterm-screen canvas blocks mouse events */
+/* Solution: Add padding to xterm so scrollbar is outside the screen area */
 .claude-code-terminal-area .xterm {
   position: relative;
+  padding-right: 14px !important; /* Push content left, scrollbar sits in this space */
 }
 
-/* Create a scrollbar click zone that sits above the xterm-screen */
-.claude-code-terminal-area .xterm-viewport {
-  z-index: 1; /* Ensure viewport is above screen for scrollbar clicks */
-}
-
+/* Shrink the screen element so it doesn't overlap the scrollbar padding */
 .claude-code-terminal-area .xterm-screen {
-  z-index: 0;
+  width: calc(100% - 14px) !important;
+}
+
+/* Ensure the viewport scrollbar is in the padding area */
+.claude-code-terminal-area .xterm-viewport {
+  width: 100% !important; /* Full width including padding */
 }
 
 /* Style the xterm scrollbar in Claude Code terminal */
