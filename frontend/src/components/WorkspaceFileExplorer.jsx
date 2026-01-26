@@ -42,6 +42,9 @@ export default function WorkspaceFileExplorer({
   // UI-03: VPS connection status per server
   const [serverStatuses, setServerStatuses] = useState({})
 
+  // INFRA-02: Track which servers are being reconnected
+  const [reconnectingServers, setReconnectingServers] = useState(new Set())
+
   // UI-05: Project menu state
   const [openMenuProjectId, setOpenMenuProjectId] = useState(null)
 
@@ -122,6 +125,51 @@ export default function WorkspaceFileExplorer({
       if (err.name !== 'AbortError') {
         console.error('Failed to load server statuses:', err)
       }
+    }
+  }
+
+  // INFRA-02: Reconnect a single VPS
+  const reconnectServer = async (serverId) => {
+    if (reconnectingServers.has(serverId)) return
+
+    setReconnectingServers(prev => new Set([...prev, serverId]))
+
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 20000)
+
+      const res = await fetch(`/api/ssh/servers/${serverId}/connect`, {
+        method: 'POST',
+        signal: controller.signal
+      })
+      clearTimeout(timeout)
+
+      if (res.ok) {
+        setServerStatuses(prev => ({
+          ...prev,
+          [serverId]: { connected: true, error: null }
+        }))
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setServerStatuses(prev => ({
+          ...prev,
+          [serverId]: { connected: false, error: data.detail || 'Connection failed' }
+        }))
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Reconnect failed:', err)
+        setServerStatuses(prev => ({
+          ...prev,
+          [serverId]: { connected: false, error: err.message }
+        }))
+      }
+    } finally {
+      setReconnectingServers(prev => {
+        const next = new Set(prev)
+        next.delete(serverId)
+        return next
+      })
     }
   }
 
@@ -596,21 +644,47 @@ export default function WorkspaceFileExplorer({
                             <span style={{ width: '12px' }}></span>
                           )}
 
-                          {/* UI-03: Status dot - before folder icon */}
+                          {/* INFRA-02/BUG-26: Clickable status dot for reconnection */}
                           {(() => {
                             const statusDot = getStatusDot(project)
+                            const isReconnecting = reconnectingServers.has(project.vps_server_id)
+                            const canReconnect = project.vps_server_id && statusDot.color !== '#22c55e' && !isReconnecting
                             return (
-                              <span
-                                style={{
-                                  width: '8px',
-                                  height: '8px',
-                                  borderRadius: '50%',
-                                  backgroundColor: statusDot.color,
-                                  flexShrink: 0,
-                                  boxShadow: statusDot.color === '#22c55e' ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none'
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (canReconnect) {
+                                    reconnectServer(project.vps_server_id)
+                                  }
                                 }}
-                                title={statusDot.title}
-                              />
+                                style={{
+                                  width: '16px',
+                                  height: '16px',
+                                  padding: '4px',
+                                  border: 'none',
+                                  background: 'transparent',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                  cursor: canReconnect ? 'pointer' : 'default'
+                                }}
+                                title={isReconnecting ? 'Reconnecting...' : (canReconnect ? 'Click to reconnect VPS' : statusDot.title)}
+                              >
+                                <span
+                                  style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    backgroundColor: isReconnecting ? '#f59e0b' : statusDot.color,
+                                    boxShadow: statusDot.color === '#22c55e' ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none',
+                                    animation: isReconnecting ? 'pulse 1s ease-in-out infinite' : 'none',
+                                    transition: 'background-color 0.2s, transform 0.15s'
+                                  }}
+                                  className={canReconnect ? 'hover-scale' : ''}
+                                />
+                              </button>
                             )
                           })()}
 

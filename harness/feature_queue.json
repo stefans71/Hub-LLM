@@ -32,21 +32,6 @@
       "test": "Have 2 projects (Project A, Project B). Click Project A → Claude Terminal Chat shows Project A's Claude session, LLM-Dev Terminal shows Project A's directory. Click Project B → both areas switch to Project B."
     },
     {
-      "id": "BUG-26",
-      "name": "Clickable Status Dots Don't Trigger Reconnect",
-      "size": "S",
-      "priority": 2,
-      "status": "pending",
-      "description": "INFRA-02 added clickable dots but clicking individual gray dots does nothing",
-      "current": "Gray dots show 'VPS not connected' tooltip, but clicking has no effect. Only 'Reconnect All' button works.",
-      "change": [
-        "Click gray/red dot → triggers reconnect for that VPS",
-        "Dot turns orange while reconnecting",
-        "Dot turns green when connected"
-      ],
-      "test": "Disconnect VPS → dot turns gray → click the dot → dot turns orange → reconnects → turns green"
-    },
-    {
       "id": "INFRA-03",
       "name": "Idle Connection Timeout",
       "size": "S",
@@ -150,6 +135,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-26", "name": "Clickable Status Dots Don't Trigger Reconnect", "completed": "2026-01-26"},
     {"id": "INFRA-02", "name": "VPS Reconnect UX", "completed": "2026-01-26"},
     {"id": "BUG-24", "name": "Chat Shows Welcome Instead of Loading After Project Create", "completed": "2026-01-26"},
     {"id": "INFRA-01", "name": "SSH Connection Multiplexing", "completed": "2026-01-26"},

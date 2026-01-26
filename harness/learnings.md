@@ -4,6 +4,24 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 84 - 2026-01-26 EST
+**Task**: BUG-26 - Clickable Status Dots Don't Trigger Reconnect
+**What**: Fixed status dots in both DashboardSidebar and WorkspaceFileExplorer
+
+**Issues Found**:
+1. Click target was too small (8x8px span) - hard to click accurately
+2. WorkspaceFileExplorer had status dots that weren't clickable at all
+
+**Fixes**:
+- Changed span to button element with larger hit area (16x16px with 4px padding around 8px dot)
+- Added reconnect functionality to WorkspaceFileExplorer.jsx (was only in DashboardSidebar)
+- Added hover scale effect with CSS class `.hover-scale`
+- Always call `e.stopPropagation()` to prevent accidental project selection
+
+**Key Pattern**: For small click targets, use a wrapper button with padding around the visible element for better UX.
+
+---
+
 ### Session 83 - 2026-01-26 EST
 **Task**: INFRA-02 - VPS Reconnect UX
 **What**: Added clickable status dots and "Reconnect All" button for easy VPS reconnection

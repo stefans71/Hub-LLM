@@ -72,27 +72,44 @@ function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProj
                 }`}
                 onClick={() => onSelectProject(project)}
               >
-                {/* INFRA-02: Clickable status dot for reconnection */}
-                <span
+                {/* INFRA-02/BUG-26: Clickable status dot for reconnection - larger hit area */}
+                <button
+                  type="button"
                   onClick={(e) => {
+                    e.stopPropagation()
                     if (canReconnect) {
-                      e.stopPropagation()
                       onReconnect(project.vps_server_id)
                     }
                   }}
                   style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    backgroundColor: isReconnecting ? '#f59e0b' : statusDot.color,
+                    width: '16px',
+                    height: '16px',
+                    padding: '4px',
+                    border: 'none',
+                    background: 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     flexShrink: 0,
-                    boxShadow: statusDot.color === '#22c55e' ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none',
                     cursor: canReconnect ? 'pointer' : 'default',
-                    animation: isReconnecting ? 'pulse 1s ease-in-out infinite' : 'none',
-                    transition: 'background-color 0.2s'
+                    marginLeft: '-4px'
                   }}
                   title={isReconnecting ? 'Reconnecting...' : (canReconnect ? 'Click to reconnect VPS' : statusDot.title)}
-                />
+                >
+                  <span
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: isReconnecting ? '#f59e0b' : statusDot.color,
+                      boxShadow: statusDot.color === '#22c55e' ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none',
+                      animation: isReconnecting ? 'pulse 1s ease-in-out infinite' : 'none',
+                      transition: 'background-color 0.2s, transform 0.15s',
+                      transform: canReconnect ? 'scale(1)' : 'scale(1)'
+                    }}
+                    className={canReconnect ? 'hover-scale' : ''}
+                  />
+                </button>
                 <FileText size={14} className="flex-shrink-0 opacity-60" />
                 <span className="truncate" title={project.name}>{project.name}</span>
               </div>
