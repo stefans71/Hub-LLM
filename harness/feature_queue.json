@@ -1,6 +1,6 @@
 {
-  "version": "5.2",
-  "updated": "2026-01-25",
+  "version": "5.4",
+  "updated": "2026-01-26",
   "session_docs": ["CLAUDE.md", "harness/feature_queue.json"],
   "vision": {
     "summary": "Chat-focused workspace with LLM-Dev panel for dev tools",
@@ -17,52 +17,109 @@
   },
   "queue": [
     {
-      "id": "CLAUDE-02-REWORK",
-      "name": "Chat Area as Terminal Mirror for Claude Code",
-      "size": "L",
+      "id": "BUG-21",
+      "name": "Project Switch/Refresh Doesn't Reconnect VPS or Load Chat Terminal",
+      "size": "M",
       "priority": 1,
-      "status": "phase1-complete",
-      "description": "Replace one-shot `claude -p` approach with live terminal session. Chat area becomes a styled terminal view into VPS where Claude Code runs. Zero processing on our side - just display.",
-      "current": "CLAUDE-02 runs `claude -p 'prompt'` one-shot commands via SSH. No conversation context, no streaming, no interactive features.",
-      "context": "When user selects Anthropic model + has VPS with Claude Code authenticated, the chat should connect to a live Claude Code session on their VPS, not run one-shot commands.",
-      "approach": [
-        "PHASE 1 - Terminal in Chat Area:",
-        "- When Anthropic model selected + Claude Code ready, chat area shows/becomes terminal",
-        "- Terminal connects to VPS via existing SSH WebSocket",
-        "- Auto-run `claude` command on connect to start Claude Code session",
-        "- User types in chat input → sends to terminal stdin",
-        "- Terminal output displays in chat area",
-        "- This is literally xterm.js in the chat area - we already have this working in LLM-Dev",
-        "",
-        "PHASE 2 - Pretty Rendering (same terminal, styled output):",
-        "- Detect Claude Code output patterns (prompts, responses, thinking blocks)",
-        "- Render in chat bubble style instead of raw terminal",
-        "- User messages → right-aligned bubbles",
-        "- Claude responses → left-aligned bubbles with avatar",
-        "- Still zero processing - just CSS/display formatting of terminal output",
-        "- Raw terminal view available in LLM-Dev panel below"
-      ],
-      "investigation": [
-        "Before implementing, investigate:",
-        "1. What are Claude Code's output patterns? (How to detect user vs assistant text)",
-        "2. Does Claude Code use ANSI codes or special markers we can parse?",
-        "3. Can we intercept xterm.js output stream for pattern matching?",
-        "4. How does `claude --resume` work - can we list/select conversations?"
-      ],
+      "status": "pending",
+      "description": "Clicking existing project in sidebar or refreshing page doesn't reconnect VPS or load Claude Code terminal",
+      "current": "VPS shows disconnected in LLM-Dev, chat terminal doesn't load. Only works on fresh project creation flow.",
       "change": [
-        "Remove or deprecate the `claude -p` one-shot approach from CLAUDE-02",
-        "Create terminal-based chat component for Anthropic model mode",
-        "Wire chat input to terminal stdin when in Claude Code mode",
-        "Add output pattern detection for chat bubble rendering",
-        "Keep raw terminal visible in LLM-Dev panel as fallback/debug view"
+        "On project select/switch in sidebar: load project's vps_server_id",
+        "Auto-reconnect to VPS using saved credentials from localStorage (vps_servers)",
+        "Or prompt user with reconnect button if auto-connect fails",
+        "After VPS connects: re-run Claude Code detection",
+        "Load appropriate chat view based on detection results",
+        "Same flow must work on page refresh - check URL for project ID, load and connect"
       ],
-      "test": "Select Anthropic model with VPS + Claude Code → chat area shows Claude Code session → type message → Claude responds → shows in chat bubbles → same conversation visible in LLM-Dev terminal"
+      "test": "Create project with VPS → refresh page → VPS auto-reconnects → Claude Code terminal loads. Click different project → same behavior."
+    },
+    {
+      "id": "BUG-17",
+      "name": "Setup Wizard VPS Test Connection Not Working",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Setup Wizard (/setup) VPS Test Connection button doesn't work",
+      "current": "Clicking Test Connection does nothing. Create Project VPS form works fine.",
+      "change": [
+        "Wire Setup.jsx VPS form to use same /api/ssh/test endpoint as Create Project",
+        "On successful test, save VPS to localStorage (vps_servers) - same as Settings does",
+        "This ensures VPS is available for project creation after wizard completes"
+      ],
+      "test": "Setup Wizard → Enter VPS details → Test Connection → Success message + VPS saved to Settings"
+    },
+    {
+      "id": "BUG-19",
+      "name": "Setup Wizard VPS Form Different Validation Than Settings",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Setup Wizard VPS form doesn't accept same SSH key format as Settings and Create Project",
+      "current": "Key that works in Settings doesn't work in Setup Wizard form",
+      "change": [
+        "Check Setup.jsx SSH key input field - likely different validation or formatting",
+        "Match the exact input handling from Settings VPS form",
+        "Ensure textarea handles multiline PEM keys properly"
+      ],
+      "test": "Same SSH key that works in Settings also works in Setup Wizard"
+    },
+    {
+      "id": "BUG-20",
+      "name": "Create Project Fails When Adding New VPS Inline",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Creating project with new VPS (not from Settings) fails silently",
+      "current": "User can add VPS in Create Project, test passes, but Create Project fails because VPS not in Settings/localStorage",
+      "change": [
+        "Option A: When user adds VPS in Create Project and tests successfully, auto-save to Settings (localStorage vps_servers)",
+        "Option B: Remove inline VPS creation from Create Project, only show dropdown of VPS from Settings",
+        "Option A preferred - seamless UX",
+        "Ensure VPS ID is consistent so project links to correct server"
+      ],
+      "test": "Create Project → Add new VPS → Test → Create Project → Success → VPS appears in Settings"
+    },
+    {
+      "id": "FEAT-10",
+      "name": "Share Claude Code Session Between Chat and LLM-Dev Terminal",
+      "size": "M",
+      "priority": 2,
+      "status": "pending",
+      "description": "Chat area and LLM-Dev terminal should show the same Claude Code session",
+      "current": "Chat terminal and LLM-Dev terminal are separate SSH connections - two different sessions",
+      "change": [
+        "When Claude Code mode active, use single shared WebSocket connection",
+        "Chat area shows styled view of session (Phase 2: chat bubbles)",
+        "LLM-Dev terminal shows raw view of same session",
+        "User can interact from either view",
+        "Input from chat goes to shared session, output appears in both views"
+      ],
+      "test": "Type in chat → appears in LLM-Dev terminal. Type in LLM-Dev → appears in chat. Same conversation."
+    },
+    {
+      "id": "PHASE-2",
+      "name": "Chat Bubble Rendering for Claude Code Output",
+      "size": "M",
+      "priority": 2,
+      "status": "pending",
+      "description": "Render Claude Code terminal output as pretty chat bubbles in chat area",
+      "current": "Chat area shows raw terminal output (Phase 1 complete)",
+      "change": [
+        "Intercept terminal output via term.write() wrapper",
+        "Parse patterns: lines starting with > = user input",
+        "Strip ANSI codes with util.stripVTControlCharacters()",
+        "Render user messages as right-aligned bubbles",
+        "Render Claude responses as left-aligned bubbles with avatar",
+        "Keep raw terminal in LLM-Dev as fallback view"
+      ],
+      "test": "Chat shows pretty bubbles, LLM-Dev shows raw terminal, same session data"
     },
     {
       "id": "SETTINGS-01",
       "name": "Wire Settings Connected Status to Real Detection",
       "size": "S",
-      "priority": 2,
+      "priority": 3,
       "status": "pending",
       "description": "Settings page shows mock 'Anthropic connected' - wire to real Claude Code detection",
       "current": "Settings shows hardcoded mock status for Anthropic connection",
@@ -71,8 +128,7 @@
         "- OpenRouter: Check if API key exists in localStorage and display status",
         "- Anthropic: Check if any saved VPS has Claude Code authenticated",
         "- VPS list: Show which VPSes have Claude Code installed/authenticated",
-        "Reuse detection logic pattern from CLAUDE-01 (run which claude and claude --version)",
-        "Note: Settings.jsx is very large - use grep/offset to read specific sections"
+        "Reuse detection logic pattern from CLAUDE-01"
       ],
       "test": "Settings shows real status - Anthropic only 'connected' if Claude Code detected on a VPS"
     },
@@ -80,7 +136,7 @@
       "id": "MODEL-04",
       "name": "Dynamic Model List from OpenRouter API",
       "size": "M",
-      "priority": 2,
+      "priority": 3,
       "status": "pending",
       "description": "Replace hardcoded MODEL_LIST with live data from OpenRouter public API",
       "current": "Model selector uses hardcoded MODEL_LIST with ~16 models",
@@ -90,12 +146,9 @@
         "Show ALL models in selector, even without API key",
         "Without key: models greyed out with 'Add OpenRouter key' message",
         "With key: all OpenRouter models enabled",
-        "Keep Anthropic models special case - show 'Pro Subscription' if Claude Code detected",
-        "Group models by provider (OpenAI, Anthropic, Meta, Google, etc.)",
-        "Update search to filter across full model list",
-        "Handle API fetch errors gracefully - fall back to cached or minimal default list"
+        "Keep Anthropic models special case - show 'Pro Subscription' if Claude Code detected"
       ],
-      "test": "No API key → see full model list greyed out. Add key → all enabled. Search 'llama' → shows all Llama variants from OpenRouter."
+      "test": "No API key → see full model list greyed out. Add key → all enabled."
     },
     {
       "id": "CLAUDE-03",
@@ -107,19 +160,20 @@
       "current": "Each chat session starts fresh, no history",
       "change": [
         "Add 'Resume conversation' option in chat header or menu",
-        "Run `claude --resume` on VPS and capture conversation list",
-        "Show conversation picker modal",
-        "User selects conversation → continue in that context",
+        "Run `claude --resume` or `claude --continue` on VPS",
+        "Show conversation picker if multiple sessions",
         "Store last conversation ID per project for quick resume"
       ],
       "test": "Have existing Claude conversation on VPS → Resume → continue where left off."
     }
   ],
   "completed": [
+    {"id": "BUG-18", "name": "Claude Code Terminal in Chat Not Receiving Keyboard Input", "completed": "2026-01-26"},
+    {"id": "CLAUDE-02-REWORK", "name": "Chat Area as Terminal Mirror for Claude Code (Phase 1)", "completed": "2026-01-26"},
     {"id": "ONBOARD-01", "name": "Setup Wizard Skeleton", "completed": "2026-01-25"},
     {"id": "MODEL-03", "name": "Billing Switch Warning Popup", "completed": "2026-01-25"},
     {"id": "MODEL-02", "name": "Billing Source Detection and Display", "completed": "2026-01-25"},
-    {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS (one-shot approach - needs rework)", "completed": "2026-01-25"},
+    {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS (one-shot - replaced by rework)", "completed": "2026-01-25"},
     {"id": "MODEL-01", "name": "Per-Project Model Persistence", "completed": "2026-01-25"},
     {"id": "CLAUDE-01", "name": "Detect Claude Code on VPS", "completed": "2026-01-25"},
     {"id": "AUTH-01", "name": "Password Validation Rules", "completed": "2026-01-25"},
