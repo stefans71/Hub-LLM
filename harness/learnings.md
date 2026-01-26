@@ -4,6 +4,69 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 69 - 2026-01-26 EST
+**Task**: CLAUDE-02 - Route Chat to Claude Code on VPS
+**What**: When Anthropic model selected + Claude Code detected, pipe chat to VPS instead of OpenRouter
+
+**Implementation**:
+1. Backend (`services/claude_code_ssh.py`) - NEW:
+   - Created `ClaudeCodeSSHService` that routes chat through Claude Code CLI on VPS
+   - Runs `claude -p "prompt" --max-tokens N` via SSH
+   - Streams output back to frontend in SSE format
+   - Formats multi-turn conversations for Claude Code context
+
+2. Backend (`routers/chat.py`):
+   - Added `claude_code_ssh` provider type
+   - Added `server_id` field to ChatRequest for VPS routing
+   - Routes to ClaudeCodeSSHService when provider is `claude_code_ssh`
+   - Always uses streaming for claude_code_ssh (no non-streaming mode)
+
+3. Frontend (`Chat.jsx`):
+   - Added `serverId` and `claudeCodeStatus` props
+   - Detects when to use Claude Code SSH routing:
+     - Model provider is 'anthropic' OR model ID contains 'claude'
+     - `claudeCodeStatus.authenticated` is true
+     - `serverId` is available
+   - Passes `server_id` in request body when using claude_code_ssh
+
+4. Frontend (`Workspace.jsx`):
+   - Added `claudeCodeStatus` state tracking
+   - Pass `serverId` (linkedServerId) and `claudeCodeStatus` to Chat
+   - Pass `onClaudeCodeStatusChange` callback to WorkspaceTopBar
+
+5. Frontend (`WorkspaceTopBar.jsx`):
+   - Added `onClaudeCodeStatusChange` prop
+   - Calls callback when Claude Code detection completes
+
+**Provider Priority**:
+1. Claude Code SSH (if Anthropic model + VPS connected + Claude Code authenticated)
+2. Claude Direct API (if apiKeys.claude available)
+3. OpenRouter (default fallback)
+
+**Key Pattern - Async Generator Interface**:
+```python
+# Service must return async generator, not BE one
+async def chat(self, ...) -> AsyncGenerator[str, None]:
+    # Returns the generator (not yields from it)
+    return self._stream_chat(conn, cmd)
+
+async def _stream_chat(self, conn, cmd) -> AsyncGenerator[str, None]:
+    # This is the actual async generator
+    async for chunk in self._stream_command(conn, cmd):
+        yield chunk
+```
+
+**Files Created**:
+- backend/services/claude_code_ssh.py
+
+**Files Modified**:
+- backend/routers/chat.py
+- frontend/src/components/Chat.jsx
+- frontend/src/components/Workspace.jsx
+- frontend/src/components/WorkspaceTopBar.jsx
+
+---
+
 ### Session 68 - 2026-01-26 EST
 **Task**: AUTH-01 - Password Validation Rules
 **What**: Added password strength requirements to signup and password reset

@@ -70,7 +70,7 @@
       "name": "Route Chat to Claude Code on VPS",
       "size": "M",
       "priority": 1,
-      "status": "pending",
+      "status": "completed",
       "description": "When Anthropic model selected + Claude Code detected, pipe chat to VPS instead of OpenRouter",
       "current": "All chat goes through OpenRouter API regardless of model",
       "change": [
@@ -152,6 +152,7 @@
     }
   ],
   "completed": [
+    {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS", "completed": "2026-01-26"},
     {"id": "CLEANUP-03", "name": "Fix Config Mismatch - Standardize on SQLite + Port 8000", "completed": "2026-01-25"},
     {"id": "FEAT-08", "name": "Chat File Drop and Paste", "completed": "2026-01-25"},
     {"id": "BUG-16", "name": "Terminal Pane Can't Resize Smaller", "completed": "2026-01-25"},

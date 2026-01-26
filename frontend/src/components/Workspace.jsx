@@ -47,6 +47,8 @@ export default function Workspace({ project, model, apiKeys }) {
   // W-03: Workspace Top Bar state - SSH connection status
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
+  // CLAUDE-02: Track Claude Code status for chat routing
+  const [claudeCodeStatus, setClaudeCodeStatus] = useState({ installed: false, authenticated: false })
   // MODEL-01: Initialize from project's saved model, fallback to prop, then default
   const [selectedModel, setSelectedModel] = useState(() => {
     if (project?.selected_model) return project.selected_model
@@ -363,6 +365,7 @@ export default function Workspace({ project, model, apiKeys }) {
         onExport={handleExport}
         linkedServerId={linkedServerId}
         isConnected={isConnected}
+        onClaudeCodeStatusChange={setClaudeCodeStatus}
       />
 
       {/* W-30: Workspace Main Container - min-h-0 allows shrinking for LLM-Dev panel */}
@@ -391,8 +394,10 @@ export default function Workspace({ project, model, apiKeys }) {
             <div className="flex-1 overflow-hidden">
               <Chat
                 project={project}
-                model={model}
+                model={selectedModel}
                 apiKeys={apiKeys}
+                serverId={linkedServerId}
+                claudeCodeStatus={claudeCodeStatus}
               />
             </div>
 

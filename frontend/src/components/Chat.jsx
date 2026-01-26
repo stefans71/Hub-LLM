@@ -15,8 +15,9 @@ const MAX_IMAGES = 4 // FIFO queue limit to prevent memory bloat
  * - W-56-60: Message bubbles (assistant/user)
  * - W-61-67: Chat Input Area with voice input
  * - FEAT-08: File drop and paste support
+ * - CLAUDE-02: Routes to Claude Code on VPS when available
  */
-export default function Chat({ project, model, apiKeys }) {
+export default function Chat({ project, model, apiKeys, serverId, claudeCodeStatus }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -189,8 +190,25 @@ export default function Chat({ project, model, apiKeys }) {
     setLoadingStatus('Thinking...')
 
     try {
-      // Determine provider based on available keys
-      const provider = apiKeys?.claude ? 'claude_direct' : 'openrouter'
+      // CLAUDE-02: Determine provider based on available resources
+      // Priority: Claude Code on VPS > Claude Direct API > OpenRouter
+      let provider = 'openrouter'
+      let useServerId = null
+
+      // Check if we should route through Claude Code on VPS
+      // Conditions: Anthropic model + Claude Code authenticated + VPS connected
+      const isAnthropicModel = model?.provider === 'anthropic' ||
+        (typeof model === 'string' && model.toLowerCase().includes('claude'))
+
+      if (isAnthropicModel && claudeCodeStatus?.authenticated && serverId) {
+        // Route through Claude Code on VPS (uses Pro subscription)
+        provider = 'claude_code_ssh'
+        useServerId = serverId
+      } else if (apiKeys?.claude) {
+        // Use direct Anthropic API
+        provider = 'claude_direct'
+      }
+      // Otherwise use openrouter (default)
 
       const response = await fetch('/api/chat/completions', {
         method: 'POST',
@@ -201,10 +219,11 @@ export default function Chat({ project, model, apiKeys }) {
         },
         body: JSON.stringify({
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-          model,
+          model: typeof model === 'object' ? model.id : model,
           provider,
           stream: true,
-          project_id: project?.id
+          project_id: project?.id,
+          server_id: useServerId
         })
       })
 

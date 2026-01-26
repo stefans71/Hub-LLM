@@ -1,20 +1,26 @@
 """
 Chat Router - Handles AI chat requests
+
+Supports multiple providers:
+- openrouter: OpenRouter API (requires API key)
+- claude_direct: Direct Anthropic API (requires API key)
+- claude_code_ssh: Claude Code CLI on VPS (requires connected VPS with Claude Code)
 """
 from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Union
 import json
 
 from services.openrouter import OpenRouterService, ClaudeDirectService
+from services.claude_code_ssh import ClaudeCodeSSHService
 
 router = APIRouter()
 
 
 class Message(BaseModel):
     role: str  # "user", "assistant", "system"
-    content: str
+    content: Union[str, list]  # String or multimodal content array
 
 
 class ChatRequest(BaseModel):
@@ -23,8 +29,9 @@ class ChatRequest(BaseModel):
     temperature: float = 0.7
     max_tokens: int = 4096
     stream: bool = True
-    provider: str = "openrouter"  # "openrouter" or "claude_direct"
+    provider: str = "openrouter"  # "openrouter", "claude_direct", or "claude_code_ssh"
     project_id: Optional[str] = None  # For context
+    server_id: Optional[str] = None  # Required for claude_code_ssh provider
 
 
 class ChatResponse(BaseModel):
@@ -51,15 +58,28 @@ async def chat_completion(
 ):
     """
     Send a chat completion request to the selected provider
-    
+
     Headers:
         X-OpenRouter-Key: Your OpenRouter API key
         X-Claude-Key: Your Anthropic API key (for direct Claude access)
+
+    Providers:
+        - openrouter: Uses OpenRouter API (default)
+        - claude_direct: Uses Anthropic API directly
+        - claude_code_ssh: Routes through Claude Code CLI on connected VPS
     """
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
-    
+
     # Select provider
-    if request.provider == "claude_direct":
+    if request.provider == "claude_code_ssh":
+        # CLAUDE-02: Route through Claude Code on VPS
+        if not request.server_id:
+            raise HTTPException(
+                status_code=400,
+                detail="server_id required for claude_code_ssh provider. Connect to a VPS with Claude Code installed."
+            )
+        service = ClaudeCodeSSHService(request.server_id)
+    elif request.provider == "claude_direct":
         if not api_keys.get("claude"):
             raise HTTPException(
                 status_code=401,
@@ -75,7 +95,8 @@ async def chat_completion(
         service = OpenRouterService(api_keys["openrouter"])
     
     try:
-        if request.stream:
+        # Claude Code SSH always uses streaming (no non-streaming mode)
+        if request.stream or request.provider == "claude_code_ssh":
             return StreamingResponse(
                 stream_response(service, messages, request),
                 media_type="text/event-stream"
@@ -88,19 +109,19 @@ async def chat_completion(
                 max_tokens=request.max_tokens,
                 stream=False
             )
-            
+
             # Extract content based on provider response format
             if request.provider == "claude_direct":
                 content = response["content"][0]["text"]
             else:
                 content = response["choices"][0]["message"]["content"]
-            
+
             return ChatResponse(
                 content=content,
                 model=request.model,
                 usage=response.get("usage")
             )
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

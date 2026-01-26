@@ -94,7 +94,8 @@ export default function WorkspaceTopBar({
   onModelChange,
   onExport,
   linkedServerId,
-  isConnected
+  isConnected,
+  onClaudeCodeStatusChange
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -127,8 +128,11 @@ export default function WorkspaceTopBar({
   useEffect(() => {
     const checkClaudeCode = async () => {
       if (!linkedServerId || !isConnected) {
-        setClaudeCodeStatus({ installed: false, version: null, checking: false, error: null })
+        const status = { installed: false, version: null, authenticated: false, checking: false, error: null }
+        setClaudeCodeStatus(status)
         setApiKeys(prev => ({ ...prev, anthropic: false }))
+        // CLAUDE-02: Notify parent of status change
+        onClaudeCodeStatusChange?.(status)
         return
       }
 
@@ -145,29 +149,36 @@ export default function WorkspaceTopBar({
 
         if (res.ok) {
           const data = await res.json()
-          setClaudeCodeStatus({
+          const status = {
             installed: data.installed,
             version: data.version,
             authenticated: data.authenticated,
             checking: false,
             error: data.error
-          })
+          }
+          setClaudeCodeStatus(status)
           setApiKeys(prev => ({ ...prev, anthropic: data.installed && data.authenticated }))
+          // CLAUDE-02: Notify parent of status change
+          onClaudeCodeStatusChange?.(status)
         } else {
-          setClaudeCodeStatus({ installed: false, version: null, checking: false, error: 'Failed to check' })
+          const status = { installed: false, version: null, authenticated: false, checking: false, error: 'Failed to check' }
+          setClaudeCodeStatus(status)
           setApiKeys(prev => ({ ...prev, anthropic: false }))
+          onClaudeCodeStatusChange?.(status)
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('Failed to check Claude Code status:', err)
         }
-        setClaudeCodeStatus({ installed: false, version: null, checking: false, error: 'Connection failed' })
+        const status = { installed: false, version: null, authenticated: false, checking: false, error: 'Connection failed' }
+        setClaudeCodeStatus(status)
         setApiKeys(prev => ({ ...prev, anthropic: false }))
+        onClaudeCodeStatusChange?.(status)
       }
     }
 
     checkClaudeCode()
-  }, [linkedServerId, isConnected])
+  }, [linkedServerId, isConnected, onClaudeCodeStatusChange])
 
   // Focus search input when dropdown opens
   useEffect(() => {
