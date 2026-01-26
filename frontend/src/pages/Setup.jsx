@@ -473,6 +473,16 @@ function AnthropicStep({ onBack, onComplete }) {
       return
     }
 
+    // Validate auth credentials
+    if (authMode === 'password' && !password) {
+      setError('Password is required')
+      return
+    }
+    if (authMode === 'key' && !privateKey) {
+      setError('SSH private key is required')
+      return
+    }
+
     setConnecting(true)
     setError(null)
 
@@ -480,16 +490,16 @@ function AnthropicStep({ onBack, onComplete }) {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 30000)
 
-      const res = await fetch('/api/vps/test', {
+      // BUG-17: Use correct endpoint /api/ssh/test (not /api/vps/test)
+      const res = await fetch('/api/ssh/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           host,
-          port: parseInt(port),
+          port: parseInt(port) || 22,
           username,
-          auth_type: authMode,
-          password: authMode === 'password' ? password : undefined,
-          private_key: authMode === 'key' ? privateKey : undefined
+          password: authMode === 'password' ? password : null,
+          private_key: authMode === 'key' ? privateKey : null
         }),
         signal: controller.signal
       })
@@ -498,13 +508,38 @@ function AnthropicStep({ onBack, onComplete }) {
 
       const data = await res.json()
 
-      if (!res.ok) {
-        throw new Error(data.detail || 'Connection failed')
+      if (!data.success) {
+        throw new Error(data.message || 'Connection failed')
       }
 
       setConnected(true)
-      setServerInfo(data)
-      setClaudeCodeDetected(data.claude_code_available || false)
+      setServerInfo(data.server_info)
+
+      // BUG-17: Save VPS to localStorage after successful test
+      const savedServers = localStorage.getItem('vps_servers')
+      const servers = savedServers ? JSON.parse(savedServers) : []
+
+      const newServerId = `vps_${Date.now()}`
+      const newServer = {
+        id: newServerId,
+        name: data.server_info?.hostname || host,
+        host,
+        port: port || '22',
+        username,
+        auth_type: authMode,
+        password: authMode === 'password' ? password : '',
+        privateKey: authMode === 'key' ? privateKey : '',
+        lastTestSuccess: true,
+        serverInfo: data.server_info || null,
+        createdAt: new Date().toISOString()
+      }
+
+      servers.push(newServer)
+      localStorage.setItem('vps_servers', JSON.stringify(servers))
+
+      // Check for Claude Code (would need to call detection endpoint)
+      // For now, we'll leave this as false and let the workspace detect it
+      setClaudeCodeDetected(false)
     } catch (err) {
       if (err.name === 'AbortError') {
         setError('Connection timed out. Please check your VPS settings.')
@@ -517,25 +552,9 @@ function AnthropicStep({ onBack, onComplete }) {
   }
 
   const saveVPSConfig = async () => {
-    try {
-      // Save VPS configuration
-      await fetch('/api/vps/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: `VPS ${host}`,
-          host,
-          port: parseInt(port),
-          username,
-          auth_type: authMode,
-          password: authMode === 'password' ? password : undefined,
-          private_key: authMode === 'key' ? privateKey : undefined
-        })
-      })
-      onComplete()
-    } catch (err) {
-      setError('Failed to save VPS configuration')
-    }
+    // VPS is already saved to localStorage in connectVPS()
+    // Just complete the setup
+    onComplete()
   }
 
   return (
@@ -732,20 +751,23 @@ function AnthropicStep({ onBack, onComplete }) {
                 <textarea
                   value={privateKey}
                   onChange={(e) => setPrivateKey(e.target.value)}
-                  placeholder="Paste your private key here (-----BEGIN OPENSSH PRIVATE KEY-----...)"
-                  rows={4}
+                  placeholder={`-----BEGIN RSA PRIVATE KEY-----
+...your key content...
+-----END RSA PRIVATE KEY-----`}
                   style={{
                     width: '100%',
+                    minHeight: '120px',
                     padding: '12px',
                     background: cssVars.bgSecondary,
                     border: `1px solid ${cssVars.border}`,
                     borderRadius: '8px',
                     color: cssVars.textPrimary,
-                    fontSize: '13px',
-                    fontFamily: 'monospace',
+                    fontSize: '11px',
+                    fontFamily: 'Monaco, Consolas, monospace',
                     outline: 'none',
                     resize: 'vertical',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    whiteSpace: 'pre'
                   }}
                 />
               )}

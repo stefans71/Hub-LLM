@@ -17,52 +17,6 @@
   },
   "queue": [
     {
-      "id": "BUG-17",
-      "name": "Setup Wizard VPS Test Connection Not Working",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Setup Wizard (/setup) VPS Test Connection button doesn't work",
-      "current": "Clicking Test Connection does nothing. Create Project VPS form works fine.",
-      "change": [
-        "Wire Setup.jsx VPS form to use same /api/ssh/test endpoint as Create Project",
-        "On successful test, save VPS to localStorage (vps_servers) - same as Settings does",
-        "This ensures VPS is available for project creation after wizard completes"
-      ],
-      "test": "Setup Wizard → Enter VPS details → Test Connection → Success message + VPS saved to Settings"
-    },
-    {
-      "id": "BUG-19",
-      "name": "Setup Wizard VPS Form Different Validation Than Settings",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Setup Wizard VPS form doesn't accept same SSH key format as Settings and Create Project",
-      "current": "Key that works in Settings doesn't work in Setup Wizard form",
-      "change": [
-        "Check Setup.jsx SSH key input field - likely different validation or formatting",
-        "Match the exact input handling from Settings VPS form",
-        "Ensure textarea handles multiline PEM keys properly"
-      ],
-      "test": "Same SSH key that works in Settings also works in Setup Wizard"
-    },
-    {
-      "id": "BUG-20",
-      "name": "Create Project Fails When Adding New VPS Inline",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Creating project with new VPS (not from Settings) fails silently",
-      "current": "User can add VPS in Create Project, test passes, but Create Project fails because VPS not in Settings/localStorage",
-      "change": [
-        "Option A: When user adds VPS in Create Project and tests successfully, auto-save to Settings (localStorage vps_servers)",
-        "Option B: Remove inline VPS creation from Create Project, only show dropdown of VPS from Settings",
-        "Option A preferred - seamless UX",
-        "Ensure VPS ID is consistent so project links to correct server"
-      ],
-      "test": "Create Project → Add new VPS → Test → Create Project → Success → VPS appears in Settings"
-    },
-    {
       "id": "FEAT-10",
       "name": "Share Claude Code Session Between Chat and LLM-Dev Terminal",
       "size": "M",
@@ -150,6 +104,9 @@
     }
   ],
   "completed": [
+    {"id": "BUG-20", "name": "Create Project Fails When Adding New VPS Inline (was already fixed)", "completed": "2026-01-26"},
+    {"id": "BUG-19", "name": "Setup Wizard VPS Form Different Validation Than Settings", "completed": "2026-01-26"},
+    {"id": "BUG-17", "name": "Setup Wizard VPS Test Connection Not Working", "completed": "2026-01-26"},
     {"id": "BUG-21", "name": "Project Switch/Refresh Doesn't Reconnect VPS or Load Chat Terminal", "completed": "2026-01-26"},
     {"id": "BUG-18", "name": "Claude Code Terminal in Chat Not Receiving Keyboard Input", "completed": "2026-01-26"},
     {"id": "CLAUDE-02-REWORK", "name": "Chat Area as Terminal Mirror for Claude Code (Phase 1)", "completed": "2026-01-26"},

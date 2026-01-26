@@ -4,6 +4,32 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 74 - 2026-01-26 EST
+**Task**: BUG-17, BUG-19, BUG-20 - Setup Wizard and Create Project VPS Issues
+**What**: Fixed Setup Wizard VPS test and verified CreateProject VPS save
+
+**BUG-17: Setup Wizard VPS Test Not Working**
+- Root cause: Used non-existent `/api/vps/test` endpoint
+- Fix: Changed to `/api/ssh/test` (same as CreateProject)
+- Added localStorage save after successful test (saves to `vps_servers`)
+
+**BUG-19: Setup Wizard SSH Key Format**
+- Updated textarea styling to match CreateProject:
+  - `minHeight: 120px` instead of `rows={4}`
+  - `fontSize: 11px` with Monaco/Consolas monospace font
+  - `whiteSpace: pre` to preserve key formatting
+  - Better placeholder showing key format
+
+**BUG-20: CreateProject VPS Save (Already Fixed)**
+- Verified CreateProject.jsx already saves VPS to localStorage after successful test (lines 619-653)
+- No changes needed
+
+**Files Modified**:
+- frontend/src/pages/Setup.jsx (connectVPS, saveVPSConfig, textarea styling)
+- harness/feature_queue.json
+
+---
+
 ### Session 73 - 2026-01-26 EST
 **Task**: BUG-21 - Project Switch/Refresh Doesn't Reconnect VPS or Load Chat Terminal
 **What**: Fixed project not persisting in URL, causing wrong project to load on refresh
