@@ -17,23 +17,6 @@
   },
   "queue": [
     {
-      "id": "INFRA-02",
-      "name": "VPS Reconnect UX",
-      "size": "M",
-      "priority": 1,
-      "status": "pending",
-      "description": "Easy way to reconnect VPS after idle timeout or disconnect",
-      "current": "User must click Reconnect in each terminal individually - annoying with many projects",
-      "change": [
-        "Clickable status dot: gray/red dot click triggers VPS reconnect",
-        "All projects on same VPS turn green when reconnected (shared connection)",
-        "Add 'Reconnect All' button in sidebar header",
-        "One click reconnects all VPSes that have projects",
-        "Backend endpoint: POST /api/terminal/connections/{server_id}/connect"
-      ],
-      "test": "Have 4 projects on 2 VPSes, all disconnected. Click one gray dot → that VPS's projects turn green. Click 'Reconnect All' → all projects turn green."
-    },
-    {
       "id": "INFRA-03",
       "name": "Idle Connection Timeout",
       "size": "S",
@@ -137,6 +120,7 @@
     }
   ],
   "completed": [
+    {"id": "INFRA-02", "name": "VPS Reconnect UX", "completed": "2026-01-26"},
     {"id": "BUG-24", "name": "Chat Shows Welcome Instead of Loading After Project Create", "completed": "2026-01-26"},
     {"id": "INFRA-01", "name": "SSH Connection Multiplexing", "completed": "2026-01-26"},
     {"id": "PHASE-2", "name": "Chat Bubble Rendering for Claude Code Output", "completed": "2026-01-26"},

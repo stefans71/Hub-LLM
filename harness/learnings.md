@@ -4,6 +4,26 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 83 - 2026-01-26 EST
+**Task**: INFRA-02 - VPS Reconnect UX
+**What**: Added clickable status dots and "Reconnect All" button for easy VPS reconnection
+
+**Implementation**:
+- Status dots now clickable when gray/red (disconnected/error)
+- Click triggers `POST /api/ssh/servers/{server_id}/connect`
+- Dot turns orange with pulse animation while reconnecting
+- All projects on same VPS update together (shared connection status)
+- "Reconnect All" button appears in Workspaces header when any VPS disconnected
+- Button shows spinning RefreshCw icon when reconnecting
+
+**Key Code**:
+- `reconnectServer(serverId)` - calls backend with 20s timeout
+- `reconnectingServers` Set tracks in-progress reconnections
+- `getDisconnectedServerIds()` - finds all unique disconnected VPS IDs
+- Status dot onClick with `e.stopPropagation()` to prevent project selection
+
+---
+
 ### Session 82 - 2026-01-26 EST
 **Task**: BUG-24 - Chat loading state after project create (RESOLVED)
 **What**: Implemented Option D - show animated "Connecting to VPS..." welcome message
