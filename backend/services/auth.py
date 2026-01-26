@@ -75,6 +75,7 @@ class UserResponse(BaseModel):
     avatar_url: Optional[str]
     email_verified: bool
     auth_provider: str
+    setup_completed: bool
     created_at: datetime
 
     class Config:
@@ -475,6 +476,7 @@ def user_to_response(user: User) -> UserResponse:
         avatar_url=user.avatar_url,
         email_verified=user.email_verified,
         auth_provider=user.auth_provider.value,
+        setup_completed=user.setup_completed,
         created_at=user.created_at
     )
 

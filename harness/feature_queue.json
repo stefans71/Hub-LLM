@@ -119,7 +119,7 @@
       "name": "Setup Wizard Skeleton",
       "size": "M",
       "priority": 2,
-      "status": "pending",
+      "status": "completed",
       "description": "Post-signup wizard to configure API keys and VPS",
       "current": "Users go straight to dashboard after signup, may not know how to set up",
       "change": [
@@ -152,6 +152,7 @@
     }
   ],
   "completed": [
+    {"id": "ONBOARD-01", "name": "Setup Wizard Skeleton", "completed": "2026-01-26"},
     {"id": "MODEL-03", "name": "Billing Switch Warning Popup", "completed": "2026-01-26"},
     {"id": "MODEL-02", "name": "Billing Source Detection and Display", "completed": "2026-01-26"},
     {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS", "completed": "2026-01-26"},

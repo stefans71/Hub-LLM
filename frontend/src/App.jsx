@@ -10,6 +10,7 @@ import SettingsModal from './components/SettingsModal'
 import CreateProject from './pages/CreateProject'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
+import Setup from './pages/Setup'
 import { Loader2 } from 'lucide-react'
 
 // Main App content (requires auth)
@@ -21,11 +22,19 @@ function AppContent() {
   const [activeProject, setActiveProject] = useState(null)
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
   const [showSettings, setShowSettings] = useState(false)
+  const [setupComplete, setSetupComplete] = useState(true) // Assume complete until proven otherwise
   const [apiKeys, setApiKeys] = useState({
     openrouter: localStorage.getItem('openrouter_key') || '',
     claude: localStorage.getItem('claude_key') || '',
     github: localStorage.getItem('github_token') || ''
   })
+
+  // Check if user has completed setup
+  useEffect(() => {
+    if (user) {
+      setSetupComplete(user.setup_completed !== false)
+    }
+  }, [user])
 
   // Load projects on mount (with auth)
   useEffect(() => {
@@ -91,6 +100,16 @@ function AppContent() {
     )
   }
 
+  // Redirect to setup if user hasn't completed it (except if already on setup page)
+  if (!setupComplete && location.pathname !== '/setup') {
+    return <Navigate to="/setup" replace />
+  }
+
+  // If on setup page but already completed, redirect to dashboard
+  if (setupComplete && location.pathname === '/setup') {
+    return <Navigate to="/dashboard" replace />
+  }
+
   const saveApiKeys = (keys) => {
     setApiKeys(keys)
     localStorage.setItem('openrouter_key', keys.openrouter || '')
@@ -135,6 +154,17 @@ function AppContent() {
         {/* Routes */}
         <div className="flex-1 overflow-hidden">
           <Routes>
+            <Route
+              path="/setup"
+              element={
+                <Setup
+                  onComplete={() => {
+                    setSetupComplete(true)
+                    navigate('/dashboard')
+                  }}
+                />
+              }
+            />
             <Route
               path="/"
               element={<Navigate to="/dashboard" replace />}

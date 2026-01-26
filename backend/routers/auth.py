@@ -260,6 +260,18 @@ async def update_me(
         )
 
 
+@router.post("/me/setup-complete", response_model=UserResponse)
+async def mark_setup_complete(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session)
+):
+    """Mark user's setup wizard as complete"""
+    current_user.setup_completed = True
+    await db.commit()
+    await db.refresh(current_user)
+    return user_to_response(current_user)
+
+
 # ============================================================================
 # Email Verification
 # ============================================================================

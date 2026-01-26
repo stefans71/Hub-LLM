@@ -4,6 +4,58 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 71 - 2026-01-26 EST
+**Task**: ONBOARD-01 - Setup Wizard Skeleton
+**What**: Post-signup wizard to configure API keys and VPS
+
+**Implementation**:
+1. Backend (`models/__init__.py`):
+   - Added `setup_completed` field to User model (Boolean, default False)
+
+2. Backend (`services/auth.py`):
+   - Added `setup_completed` to UserResponse schema
+   - Updated `user_to_response()` to include setup_completed
+
+3. Backend (`routers/auth.py`):
+   - Added POST `/api/auth/me/setup-complete` endpoint to mark setup as done
+
+4. Frontend (`pages/Setup.jsx`) - NEW:
+   - Created step-based wizard with 2 steps:
+     - Step 1: Choose path - OpenRouter API key vs Anthropic Pro subscription
+     - Step 2a (OpenRouter): Enter API key, validate against OpenRouter API, save to localStorage
+     - Step 2b (Anthropic): Connect VPS, test connection, detect Claude Code
+   - Skip option to bypass setup
+   - Calls `/api/auth/me/setup-complete` on finish
+
+5. Frontend (`App.jsx`):
+   - Added `/setup` route
+   - Added redirect logic: if `user.setup_completed === false`, redirect to /setup
+   - If on /setup but already completed, redirect to /dashboard
+   - `setSetupComplete` state passed to Setup component for navigation after completion
+
+**User Flow**:
+1. New user signs up → `setup_completed: false` in database
+2. After login, AppContent checks `user.setup_completed`
+3. If false and not on /setup → redirect to /setup
+4. User completes wizard or clicks "Skip" → POST to /setup-complete → redirect to /dashboard
+5. On subsequent logins, user goes directly to dashboard
+
+**Key Patterns**:
+- **Redirect on auth state change**: Use effect to check user.setup_completed when user object loads
+- **OpenRouter API key validation**: Call `/api/v1/models` with Bearer token to verify key works
+- **VPS connection test**: POST to `/api/vps/test` with credentials
+
+**Files Created**:
+- frontend/src/pages/Setup.jsx
+
+**Files Modified**:
+- backend/models/__init__.py (User model)
+- backend/services/auth.py (UserResponse, user_to_response)
+- backend/routers/auth.py (setup-complete endpoint)
+- frontend/src/App.jsx (route, redirect logic)
+
+---
+
 ### Session 70 - 2026-01-26 EST
 **Task**: MODEL-02, MODEL-03 - Billing Source Detection and Warning
 

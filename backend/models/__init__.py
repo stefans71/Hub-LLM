@@ -66,6 +66,9 @@ class User(Base):
     reset_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     reset_expires: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
+    # Setup wizard
+    setup_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
