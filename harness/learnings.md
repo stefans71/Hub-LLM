@@ -4,6 +4,43 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 81 - 2026-01-26 EST
+**Task**: BUG-24 - Chat loading state after project create (UNRESOLVED)
+**What**: Attempted to show loading spinner instead of "Hello I'm Claude" when navigating to workspace
+
+**Problem**: After creating project, Chat.jsx shows regular chat with welcome message for ~4 seconds before ClaudeCodeTerminalChat loads.
+
+**Root Cause Analysis**:
+- Chat.jsx checks `useClaudeCodeTerminal = isAnthropicModel && claudeCodeStatus?.authenticated && serverId`
+- Initial `claudeCodeStatus` in Workspace.jsx is `{installed: false, authenticated: false}` - no `checking` field
+- WorkspaceTopBar runs claude code check async, sets `checking: true`, then `checking: false` when done
+- Chat renders before the check starts, sees `authenticated: false`, shows regular chat
+
+**Attempted Fixes**:
+1. Added check `claudeCodeStatus?.checking === true` → show loading - FAILED: initial state has no `checking` field
+2. Added check `!('checking' in claudeCodeStatus)` → show loading - FAILED: still shows regular chat
+3. Combined checks for pending state - FAILED: timing issue, check hasn't started yet
+
+**Why It's Hard**:
+- The claudeCodeStatus check runs in WorkspaceTopBar's useEffect
+- That effect depends on `linkedServerId` and `isConnected`
+- These values take time to resolve after navigation
+- Chat renders immediately with stale/initial state
+
+**Possible Solutions** (not yet tried):
+- Option A: Change initial claudeCodeStatus to `{checking: true}` when serverId exists
+- Option B: Add separate `isCheckingClaudeCode` state that starts true
+- Option C: Delay rendering Chat until claudeCodeStatus has been updated once
+
+**Also Fixed**:
+- Removed "Disconnect VPS" from 3-dot menu (confusing, moved to Settings)
+- Added loading overlay to ClaudeCodeTerminalChat while connecting
+- Hid input bar in terminal view (only shows in bubble view)
+- Added error handling to VPSConnection.create_channel() for stale connections
+- Added logging to VPS connection for debugging
+
+---
+
 ### Session 80 - 2026-01-26 EST
 **Task**: INFRA-01 - SSH Connection Multiplexing
 **What**: Implemented single SSH connection per VPS with multiplexed PTY channels

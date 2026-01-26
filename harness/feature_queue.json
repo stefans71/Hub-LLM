@@ -11,12 +11,67 @@
     },
     "left_sidebar": {
       "status_dots": "● green=connected, ○ gray=disconnected, 🔴 red=error",
-      "project_menu": "3-dot menu (Rename, Settings, Disconnect, Delete)",
+      "project_menu": "3-dot menu (Rename, Settings, Delete)",
       "truncation": "Names truncate with hover tooltip"
     }
   },
   "queue": [
-        {
+    {
+      "id": "BUG-24",
+      "name": "Chat Shows Welcome Instead of Loading After Project Create",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "After creating a project, workspace shows regular Chat with 'Hello I'm Claude' instead of loading/terminal",
+      "current": "Chat.jsx shows regular chat because claudeCodeStatus check hasn't completed yet",
+      "attempted_fixes": [
+        "Added loading state in Chat.jsx when checking === true - didn't work because initial state has no 'checking' field",
+        "Added check for !('checking' in claudeCodeStatus) - still shows regular chat",
+        "Issue: claudeCodeStatus initial state is {installed: false, authenticated: false} with no checking field",
+        "The check runs async in WorkspaceTopBar useEffect, but Chat renders before it starts"
+      ],
+      "change": [
+        "Option A: Change Workspace initial claudeCodeStatus to include checking: true",
+        "Option B: Add isLoading state that's true until first claudeCodeStatus update",
+        "Option C: Delay Chat render until claudeCodeStatus has 'checking' field"
+      ],
+      "test": "Create new project → navigate to workspace → see loading spinner, NOT 'Hello I'm Claude'"
+    },
+    {
+      "id": "INFRA-02",
+      "name": "VPS Reconnect UX",
+      "size": "M",
+      "priority": 1,
+      "status": "pending",
+      "description": "Easy way to reconnect VPS after idle timeout or disconnect",
+      "current": "User must click Reconnect in each terminal individually - annoying with many projects",
+      "change": [
+        "Clickable status dot: gray/red dot click triggers VPS reconnect",
+        "All projects on same VPS turn green when reconnected (shared connection)",
+        "Add 'Reconnect All' button in sidebar header",
+        "One click reconnects all VPSes that have projects",
+        "Backend endpoint: POST /api/terminal/connections/{server_id}/connect"
+      ],
+      "test": "Have 4 projects on 2 VPSes, all disconnected. Click one gray dot → that VPS's projects turn green. Click 'Reconnect All' → all projects turn green."
+    },
+    {
+      "id": "INFRA-03",
+      "name": "Idle Connection Timeout",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Auto-close SSH connections after inactivity to save server resources",
+      "current": "Connections stay open forever until browser closes or network fails",
+      "change": [
+        "Track last activity time per VPS connection",
+        "Background task checks for idle connections every 5 min",
+        "Close connections idle for 2 hours (configurable in Settings)",
+        "Send connection_status: disconnected to all terminals before closing",
+        "User can reconnect easily via INFRA-02"
+      ],
+      "test": "Open terminal, leave idle for 2+ hours. Connection auto-closes. Dot turns gray. User clicks dot to reconnect."
+    },
+    {
       "id": "FEAT-10",
       "name": "Project-Specific Claude Code Sessions",
       "size": "S",
