@@ -30,7 +30,7 @@ import {
  * - LLM-Dev Panel (Terminal, Editor, Docker, Logs)
  * - File Explorer (left sidebar)
  */
-export default function Workspace({ project, model, apiKeys }) {
+export default function Workspace({ project, model, apiKeys, onProjectChange }) {
   const navigate = useNavigate()
   const [activeServer, setActiveServer] = useState(null)
   const [terminals, setTerminals] = useState([]) // Multiple terminals
@@ -311,9 +311,11 @@ export default function Workspace({ project, model, apiKeys }) {
     }
   }
 
+  // BUG-25: Handle project selection from file explorer
   const handleSelectProject = (selectedProject) => {
-    // In a real implementation, this would load the selected project
-    console.log('Selected project:', selectedProject)
+    if (onProjectChange && selectedProject.id !== project?.id) {
+      onProjectChange(selectedProject)
+    }
   }
 
   const closeTerminal = (serverId) => {

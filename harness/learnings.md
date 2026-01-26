@@ -4,6 +4,30 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 85 - 2026-01-26 EST
+**Task**: BUG-25 - Project Click Doesn't Switch Claude Terminal Chat or LLM-Dev Terminal
+**What**: Wired up project switching from WorkspaceFileExplorer to update terminals
+
+**Root Cause**:
+- Workspace.jsx's `handleSelectProject` only logged to console, didn't actually switch project
+- No callback was passed from App.jsx to Workspace for project changes
+
+**Fix**:
+1. Added `onProjectChange` prop to Workspace component
+2. App.jsx passes callback that updates `activeProject` state and navigates
+3. Workspace.jsx `handleSelectProject` now calls `onProjectChange(selectedProject)`
+
+**Data Flow (verified)**:
+1. User clicks project in WorkspaceFileExplorer
+2. `handleSelectProject` → `onProjectChange(project)`
+3. App.jsx `setActiveProject(project)` + `navigate(/workspace?projectId=...)`
+4. Workspace re-renders with new `project` prop
+5. useEffect updates `linkedServerId` from `project.vps_server_id`
+6. Chat receives new `serverId` → ClaudeCodeTerminalChat reconnects
+7. LLMDevPanel receives new `linkedServerId` → MultiTerminal reconnects
+
+---
+
 ### Session 84 - 2026-01-26 EST
 **Task**: BUG-26 - Clickable Status Dots Don't Trigger Reconnect
 **What**: Fixed status dots in both DashboardSidebar and WorkspaceFileExplorer

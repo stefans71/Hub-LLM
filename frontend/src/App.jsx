@@ -212,6 +212,11 @@ function AppContent() {
                     project={activeProject}
                     model={selectedModel}
                     apiKeys={apiKeys}
+                    onProjectChange={(project) => {
+                      setActiveProject(project)
+                      // BUG-25: Update URL when switching projects within workspace
+                      navigate(`/workspace?projectId=${project.id}`, { replace: true })
+                    }}
                   />
                 ) : (
                   <div className="flex-1 flex items-center justify-center">
