@@ -268,31 +268,51 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                 const responseLines = lines.filter(line => {
                   const trimmed = line.trim()
                   // Skip empty lines, prompt lines, and echoed user input
-                  if (trimmed === '' || trimmed === '>') return false
-                  if (trimmed.startsWith('> ')) return false
+                  if (trimmed === '' || trimmed === '>' || trimmed === '❯') return false
+                  if (trimmed.startsWith('> ') || trimmed.startsWith('❯ ')) return false
                   // Skip lines that match the last user input (echo)
                   if (lastUserInputRef.current && trimmed === lastUserInputRef.current) return false
 
-                  // Skip Claude Code status bar and UI elements
-                  // Status bar contains model names, project info, token counts
+                  // Skip Claude Code UI elements - be very aggressive
                   const lowerLine = trimmed.toLowerCase()
-                  if (lowerLine.includes('opus') && (lowerLine.includes('4') || lowerLine.includes('claude'))) return false
-                  if (lowerLine.includes('sonnet') && (lowerLine.includes('3') || lowerLine.includes('4') || lowerLine.includes('claude'))) return false
-                  if (lowerLine.includes('haiku') && lowerLine.includes('claude')) return false
-                  // Skip token count lines (e.g., "123 tokens", "~500 tokens")
+
+                  // Skip welcome screen and session picker
+                  if (lowerLine.includes('welcome back')) return false
+                  if (lowerLine.includes('tips for getting started')) return false
+                  if (lowerLine.includes('recent activity')) return false
+                  if (lowerLine.includes('no recent activity')) return false
+                  if (lowerLine.includes('organization')) return false
+                  if (lowerLine.includes('resume session')) return false
+                  if (lowerLine.includes('loading conversation')) return false
+                  if (lowerLine.includes('search')) return false
+                  if (lowerLine.includes('ctrl+') || lowerLine.includes('esc to')) return false
+                  if (lowerLine.includes('messages') && /\d+/.test(lowerLine)) return false
+
+                  // Skip ASCII art box characters and UI frames
+                  if (/^[│┃|├┤┌┐└┘─━┬┴┼]+$/.test(trimmed)) return false
+                  if (/^[|\-+]+$/.test(trimmed)) return false
+                  // Skip lines that are mostly box-drawing or UI structure
+                  if ((trimmed.match(/[│┃|├┤┌┐└┘─━]/g) || []).length > trimmed.length * 0.3) return false
+
+                  // Skip model/status bar elements
+                  if (lowerLine.includes('opus') || lowerLine.includes('sonnet') || lowerLine.includes('haiku')) return false
+                  if (lowerLine.includes('claude code')) return false
                   if (/\d+\s*(tokens?|tk)/i.test(trimmed)) return false
-                  // Skip cost lines (e.g., "$0.05", "cost:")
                   if (/\$\d+\.\d+/.test(trimmed) || lowerLine.includes('cost:')) return false
-                  // Skip path lines from cd command
+
+                  // Skip path and command lines
                   if (trimmed.startsWith('/root/') || trimmed.includes('llm-hub-projects')) return false
-                  // Skip command echo (cd ... && claude)
                   if (trimmed.includes('&& claude') || trimmed.startsWith('cd /')) return false
-                  // Skip status indicators and progress
+                  if (lowerLine.includes('/init') || lowerLine.includes('claude.md')) return false
+
+                  // Skip status indicators
                   if (lowerLine.includes('thinking') || lowerLine.includes('processing')) return false
-                  // Skip lines that are just special characters or dividers
-                  if (/^[-=_*~]+$/.test(trimmed)) return false
-                  // Skip very short lines that look like UI fragments (< 3 chars, not punctuation continuation)
-                  if (trimmed.length < 3 && !/^[.!?]$/.test(trimmed)) return false
+
+                  // Skip divider lines
+                  if (/^[-=_*~─━]+$/.test(trimmed)) return false
+
+                  // Skip very short lines that look like UI fragments
+                  if (trimmed.length < 3 && !/^[.!?●•└├]/.test(trimmed)) return false
 
                   return true
                 })
@@ -395,6 +415,9 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       // PHASE-2: Add user message immediately for responsive UI
       lastUserInputRef.current = userMessage
       setChatMessages(prev => [...prev, { role: 'user', content: userMessage }])
+
+      // Clear output buffer before sending - we only want Claude's response to THIS message
+      outputBufferRef.current = ''
 
       // Send message text first
       wsRef.current.send(JSON.stringify({ type: 'input', data: userMessage }))
