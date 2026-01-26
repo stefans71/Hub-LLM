@@ -4,6 +4,29 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 79 - 2026-01-26 EST
+**Task**: PHASE-2 MVP wrap-up - Terminal loading spinner
+**What**: Added loading state while terminal initializes
+
+**Problem**: Terminal view shows blank screen while xterm loads
+**Solution**:
+- Add `terminalReady` state, set true after xterm mounts
+- Show spinner + "Loading terminal..." while waiting
+- Terminal already defaults to 'terminal' mode (useState line 195)
+
+**Note**: If bubble view still appears on load, user needs to clear browser cache (Ctrl+Shift+R)
+
+**PHASE-2 MVP Status**: COMPLETE
+- ✅ Bubble/terminal toggle
+- ✅ User/Claude message rendering
+- ✅ Thinking indicator with spinner text
+- ✅ Echo detection (skip user input capture)
+- ✅ Spinner word filtering (50+ words)
+- ✅ Terminal loading spinner
+- ⚠️ Known: Some edge cases with UI artifact leaking
+
+---
+
 ### Session 78 - 2026-01-26 EST
 **Task**: PHASE-2 polish - Thinking indicator
 **What**: Added visual feedback when Claude is processing
