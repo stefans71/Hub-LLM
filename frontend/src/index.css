@@ -548,14 +548,34 @@
 }
 
 /* CLAUDE-02-REWORK: Claude Code Terminal Chat */
+/* BUG-22: Wrapper for resizable terminal */
+.claude-code-terminal-chat-wrapper {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+}
+
 .claude-code-terminal-chat {
   display: flex;
   flex-direction: column;
   height: 100%;
-  /* BUG-22: Constrain width for readability when sidebar is closed */
-  max-width: 1000px;
-  width: 100%;
-  /* Left-aligned with content area, not centered */
+  flex-shrink: 0;
+  /* Width controlled by inline style for resize */
+}
+
+/* BUG-22: Resize handle on right edge */
+.claude-code-resize-handle {
+  width: 4px;
+  background: var(--border);
+  cursor: ew-resize;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.claude-code-resize-handle:hover,
+.claude-code-resize-handle.dragging {
+  background: var(--primary);
 }
 
 .claude-code-status-bar {
@@ -631,6 +651,21 @@
 /* The screen element captures mouse events - shrink it to not cover scrollbar */
 .claude-code-terminal-area .xterm-screen {
   width: calc(100% - 14px) !important; /* Leave room for 14px scrollbar */
+}
+
+/* BUG-22: Make scrollbar area receive pointer events */
+/* The xterm element needs to allow scrollbar clicks through */
+.claude-code-terminal-area .xterm {
+  position: relative;
+}
+
+/* Create a scrollbar click zone that sits above the xterm-screen */
+.claude-code-terminal-area .xterm-viewport {
+  z-index: 1; /* Ensure viewport is above screen for scrollbar clicks */
+}
+
+.claude-code-terminal-area .xterm-screen {
+  z-index: 0;
 }
 
 /* Style the xterm scrollbar in Claude Code terminal */

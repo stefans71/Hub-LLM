@@ -27,6 +27,13 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
   const inputRef = useRef(null)
   const claudeStartedRef = useRef(false)
 
+  // BUG-22: Resize handle state (delta-based drag pattern)
+  const [terminalWidth, setTerminalWidth] = useState(800) // Default width
+  const [isDragging, setIsDragging] = useState(false)
+  const dragStartXRef = useRef(null)
+  const dragStartWidthRef = useRef(null)
+  const resizeHandleRef = useRef(null)
+
   // Connect to WebSocket
   const connect = useCallback(async () => {
     if (!serverId) {
@@ -329,83 +336,155 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
     }
   }, [])
 
+  // BUG-22: Resize handle - delta-based drag pattern (from TERMINAL_WORKSPACE.md)
+  useEffect(() => {
+    const handle = resizeHandleRef.current
+    if (!handle) return
+
+    const onMouseDown = (e) => {
+      e.preventDefault()
+      setIsDragging(true)
+      dragStartXRef.current = e.clientX
+      dragStartWidthRef.current = terminalWidth
+      document.body.style.cursor = 'ew-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    const onMouseMove = (e) => {
+      if (dragStartXRef.current === null) return
+
+      // Delta = how far mouse moved (positive = right/wider, negative = left/narrower)
+      const delta = e.clientX - dragStartXRef.current
+      const newWidth = dragStartWidthRef.current + delta
+      // Clamp between 400px and 1200px
+      const clampedWidth = Math.max(400, Math.min(1200, newWidth))
+      setTerminalWidth(clampedWidth)
+    }
+
+    const onMouseUp = () => {
+      setIsDragging(false)
+      dragStartXRef.current = null
+      dragStartWidthRef.current = null
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+
+      // Refit terminal after resize
+      if (fitAddonRef.current) {
+        requestAnimationFrame(() => {
+          fitAddonRef.current.fit()
+          // Send resize to server
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && xtermRef.current) {
+            wsRef.current.send(JSON.stringify({
+              type: 'resize',
+              cols: xtermRef.current.cols,
+              rows: xtermRef.current.rows
+            }))
+          }
+        })
+      }
+    }
+
+    handle.addEventListener('mousedown', onMouseDown)
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+
+    return () => {
+      handle.removeEventListener('mousedown', onMouseDown)
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [terminalWidth])
+
   return (
-    <div className="chat-panel claude-code-terminal-chat">
-      {/* Status Header */}
-      <div className="claude-code-status-bar">
-        <div className="claude-code-status-left">
-          <TerminalIcon size={14} />
-          <span
-            className="claude-code-status-dot"
-            style={{ backgroundColor: statusInfo.color }}
-          />
-          <span className="claude-code-status-text">{statusInfo.text}</span>
-          {serverInfo && (
-            <span className="claude-code-server-name">• {serverInfo.server}</span>
+    <div className="chat-panel claude-code-terminal-chat-wrapper">
+      {/* BUG-22: Resizable terminal container */}
+      <div
+        className="claude-code-terminal-chat"
+        style={{ width: terminalWidth }}
+      >
+        {/* Status Header */}
+        <div className="claude-code-status-bar">
+          <div className="claude-code-status-left">
+            <TerminalIcon size={14} />
+            <span
+              className="claude-code-status-dot"
+              style={{ backgroundColor: statusInfo.color }}
+            />
+            <span className="claude-code-status-text">{statusInfo.text}</span>
+            {serverInfo && (
+              <span className="claude-code-server-name">• {serverInfo.server}</span>
+            )}
+          </div>
+          {(status === 'disconnected' || status === 'error') && serverId && (
+            <button className="claude-code-reconnect-btn" onClick={reconnect}>
+              <RefreshCw size={12} />
+              Reconnect
+            </button>
           )}
         </div>
-        {(status === 'disconnected' || status === 'error') && serverId && (
-          <button className="claude-code-reconnect-btn" onClick={reconnect}>
-            <RefreshCw size={12} />
-            Reconnect
-          </button>
-        )}
+
+        {/* Terminal Display Area (replaces chat-messages) */}
+        {/* BUG-18 FIX: Click to focus terminal for keyboard input */}
+        <div
+          ref={terminalRef}
+          className="claude-code-terminal-area"
+          onClick={handleTerminalClick}
+        />
+
+        {/* Chat Input Area (same as regular Chat) */}
+        <div className="chat-input-area">
+          <div className="chat-input-wrapper">
+            {/* Plus Button - disabled in terminal mode */}
+            <button className="plus-btn" disabled title="Files not supported in terminal mode">
+              <Plus size={18} />
+            </button>
+
+            {/* Chat Text Input */}
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={status === 'claude_ready' ? 'Ask Claude Code...' : 'Waiting for Claude Code...'}
+              disabled={status !== 'claude_ready'}
+            />
+
+            {/* Mic Button */}
+            <button
+              className={`mic-btn ${isRecording ? 'recording' : ''}`}
+              onClick={toggleMic}
+              title="Voice input (Whisper)"
+              disabled={status !== 'claude_ready'}
+            >
+              <Mic size={18} />
+            </button>
+
+            {/* Send Button */}
+            <button
+              className="send-btn"
+              onClick={sendMessage}
+              disabled={!input.trim() || status !== 'claude_ready'}
+            >
+              <Send size={18} />
+            </button>
+          </div>
+
+          {/* Input Hint */}
+          <div className="chat-input-hint">
+            {status === 'claude_ready'
+              ? 'Click terminal to type directly • Or use input box below'
+              : 'Connecting to Claude Code on VPS...'}
+          </div>
+        </div>
       </div>
 
-      {/* Terminal Display Area (replaces chat-messages) */}
-      {/* BUG-18 FIX: Click to focus terminal for keyboard input */}
+      {/* BUG-22: Resize handle on right edge */}
       <div
-        ref={terminalRef}
-        className="claude-code-terminal-area"
-        onClick={handleTerminalClick}
+        ref={resizeHandleRef}
+        className={`claude-code-resize-handle ${isDragging ? 'dragging' : ''}`}
+        title="Drag to resize"
       />
-
-      {/* Chat Input Area (same as regular Chat) */}
-      <div className="chat-input-area">
-        <div className="chat-input-wrapper">
-          {/* Plus Button - disabled in terminal mode */}
-          <button className="plus-btn" disabled title="Files not supported in terminal mode">
-            <Plus size={18} />
-          </button>
-
-          {/* Chat Text Input */}
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={status === 'claude_ready' ? 'Ask Claude Code...' : 'Waiting for Claude Code...'}
-            disabled={status !== 'claude_ready'}
-          />
-
-          {/* Mic Button */}
-          <button
-            className={`mic-btn ${isRecording ? 'recording' : ''}`}
-            onClick={toggleMic}
-            title="Voice input (Whisper)"
-            disabled={status !== 'claude_ready'}
-          >
-            <Mic size={18} />
-          </button>
-
-          {/* Send Button */}
-          <button
-            className="send-btn"
-            onClick={sendMessage}
-            disabled={!input.trim() || status !== 'claude_ready'}
-          >
-            <Send size={18} />
-          </button>
-        </div>
-
-        {/* Input Hint */}
-        <div className="chat-input-hint">
-          {status === 'claude_ready'
-            ? 'Click terminal to type directly • Or use input box below'
-            : 'Connecting to Claude Code on VPS...'}
-        </div>
-      </div>
     </div>
   )
 }
