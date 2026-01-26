@@ -324,6 +324,8 @@ export default function Workspace({ project, model, apiKeys }) {
         model={selectedModel}
         onModelChange={handleModelChange}
         onExport={handleExport}
+        linkedServerId={linkedServerId}
+        isConnected={isConnected}
       />
 
       {/* W-30: Workspace Main Container - min-h-0 allows shrinking for LLM-Dev panel */}

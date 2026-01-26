@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { Package, Search, Key } from 'lucide-react'
+import { Package, Search, Key, ExternalLink } from 'lucide-react'
 import ModelNotification from './ModelNotification'
+
+const API_URL = import.meta.env.VITE_API_URL || ''
 
 /**
  * WorkspaceTopBar Component (W-03)
@@ -90,7 +92,9 @@ export default function WorkspaceTopBar({
   project,
   model,
   onModelChange,
-  onExport
+  onExport,
+  linkedServerId,
+  isConnected
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -98,7 +102,8 @@ export default function WorkspaceTopBar({
   const [showNotification, setShowNotification] = useState(false)
   const [pendingModel, setPendingModel] = useState(null)
   const [searchFilter, setSearchFilter] = useState('')
-  const [apiKeys, setApiKeys] = useState({ openrouter: false, anthropic: true })
+  const [apiKeys, setApiKeys] = useState({ openrouter: false, anthropic: false })
+  const [claudeCodeStatus, setClaudeCodeStatus] = useState({ installed: false, version: null, checking: false, error: null })
   const dropdownRef = useRef(null)
   const searchInputRef = useRef(null)
 
@@ -106,10 +111,10 @@ export default function WorkspaceTopBar({
   useEffect(() => {
     const checkApiKeys = () => {
       const openrouterKey = localStorage.getItem('openrouter_api_key') || localStorage.getItem('openrouter_key')
-      setApiKeys({
-        openrouter: !!openrouterKey,
-        anthropic: true // Anthropic subscription always available
-      })
+      setApiKeys(prev => ({
+        ...prev,
+        openrouter: !!openrouterKey
+      }))
     }
     checkApiKeys()
     // Re-check when dropdown opens in case keys were added in Settings
@@ -117,6 +122,52 @@ export default function WorkspaceTopBar({
       checkApiKeys()
     }
   }, [dropdownOpen])
+
+  // Check Claude Code status when VPS is connected
+  useEffect(() => {
+    const checkClaudeCode = async () => {
+      if (!linkedServerId || !isConnected) {
+        setClaudeCodeStatus({ installed: false, version: null, checking: false, error: null })
+        setApiKeys(prev => ({ ...prev, anthropic: false }))
+        return
+      }
+
+      setClaudeCodeStatus(prev => ({ ...prev, checking: true }))
+
+      try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 15000)
+
+        const res = await fetch(`${API_URL}/api/ssh/servers/${linkedServerId}/claude-code`, {
+          signal: controller.signal
+        })
+        clearTimeout(timeout)
+
+        if (res.ok) {
+          const data = await res.json()
+          setClaudeCodeStatus({
+            installed: data.installed,
+            version: data.version,
+            authenticated: data.authenticated,
+            checking: false,
+            error: data.error
+          })
+          setApiKeys(prev => ({ ...prev, anthropic: data.installed && data.authenticated }))
+        } else {
+          setClaudeCodeStatus({ installed: false, version: null, checking: false, error: 'Failed to check' })
+          setApiKeys(prev => ({ ...prev, anthropic: false }))
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to check Claude Code status:', err)
+        }
+        setClaudeCodeStatus({ installed: false, version: null, checking: false, error: 'Connection failed' })
+        setApiKeys(prev => ({ ...prev, anthropic: false }))
+      }
+    }
+
+    checkClaudeCode()
+  }, [linkedServerId, isConnected])
 
   // Focus search input when dropdown opens
   useEffect(() => {
@@ -185,7 +236,7 @@ export default function WorkspaceTopBar({
 
   // Check if a model is available based on tier and API keys
   const isModelAvailable = (model) => {
-    if (model.tier === 'subscription') return true
+    if (model.tier === 'subscription') return apiKeys.anthropic  // Requires Claude Code on VPS
     if (model.tier === 'openrouter') return apiKeys.openrouter
     if (model.tier === 'coming_soon') return false
     return false
@@ -427,15 +478,47 @@ export default function WorkspaceTopBar({
                         <span style={{
                           fontSize: '10px',
                           fontWeight: 400,
-                          color: models[0]?.tier === 'subscription' ? 'var(--success)' :
-                                 models[0]?.tier === 'openrouter' && apiKeys.openrouter ? 'var(--success)' :
-                                 'var(--text-muted)'
+                          color: provider === 'anthropic' ? (
+                            claudeCodeStatus.checking ? 'var(--text-muted)' :
+                            apiKeys.anthropic ? 'var(--success)' : 'var(--text-muted)'
+                          ) : (
+                            models[0]?.tier === 'openrouter' && apiKeys.openrouter ? 'var(--success)' : 'var(--text-muted)'
+                          )
                         }}>
-                          {models[0]?.tier === 'subscription' ? '✓ Included' :
-                           models[0]?.tier === 'openrouter' ? (apiKeys.openrouter ? '✓ API Key Added' : '🔑 Requires API Key') :
-                           models[0]?.tier === 'coming_soon' ? '🔜 Coming Soon' : ''}
+                          {provider === 'anthropic' ? (
+                            claudeCodeStatus.checking ? '⏳ Checking...' :
+                            !isConnected ? '○ Connect VPS' :
+                            claudeCodeStatus.installed && claudeCodeStatus.authenticated ? '✓ Claude Code Ready' :
+                            claudeCodeStatus.installed ? '⚠ Not Authenticated' :
+                            '⚠ Install Claude Code'
+                          ) : (
+                            models[0]?.tier === 'openrouter' ? (apiKeys.openrouter ? '✓ API Key Added' : '🔑 Requires API Key') :
+                            models[0]?.tier === 'coming_soon' ? '🔜 Coming Soon' : ''
+                          )}
                         </span>
                       </div>
+
+                      {/* Install Claude Code link for Anthropic when not installed */}
+                      {provider === 'anthropic' && isConnected && !claudeCodeStatus.installed && !claudeCodeStatus.checking && (
+                        <div
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            color: 'var(--primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: 'var(--bg-secondary)'
+                          }}
+                          onClick={() => window.open('https://docs.anthropic.com/en/docs/claude-code', '_blank')}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                        >
+                          <ExternalLink size={12} />
+                          Install Claude Code on VPS →
+                        </div>
+                      )}
 
                       {/* Model Items */}
                       {models.map((model) => {

@@ -194,6 +194,29 @@ class SSHConnection:
         """Disconnect (alias for close)"""
         await self.close()
 
+    async def run_command(self, command: str, timeout: float = 10.0) -> tuple[str, str, int]:
+        """
+        Run a command and return (stdout, stderr, exit_code).
+        Does not use the interactive shell - runs command directly.
+        """
+        if not self.conn:
+            await self.connect()
+
+        try:
+            result = await asyncio.wait_for(
+                self.conn.run(command),
+                timeout=timeout
+            )
+            return (
+                result.stdout or "",
+                result.stderr or "",
+                result.exit_status or 0
+            )
+        except asyncio.TimeoutError:
+            return ("", f"Command timed out after {timeout}s", -1)
+        except Exception as e:
+            return ("", str(e), -1)
+
     async def close(self):
         """Close the connection"""
         if self.process:

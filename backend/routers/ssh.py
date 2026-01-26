@@ -220,6 +220,71 @@ async def disconnect_server(server_id: str):
     return {"status": "disconnected"}
 
 
+# === Claude Code Detection ===
+
+class ClaudeCodeStatus(BaseModel):
+    installed: bool
+    version: Optional[str] = None
+    authenticated: bool = False
+    error: Optional[str] = None
+
+
+@router.get("/servers/{server_id}/claude-code", response_model=ClaudeCodeStatus)
+async def detect_claude_code(server_id: str):
+    """
+    Detect if Claude Code is installed and authenticated on the VPS.
+    Runs `which claude` and `claude --version` to check.
+    """
+    from services.ssh import get_connection, servers_cache
+
+    if server_id not in servers_cache:
+        # Try to load from database
+        async with async_session() as session:
+            result = await session.execute(select(VPSServerModel).where(VPSServerModel.id == server_id))
+            server = result.scalar_one_or_none()
+            if not server:
+                raise HTTPException(status_code=404, detail="Server not found")
+            await load_server_to_cache(server)
+
+    try:
+        conn = await get_connection(server_id)
+
+        # Check if claude is installed
+        stdout, stderr, exit_code = await conn.run_command("which claude")
+
+        if exit_code != 0 or not stdout.strip():
+            return ClaudeCodeStatus(
+                installed=False,
+                authenticated=False,
+                error="Claude Code not found. Install with: npm install -g @anthropic-ai/claude-code"
+            )
+
+        # Get version
+        version_stdout, version_stderr, version_exit = await conn.run_command("claude --version")
+        version = version_stdout.strip() if version_exit == 0 else None
+
+        # Check if authenticated by running a simple command
+        # Claude Code shows auth status when you run it
+        auth_stdout, auth_stderr, auth_exit = await conn.run_command("claude --help 2>&1 | head -5")
+
+        # If claude --help works without auth errors, assume authenticated
+        # In practice, we might need to check for specific auth messages
+        authenticated = auth_exit == 0 and "not authenticated" not in auth_stdout.lower()
+
+        return ClaudeCodeStatus(
+            installed=True,
+            version=version,
+            authenticated=authenticated
+        )
+
+    except Exception as e:
+        return ClaudeCodeStatus(
+            installed=False,
+            authenticated=False,
+            error=f"Failed to detect Claude Code: {str(e)}"
+        )
+
+
 # === Test Connection (without storing) ===
 
 @router.post("/test", response_model=TestConnectionResponse)

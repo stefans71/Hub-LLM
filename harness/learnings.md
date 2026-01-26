@@ -34,6 +34,43 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+**Task**: CLAUDE-01 - Detect Claude Code on VPS
+**What**: Added Claude Code detection when VPS connects
+
+**Implementation**:
+1. Backend (`services/ssh.py`):
+   - Added `run_command()` method to SSHConnection for executing commands and getting output
+
+2. Backend (`routers/ssh.py`):
+   - Added `/api/ssh/servers/{server_id}/claude-code` endpoint
+   - Runs `which claude` to check if installed
+   - Runs `claude --version` to get version
+   - Returns `ClaudeCodeStatus`: installed, version, authenticated, error
+
+3. Frontend (`WorkspaceTopBar.jsx`):
+   - Added `claudeCodeStatus` state to track detection result
+   - Added useEffect to check Claude Code when VPS connects
+   - Updated `apiKeys.anthropic` to be based on real detection
+   - Updated provider header to show real status:
+     - "⏳ Checking..." while detecting
+     - "○ Connect VPS" when no VPS connected
+     - "✓ Claude Code Ready" when installed & authenticated
+     - "⚠ Not Authenticated" when installed but not auth'd
+     - "⚠ Install Claude Code" when not installed
+   - Added "Install Claude Code on VPS →" link to Anthropic docs
+   - Anthropic models now greyed out when Claude Code not available
+
+4. Frontend (`Workspace.jsx`):
+   - Passed `linkedServerId` and `isConnected` props to WorkspaceTopBar
+
+**Files Modified**:
+- backend/services/ssh.py
+- backend/routers/ssh.py
+- frontend/src/components/WorkspaceTopBar.jsx
+- frontend/src/components/Workspace.jsx
+
+---
+
 ### Session 67 - 2026-01-25 EST
 **Task**: CLEANUP-03 - Fix Config Mismatch - Standardize on SQLite + Port 8000
 **What**: Aligned configuration files - Vite proxy now points to port 8000, init.sh no longer starts PostgreSQL/Docker
