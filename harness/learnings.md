@@ -4,8 +4,26 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 82 - 2026-01-26 EST
+**Task**: BUG-24 - Chat loading state after project create (RESOLVED)
+**What**: Implemented Option D - show animated "Connecting to VPS..." welcome message
+
+**Solution**:
+- Removed broken `showVpsLoading` loading spinner code that didn't work due to timing issues
+- Added `showConnectingWelcome` check: `isAnthropicModel && serverId && !claudeCodeStatus?.authenticated`
+- Changed welcome message to show animated dots + "Connecting to your VPS" when waiting
+- Added CSS animation for pulsing dots effect
+
+**Why Option D Works**:
+- Doesn't fight timing issues - just shows different messaging
+- User sees appropriate message during wait ("Connecting to VPS" vs "Hello I'm Claude")
+- Once claudeCodeStatus updates, automatically switches to ClaudeCodeTerminalChat
+- Simple, clean solution that matches user expectations
+
+---
+
 ### Session 81 - 2026-01-26 EST
-**Task**: BUG-24 - Chat loading state after project create (UNRESOLVED)
+**Task**: BUG-24 - Chat loading state after project create (investigation)
 **What**: Attempted to show loading spinner instead of "Hello I'm Claude" when navigating to workspace
 
 **Problem**: After creating project, Chat.jsx shows regular chat with welcome message for ~4 seconds before ClaudeCodeTerminalChat loads.
@@ -26,12 +44,6 @@ Track discoveries, patterns, and friction points for harness improvement.
 - That effect depends on `linkedServerId` and `isConnected`
 - These values take time to resolve after navigation
 - Chat renders immediately with stale/initial state
-
-**Possible Solutions** (not yet tried):
-- Option A: Change initial claudeCodeStatus to `{checking: true}` when serverId exists
-- Option B: Add separate `isCheckingClaudeCode` state that starts true
-- Option C: Delay rendering Chat until claudeCodeStatus has been updated once
-- **Option D (SIMPLEST)**: Change the "Hello I'm Claude" welcome message in Chat.jsx to show "Connecting to VPS..." when `serverId` exists. No loading spinner needed - just different text that makes sense during the wait.
 
 **Also Fixed**:
 - Removed "Disconnect VPS" from 3-dot menu (confusing, moved to Settings)

@@ -780,6 +780,64 @@
   to { transform: rotate(360deg); }
 }
 
+/* BUG-24: VPS Connecting Welcome Animation */
+.vps-connecting-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.vps-connecting-dots {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.vps-connecting-dots .dot {
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  animation: vps-dot-pulse 1.4s ease-in-out infinite;
+}
+
+.vps-connecting-dots .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.vps-connecting-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.vps-connecting-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes vps-dot-pulse {
+  0%, 60%, 100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  30% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
+.vps-connecting-text {
+  color: #e2e8f0;
+  font-size: 15px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.vps-connecting-subtext {
+  color: #64748b;
+  font-size: 13px;
+  margin: 0;
+}
+
 .claude-code-bubbles-area {
   flex: 1;
   overflow-y: auto;

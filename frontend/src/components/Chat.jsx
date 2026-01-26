@@ -322,27 +322,11 @@ export default function Chat({ project, model, apiKeys, serverId, claudeCodeStat
     )
   }
 
-  // Check if we should show loading while waiting for Claude Code check
-  // Show loading when: Anthropic model + serverId + check is actively running
+  // BUG-24: Option D - Check if we should show "Connecting to VPS..." welcome message
+  // instead of "Hello I'm Claude" when serverId exists but ClaudeCodeTerminal hasn't loaded yet
   const isAnthropicModel = model?.provider === 'anthropic' ||
     (typeof model === 'string' && model.toLowerCase().includes('claude'))
-
-  // Show loading only when check is actively running (checking === true)
-  // OR when check hasn't run yet (no 'checking' field exists in status)
-  const isCheckingOrPending = claudeCodeStatus?.checking === true ||
-    !('checking' in (claudeCodeStatus || {}))
-
-  const showVpsLoading = isAnthropicModel && serverId && isCheckingOrPending
-
-  // Show loading state while checking Claude Code status
-  if (showVpsLoading) {
-    return (
-      <div className="chat-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
-        <div className="terminal-loading-spinner" style={{ width: '40px', height: '40px', border: '3px solid #1a1a2e', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'terminal-spin 1s linear infinite' }}></div>
-        <p style={{ color: '#9ca3af', fontSize: '14px', margin: 0 }}>Connecting to VPS...</p>
-      </div>
-    )
-  }
+  const showConnectingWelcome = isAnthropicModel && serverId && !claudeCodeStatus?.authenticated
 
   return (
     <div
@@ -376,7 +360,19 @@ export default function Chat({ project, model, apiKeys, serverId, claudeCodeStat
               </svg>
             </div>
             <div className="chat-message-content">
-              <p>Hello! I'm Claude, your AI coding assistant. Ask me to build, modify, or explain anything about your project.</p>
+              {showConnectingWelcome ? (
+                <div className="vps-connecting-welcome">
+                  <div className="vps-connecting-dots">
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                  </div>
+                  <p className="vps-connecting-text">Connecting to your VPS</p>
+                  <p className="vps-connecting-subtext">Setting up Claude Code terminal...</p>
+                </div>
+              ) : (
+                <p>Hello! I'm Claude, your AI coding assistant. Ask me to build, modify, or explain anything about your project.</p>
+              )}
             </div>
           </div>
         )}

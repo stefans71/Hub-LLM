@@ -17,28 +17,6 @@
   },
   "queue": [
     {
-      "id": "BUG-24",
-      "name": "Chat Shows Welcome Instead of Loading After Project Create",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "After creating a project, workspace shows regular Chat with 'Hello I'm Claude' instead of loading/terminal",
-      "current": "Chat.jsx shows regular chat because claudeCodeStatus check hasn't completed yet",
-      "attempted_fixes": [
-        "Added loading state in Chat.jsx when checking === true - didn't work because initial state has no 'checking' field",
-        "Added check for !('checking' in claudeCodeStatus) - still shows regular chat",
-        "Issue: claudeCodeStatus initial state is {installed: false, authenticated: false} with no checking field",
-        "The check runs async in WorkspaceTopBar useEffect, but Chat renders before it starts"
-      ],
-      "change": [
-        "Option A: Change Workspace initial claudeCodeStatus to include checking: true",
-        "Option B: Add isLoading state that's true until first claudeCodeStatus update",
-        "Option C: Delay Chat render until claudeCodeStatus has 'checking' field",
-        "Option D (SIMPLEST): Change 'Hello I'm Claude' to 'Connecting to VPS...' when serverId exists"
-      ],
-      "test": "Create new project → navigate to workspace → see loading spinner, NOT 'Hello I'm Claude'"
-    },
-    {
       "id": "INFRA-02",
       "name": "VPS Reconnect UX",
       "size": "M",
@@ -159,6 +137,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-24", "name": "Chat Shows Welcome Instead of Loading After Project Create", "completed": "2026-01-26"},
     {"id": "INFRA-01", "name": "SSH Connection Multiplexing", "completed": "2026-01-26"},
     {"id": "PHASE-2", "name": "Chat Bubble Rendering for Claude Code Output", "completed": "2026-01-26"},
     {"id": "BUG-23", "name": "Setup Wizard VPS Validation Rejects Valid SSH Key", "completed": "2026-01-26"},
