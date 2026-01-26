@@ -31,6 +31,7 @@ Track discoveries, patterns, and friction points for harness improvement.
 - Option A: Change initial claudeCodeStatus to `{checking: true}` when serverId exists
 - Option B: Add separate `isCheckingClaudeCode` state that starts true
 - Option C: Delay rendering Chat until claudeCodeStatus has been updated once
+- **Option D (SIMPLEST)**: Change the "Hello I'm Claude" welcome message in Chat.jsx to show "Connecting to VPS..." when `serverId` exists. No loading spinner needed - just different text that makes sense during the wait.
 
 **Also Fixed**:
 - Removed "Disconnect VPS" from 3-dot menu (confusing, moved to Settings)

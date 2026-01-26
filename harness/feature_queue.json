@@ -33,7 +33,8 @@
       "change": [
         "Option A: Change Workspace initial claudeCodeStatus to include checking: true",
         "Option B: Add isLoading state that's true until first claudeCodeStatus update",
-        "Option C: Delay Chat render until claudeCodeStatus has 'checking' field"
+        "Option C: Delay Chat render until claudeCodeStatus has 'checking' field",
+        "Option D (SIMPLEST): Change 'Hello I'm Claude' to 'Connecting to VPS...' when serverId exists"
       ],
       "test": "Create new project → navigate to workspace → see loading spinner, NOT 'Hello I'm Claude'"
     },
