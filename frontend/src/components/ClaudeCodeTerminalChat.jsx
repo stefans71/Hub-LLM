@@ -379,9 +379,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       lastUserInputRef.current = userMessage
       setChatMessages(prev => [...prev, { role: 'user', content: userMessage }])
 
-      // Send the message followed by carriage return (Enter key) to Claude Code's stdin
-      // Note: xterm sends \r when Enter is pressed, not \n
-      wsRef.current.send(JSON.stringify({ type: 'input', data: input + '\r' }))
+      // Send the message followed by newline to submit to Claude Code
+      wsRef.current.send(JSON.stringify({ type: 'input', data: input + '\n' }))
       setInput('')
     }
   }, [input, status])
