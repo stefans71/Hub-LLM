@@ -396,8 +396,17 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       lastUserInputRef.current = userMessage
       setChatMessages(prev => [...prev, { role: 'user', content: userMessage }])
 
-      // Send the message followed by newline to submit to Claude Code
-      wsRef.current.send(JSON.stringify({ type: 'input', data: input + '\n' }))
+      // Send message text first
+      wsRef.current.send(JSON.stringify({ type: 'input', data: userMessage }))
+
+      // Then send Enter key (\r) separately after a small delay
+      // This mimics actual terminal typing behavior
+      setTimeout(() => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'input', data: '\r' }))
+        }
+      }, 50)
+
       setInput('')
     }
   }, [input, status])
