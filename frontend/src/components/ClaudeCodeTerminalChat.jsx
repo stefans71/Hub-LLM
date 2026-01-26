@@ -185,7 +185,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
   const resizeHandleRef = useRef(null)
 
   // PHASE-2: Chat bubble rendering state
-  const [viewMode, setViewMode] = useState('bubbles') // 'bubbles' | 'terminal'
+  // Start in terminal mode so user can see Claude Code loading and select conversation
+  const [viewMode, setViewMode] = useState('terminal') // 'bubbles' | 'terminal'
   const [chatMessages, setChatMessages] = useState([])
   const outputBufferRef = useRef('')
   const messagesEndRef = useRef(null)
@@ -292,15 +293,43 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                   const lowerLine = trimmed.toLowerCase()
 
                   // Skip spinner/loading animation text and fragments
-                  if (lowerLine.includes('evaporating')) return false
-                  if (lowerLine.includes('app opinion')) return false
-                  if (lowerLine.includes('actualizing')) return false
-                  if (trimmed.match(/^[0●•\*\+;]+$/)) return false  // Spinner frames
+                  // Claude Code uses creative spinner words - be very comprehensive
+                  const spinnerWords = [
+                    // -ating words
+                    'evaporating', 'pollinating', 'percolating', 'bamboozling', 'schmoozling',
+                    'actualizing', 'crystallizing', 'ruminating', 'cogitating', 'deliberating',
+                    'pondering', 'contemplating', 'meditating', 'reflecting', 'musing',
+                    'initializing', 'processing', 'thinking', 'loading', 'calculating',
+                    'formulating', 'generating', 'synthesizing', 'analyzing', 'evaluating',
+                    'calibrating', 'activating', 'orchestrating', 'incubating', 'marinating',
+                    'hibernating', 'germinating', 'simulating', 'cascading', 'brewing',
+                    // -ing words
+                    'gathering', 'assembling', 'compiling', 'warming', 'charging', 'spinning',
+                    'dreaming', 'scheming', 'plotting', 'hatching', 'concocting', 'manifesting',
+                    // UI fragments
+                    'app opinion', 'fetching', 'working', 'preparing', 'crunching'
+                  ]
+                  if (spinnerWords.some(word => lowerLine.includes(word))) return false
+
+                  // Skip any line ending with "..." (incomplete/loading indicator)
+                  if (trimmed.endsWith('...')) return false
+
+                  // Skip tool call indicators
+                  const toolNames = ['read', 'write', 'edit', 'bash', 'glob', 'grep', 'task', 'webfetch', 'websearch']
+                  if (toolNames.some(tool => lowerLine === tool || lowerLine.startsWith(tool + ' '))) return false
+
+                  // Skip lines that look like command output fragments (very short, no spaces)
+                  if (trimmed.length < 10 && !trimmed.includes(' ') && !/^[A-Z]/.test(trimmed)) return false
+
+                  if (trimmed.match(/^[0●•\*\+;❯]+$/)) return false  // Spinner frames
                   if (trimmed.match(/^[\d;]+$/)) return false  // Leftover escape params
-                  // Skip partial spinner fragments (ng..., *liz, ctal, *Au, etc.)
-                  if (trimmed.match(/^[\*\-]?[a-z]{1,4}\.{0,3}$/i)) return false
-                  if (trimmed.match(/^\*?[A-Za-z]{1,3}$/)) return false  // Very short text fragments
+                  // Skip partial spinner fragments (ng..., *liz, ctal, *Au, ating..., etc.)
+                  if (trimmed.match(/^[\*\-\+●•]?[a-z]{1,5}\.{2,3}❯?$/i)) return false
+                  if (trimmed.match(/^[\*\-\+●•]?[A-Za-z]{1,4}$/)) return false  // Very short text fragments
                   if (trimmed.includes('ought for')) return false  // "...ought for 1s)" spinner fragment
+                  if (trimmed.includes('Esc to interrupt')) return false  // Interrupt hint
+                  if (trimmed.match(/^\d+m\s*\d+s/)) return false  // Time display "1m 1s"
+                  if (trimmed.match(/↑\s*\d+\s*tokens/)) return false  // Token count with arrow
 
                   // Skip Claude Code status bar (DO project-name Model tokens LIVE)
                   if (lowerLine.includes('live') && /\d+%/.test(trimmed)) return false

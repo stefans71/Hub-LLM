@@ -4,6 +4,32 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 76 - 2026-01-26 EST
+**Task**: PHASE-2 polish - Spinner text filtering
+**What**: Enhanced bubble view filter to catch more Claude Code UI elements
+
+**Problem**: Spinner animation text and UI fragments leaking into bubble view
+- Words like "Pollinating...", "Percolating...", "Bamboozling..." appearing as messages
+- Tool names and short fragments showing up
+
+**Solution**: Comprehensive filter approach
+1. Expanded spinner word list (30+ words covering all -ating/-ing patterns)
+2. Skip lines ending with "..." (loading indicators)
+3. Skip tool names (Read, Write, Bash, etc.)
+4. Skip short fragments (<10 chars, no spaces, not capitalized)
+5. Default to terminal view on startup (user can see Claude load, then switch to bubbles)
+
+**Key Pattern - Aggressive UI Filtering**:
+```javascript
+// Multiple layers of filtering for terminal → bubble conversion
+if (spinnerWords.some(word => lowerLine.includes(word))) return false
+if (trimmed.endsWith('...')) return false
+if (toolNames.some(tool => lowerLine === tool)) return false
+if (trimmed.length < 10 && !trimmed.includes(' ')) return false
+```
+
+---
+
 ### Session 75 - 2026-01-26 EST
 **Task**: BUG-23 + PHASE-2
 
