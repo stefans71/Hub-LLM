@@ -1,5 +1,5 @@
 {
-  "version": "5.1",
+  "version": "5.2",
   "updated": "2026-01-25",
   "session_docs": ["CLAUDE.md", "harness/feature_queue.json"],
   "vision": {
@@ -17,10 +17,52 @@
   },
   "queue": [
     {
+      "id": "CLAUDE-02-REWORK",
+      "name": "Chat Area as Terminal Mirror for Claude Code",
+      "size": "L",
+      "priority": 1,
+      "status": "pending",
+      "description": "Replace one-shot `claude -p` approach with live terminal session. Chat area becomes a styled terminal view into VPS where Claude Code runs. Zero processing on our side - just display.",
+      "current": "CLAUDE-02 runs `claude -p 'prompt'` one-shot commands via SSH. No conversation context, no streaming, no interactive features.",
+      "context": "When user selects Anthropic model + has VPS with Claude Code authenticated, the chat should connect to a live Claude Code session on their VPS, not run one-shot commands.",
+      "approach": [
+        "PHASE 1 - Terminal in Chat Area:",
+        "- When Anthropic model selected + Claude Code ready, chat area shows/becomes terminal",
+        "- Terminal connects to VPS via existing SSH WebSocket",
+        "- Auto-run `claude` command on connect to start Claude Code session",
+        "- User types in chat input → sends to terminal stdin",
+        "- Terminal output displays in chat area",
+        "- This is literally xterm.js in the chat area - we already have this working in LLM-Dev",
+        "",
+        "PHASE 2 - Pretty Rendering (same terminal, styled output):",
+        "- Detect Claude Code output patterns (prompts, responses, thinking blocks)",
+        "- Render in chat bubble style instead of raw terminal",
+        "- User messages → right-aligned bubbles",
+        "- Claude responses → left-aligned bubbles with avatar",
+        "- Still zero processing - just CSS/display formatting of terminal output",
+        "- Raw terminal view available in LLM-Dev panel below"
+      ],
+      "investigation": [
+        "Before implementing, investigate:",
+        "1. What are Claude Code's output patterns? (How to detect user vs assistant text)",
+        "2. Does Claude Code use ANSI codes or special markers we can parse?",
+        "3. Can we intercept xterm.js output stream for pattern matching?",
+        "4. How does `claude --resume` work - can we list/select conversations?"
+      ],
+      "change": [
+        "Remove or deprecate the `claude -p` one-shot approach from CLAUDE-02",
+        "Create terminal-based chat component for Anthropic model mode",
+        "Wire chat input to terminal stdin when in Claude Code mode",
+        "Add output pattern detection for chat bubble rendering",
+        "Keep raw terminal visible in LLM-Dev panel as fallback/debug view"
+      ],
+      "test": "Select Anthropic model with VPS + Claude Code → chat area shows Claude Code session → type message → Claude responds → shows in chat bubbles → same conversation visible in LLM-Dev terminal"
+    },
+    {
       "id": "SETTINGS-01",
       "name": "Wire Settings Connected Status to Real Detection",
       "size": "S",
-      "priority": 1,
+      "priority": 2,
       "status": "pending",
       "description": "Settings page shows mock 'Anthropic connected' - wire to real Claude Code detection",
       "current": "Settings shows hardcoded mock status for Anthropic connection",
@@ -38,7 +80,7 @@
       "id": "MODEL-04",
       "name": "Dynamic Model List from OpenRouter API",
       "size": "M",
-      "priority": 1,
+      "priority": 2,
       "status": "pending",
       "description": "Replace hardcoded MODEL_LIST with live data from OpenRouter public API",
       "current": "Model selector uses hardcoded MODEL_LIST with ~16 models",
@@ -59,7 +101,7 @@
       "id": "CLAUDE-03",
       "name": "Claude Resume Conversation Support",
       "size": "M",
-      "priority": 2,
+      "priority": 3,
       "status": "pending",
       "description": "Support resuming previous Claude Code conversations",
       "current": "Each chat session starts fresh, no history",
@@ -77,7 +119,7 @@
     {"id": "ONBOARD-01", "name": "Setup Wizard Skeleton", "completed": "2026-01-25"},
     {"id": "MODEL-03", "name": "Billing Switch Warning Popup", "completed": "2026-01-25"},
     {"id": "MODEL-02", "name": "Billing Source Detection and Display", "completed": "2026-01-25"},
-    {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS", "completed": "2026-01-25"},
+    {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS (one-shot approach - needs rework)", "completed": "2026-01-25"},
     {"id": "MODEL-01", "name": "Per-Project Model Persistence", "completed": "2026-01-25"},
     {"id": "CLAUDE-01", "name": "Detect Claude Code on VPS", "completed": "2026-01-25"},
     {"id": "AUTH-01", "name": "Password Validation Rules", "completed": "2026-01-25"},
