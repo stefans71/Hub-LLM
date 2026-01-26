@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import AuthPage from './components/AuthPage'
 import AuthCallback from './components/AuthCallback'
@@ -18,6 +18,7 @@ function AppContent() {
   const { user, logout, isAuthenticated, loading, getAuthHeader } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [projects, setProjects] = useState([])
   const [activeProject, setActiveProject] = useState(null)
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
@@ -53,6 +54,16 @@ function AppContent() {
       const data = await res.json()
       setProjects(data)
       if (data.length > 0 && !activeProject) {
+        // BUG-21: Check URL for projectId parameter on page refresh
+        const urlProjectId = searchParams.get('projectId')
+        if (urlProjectId) {
+          const urlProject = data.find(p => String(p.id) === urlProjectId)
+          if (urlProject) {
+            setActiveProject(urlProject)
+            return
+          }
+        }
+        // Fallback to first project
         setActiveProject(data[0])
       }
     } catch (err) {
@@ -81,7 +92,8 @@ function AppContent() {
   const handleProjectCreated = (project) => {
     setProjects([...projects, project])
     setActiveProject(project)
-    navigate('/workspace')
+    // BUG-21: Include projectId in URL for page refresh persistence
+    navigate(`/workspace?projectId=${project.id}`)
   }
 
   const handleLogout = async () => {
@@ -139,11 +151,17 @@ function AppContent() {
             activeProject={activeProject}
             onSelectProject={(project) => {
               setActiveProject(project)
-              navigate('/workspace')
+              // BUG-21: Include projectId in URL for page refresh persistence
+              navigate(`/workspace?projectId=${project.id}`)
             }}
             onNavigate={(view, project) => {
               if (project) setActiveProject(project)
-              navigate(`/${view}`)
+              // BUG-21: Include projectId in URL when navigating to workspace
+              if (view === 'workspace' && project?.id) {
+                navigate(`/workspace?projectId=${project.id}`)
+              } else {
+                navigate(`/${view}`)
+              }
             }}
             onCreateProject={() => navigate('/create-project')}
             currentView={currentView}
@@ -175,7 +193,12 @@ function AppContent() {
                 <Dashboard
                   onNavigate={(view, project) => {
                     if (project) setActiveProject(project)
-                    navigate(`/${view}`)
+                    // BUG-21: Include projectId in URL when navigating to workspace
+                    if (view === 'workspace' && project?.id) {
+                      navigate(`/workspace?projectId=${project.id}`)
+                    } else {
+                      navigate(`/${view}`)
+                    }
                   }}
                   onCreateProject={() => navigate('/create-project')}
                 />

@@ -4,6 +4,66 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 73 - 2026-01-26 EST
+**Task**: BUG-21 - Project Switch/Refresh Doesn't Reconnect VPS or Load Chat Terminal
+**What**: Fixed project not persisting in URL, causing wrong project to load on refresh
+
+**Root Causes Found**:
+1. **URL didn't track project ID**: `/workspace` had no query param, so refresh loaded first project from DB
+2. **linkedServerId not updating**: State initialized from `project?.vps_server_id` but never updated when project prop changed
+
+**Solution**:
+1. **App.jsx** - URL project persistence:
+   - Added `useSearchParams` hook to read/write URL params
+   - Navigation to workspace now includes `?projectId={id}`
+   - On page load, `loadProjects()` checks URL for `projectId` and sets that project as active
+   - All navigation points updated: `onSelectProject`, `onNavigate`, `handleProjectCreated`, Dashboard
+
+2. **Workspace.jsx** - linkedServerId sync:
+   - Added `useEffect` that updates `linkedServerId` when `project` prop changes
+   - Critical for page refresh: component mounts with null project, then receives project after load
+   - Without this, `linkedServerId` stayed null even after project loaded
+
+3. **ClaudeCodeTerminalChat.jsx** - Project switch handling:
+   - Added `projectSlug` to reconnect useEffect dependency
+   - Ensures terminal reconnects when switching to different project (even with same VPS)
+
+**Key Pattern - URL State Persistence**:
+```javascript
+// Read from URL on load
+const [searchParams] = useSearchParams()
+const urlProjectId = searchParams.get('projectId')
+if (urlProjectId) {
+  const project = data.find(p => String(p.id) === urlProjectId)
+  if (project) setActiveProject(project)
+}
+
+// Write to URL on navigation
+navigate(`/workspace?projectId=${project.id}`)
+```
+
+**Key Pattern - Sync State from Props**:
+```javascript
+// Initialize from prop
+const [linkedServerId, setLinkedServerId] = useState(project?.vps_server_id || null)
+
+// CRITICAL: Update when prop changes (for page refresh)
+useEffect(() => {
+  if (project?.vps_server_id) {
+    setLinkedServerId(project.vps_server_id)
+  } else {
+    setLinkedServerId(null)
+  }
+}, [project?.id, project?.vps_server_id])
+```
+
+**Files Modified**:
+- frontend/src/App.jsx (URL param handling)
+- frontend/src/components/Workspace.jsx (linkedServerId sync)
+- frontend/src/components/ClaudeCodeTerminalChat.jsx (projectSlug reconnect)
+
+---
+
 ### Session 72 - 2026-01-26 EST
 **Task**: CLAUDE-02-REWORK (Phase 1) - Terminal-based Chat for Claude Code
 **What**: Replace one-shot `claude -p` approach with live terminal session in chat area

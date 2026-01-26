@@ -17,24 +17,6 @@
   },
   "queue": [
     {
-      "id": "BUG-21",
-      "name": "Project Switch/Refresh Doesn't Reconnect VPS or Load Chat Terminal",
-      "size": "M",
-      "priority": 1,
-      "status": "pending",
-      "description": "Clicking existing project in sidebar or refreshing page doesn't reconnect VPS or load Claude Code terminal",
-      "current": "VPS shows disconnected in LLM-Dev, chat terminal doesn't load. Only works on fresh project creation flow.",
-      "change": [
-        "On project select/switch in sidebar: load project's vps_server_id",
-        "Auto-reconnect to VPS using saved credentials from localStorage (vps_servers)",
-        "Or prompt user with reconnect button if auto-connect fails",
-        "After VPS connects: re-run Claude Code detection",
-        "Load appropriate chat view based on detection results",
-        "Same flow must work on page refresh - check URL for project ID, load and connect"
-      ],
-      "test": "Create project with VPS → refresh page → VPS auto-reconnects → Claude Code terminal loads. Click different project → same behavior."
-    },
-    {
       "id": "BUG-17",
       "name": "Setup Wizard VPS Test Connection Not Working",
       "size": "S",
@@ -168,6 +150,7 @@
     }
   ],
   "completed": [
+    {"id": "BUG-21", "name": "Project Switch/Refresh Doesn't Reconnect VPS or Load Chat Terminal", "completed": "2026-01-26"},
     {"id": "BUG-18", "name": "Claude Code Terminal in Chat Not Receiving Keyboard Input", "completed": "2026-01-26"},
     {"id": "CLAUDE-02-REWORK", "name": "Chat Area as Terminal Mirror for Claude Code (Phase 1)", "completed": "2026-01-26"},
     {"id": "ONBOARD-01", "name": "Setup Wizard Skeleton", "completed": "2026-01-25"},

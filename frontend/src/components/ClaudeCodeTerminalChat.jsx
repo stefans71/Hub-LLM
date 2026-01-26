@@ -235,13 +235,13 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
     }
   }, []) // Only run once on mount
 
-  // Reconnect when serverId changes
+  // Reconnect when serverId or projectSlug changes (BUG-21: handles project switch)
   useEffect(() => {
     if (xtermRef.current && serverId) {
       xtermRef.current.clear()
       connect()
     }
-  }, [serverId])
+  }, [serverId, projectSlug])
 
   // Handle resize
   useEffect(() => {

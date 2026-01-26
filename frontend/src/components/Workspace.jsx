@@ -85,6 +85,15 @@ export default function Workspace({ project, model, apiKeys }) {
     }
   }, [project?.id, project?.selected_model])
 
+  // BUG-21: Update linkedServerId when project changes (critical for page refresh)
+  useEffect(() => {
+    if (project?.vps_server_id) {
+      setLinkedServerId(project.vps_server_id)
+    } else {
+      setLinkedServerId(null)
+    }
+  }, [project?.id, project?.vps_server_id])
+
   // Check initial connection status when project changes - auto-connect if VPS was verified
   useEffect(() => {
     if (project?.vps_server_id) {
