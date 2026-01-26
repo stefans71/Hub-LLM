@@ -264,7 +264,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                 const hasPromptAtEnd = lastNonEmptyLine?.trim() === '>' ||
                                        lastNonEmptyLine?.trim().startsWith('> ')
 
-                // Filter out prompt lines and user echo, keep only Claude's response
+                // Filter out prompt lines, user echo, and Claude Code UI elements
                 const responseLines = lines.filter(line => {
                   const trimmed = line.trim()
                   // Skip empty lines, prompt lines, and echoed user input
@@ -272,6 +272,28 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                   if (trimmed.startsWith('> ')) return false
                   // Skip lines that match the last user input (echo)
                   if (lastUserInputRef.current && trimmed === lastUserInputRef.current) return false
+
+                  // Skip Claude Code status bar and UI elements
+                  // Status bar contains model names, project info, token counts
+                  const lowerLine = trimmed.toLowerCase()
+                  if (lowerLine.includes('opus') && (lowerLine.includes('4') || lowerLine.includes('claude'))) return false
+                  if (lowerLine.includes('sonnet') && (lowerLine.includes('3') || lowerLine.includes('4') || lowerLine.includes('claude'))) return false
+                  if (lowerLine.includes('haiku') && lowerLine.includes('claude')) return false
+                  // Skip token count lines (e.g., "123 tokens", "~500 tokens")
+                  if (/\d+\s*(tokens?|tk)/i.test(trimmed)) return false
+                  // Skip cost lines (e.g., "$0.05", "cost:")
+                  if (/\$\d+\.\d+/.test(trimmed) || lowerLine.includes('cost:')) return false
+                  // Skip path lines from cd command
+                  if (trimmed.startsWith('/root/') || trimmed.includes('llm-hub-projects')) return false
+                  // Skip command echo (cd ... && claude)
+                  if (trimmed.includes('&& claude') || trimmed.startsWith('cd /')) return false
+                  // Skip status indicators and progress
+                  if (lowerLine.includes('thinking') || lowerLine.includes('processing')) return false
+                  // Skip lines that are just special characters or dividers
+                  if (/^[-=_*~]+$/.test(trimmed)) return false
+                  // Skip very short lines that look like UI fragments (< 3 chars, not punctuation continuation)
+                  if (trimmed.length < 3 && !/^[.!?]$/.test(trimmed)) return false
+
                   return true
                 })
 
