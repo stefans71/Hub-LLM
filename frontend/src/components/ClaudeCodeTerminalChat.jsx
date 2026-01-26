@@ -130,12 +130,14 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       setStatus('claude_starting')
 
-      // First cd to project directory if slug provided, then start claude
+      // First cd to project directory if slug provided, then start claude --resume
+      // Using --resume allows continuing previous conversations on reconnect
+      // If no previous conversation exists, Claude Code will prompt to start a new one
       let command = ''
       if (projectSlug) {
-        command = `cd /root/llm-hub-projects/${projectSlug} && claude\n`
+        command = `cd /root/llm-hub-projects/${projectSlug} && claude --resume\n`
       } else {
-        command = 'claude\n'
+        command = 'claude --resume\n'
       }
 
       wsRef.current.send(JSON.stringify({ type: 'input', data: command }))
