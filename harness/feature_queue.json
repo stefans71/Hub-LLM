@@ -1,5 +1,5 @@
 {
-  "version": "5.5",
+  "version": "5.6",
   "updated": "2026-01-26",
   "session_docs": ["CLAUDE.md", "harness/feature_queue.json"],
   "vision": {
@@ -17,21 +17,38 @@
   },
   "queue": [
     {
-      "id": "FEAT-10",
-      "name": "Share Claude Code Session Between Chat and LLM-Dev Terminal",
-      "size": "M",
+      "id": "INFRA-01",
+      "name": "SSH Connection Multiplexing",
+      "size": "L",
       "priority": 2,
       "status": "pending",
-      "description": "Chat area and LLM-Dev terminal should show the same Claude Code session",
-      "current": "Chat terminal and LLM-Dev terminal are separate SSH connections - two different sessions",
+      "description": "Single SSH connection per VPS with multiplexed PTY channels (like VS Code Remote)",
+      "current": "Each terminal creates separate SSH connection - can timeout independently, status out of sync",
       "change": [
-        "When Claude Code mode active, use single shared WebSocket connection",
-        "Chat area shows styled view of session (Phase 2: chat bubbles)",
-        "LLM-Dev terminal shows raw view of same session",
-        "User can interact from either view",
-        "Input from chat goes to shared session, output appears in both views"
+        "Backend maintains ONE SSH connection per VPS",
+        "Multiple PTY channels over single connection (SSH native multiplexing)",
+        "All terminals for same VPS share fate - if connection drops, all drop together",
+        "Unified connection status across all components",
+        "Project sidebar dot, chat status, LLM-Dev status all sync from same source"
       ],
-      "test": "Type in chat → appears in LLM-Dev terminal. Type in LLM-Dev → appears in chat. Same conversation."
+      "test": "Open 3 terminals to same VPS. Kill SSH. All 3 show disconnected simultaneously. All status indicators turn red."
+    },
+    {
+      "id": "FEAT-10",
+      "name": "Project-Specific Claude Code Sessions",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Ensure Claude Code conversations are isolated per project with no history leaking",
+      "current": "Claude --resume runs in project directory, should isolate history. Needs verification.",
+      "change": [
+        "Verify: switching projects disconnects old Claude session, starts fresh in new project dir",
+        "Verify: claude --resume only shows conversations from current project",
+        "Store last conversation ID per project in localStorage",
+        "On project switch: clear chat messages, reconnect to correct project directory",
+        "Add subtle pulse animation on active project dot when Claude is processing"
+      ],
+      "test": "Chat in Fishing App → switch to Other Project → see empty chat → switch back → can resume Fishing App conversation"
     },
     {
       "id": "SETTINGS-01",
