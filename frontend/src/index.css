@@ -555,7 +555,7 @@
   /* BUG-22: Constrain width for readability when sidebar is closed */
   max-width: 1000px;
   width: 100%;
-  margin: 0 auto; /* Center when constrained */
+  /* Left-aligned with content area, not centered */
 }
 
 .claude-code-status-bar {
@@ -625,6 +625,12 @@
 .claude-code-terminal-area .xterm-viewport {
   overflow-y: scroll !important;
   scrollbar-width: auto;
+}
+
+/* BUG-22: Prevent xterm-screen from blocking scrollbar clicks */
+/* The screen element captures mouse events - shrink it to not cover scrollbar */
+.claude-code-terminal-area .xterm-screen {
+  width: calc(100% - 14px) !important; /* Leave room for 14px scrollbar */
 }
 
 /* Style the xterm scrollbar in Claude Code terminal */
