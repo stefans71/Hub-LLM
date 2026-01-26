@@ -201,6 +201,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
   const echoTimeoutRef = useRef(null) // Timer to detect echo completion
   const [isProcessing, setIsProcessing] = useState(false) // True when waiting for Claude's response
   const [processingText, setProcessingText] = useState('') // Current spinner text (e.g., "Channeling...")
+  const [terminalReady, setTerminalReady] = useState(false) // True when xterm is mounted and ready
 
   // Connect to WebSocket
   const connect = useCallback(async () => {
@@ -605,10 +606,11 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       // Mount terminal
       term.open(terminalRef.current)
 
-      // Fit terminal to container
+      // Fit terminal to container and mark as ready
       requestAnimationFrame(() => {
         if (fitAddonRef.current && mounted) {
           fitAddonRef.current.fit()
+          setTerminalReady(true)
         }
       })
 
@@ -898,13 +900,21 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
           </div>
         )}
 
+        {/* Terminal Loading State */}
+        {viewMode === 'terminal' && !terminalReady && (
+          <div className="claude-code-terminal-loading">
+            <div className="terminal-loading-spinner"></div>
+            <p>Loading terminal...</p>
+          </div>
+        )}
+
         {/* Terminal Display Area - always rendered but hidden when in bubbles mode */}
         {/* BUG-18 FIX: Click to focus terminal for keyboard input */}
         <div
           ref={terminalRef}
           className="claude-code-terminal-area"
           onClick={handleTerminalClick}
-          style={{ display: viewMode === 'terminal' ? 'block' : 'none' }}
+          style={{ display: viewMode === 'terminal' && terminalReady ? 'block' : 'none' }}
         />
 
         {/* Chat Input Area (same as regular Chat) */}
