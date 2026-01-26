@@ -6,10 +6,13 @@ All terminals to the same VPS share fate - if connection drops, all drop togethe
 """
 import asyncio
 import asyncssh
+import logging
 from typing import Optional, Callable, AsyncGenerator
 from dataclasses import dataclass, field
 from enum import Enum
 import uuid
+
+logger = logging.getLogger(__name__)
 
 
 class ConnectionStatus(Enum):
@@ -122,8 +125,10 @@ class VPSConnection:
         """
         async with self._connect_lock:
             if self.conn and self.status == ConnectionStatus.CONNECTED:
+                logger.info(f"Already connected to {self.server_id}")
                 return True
 
+            logger.info(f"Connecting to {self.credentials.host}:{self.credentials.port} as {self.credentials.username}")
             self.status = ConnectionStatus.CONNECTING
             self.error_message = None
             await self._notify_status_change()
@@ -137,29 +142,36 @@ class VPSConnection:
                 }
 
                 if self.credentials.private_key:
+                    logger.info(f"Using private key authentication (key length: {len(self.credentials.private_key)})")
                     key = asyncssh.import_private_key(
                         self.credentials.private_key,
                         passphrase=self.credentials.passphrase
                     )
                     connect_kwargs["client_keys"] = [key]
                 elif self.credentials.password:
+                    logger.info("Using password authentication")
                     connect_kwargs["password"] = self.credentials.password
+                else:
+                    logger.warning("No authentication method provided!")
 
                 self.conn = await asyncio.wait_for(
                     asyncssh.connect(**connect_kwargs),
                     timeout=timeout
                 )
 
+                logger.info(f"SSH connection established to {self.credentials.host}")
                 self.status = ConnectionStatus.CONNECTED
                 await self._notify_status_change()
                 return True
 
             except asyncio.TimeoutError:
+                logger.error(f"Connection timeout to {self.credentials.host}")
                 self.status = ConnectionStatus.ERROR
                 self.error_message = f"Connection to {self.credentials.host} timed out"
                 await self._notify_status_change()
                 raise
             except Exception as e:
+                logger.error(f"Connection failed: {type(e).__name__}: {e}")
                 self.status = ConnectionStatus.ERROR
                 self.error_message = str(e)
                 await self._notify_status_change()
@@ -170,15 +182,40 @@ class VPSConnection:
         Create a new PTY channel on this connection.
         If not connected, will connect first.
         """
+        logger.info(f"Creating channel on {self.server_id}, current status: {self.status}, conn: {self.conn is not None}")
+
         if not self.conn or self.status != ConnectionStatus.CONNECTED:
+            logger.info(f"Not connected, calling connect() for {self.server_id}")
             await self.connect()
 
         channel_id = str(uuid.uuid4())
+        logger.info(f"Creating PTY process for channel {channel_id[:8]}")
 
-        process = await self.conn.create_process(
-            term_type="xterm-256color",
-            term_size=(cols, rows)
-        )
+        try:
+            process = await self.conn.create_process(
+                term_type="xterm-256color",
+                term_size=(cols, rows)
+            )
+            logger.info(f"PTY process created successfully for {channel_id[:8]}")
+        except asyncssh.ChannelOpenError as e:
+            logger.warning(f"ChannelOpenError: {e}, attempting reconnect")
+            # Connection might be stale - mark as disconnected and retry
+            self.status = ConnectionStatus.DISCONNECTED
+            self.conn = None
+            await self._notify_status_change()
+            # Reconnect and try again
+            await self.connect()
+            process = await self.conn.create_process(
+                term_type="xterm-256color",
+                term_size=(cols, rows)
+            )
+        except Exception as e:
+            logger.error(f"Failed to create PTY: {type(e).__name__}: {e}")
+            # Mark connection as failed
+            self.status = ConnectionStatus.ERROR
+            self.error_message = f"Failed to create terminal: {str(e)}"
+            await self._notify_status_change()
+            raise
 
         channel = PTYChannel(
             id=channel_id,
@@ -279,8 +316,14 @@ class VPSConnectionManager:
         # One VPSConnection per server_id
         self._connections: dict[str, VPSConnection] = {}
 
-        # Lock for creating connections
-        self._lock = asyncio.Lock()
+        # Lock for creating connections (lazy init to avoid event loop issues)
+        self._lock: Optional[asyncio.Lock] = None
+
+    def _get_lock(self) -> asyncio.Lock:
+        """Get or create the lock (lazy init for event loop compatibility)"""
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
 
     async def get_connection(self, server_id: str, credentials: SSHCredentials) -> VPSConnection:
         """
@@ -290,7 +333,7 @@ class VPSConnectionManager:
         If connection exists but is dead, recreates it.
         If no connection, creates new one.
         """
-        async with self._lock:
+        async with self._get_lock():
             if server_id in self._connections:
                 conn = self._connections[server_id]
                 # Check if connection is still alive
