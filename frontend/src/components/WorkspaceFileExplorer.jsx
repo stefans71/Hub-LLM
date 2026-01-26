@@ -301,29 +301,6 @@ export default function WorkspaceFileExplorer({
     navigate(`/settings?project=${project.id}`)
   }
 
-  const handleDisconnectVps = async (project) => {
-    handleMenuClose()
-    if (!project.vps_server_id) return
-
-    // Update project to remove VPS link
-    try {
-      const res = await fetch(`/api/projects/${project.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeader()
-        },
-        body: JSON.stringify({ vps_server_id: null })
-      })
-      if (res.ok) {
-        // Refresh projects list
-        loadProjects()
-      }
-    } catch (err) {
-      console.error('Failed to disconnect VPS:', err)
-    }
-  }
-
   const handleDelete = (project) => {
     handleMenuClose()
     // UI-06: Open delete confirmation modal
@@ -759,32 +736,6 @@ export default function WorkspaceFileExplorer({
                                     </svg>
                                     Settings
                                   </button>
-                                  {hasVps && (
-                                    <button
-                                      onClick={() => handleDisconnectVps(project)}
-                                      style={{
-                                        width: '100%',
-                                        padding: '8px 12px',
-                                        background: 'transparent',
-                                        border: 'none',
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                        fontSize: '13px',
-                                        color: 'var(--text-primary)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px'
-                                      }}
-                                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
-                                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-                                        <line x1="12" y1="2" x2="12" y2="12" />
-                                      </svg>
-                                      Disconnect VPS
-                                    </button>
-                                  )}
                                   <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
                                   <button
                                     onClick={() => handleDelete(project)}
