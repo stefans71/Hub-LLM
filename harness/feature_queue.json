@@ -1,5 +1,5 @@
 {
-  "version": "5.0",
+  "version": "5.1",
   "updated": "2026-01-25",
   "session_docs": ["CLAUDE.md", "harness/feature_queue.json"],
   "vision": {
@@ -17,127 +17,49 @@
   },
   "queue": [
     {
-      "id": "AUTH-01",
-      "name": "Password Validation Rules",
-      "size": "XS",
-      "priority": 1,
-      "status": "completed",
-      "description": "Add password strength requirements on signup",
-      "current": "No password validation - any password accepted",
-      "change": [
-        "Add validation: min 8 chars, 1 uppercase, 1 number, 1 special character",
-        "Show validation feedback in real-time as user types",
-        "Block form submission if requirements not met",
-        "Apply to both signup and password change"
-      ],
-      "test": "Signup with 'abc' fails with helpful message. Signup with 'Test1234!' succeeds."
-    },
-    {
-      "id": "CLAUDE-01",
-      "name": "Detect Claude Code on VPS",
+      "id": "SETTINGS-01",
+      "name": "Wire Settings Connected Status to Real Detection",
       "size": "S",
       "priority": 1,
-      "status": "completed",
-      "description": "When VPS connects, detect if Claude Code is installed and authenticated",
-      "current": "Model selector shows mock 'INCLUDED' for Anthropic - not actually detecting",
+      "status": "pending",
+      "description": "Settings page shows mock 'Anthropic connected' - wire to real Claude Code detection",
+      "current": "Settings shows hardcoded mock status for Anthropic connection",
       "change": [
-        "On VPS connect: run `which claude` to check if installed",
-        "If installed: run `claude --version` to verify working",
-        "Store detection result in project/server state",
-        "Update model selector: show real status instead of mock 'INCLUDED'",
-        "If not installed: show 'Install Claude Code' link → setup guide"
+        "In Settings, show real connection status for:",
+        "- OpenRouter: Check if API key exists in localStorage and display status",
+        "- Anthropic: Check if any saved VPS has Claude Code authenticated",
+        "- VPS list: Show which VPSes have Claude Code installed/authenticated",
+        "Reuse detection logic pattern from CLAUDE-01 (run which claude and claude --version)",
+        "Note: Settings.jsx is very large - use grep/offset to read specific sections"
       ],
-      "test": "Connect VPS with Claude Code → Anthropic models enabled. Connect VPS without → shows install prompt."
+      "test": "Settings shows real status - Anthropic only 'connected' if Claude Code detected on a VPS"
     },
     {
-      "id": "MODEL-01",
-      "name": "Per-Project Model Persistence",
-      "size": "S",
-      "priority": 1,
-      "status": "completed",
-      "description": "Store selected model per project instead of globally",
-      "current": "Model selection is global - same for all projects",
-      "change": [
-        "Add selectedModel field to project in database/localStorage",
-        "Load project's model when entering workspace",
-        "Save model choice when user changes it",
-        "Default to last used model for new projects"
-      ],
-      "test": "Select Opus in Project A, Sonnet in Project B. Switch between → each keeps its model."
-    },
-    {
-      "id": "CLAUDE-02",
-      "name": "Route Chat to Claude Code on VPS",
+      "id": "MODEL-04",
+      "name": "Dynamic Model List from OpenRouter API",
       "size": "M",
       "priority": 1,
-      "status": "completed",
-      "description": "When Anthropic model selected + Claude Code detected, pipe chat to VPS instead of OpenRouter",
-      "current": "All chat goes through OpenRouter API regardless of model",
+      "status": "pending",
+      "description": "Replace hardcoded MODEL_LIST with live data from OpenRouter public API",
+      "current": "Model selector uses hardcoded MODEL_LIST with ~16 models",
       "change": [
-        "Detect when user selects Anthropic model AND Claude Code available on VPS",
-        "Create new chat routing: Chat input → SSH → `claude` command on VPS",
-        "Pipe Claude Code stdout back to chat UI as response",
-        "Handle streaming output (Claude Code streams responses)",
-        "Maintain conversation context (Claude Code handles this on VPS side)"
+        "Fetch models from https://openrouter.ai/api/v1/models (public, no auth required)",
+        "Cache results in localStorage with timestamp (refresh daily or on demand)",
+        "Show ALL models in selector, even without API key",
+        "Without key: models greyed out with 'Add OpenRouter key' message",
+        "With key: all OpenRouter models enabled",
+        "Keep Anthropic models special case - show 'Pro Subscription' if Claude Code detected",
+        "Group models by provider (OpenAI, Anthropic, Meta, Google, etc.)",
+        "Update search to filter across full model list",
+        "Handle API fetch errors gracefully - fall back to cached or minimal default list"
       ],
-      "test": "Select Claude Opus with VPS connected + Claude Code installed → chat response comes from VPS, not OpenRouter."
-    },
-    {
-      "id": "MODEL-02",
-      "name": "Billing Source Detection and Display",
-      "size": "S",
-      "priority": 2,
-      "status": "completed",
-      "description": "Show user which billing source each model uses",
-      "current": "User doesn't know if they're using Pro sub or paid API",
-      "change": [
-        "For Anthropic models: detect if Claude Code available → show 'Pro Subscription'",
-        "For Anthropic models without Claude Code: show 'OpenRouter (paid)'",
-        "For other models: show 'OpenRouter (paid)'",
-        "Add subtle billing indicator in model selector"
-      ],
-      "test": "With Claude Code: Anthropic shows 'Pro'. Without: shows 'OpenRouter (paid)'."
-    },
-    {
-      "id": "MODEL-03",
-      "name": "Billing Switch Warning Popup",
-      "size": "S",
-      "priority": 2,
-      "status": "completed",
-      "description": "Warn user when switching to a paid-per-call model",
-      "current": "No warning when switching billing sources",
-      "change": [
-        "Detect when switching FROM Pro subscription TO OpenRouter billing",
-        "Show popup: 'You are switching to OpenRouter which bills per API call'",
-        "Include 'Don't show again' checkbox",
-        "Store preference in user settings"
-      ],
-      "test": "Using Claude via Pro → switch to DeepSeek → warning popup appears."
-    },
-    {
-      "id": "ONBOARD-01",
-      "name": "Setup Wizard Skeleton",
-      "size": "M",
-      "priority": 2,
-      "status": "completed",
-      "description": "Post-signup wizard to configure API keys and VPS",
-      "current": "Users go straight to dashboard after signup, may not know how to set up",
-      "change": [
-        "Create /setup route with step-based wizard",
-        "Redirect new users to /setup after first login",
-        "Step 1: Choose path - 'I have OpenRouter key' vs 'I have Anthropic Pro'",
-        "Step 2a (OpenRouter): Paste API key, validate, save",
-        "Step 2b (Anthropic Pro): Connect VPS first, then install Claude Code",
-        "Step 3: Optional VPS setup (if not done in 2b)",
-        "Mark setup complete in user profile, don't show again"
-      ],
-      "test": "New signup → redirected to /setup → complete steps → lands on dashboard."
+      "test": "No API key → see full model list greyed out. Add key → all enabled. Search 'llama' → shows all Llama variants from OpenRouter."
     },
     {
       "id": "CLAUDE-03",
       "name": "Claude Resume Conversation Support",
       "size": "M",
-      "priority": 3,
+      "priority": 2,
       "status": "pending",
       "description": "Support resuming previous Claude Code conversations",
       "current": "Each chat session starts fresh, no history",
@@ -152,10 +74,13 @@
     }
   ],
   "completed": [
-    {"id": "ONBOARD-01", "name": "Setup Wizard Skeleton", "completed": "2026-01-26"},
-    {"id": "MODEL-03", "name": "Billing Switch Warning Popup", "completed": "2026-01-26"},
-    {"id": "MODEL-02", "name": "Billing Source Detection and Display", "completed": "2026-01-26"},
-    {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS", "completed": "2026-01-26"},
+    {"id": "ONBOARD-01", "name": "Setup Wizard Skeleton", "completed": "2026-01-25"},
+    {"id": "MODEL-03", "name": "Billing Switch Warning Popup", "completed": "2026-01-25"},
+    {"id": "MODEL-02", "name": "Billing Source Detection and Display", "completed": "2026-01-25"},
+    {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS", "completed": "2026-01-25"},
+    {"id": "MODEL-01", "name": "Per-Project Model Persistence", "completed": "2026-01-25"},
+    {"id": "CLAUDE-01", "name": "Detect Claude Code on VPS", "completed": "2026-01-25"},
+    {"id": "AUTH-01", "name": "Password Validation Rules", "completed": "2026-01-25"},
     {"id": "CLEANUP-03", "name": "Fix Config Mismatch - Standardize on SQLite + Port 8000", "completed": "2026-01-25"},
     {"id": "FEAT-08", "name": "Chat File Drop and Paste", "completed": "2026-01-25"},
     {"id": "BUG-16", "name": "Terminal Pane Can't Resize Smaller", "completed": "2026-01-25"},
