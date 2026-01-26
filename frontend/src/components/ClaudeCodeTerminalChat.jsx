@@ -199,6 +199,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
   const lastUserInputRef = useRef(null) // Track last user input to avoid duplicates
   const waitingForEchoRef = useRef(false) // Skip output until echo completes
   const echoTimeoutRef = useRef(null) // Timer to detect echo completion
+  const [isProcessing, setIsProcessing] = useState(false) // True when waiting for Claude's response
+  const [processingText, setProcessingText] = useState('') // Current spinner text (e.g., "Channeling...")
 
   // Connect to WebSocket
   const connect = useCallback(async () => {
@@ -297,6 +299,20 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                   }
                   // Still waiting for echo to complete - skip this output
                   return
+                }
+
+                // Detect and display spinner/processing text
+                const lowerData = cleanData.toLowerCase()
+                const spinnerPatterns = [
+                  'channeling', 'catapulting', 'pollinating', 'percolating', 'bamboozling',
+                  'thinking', 'processing', 'analyzing', 'generating', 'writing'
+                ]
+                for (const pattern of spinnerPatterns) {
+                  if (lowerData.includes(pattern)) {
+                    // Capitalize first letter
+                    setProcessingText(pattern.charAt(0).toUpperCase() + pattern.slice(1) + '...')
+                    break
+                  }
                 }
 
                 // Append to buffer
@@ -435,6 +451,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                 // Clear buffer when we see the next prompt (response complete)
                 if (hasPromptAtEnd) {
                   outputBufferRef.current = ''
+                  setIsProcessing(false)
+                  setProcessingText('')
                 }
               }
             }
@@ -443,6 +461,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
           case 'error':
             setStatus('error')
             setError(message.message)
+            setIsProcessing(false)
+            setProcessingText('')
             if (xtermRef.current) {
               xtermRef.current.writeln(`\x1b[31mError: ${message.message}\x1b[0m`)
             }
@@ -450,6 +470,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
 
           case 'disconnected':
             setStatus('disconnected')
+            setIsProcessing(false)
+            setProcessingText('')
             if (xtermRef.current) {
               xtermRef.current.writeln('')
               xtermRef.current.writeln('\x1b[33mConnection closed\x1b[0m')
@@ -515,6 +537,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       // Clear output buffer and set flag to wait for echo to complete
       outputBufferRef.current = ''
       waitingForEchoRef.current = true
+      setIsProcessing(true)
+      setProcessingText('Thinking...')
 
       // Fallback: if no response indicator seen within 500ms, assume echo done
       if (echoTimeoutRef.current) clearTimeout(echoTimeoutRef.current)
@@ -671,10 +695,12 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       xtermRef.current.clear()
       xtermRef.current.writeln('\x1b[33mReconnecting...\x1b[0m')
     }
-    // PHASE-2: Clear chat messages on reconnect
+    // PHASE-2: Clear chat messages and processing state on reconnect
     setChatMessages([])
     outputBufferRef.current = ''
     lastUserInputRef.current = null
+    setIsProcessing(false)
+    setProcessingText('')
     connect()
   }
 
@@ -836,19 +862,37 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
         {/* PHASE-2: Chat Bubbles View */}
         {viewMode === 'bubbles' && (
           <div className="claude-code-bubbles-area">
-            {chatMessages.length === 0 ? (
+            {chatMessages.length === 0 && !isProcessing ? (
               <div className="claude-code-empty-state">
                 <Sparkles size={32} style={{ color: '#bb9af7', marginBottom: '12px' }} />
                 <p style={{ color: '#9ca3af', fontSize: '14px' }}>
                   {status === 'claude_ready'
                     ? 'Start a conversation with Claude Code'
-                    : 'Connecting to Claude Code...'}
+                    : status === 'error' || status === 'disconnected'
+                      ? 'Connection lost - click Reconnect'
+                      : 'Connecting to Claude Code...'}
                 </p>
               </div>
             ) : (
-              chatMessages.map((msg, i) => (
-                <ChatBubble key={i} message={msg} isUser={msg.role === 'user'} />
-              ))
+              <>
+                {chatMessages.map((msg, i) => (
+                  <ChatBubble key={i} message={msg} isUser={msg.role === 'user'} />
+                ))}
+                {/* Thinking indicator */}
+                {isProcessing && (
+                  <div className="claude-code-thinking">
+                    <div className="thinking-avatar">
+                      <Sparkles size={16} color="#fff" />
+                    </div>
+                    <div className="thinking-bubble">
+                      <div className="thinking-dots">
+                        <span></span><span></span><span></span>
+                      </div>
+                      <span className="thinking-text">{processingText || 'Thinking...'}</span>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
             <div ref={messagesEndRef} />
           </div>
