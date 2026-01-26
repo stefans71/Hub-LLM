@@ -103,7 +103,7 @@
       "name": "Billing Switch Warning Popup",
       "size": "S",
       "priority": 2,
-      "status": "pending",
+      "status": "completed",
       "description": "Warn user when switching to a paid-per-call model",
       "current": "No warning when switching billing sources",
       "change": [
@@ -152,6 +152,7 @@
     }
   ],
   "completed": [
+    {"id": "MODEL-03", "name": "Billing Switch Warning Popup", "completed": "2026-01-26"},
     {"id": "MODEL-02", "name": "Billing Source Detection and Display", "completed": "2026-01-26"},
     {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS", "completed": "2026-01-26"},
     {"id": "CLEANUP-03", "name": "Fix Config Mismatch - Standardize on SQLite + Port 8000", "completed": "2026-01-25"},

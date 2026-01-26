@@ -5,7 +5,9 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 70 - 2026-01-26 EST
-**Task**: MODEL-02 - Billing Source Detection and Display
+**Task**: MODEL-02, MODEL-03 - Billing Source Detection and Warning
+
+**MODEL-02: Billing Source Detection and Display**
 **What**: Show users which billing source each model uses in the model selector
 
 **Implementation**:
@@ -19,11 +21,29 @@ Track discoveries, patterns, and friction points for harness improvement.
    - Added billing badge to selected model button (shows "PRO" or "PAID")
    - Added billing label to each model in dropdown list
 
-**UI Changes**:
-- Model selector button: Shows "PRO" badge (green) when using Pro Subscription, "PAID" badge (amber) otherwise
-- Dropdown: Each model row shows its billing source on the right side
+**MODEL-03: Billing Switch Warning Popup**
+**What**: Warn user when switching from Pro subscription to paid-per-call model
+
+**Implementation**:
+1. Frontend (`ModelNotification.jsx`):
+   - Added `showDontShowAgain` prop to show checkbox
+   - Added `onDontShowAgainChange` callback for preference storage
+   - Checkbox state managed internally, fires callback on confirm
+
+2. Frontend (`WorkspaceTopBar.jsx`):
+   - Added `showBillingWarning` state for second modal
+   - Added `isCurrentModelPro()` to detect if current model uses Pro subscription
+   - Added `willUseOpenRouter()` to detect if new model will use OpenRouter
+   - Added `shouldShowBillingWarning()` to check localStorage preference
+   - Modified `handleModelSelect()` to detect billing switch and show warning
+   - Added billing warning handlers (confirm, cancel, dontShowAgain)
+   - Added second ModelNotification for billing warning with checkbox
+
+**Preference Storage**:
+- `localStorage.hide_billing_switch_warning` = 'true' when user checks "Don't show again"
 
 **Files Modified**:
+- frontend/src/components/ModelNotification.jsx
 - frontend/src/components/WorkspaceTopBar.jsx
 
 ---

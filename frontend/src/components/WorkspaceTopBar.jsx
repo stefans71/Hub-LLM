@@ -101,6 +101,7 @@ export default function WorkspaceTopBar({
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [selectedModel, setSelectedModel] = useState(() => getModelDisplay(model))
   const [showNotification, setShowNotification] = useState(false)
+  const [showBillingWarning, setShowBillingWarning] = useState(false)
   const [pendingModel, setPendingModel] = useState(null)
   const [searchFilter, setSearchFilter] = useState('')
   const [apiKeys, setApiKeys] = useState({ openrouter: false, anthropic: false })
@@ -202,6 +203,26 @@ export default function WorkspaceTopBar({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // MODEL-03: Check if current model is using Pro subscription
+  const isCurrentModelPro = () => {
+    const currentModelData = MODEL_LIST.find(m => m.name === selectedModel.name || m.id === selectedModel.id)
+    return currentModelData?.tier === 'subscription' && apiKeys.anthropic
+  }
+
+  // MODEL-03: Check if new model will use OpenRouter (paid)
+  const willUseOpenRouter = (modelItem) => {
+    // OpenRouter tier models always use OpenRouter
+    if (modelItem.tier === 'openrouter') return true
+    // Subscription tier models use OpenRouter if Claude Code not available
+    if (modelItem.tier === 'subscription' && !apiKeys.anthropic) return true
+    return false
+  }
+
+  // MODEL-03: Check if user dismissed billing warning
+  const shouldShowBillingWarning = () => {
+    return localStorage.getItem('hide_billing_switch_warning') !== 'true'
+  }
+
   const handleModelSelect = (modelItem) => {
     const color = PROVIDER_COLORS[modelItem.provider] || '#ef4444'
     const newModel = { name: modelItem.name, color, id: modelItem.id, provider: modelItem.provider }
@@ -212,10 +233,20 @@ export default function WorkspaceTopBar({
     if (modelItem.tier === 'openrouter' && !apiKeys.openrouter) {
       setPendingModel(newModel)
       setShowNotification(true)
-    } else {
-      setSelectedModel(newModel)
-      onModelChange?.(newModel)
+      return
     }
+
+    // MODEL-03: Detect billing source switch (Pro → OpenRouter)
+    const switchingFromProToOpenRouter = isCurrentModelPro() && willUseOpenRouter(modelItem)
+
+    if (switchingFromProToOpenRouter && shouldShowBillingWarning()) {
+      setPendingModel(newModel)
+      setShowBillingWarning(true)
+      return
+    }
+
+    setSelectedModel(newModel)
+    onModelChange?.(newModel)
   }
 
   // Filter and group models based on search and API key availability
@@ -291,6 +322,27 @@ export default function WorkspaceTopBar({
   const handleCancelModel = () => {
     setPendingModel(null)
     setShowNotification(false)
+  }
+
+  // MODEL-03: Billing warning handlers
+  const handleConfirmBillingSwitch = () => {
+    if (pendingModel) {
+      setSelectedModel(pendingModel)
+      onModelChange?.(pendingModel)
+      setPendingModel(null)
+    }
+    setShowBillingWarning(false)
+  }
+
+  const handleCancelBillingSwitch = () => {
+    setPendingModel(null)
+    setShowBillingWarning(false)
+  }
+
+  const handleDontShowBillingWarning = (checked) => {
+    if (checked) {
+      localStorage.setItem('hide_billing_switch_warning', 'true')
+    }
   }
 
   const toggleHeader = () => {
@@ -733,6 +785,18 @@ export default function WorkspaceTopBar({
         onConfirm={handleConfirmModel}
         title="Using OpenRouter API Key"
         body={`You're selecting ${pendingModel?.name || 'a model'} that will use your OpenRouter API key. Make sure you have configured your API key in Settings.`}
+      />
+
+      {/* MODEL-03: Billing Switch Warning Modal */}
+      <ModelNotification
+        isOpen={showBillingWarning}
+        onClose={handleCancelBillingSwitch}
+        onConfirm={handleConfirmBillingSwitch}
+        title="Switching to Paid API"
+        body={`You are switching from Pro Subscription to OpenRouter, which bills per API call. ${pendingModel?.name || 'This model'} will be charged to your OpenRouter account.`}
+        iconColor="rgba(245, 158, 11, 0.2)"
+        showDontShowAgain={true}
+        onDontShowAgainChange={handleDontShowBillingWarning}
       />
     </div>
   )

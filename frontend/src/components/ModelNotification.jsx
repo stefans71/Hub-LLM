@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 
 /**
@@ -14,6 +15,7 @@ import { AlertTriangle } from 'lucide-react'
  * - M-07: Actions container
  * - M-08: Cancel button
  * - M-09: Confirm button
+ * - MODEL-03: "Don't show again" checkbox
  */
 export default function ModelNotification({
   isOpen,
@@ -21,9 +23,24 @@ export default function ModelNotification({
   onConfirm,
   title = 'Using OpenRouter API Key',
   body = "You're selecting a model that will use your OpenRouter API key.",
-  iconColor = 'rgba(249, 115, 22, 0.2)'
+  iconColor = 'rgba(249, 115, 22, 0.2)',
+  showDontShowAgain = false,
+  onDontShowAgainChange
 }) {
+  const [dontShowAgain, setDontShowAgain] = useState(false)
+
   if (!isOpen) return null
+
+  const handleConfirm = () => {
+    if (showDontShowAgain && dontShowAgain) {
+      onDontShowAgainChange?.(true)
+    }
+    onConfirm()
+  }
+
+  const handleCheckboxChange = (e) => {
+    setDontShowAgain(e.target.checked)
+  }
 
   return (
     <>
@@ -57,6 +74,33 @@ export default function ModelNotification({
           {body}
         </div>
 
+        {/* MODEL-03: Don't show again checkbox */}
+        {showDontShowAgain && (
+          <label style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '13px',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            marginTop: '12px',
+            marginBottom: '4px'
+          }}>
+            <input
+              type="checkbox"
+              checked={dontShowAgain}
+              onChange={handleCheckboxChange}
+              style={{
+                width: '16px',
+                height: '16px',
+                cursor: 'pointer',
+                accentColor: 'var(--primary)'
+              }}
+            />
+            Don't show this warning again
+          </label>
+        )}
+
         {/* M-07: Actions */}
         <div className="model-notification-actions">
           {/* M-08: Cancel Button */}
@@ -67,7 +111,7 @@ export default function ModelNotification({
           <button
             className="btn btn-primary"
             id="model-notification-confirm"
-            onClick={onConfirm}
+            onClick={handleConfirm}
           >
             Confirm
           </button>
