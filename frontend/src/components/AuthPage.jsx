@@ -1,8 +1,49 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { Mail, Lock, User, Github, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Mail, Lock, User, Github, Loader2, Eye, EyeOff, AlertCircle, Check, X } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
+
+// Password validation rules
+const passwordRules = [
+  { id: 'length', label: 'At least 8 characters', test: (pw) => pw.length >= 8 },
+  { id: 'uppercase', label: 'One uppercase letter', test: (pw) => /[A-Z]/.test(pw) },
+  { id: 'number', label: 'One number', test: (pw) => /\d/.test(pw) },
+  { id: 'special', label: 'One special character (!@#$%^&*)', test: (pw) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pw) }
+]
+
+// Validate password against all rules
+const validatePassword = (password) => {
+  return passwordRules.every(rule => rule.test(password))
+}
+
+// Password requirements component with real-time feedback
+function PasswordRequirements({ password }) {
+  if (!password) return null
+
+  return (
+    <div className="mt-2 p-3 bg-gray-700/50 rounded-lg">
+      <p className="text-xs text-gray-400 mb-2">Password must contain:</p>
+      <ul className="space-y-1">
+        {passwordRules.map(rule => {
+          const passed = rule.test(password)
+          return (
+            <li key={rule.id} className="flex items-center gap-2 text-xs">
+              {passed ? (
+                <Check size={14} className="text-green-400" />
+              ) : (
+                <X size={14} className="text-red-400" />
+              )}
+              <span className={passed ? 'text-green-400' : 'text-gray-400'}>
+                {rule.label}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
 
 /**
  * AuthPage Component
@@ -60,9 +101,9 @@ function AuthPage() {
           setError(result.error || 'Login failed')
         }
       } else {
-        // Validate password
-        if (formData.password.length < 8) {
-          setError('Password must be at least 8 characters')
+        // Validate password against all rules
+        if (!validatePassword(formData.password)) {
+          setError('Password does not meet all requirements')
           setLoading(false)
           return
         }
@@ -177,9 +218,8 @@ function AuthPage() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder={mode === 'signup' ? 'At least 8 characters' : 'Enter password'}
+                  placeholder={mode === 'signup' ? 'Create a strong password' : 'Enter password'}
                   required
-                  minLength={mode === 'signup' ? 8 : undefined}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg pl-10 pr-10 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition"
                 />
                 <button
@@ -190,6 +230,8 @@ function AuthPage() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {/* Password requirements feedback (signup only) */}
+              {mode === 'signup' && <PasswordRequirements password={formData.password} />}
             </div>
 
             {/* Forgot Password (login only) */}
@@ -208,7 +250,7 @@ function AuthPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (mode === 'signup' && !validatePassword(formData.password))}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white py-2.5 rounded-lg font-medium transition flex items-center justify-center gap-2"
             >
               {loading ? (

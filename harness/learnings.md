@@ -4,6 +4,36 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 68 - 2026-01-26 EST
+**Task**: AUTH-01 - Password Validation Rules
+**What**: Added password strength requirements to signup and password reset
+
+**Implementation**:
+1. Frontend (AuthPage.jsx):
+   - Added `passwordRules` array with 4 validation rules (length, uppercase, number, special char)
+   - Created `PasswordRequirements` component showing real-time feedback as user types
+   - Submit button disabled until all requirements met
+   - Shows green check/red X for each rule
+
+2. Backend (routers/auth.py):
+   - Added `validate_password()` helper function with regex checks
+   - Applied to `/signup` and `/reset-password` endpoints
+   - Returns specific error message indicating which requirement failed
+
+**Password Requirements**:
+- Min 8 characters
+- At least 1 uppercase letter (A-Z)
+- At least 1 number (0-9)
+- At least 1 special character (!@#$%^&*)
+
+**Files Modified**:
+- frontend/src/components/AuthPage.jsx
+- backend/routers/auth.py
+
+**Note**: No password change feature exists yet (mentioned in task description but not implemented). Validation applies to signup and reset-password endpoints.
+
+---
+
 ### Session 67 - 2026-01-25 EST
 **Task**: CLEANUP-03 - Fix Config Mismatch - Standardize on SQLite + Port 8000
 **What**: Aligned configuration files - Vite proxy now points to port 8000, init.sh no longer starts PostgreSQL/Docker

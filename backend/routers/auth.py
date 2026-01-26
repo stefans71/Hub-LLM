@@ -18,6 +18,29 @@ Endpoints:
 """
 from typing import Annotated
 import os
+import re
+
+
+def validate_password(password: str) -> tuple[bool, str]:
+    """
+    Validate password against security requirements.
+    Returns (is_valid, error_message).
+
+    Requirements:
+    - Min 8 characters
+    - At least 1 uppercase letter
+    - At least 1 number
+    - At least 1 special character
+    """
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters"
+    if not re.search(r'[A-Z]', password):
+        return False, "Password must contain at least one uppercase letter"
+    if not re.search(r'\d', password):
+        return False, "Password must contain at least one number"
+    if not re.search(r'[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]', password):
+        return False, "Password must contain at least one special character (!@#$%^&*)"
+    return True, ""
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.responses import RedirectResponse
@@ -118,11 +141,12 @@ async def signup(
             detail="Email already registered"
         )
 
-    # Validate password
-    if len(user_data.password) < 8:
+    # Validate password strength
+    is_valid, error_msg = validate_password(user_data.password)
+    if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters"
+            detail=error_msg
         )
 
     # Create user
@@ -307,10 +331,11 @@ async def reset_password_endpoint(
     db: AsyncSession = Depends(get_session)
 ):
     """Reset password with token"""
-    if len(data.new_password) < 8:
+    is_valid, error_msg = validate_password(data.new_password)
+    if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters"
+            detail=error_msg
         )
 
     user = await reset_password(db, data.token, data.new_password)
