@@ -131,6 +131,9 @@ class ProjectResponse(BaseModel):
     # Status
     status: str
 
+    # Selected model
+    selected_model: Optional[dict] = None
+
     # Timestamps
     created_at: datetime
     updated_at: datetime
@@ -149,6 +152,7 @@ class ProjectUpdate(BaseModel):
     agent_ids: Optional[List[str]] = None
     mcp_server_ids: Optional[List[str]] = None
     status: Optional[str] = None
+    selected_model: Optional[dict] = None
 
 
 def db_to_response(project: ProjectModel) -> ProjectResponse:
@@ -176,6 +180,7 @@ def db_to_response(project: ProjectModel) -> ProjectResponse:
         agent_ids=json.loads(project.agent_ids) if project.agent_ids else [],
         mcp_server_ids=json.loads(project.mcp_server_ids) if project.mcp_server_ids else [],
         status=project.status,
+        selected_model=json.loads(project.selected_model) if project.selected_model else None,
         created_at=project.created_at,
         updated_at=project.updated_at
     )
@@ -255,6 +260,8 @@ async def update_project(project_id: str, update: ProjectUpdate):
             if field == "context" and value is not None:
                 setattr(project, field, json.dumps(value.model_dump() if hasattr(value, 'model_dump') else value))
             elif field in ("agent_ids", "mcp_server_ids") and value is not None:
+                setattr(project, field, json.dumps(value))
+            elif field == "selected_model" and value is not None:
                 setattr(project, field, json.dumps(value))
             elif field == "name" and value is not None:
                 setattr(project, field, value)

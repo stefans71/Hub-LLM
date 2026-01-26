@@ -54,7 +54,7 @@
       "name": "Per-Project Model Persistence",
       "size": "S",
       "priority": 1,
-      "status": "pending",
+      "status": "completed",
       "description": "Store selected model per project instead of globally",
       "current": "Model selection is global - same for all projects",
       "change": [

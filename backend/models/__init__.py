@@ -144,6 +144,9 @@ class Project(Base):
     # Status
     status: Mapped[str] = mapped_column(String(50), default="active")
 
+    # Selected model (JSON: {id, name, provider})
+    selected_model: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -168,6 +171,7 @@ class Project(Base):
             "agent_ids": json.loads(self.agent_ids) if self.agent_ids else [],
             "mcp_server_ids": json.loads(self.mcp_server_ids) if self.mcp_server_ids else [],
             "status": self.status,
+            "selected_model": json.loads(self.selected_model) if self.selected_model else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }

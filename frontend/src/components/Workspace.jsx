@@ -47,7 +47,17 @@ export default function Workspace({ project, model, apiKeys }) {
   // W-03: Workspace Top Bar state - SSH connection status
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
-  const [selectedModel, setSelectedModel] = useState(model || { name: 'Claude Opus 4.5', color: '#ef4444' })
+  // MODEL-01: Initialize from project's saved model, fallback to prop, then default
+  const [selectedModel, setSelectedModel] = useState(() => {
+    if (project?.selected_model) return project.selected_model
+    if (model) return model
+    // Check for last used model in localStorage
+    const lastModel = localStorage.getItem('last_used_model')
+    if (lastModel) {
+      try { return JSON.parse(lastModel) } catch {}
+    }
+    return { name: 'Claude Opus 4.5', color: '#ef4444', id: 'claude-opus-4.5', provider: 'anthropic' }
+  })
   // Track the currently linked server ID (may differ from project.vps_server_id if just linked)
   const [linkedServerId, setLinkedServerId] = useState(project?.vps_server_id || null)
 
@@ -65,6 +75,13 @@ export default function Workspace({ project, model, apiKeys }) {
       editorApiRef.current.openFile(file.path || file.relativePath, serverId)
     }
   }
+
+  // MODEL-01: Load model when project changes
+  useEffect(() => {
+    if (project?.selected_model) {
+      setSelectedModel(project.selected_model)
+    }
+  }, [project?.id, project?.selected_model])
 
   // Check initial connection status when project changes - auto-connect if VPS was verified
   useEffect(() => {
@@ -225,8 +242,28 @@ export default function Workspace({ project, model, apiKeys }) {
     }
   }
 
-  const handleModelChange = (newModel) => {
+  // MODEL-01: Save model to project and localStorage
+  const handleModelChange = async (newModel) => {
     setSelectedModel(newModel)
+
+    // Save to localStorage as last used model (for new projects)
+    localStorage.setItem('last_used_model', JSON.stringify(newModel))
+
+    // Save to project if we have a project
+    if (project?.id) {
+      try {
+        const res = await fetch(`/api/projects/${project.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ selected_model: newModel })
+        })
+        if (!res.ok) {
+          console.error('Failed to save model to project')
+        }
+      } catch (err) {
+        console.error('Failed to save model to project:', err)
+      }
+    }
   }
 
   const handleExport = () => {

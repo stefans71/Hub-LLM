@@ -71,6 +71,32 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+**Task**: MODEL-01 - Per-Project Model Persistence
+**What**: Store selected model per project instead of globally
+
+**Implementation**:
+1. Backend (`models/__init__.py`):
+   - Added `selected_model` field to Project model (JSON string)
+   - Updated `to_dict()` to include selected_model
+
+2. Backend (`routers/projects.py`):
+   - Added `selected_model` to ProjectResponse and ProjectUpdate
+   - Updated `db_to_response()` to include selected_model
+   - Updated `update_project()` to handle selected_model JSON serialization
+
+3. Frontend (`Workspace.jsx`):
+   - Initialize selectedModel from project.selected_model or localStorage fallback
+   - Save model to project via PATCH /api/projects/{id} when changed
+   - Save to localStorage as "last_used_model" for new projects default
+   - Load model when project changes (switching between projects)
+
+**Files Modified**:
+- backend/models/__init__.py
+- backend/routers/projects.py
+- frontend/src/components/Workspace.jsx
+
+---
+
 ### Session 67 - 2026-01-25 EST
 **Task**: CLEANUP-03 - Fix Config Mismatch - Standardize on SQLite + Port 8000
 **What**: Aligned configuration files - Vite proxy now points to port 8000, init.sh no longer starts PostgreSQL/Docker
