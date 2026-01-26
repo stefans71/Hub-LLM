@@ -900,8 +900,20 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
           </div>
         )}
 
+        {/* Loading Overlay - shown while connecting to VPS */}
+        {(status === 'connecting' || status === 'connected' || status === 'claude_starting') && (
+          <div className="claude-code-loading-overlay">
+            <div className="terminal-loading-spinner"></div>
+            <p>
+              {status === 'connecting' && 'Connecting to VPS...'}
+              {status === 'connected' && 'Connected, starting Claude Code...'}
+              {status === 'claude_starting' && 'Starting Claude Code session...'}
+            </p>
+          </div>
+        )}
+
         {/* Terminal Loading State */}
-        {viewMode === 'terminal' && !terminalReady && (
+        {viewMode === 'terminal' && !terminalReady && status === 'claude_ready' && (
           <div className="claude-code-terminal-loading">
             <div className="terminal-loading-spinner"></div>
             <p>Loading terminal...</p>
@@ -917,54 +929,54 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
           style={{ display: viewMode === 'terminal' && terminalReady ? 'block' : 'none' }}
         />
 
-        {/* Chat Input Area (same as regular Chat) */}
-        <div className="chat-input-area">
-          <div className="chat-input-wrapper">
-            {/* Plus Button - disabled in terminal mode */}
-            <button className="plus-btn" disabled title="Files not supported in terminal mode">
-              <Plus size={18} />
-            </button>
+        {/* Chat Input Area - only shown in bubble view */}
+        {viewMode === 'bubbles' && (
+          <div className="chat-input-area">
+            <div className="chat-input-wrapper">
+              {/* Plus Button - disabled in terminal mode */}
+              <button className="plus-btn" disabled title="Files not supported in terminal mode">
+                <Plus size={18} />
+              </button>
 
-            {/* Chat Text Input */}
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={status === 'claude_ready' ? 'Ask Claude Code...' : 'Waiting for Claude Code...'}
-              disabled={status !== 'claude_ready'}
-            />
+              {/* Chat Text Input */}
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={status === 'claude_ready' ? 'Ask Claude Code...' : 'Waiting for Claude Code...'}
+                disabled={status !== 'claude_ready'}
+              />
 
-            {/* Mic Button */}
-            <button
-              className={`mic-btn ${isRecording ? 'recording' : ''}`}
-              onClick={toggleMic}
-              title="Voice input (Whisper)"
-              disabled={status !== 'claude_ready'}
-            >
-              <Mic size={18} />
-            </button>
+              {/* Mic Button */}
+              <button
+                className={`mic-btn ${isRecording ? 'recording' : ''}`}
+                onClick={toggleMic}
+                title="Voice input (Whisper)"
+                disabled={status !== 'claude_ready'}
+              >
+                <Mic size={18} />
+              </button>
 
-            {/* Send Button */}
-            <button
-              className="send-btn"
-              onClick={sendMessage}
-              disabled={!input.trim() || status !== 'claude_ready'}
-            >
-              <Send size={18} />
-            </button>
-          </div>
+              {/* Send Button */}
+              <button
+                className="send-btn"
+                onClick={sendMessage}
+                disabled={!input.trim() || status !== 'claude_ready'}
+              >
+                <Send size={18} />
+              </button>
+            </div>
 
-          {/* Input Hint */}
-          <div className="chat-input-hint">
-            {status === 'claude_ready'
-              ? viewMode === 'bubbles'
+            {/* Input Hint */}
+            <div className="chat-input-hint">
+              {status === 'claude_ready'
                 ? 'Type your message and press Enter'
-                : 'Click terminal to type directly • Or use input box'
-              : 'Connecting to Claude Code on VPS...'}
+                : 'Connecting to Claude Code on VPS...'}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* BUG-22: Resize handle on right edge */}
