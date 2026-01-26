@@ -4,6 +4,41 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 77 - 2026-01-26 EST
+**Task**: PHASE-2 polish - Echo handling and styling
+**What**: Fixed user input appearing as Claude response, improved bubble visuals
+
+**Problem**: User's message was being echoed by terminal and captured as Claude's response
+- "Knots sounds fun for kids..." appeared in both user and Claude bubbles
+- Spaces stripped from echoed text
+- "Catapulting..." and "● LIVE" still leaking
+
+**Solution**: Echo detection approach
+1. When sending message, set `waitingForEchoRef = true`
+2. Skip all output until we detect response indicator (spinner chars)
+3. 500ms fallback timeout clears buffer if no indicator seen
+4. Only THEN start capturing Claude's actual response
+
+**Key Pattern - Echo Skipping**:
+```javascript
+// In output handler:
+if (waitingForEchoRef.current) {
+  const hasResponseStart = responseIndicators.some(i => data.includes(i))
+  if (hasResponseStart) {
+    waitingForEchoRef.current = false
+    outputBufferRef.current = '' // Clear accumulated echo
+  }
+  return // Skip this output
+}
+```
+
+**Styling Improvements**:
+- Gradient avatars with box shadows
+- Better spacing (20px margin, 1.7 line-height)
+- Subtle border on Claude bubbles for depth
+
+---
+
 ### Session 76 - 2026-01-26 EST
 **Task**: PHASE-2 polish - Spinner text filtering
 **What**: Enhanced bubble view filter to catch more Claude Code UI elements
