@@ -11,8 +11,7 @@ import {
   ChevronRight,
   ChevronLeft,
   LogOut,
-  User,
-  RefreshCw
+  User
 } from 'lucide-react'
 
 // UI-03: Get status dot color and title for a project
@@ -38,7 +37,7 @@ function getProjectStatusDot(project, serverStatuses) {
 }
 
 // Workspace Item Component
-function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProject, activeProjectId, serverStatuses, onReconnect, reconnectingServers }) {
+function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProject, activeProjectId, serverStatuses }) {
   const hasProjects = projects && projects.length > 0
 
   return (
@@ -59,9 +58,6 @@ function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProj
         <div className="ml-2 border-l border-[#2d3748] pl-2">
           {projects.map((project) => {
             const statusDot = getProjectStatusDot(project, serverStatuses)
-            const isReconnecting = reconnectingServers?.has(project.vps_server_id)
-            const canReconnect = project.vps_server_id && statusDot.color !== '#22c55e' && !isReconnecting
-
             return (
               <div
                 key={project.id}
@@ -72,44 +68,18 @@ function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProj
                 }`}
                 onClick={() => onSelectProject(project)}
               >
-                {/* INFRA-02/BUG-26: Clickable status dot for reconnection - larger hit area */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (canReconnect) {
-                      onReconnect(project.vps_server_id)
-                    }
-                  }}
+                {/* UI-03: Status dot - display only (reconnect in Workspace) */}
+                <span
                   style={{
-                    width: '16px',
-                    height: '16px',
-                    padding: '4px',
-                    border: 'none',
-                    background: 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: statusDot.color,
                     flexShrink: 0,
-                    cursor: canReconnect ? 'pointer' : 'default',
-                    marginLeft: '-4px'
+                    boxShadow: statusDot.color === '#22c55e' ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none'
                   }}
-                  title={isReconnecting ? 'Reconnecting...' : (canReconnect ? 'Click to reconnect VPS' : statusDot.title)}
-                >
-                  <span
-                    style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: isReconnecting ? '#f59e0b' : statusDot.color,
-                      boxShadow: statusDot.color === '#22c55e' ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none',
-                      animation: isReconnecting ? 'pulse 1s ease-in-out infinite' : 'none',
-                      transition: 'background-color 0.2s, transform 0.15s',
-                      transform: canReconnect ? 'scale(1)' : 'scale(1)'
-                    }}
-                    className={canReconnect ? 'hover-scale' : ''}
-                  />
-                </button>
+                  title={statusDot.title}
+                />
                 <FileText size={14} className="flex-shrink-0 opacity-60" />
                 <span className="truncate" title={project.name}>{project.name}</span>
               </div>
@@ -136,8 +106,6 @@ export default function DashboardSidebar({
   const [showUserMenu, setShowUserMenu] = useState(false)
   // UI-03: VPS connection status per server
   const [serverStatuses, setServerStatuses] = useState({})
-  // INFRA-02: Track which servers are being reconnected
-  const [reconnectingServers, setReconnectingServers] = useState(new Set())
 
   // UI-03: Load VPS server connection statuses
   useEffect(() => {
@@ -175,76 +143,6 @@ export default function DashboardSidebar({
     const interval = setInterval(loadServerStatuses, 10000)
     return () => clearInterval(interval)
   }, [])
-
-  // INFRA-02: Reconnect a single VPS
-  const reconnectServer = async (serverId) => {
-    if (reconnectingServers.has(serverId)) return
-
-    setReconnectingServers(prev => new Set([...prev, serverId]))
-
-    try {
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 20000) // 20s timeout for connection
-
-      const res = await fetch(`/api/ssh/servers/${serverId}/connect`, {
-        method: 'POST',
-        signal: controller.signal
-      })
-      clearTimeout(timeout)
-
-      if (res.ok) {
-        // Update status immediately
-        setServerStatuses(prev => ({
-          ...prev,
-          [serverId]: { connected: true, error: null }
-        }))
-      } else {
-        const data = await res.json().catch(() => ({}))
-        setServerStatuses(prev => ({
-          ...prev,
-          [serverId]: { connected: false, error: data.detail || 'Connection failed' }
-        }))
-      }
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        console.error('Reconnect failed:', err)
-        setServerStatuses(prev => ({
-          ...prev,
-          [serverId]: { connected: false, error: err.message }
-        }))
-      }
-    } finally {
-      setReconnectingServers(prev => {
-        const next = new Set(prev)
-        next.delete(serverId)
-        return next
-      })
-    }
-  }
-
-  // INFRA-02: Get all disconnected VPS server IDs
-  const getDisconnectedServerIds = () => {
-    const serverIds = new Set()
-    projects.forEach(project => {
-      if (project.vps_server_id) {
-        const status = serverStatuses[project.vps_server_id]
-        if (!status?.connected) {
-          serverIds.add(project.vps_server_id)
-        }
-      }
-    })
-    return serverIds
-  }
-
-  // INFRA-02: Reconnect all disconnected VPSes
-  const reconnectAll = async () => {
-    const disconnectedIds = getDisconnectedServerIds()
-    for (const serverId of disconnectedIds) {
-      reconnectServer(serverId) // Fire and forget - they run in parallel
-    }
-  }
-
-  const hasDisconnectedServers = getDisconnectedServerIds().size > 0
 
   const handleLogout = async () => {
     await logout()
@@ -338,17 +236,6 @@ export default function DashboardSidebar({
               Workspaces
             </span>
             <div className="flex items-center gap-1">
-              {/* INFRA-02: Reconnect All button */}
-              {hasDisconnectedServers && (
-                <button
-                  onClick={reconnectAll}
-                  className="w-5 h-5 hover:bg-[#242b35] rounded flex items-center justify-center transition text-gray-400 hover:text-green-400"
-                  title="Reconnect all VPSes"
-                  disabled={reconnectingServers.size > 0}
-                >
-                  <RefreshCw size={12} className={reconnectingServers.size > 0 ? 'animate-spin' : ''} />
-                </button>
-              )}
               <button
                 onClick={onCreateProject}
                 className="w-5 h-5 bg-[#3b82f6] hover:bg-[#2563eb] rounded flex items-center justify-center transition"
@@ -381,8 +268,6 @@ export default function DashboardSidebar({
                 }}
                 activeProjectId={activeProject?.id}
                 serverStatuses={serverStatuses}
-                onReconnect={reconnectServer}
-                reconnectingServers={reconnectingServers}
               />
             ))}
 

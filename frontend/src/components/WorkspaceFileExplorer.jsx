@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { RefreshCw } from 'lucide-react'
 
 /**
  * WorkspaceFileExplorer Component (W-38)
@@ -172,6 +173,30 @@ export default function WorkspaceFileExplorer({
       })
     }
   }
+
+  // INFRA-02: Get all disconnected VPS server IDs
+  const getDisconnectedServerIds = () => {
+    const serverIds = new Set()
+    projects.forEach(project => {
+      if (project.vps_server_id) {
+        const status = serverStatuses[project.vps_server_id]
+        if (!status?.connected) {
+          serverIds.add(project.vps_server_id)
+        }
+      }
+    })
+    return serverIds
+  }
+
+  // INFRA-02: Reconnect all disconnected VPSes
+  const reconnectAll = async () => {
+    const disconnectedIds = getDisconnectedServerIds()
+    for (const serverId of disconnectedIds) {
+      reconnectServer(serverId)
+    }
+  }
+
+  const hasDisconnectedServers = getDisconnectedServerIds().size > 0
 
   // UI-03: Get status dot for a project based on VPS connection
   const getStatusDot = (project) => {
@@ -534,6 +559,25 @@ export default function WorkspaceFileExplorer({
 
         {/* W-41: Explorer Actions */}
         <div className="file-explorer-actions">
+          {/* INFRA-02: Reconnect All button */}
+          {hasDisconnectedServers && (
+            <button
+              title="Reconnect all VPSes"
+              onClick={reconnectAll}
+              disabled={reconnectingServers.size > 0}
+              style={{
+                background: 'transparent',
+                color: reconnectingServers.size > 0 ? 'var(--text-muted)' : '#22c55e',
+                borderRadius: '4px',
+                fontSize: '10px',
+                padding: '4px',
+                cursor: reconnectingServers.size > 0 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <RefreshCw size={12} className={reconnectingServers.size > 0 ? 'animate-spin' : ''} />
+            </button>
+          )}
+
           {/* W-42: Create Project Button */}
           <button
             title="Create Project"
