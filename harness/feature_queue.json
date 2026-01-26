@@ -1,5 +1,5 @@
 {
-  "version": "5.6",
+  "version": "5.7",
   "updated": "2026-01-26",
   "session_docs": ["CLAUDE.md", "harness/feature_queue.json"],
   "vision": {
@@ -101,6 +101,22 @@
         "Store last conversation ID per project"
       ],
       "test": "Click Resume → see pretty list of past conversations → select one → continues in chat"
+    },
+    {
+      "id": "BUBBLE-01",
+      "name": "Bubble View Polish and Edge Cases",
+      "size": "S",
+      "priority": 4,
+      "status": "pending",
+      "description": "Address remaining bubble parsing edge cases as discovered during testing",
+      "current": "Bubble view MVP complete - functional for demos. Some UI artifacts occasionally leak through.",
+      "change": [
+        "Add new spinner words as discovered",
+        "Improve tool call visibility (show 'Using Write tool...' indicator)",
+        "Better handling of multi-line code blocks",
+        "Consider headless mode integration for cleaner parsing (future)"
+      ],
+      "test": "Extended use of bubble view without seeing spinner text, status bar fragments, or other UI artifacts"
     }
   ],
   "completed": [
