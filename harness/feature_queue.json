@@ -87,7 +87,7 @@
       "name": "Billing Source Detection and Display",
       "size": "S",
       "priority": 2,
-      "status": "pending",
+      "status": "completed",
       "description": "Show user which billing source each model uses",
       "current": "User doesn't know if they're using Pro sub or paid API",
       "change": [
@@ -152,6 +152,7 @@
     }
   ],
   "completed": [
+    {"id": "MODEL-02", "name": "Billing Source Detection and Display", "completed": "2026-01-26"},
     {"id": "CLAUDE-02", "name": "Route Chat to Claude Code on VPS", "completed": "2026-01-26"},
     {"id": "CLEANUP-03", "name": "Fix Config Mismatch - Standardize on SQLite + Port 8000", "completed": "2026-01-25"},
     {"id": "FEAT-08", "name": "Chat File Drop and Paste", "completed": "2026-01-25"},

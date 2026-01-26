@@ -4,6 +4,30 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 70 - 2026-01-26 EST
+**Task**: MODEL-02 - Billing Source Detection and Display
+**What**: Show users which billing source each model uses in the model selector
+
+**Implementation**:
+1. Frontend (`WorkspaceTopBar.jsx`):
+   - Added `getBillingLabel()` function that returns billing source text:
+     - Anthropic models + Claude Code available → "Pro Subscription" (green)
+     - Anthropic models without Claude Code → "OpenRouter (paid)" (amber)
+     - OpenRouter models → "OpenRouter (paid)" (amber)
+     - Coming Soon models → "Coming Soon" (muted)
+   - Added `getBillingColor()` function for consistent color coding
+   - Added billing badge to selected model button (shows "PRO" or "PAID")
+   - Added billing label to each model in dropdown list
+
+**UI Changes**:
+- Model selector button: Shows "PRO" badge (green) when using Pro Subscription, "PAID" badge (amber) otherwise
+- Dropdown: Each model row shows its billing source on the right side
+
+**Files Modified**:
+- frontend/src/components/WorkspaceTopBar.jsx
+
+---
+
 ### Session 69 - 2026-01-26 EST
 **Task**: CLAUDE-02 - Route Chat to Claude Code on VPS
 **What**: When Anthropic model selected + Claude Code detected, pipe chat to VPS instead of OpenRouter

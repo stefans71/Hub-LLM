@@ -253,14 +253,30 @@ export default function WorkspaceTopBar({
     return false
   }
 
-  // Get tier label for display
-  const getTierLabel = (tier) => {
-    switch (tier) {
-      case 'subscription': return 'Included'
-      case 'openrouter': return apiKeys.openrouter ? 'Available' : 'Requires API Key'
-      case 'coming_soon': return 'Coming Soon'
-      default: return ''
+  // Get billing source label for display
+  const getBillingLabel = (model) => {
+    if (model.tier === 'subscription') {
+      // Anthropic models: Pro Subscription when Claude Code available, else OpenRouter
+      return apiKeys.anthropic ? 'Pro Subscription' : 'OpenRouter (paid)'
     }
+    if (model.tier === 'openrouter') {
+      return 'OpenRouter (paid)'
+    }
+    if (model.tier === 'coming_soon') {
+      return 'Coming Soon'
+    }
+    return ''
+  }
+
+  // Get billing source color
+  const getBillingColor = (model) => {
+    if (model.tier === 'subscription' && apiKeys.anthropic) {
+      return 'var(--success)' // Green for Pro Subscription (free with subscription)
+    }
+    if (model.tier === 'coming_soon') {
+      return 'var(--text-muted)'
+    }
+    return 'var(--warning, #f59e0b)' // Amber/yellow for paid APIs
   }
 
   const handleConfirmModel = () => {
@@ -376,6 +392,26 @@ export default function WorkspaceTopBar({
           <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
             {selectedModel.name}
           </span>
+
+          {/* MODEL-02: Billing source badge */}
+          {(() => {
+            const currentModelData = MODEL_LIST.find(m => m.name === selectedModel.name || m.id === selectedModel.id)
+            if (!currentModelData) return null
+            const isProSub = currentModelData.tier === 'subscription' && apiKeys.anthropic
+            return (
+              <span style={{
+                fontSize: '9px',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontWeight: 500,
+                background: isProSub ? 'rgba(34, 197, 94, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                color: isProSub ? 'var(--success)' : 'var(--warning, #f59e0b)',
+                whiteSpace: 'nowrap'
+              }}>
+                {isProSub ? 'PRO' : 'PAID'}
+              </span>
+            )
+          })()}
 
           {/* W-14: Dropdown Arrow */}
           <span style={{ color: 'var(--text-secondary)' }}>▼</span>
@@ -535,6 +571,8 @@ export default function WorkspaceTopBar({
                       {models.map((model) => {
                         const available = isModelAvailable(model)
                         const isSelected = selectedModel.name === model.name
+                        const billingLabel = getBillingLabel(model)
+                        const billingColor = getBillingColor(model)
                         return (
                           <div
                             key={model.id}
@@ -588,17 +626,19 @@ export default function WorkspaceTopBar({
                                 </span>
                               )}
                             </span>
-                            {!available && model.tier === 'openrouter' && (
-                              <Key size={12} style={{ color: 'var(--text-muted)' }} />
-                            )}
-                            {model.tier === 'coming_soon' && (
-                              <span style={{
-                                fontSize: '10px',
-                                color: 'var(--text-muted)'
-                              }}>
-                                Coming Soon
-                              </span>
-                            )}
+                            {/* MODEL-02: Billing source indicator */}
+                            <span style={{
+                              fontSize: '10px',
+                              color: billingColor,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              {!available && model.tier === 'openrouter' && (
+                                <Key size={10} style={{ color: 'var(--text-muted)' }} />
+                              )}
+                              {billingLabel}
+                            </span>
                           </div>
                         )
                       })}
