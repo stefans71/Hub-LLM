@@ -254,70 +254,48 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                 const cleanData = stripAnsi(message.data)
                 outputBufferRef.current += cleanData
 
-                // Process buffer for complete messages
-                // Look for the `> ` prompt pattern at start of line
+                // Simple approach: accumulate response and update in real-time
                 const buffer = outputBufferRef.current
 
-                // Split by lines to process
+                // Check if buffer contains a prompt line (indicates response complete)
+                // Look for standalone `> ` at start of a line (the input prompt)
                 const lines = buffer.split('\n')
-                let newMessages = []
-                let currentResponse = ''
-                let processedUpTo = 0
+                const lastNonEmptyLine = [...lines].reverse().find(l => l.trim().length > 0)
+                const hasPromptAtEnd = lastNonEmptyLine?.trim() === '>' ||
+                                       lastNonEmptyLine?.trim().startsWith('> ')
 
-                for (let i = 0; i < lines.length; i++) {
-                  const line = lines[i]
-                  const trimmedLine = line.trim()
+                // Filter out prompt lines and user echo, keep only Claude's response
+                const responseLines = lines.filter(line => {
+                  const trimmed = line.trim()
+                  // Skip empty lines, prompt lines, and echoed user input
+                  if (trimmed === '' || trimmed === '>') return false
+                  if (trimmed.startsWith('> ')) return false
+                  // Skip lines that match the last user input (echo)
+                  if (lastUserInputRef.current && trimmed === lastUserInputRef.current) return false
+                  return true
+                })
 
-                  // Detect user input line (starts with `> `)
-                  if (trimmedLine.startsWith('> ') && trimmedLine.length > 2) {
-                    // If we have accumulated response, add it
-                    if (currentResponse.trim()) {
-                      newMessages.push({ role: 'assistant', content: currentResponse.trim() })
-                    }
+                const responseText = responseLines.join('\n').trim()
 
-                    // Extract user input (after `> `)
-                    const userInput = trimmedLine.slice(2).trim()
-
-                    // Only add if it's new (not duplicate of last input)
-                    if (userInput && userInput !== lastUserInputRef.current) {
-                      lastUserInputRef.current = userInput
-                      newMessages.push({ role: 'user', content: userInput })
-                    }
-
-                    currentResponse = ''
-                    processedUpTo = lines.slice(0, i + 1).join('\n').length + 1
-                  } else if (claudeStartedRef.current) {
-                    // Accumulate Claude response
-                    // Skip empty lines at the start, skip the `> ` prompt line itself
-                    if (line.trim() !== '>' && line.trim() !== '') {
-                      currentResponse += line + '\n'
-                    }
-                  }
-                }
-
-                // If we processed some messages, update state
-                if (newMessages.length > 0) {
+                // Update or add assistant message if we have response content
+                if (responseText.length > 0) {
                   setChatMessages(prev => {
-                    // Avoid duplicate messages
-                    const combined = [...prev]
-                    for (const msg of newMessages) {
-                      // Check if this exact message already exists
-                      const exists = combined.some(m =>
-                        m.role === msg.role && m.content === msg.content
-                      )
-                      if (!exists) {
-                        combined.push(msg)
-                      }
+                    const updated = [...prev]
+                    // Find last assistant message to update, or add new one
+                    const lastIdx = updated.length - 1
+                    if (lastIdx >= 0 && updated[lastIdx].role === 'assistant') {
+                      // Update existing assistant message
+                      updated[lastIdx] = { role: 'assistant', content: responseText }
+                    } else {
+                      // Add new assistant message
+                      updated.push({ role: 'assistant', content: responseText })
                     }
-                    return combined
+                    return updated
                   })
                 }
 
-                // Keep unprocessed part in buffer (last incomplete line)
-                // Only keep the last line if it doesn't end with newline
-                if (!buffer.endsWith('\n') && lines.length > 0) {
-                  outputBufferRef.current = lines[lines.length - 1]
-                } else {
+                // Clear buffer when we see the next prompt (response complete)
+                if (hasPromptAtEnd) {
                   outputBufferRef.current = ''
                 }
               }
