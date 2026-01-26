@@ -21,7 +21,21 @@ import { Plus, Mic, Send, Terminal as TerminalIcon, RefreshCw, MessageSquare, Sp
 // PHASE-2: Strip ANSI escape codes from text
 const stripAnsi = (text) => {
   // eslint-disable-next-line no-control-regex
-  return text.replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, '')
+  return text
+    // Standard CSI sequences: ESC [ ... final_byte
+    .replace(/\x1B\[[0-9;?]*[A-Za-z]/g, '')
+    // OSC sequences: ESC ] ... BEL or ESC ] ... ESC \
+    .replace(/\x1B\][^\x07\x1B]*(?:\x07|\x1B\\)/g, '')
+    // OSC fragments (incomplete): ESC ] ... (to end or next escape)
+    .replace(/\x1B\][^\x1B]*/g, '')
+    // Other escape sequences: ESC followed by single char
+    .replace(/\x1B[@-Z\\-_]/g, '')
+    // Remove BEL and other control chars that leak through
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+    // Remove remaining fragments like "9;4;0;" that look like escape params
+    .replace(/^\d+(?:;\d+)*;?$/gm, '')
+    // Clean up \u0007 (BEL) that might be in string form
+    .replace(/\\u0007/g, '')
 }
 
 // PHASE-2: Parse a chunk of output to extract messages
@@ -279,6 +293,12 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
 
                   // Skip Claude Code UI elements - be very aggressive
                   const lowerLine = trimmed.toLowerCase()
+
+                  // Skip spinner/loading animation text
+                  if (lowerLine.includes('evaporating')) return false
+                  if (lowerLine.includes('app opinion')) return false
+                  if (trimmed.match(/^[0●•\*\+;]+$/)) return false  // Spinner frames
+                  if (trimmed.match(/^[\d;]+$/)) return false  // Leftover escape params
 
                   // Skip welcome screen and session picker
                   if (lowerLine.includes('welcome back')) return false
