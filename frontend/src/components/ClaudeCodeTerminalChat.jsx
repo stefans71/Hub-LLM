@@ -203,6 +203,16 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
         }
       })
 
+      // BUG-18 FIX: Handle terminal keyboard input - send to WebSocket
+      term.onData((data) => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'input', data }))
+        }
+      })
+
+      // Focus terminal for keyboard input
+      term.focus()
+
       // Connect if we have serverId
       if (serverId) {
         connect()
@@ -310,6 +320,13 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
 
   const statusInfo = getStatusInfo()
 
+  // BUG-18 FIX: Focus terminal when clicked
+  const handleTerminalClick = useCallback(() => {
+    if (xtermRef.current) {
+      xtermRef.current.focus()
+    }
+  }, [])
+
   return (
     <div className="chat-panel claude-code-terminal-chat">
       {/* Status Header */}
@@ -334,9 +351,11 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
       </div>
 
       {/* Terminal Display Area (replaces chat-messages) */}
+      {/* BUG-18 FIX: Click to focus terminal for keyboard input */}
       <div
         ref={terminalRef}
         className="claude-code-terminal-area"
+        onClick={handleTerminalClick}
       />
 
       {/* Chat Input Area (same as regular Chat) */}
@@ -381,7 +400,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
         {/* Input Hint */}
         <div className="chat-input-hint">
           {status === 'claude_ready'
-            ? 'Enter to send • This is a live Claude Code session on your VPS'
+            ? 'Click terminal to type directly • Or use input box below'
             : 'Connecting to Claude Code on VPS...'}
         </div>
       </div>
