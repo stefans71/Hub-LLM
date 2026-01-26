@@ -254,6 +254,10 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                 const cleanData = stripAnsi(message.data)
                 outputBufferRef.current += cleanData
 
+                // DEBUG: Log raw and clean data to see what we're receiving
+                console.log('[BUBBLE DEBUG] Raw:', JSON.stringify(message.data))
+                console.log('[BUBBLE DEBUG] Clean:', JSON.stringify(cleanData))
+
                 // Simple approach: accumulate response and update in real-time
                 const buffer = outputBufferRef.current
 
@@ -318,6 +322,9 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
                 })
 
                 const responseText = responseLines.join('\n').trim()
+
+                // DEBUG: Log filtered result
+                console.log('[BUBBLE DEBUG] Filtered lines:', responseLines.length, 'Response:', JSON.stringify(responseText.slice(0, 200)))
 
                 // Update or add assistant message if we have response content
                 if (responseText.length > 0) {
