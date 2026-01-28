@@ -7,12 +7,13 @@ services:
     expose:
       - "8000"
     environment:
-      - DATABASE_URL=${DATABASE_URL:-sqlite+aiosqlite:///./hubllm.db}
+      - DATABASE_URL=postgresql+asyncpg://hubllm:hubllm@db:5432/hubllm
       - REDIS_URL=redis://redis:6379
       - FRONTEND_URL=${FRONTEND_URL:-https://hubllm.dev}
       - APP_URL=${APP_URL:-https://hubllm.dev}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     depends_on:
+      - db
       - redis
     command: uvicorn main:app --host 0.0.0.0 --port 8000
 
@@ -24,6 +25,17 @@ services:
       - "5173"
     command: npm run dev -- --host
 
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=hubllm
+      - POSTGRES_PASSWORD=hubllm
+      - POSTGRES_DB=hubllm
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   redis:
     image: redis:7-alpine
     expose:
@@ -32,4 +44,12 @@ services:
       - redis_data:/data
 
 volumes:
+  postgres_data:
   redis_data:
+```
+
+## Also add asyncpg to backend/requirements.txt
+
+Add this line:
+```
+asyncpg==0.29.0
