@@ -46,10 +46,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
-```
 
-## Also add asyncpg to backend/requirements.txt
-
-Add this line:
-```
-asyncpg==0.29.0
