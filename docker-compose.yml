@@ -16,6 +16,9 @@ services:
       - db
       - redis
     command: uvicorn main:app --host 0.0.0.0 --port 8000
+    networks:
+      - coolify
+      - default
 
   frontend:
     build:
@@ -24,6 +27,15 @@ services:
     expose:
       - "5173"
     command: npm run dev -- --host
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hubllm.rule=Host(`hubllm.dev`) || Host(`www.hubllm.dev`)"
+      - "traefik.http.routers.hubllm.entrypoints=https"
+      - "traefik.http.routers.hubllm.tls.certresolver=letsencrypt"
+      - "traefik.http.services.hubllm.loadbalancer.server.port=5173"
+    networks:
+      - coolify
+      - default
 
   db:
     image: postgres:16-alpine
@@ -47,3 +59,6 @@ volumes:
   postgres_data:
   redis_data:
 
+networks:
+  coolify:
+    external: true
