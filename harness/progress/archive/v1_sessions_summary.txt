@@ -1,0 +1,94 @@
+# V1 Sessions Archive
+
+This file contains a summary of work completed under Harness V1.
+
+## V1 Summary (Sessions 1-29)
+
+**Date Range**: 2024-01-22 to 2024-01-23
+**Features Completed**: 37/41 (90% of V1 features)
+
+### Completed Categories
+
+| Category | Features | Status |
+|----------|----------|--------|
+| Authentication | 5/5 | ✅ Complete |
+| Dashboard | 3/3 | ✅ Complete |
+| Project Creation | 6/6 | ✅ Complete |
+| GitHub Integration | 3/3 | ✅ Complete |
+| VPS Connection | 2/2 | ✅ Complete |
+| Agents | 3/3 | ✅ Complete |
+| MCP Servers | 2/2 | ✅ Complete |
+| Workspace | 6/6 | ✅ Complete (basic) |
+| AI Chat | 2/2 | ✅ Complete |
+| Settings | 3/3 | ✅ Complete |
+| Testing | 1/1 | ✅ Complete |
+| UI Overhaul | 1/5 | ⚠️ Partial |
+
+### Key Accomplishments
+
+1. **Authentication System**
+   - Email/password signup and login
+   - GitHub OAuth integration
+   - JWT token management
+   - Session persistence
+
+2. **Dashboard**
+   - Project listing with cards
+   - Stats display
+   - Sidebar navigation
+   - Search bar
+
+3. **Create Project Wizard**
+   - 5-step wizard flow
+   - AI brief expansion
+   - GitHub repo selection
+   - VPS connection form
+   - Agent and MCP selection
+
+4. **Settings Page**
+   - Profile management
+   - API key configuration
+   - Appearance settings
+   - Global Agents management
+   - MCP Servers configuration
+   - VPS Connections
+
+5. **Header Navigation**
+   - Global header with tabs
+   - Dashboard/Workspace/Settings/Create Project navigation
+   - User menu
+
+### Known Gaps (To Be Fixed in V2)
+
+1. **Workspace View** - Only 30% complete
+   - Missing: Top bar, icon sidebar, LLM-Dev panel
+   - Components exist but not wired into layout
+
+2. **Settings Sections** - Missing 4 sections
+   - Anthropic Subscription
+   - Default Model
+   - Voice Input
+   - Global Skills
+
+3. **Dashboard Stats** - Different metrics than mockup
+
+4. **Modals** - Missing Skill modal
+
+---
+
+## Full V1 Progress Log
+
+The complete session-by-session log from V1 was archived when migrating to V2.
+Original file size: 36KB (29 sessions)
+
+For detailed session history, see the original `claude-progress.txt` 
+which should be preserved at `harness/progress/archive/v1_claude_progress.txt`
+
+---
+
+## V2 Migration Notes
+
+- Migrated to component-level task tracking (917 elements)
+- Added T-shirt sizing for better session management
+- Visual verification now mandatory
+- Progress file rotation to prevent bloat

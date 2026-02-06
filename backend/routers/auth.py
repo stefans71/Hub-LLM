@@ -18,6 +18,29 @@ Endpoints:
 """
 from typing import Annotated
 import os
+import re
+
+
+def validate_password(password: str) -> tuple[bool, str]:
+    """
+    Validate password against security requirements.
+    Returns (is_valid, error_message).
+
+    Requirements:
+    - Min 8 characters
+    - At least 1 uppercase letter
+    - At least 1 number
+    - At least 1 special character
+    """
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters"
+    if not re.search(r'[A-Z]', password):
+        return False, "Password must contain at least one uppercase letter"
+    if not re.search(r'\d', password):
+        return False, "Password must contain at least one number"
+    if not re.search(r'[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]', password):
+        return False, "Password must contain at least one special character (!@#$%^&*)"
+    return True, ""
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.responses import RedirectResponse
@@ -27,10 +50,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models import get_session, User, AuthProvider
 from services.auth import (
     UserCreate, UserLogin, UserResponse, TokenResponse,
-    PasswordResetRequest, PasswordReset, OAuthCallback,
+    PasswordResetRequest, PasswordReset, OAuthCallback, UserUpdate,
     create_user, get_user_by_email, get_user_by_id,
     authenticate_user, verify_email, request_password_reset,
-    reset_password, generate_tokens, user_to_response,
+    reset_password, generate_tokens, user_to_response, update_user,
     decode_token, create_verification_token,
     get_github_user, get_google_user, create_or_get_oauth_user,
     GITHUB_CLIENT_ID, GOOGLE_CLIENT_ID
@@ -118,11 +141,12 @@ async def signup(
             detail="Email already registered"
         )
 
-    # Validate password
-    if len(user_data.password) < 8:
+    # Validate password strength
+    is_valid, error_msg = validate_password(user_data.password)
+    if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters"
+            detail=error_msg
         )
 
     # Create user
@@ -214,6 +238,40 @@ async def get_me(
     return user_to_response(current_user)
 
 
+@router.put("/me", response_model=UserResponse)
+async def update_me(
+    update_data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session)
+):
+    """Update current user's profile"""
+    try:
+        updated_user = await update_user(
+            db,
+            current_user,
+            name=update_data.name,
+            email=update_data.email
+        )
+        return user_to_response(updated_user)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.post("/me/setup-complete", response_model=UserResponse)
+async def mark_setup_complete(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session)
+):
+    """Mark user's setup wizard as complete"""
+    current_user.setup_completed = True
+    await db.commit()
+    await db.refresh(current_user)
+    return user_to_response(current_user)
+
+
 # ============================================================================
 # Email Verification
 # ============================================================================
@@ -285,10 +343,11 @@ async def reset_password_endpoint(
     db: AsyncSession = Depends(get_session)
 ):
     """Reset password with token"""
-    if len(data.new_password) < 8:
+    is_valid, error_msg = validate_password(data.new_password)
+    if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters"
+            detail=error_msg
         )
 
     user = await reset_password(db, data.token, data.new_password)
@@ -307,7 +366,7 @@ async def reset_password_endpoint(
 # ============================================================================
 
 @router.get("/oauth/github")
-async def github_oauth_redirect():
+async def github_oauth_redirect(mode: str = None):
     """Redirect to GitHub OAuth"""
     if not GITHUB_CLIENT_ID:
         raise HTTPException(
@@ -315,8 +374,13 @@ async def github_oauth_redirect():
             detail="GitHub OAuth not configured"
         )
 
-    redirect_uri = f"{APP_URL}/api/auth/oauth/github/callback"
-    scope = "user:email"
+    # Use popup callback if mode=popup (for Create Project flow)
+    if mode == "popup":
+        redirect_uri = f"{APP_URL}/api/auth/oauth/github/popup/callback"
+    else:
+        redirect_uri = f"{APP_URL}/api/auth/oauth/github/callback"
+
+    scope = "user:email read:user repo"
 
     return RedirectResponse(
         f"https://github.com/login/oauth/authorize"
@@ -357,6 +421,77 @@ async def github_oauth_callback(
         f"?access_token={tokens.access_token}"
         f"&refresh_token={tokens.refresh_token}"
     )
+
+
+@router.get("/oauth/github/popup/callback")
+async def github_oauth_popup_callback(
+    code: str,
+    db: AsyncSession = Depends(get_session)
+):
+    """Handle GitHub OAuth callback for popup flow (Create Project)"""
+    from fastapi.responses import HTMLResponse
+
+    user_info = await get_github_user(code)
+
+    if not user_info or not user_info.get("email"):
+        # Return error page
+        return HTMLResponse(content=f"""
+            <!DOCTYPE html>
+            <html>
+            <head><title>GitHub OAuth Error</title></head>
+            <body>
+                <script>
+                    window.opener.postMessage({{
+                        type: 'oauth-error',
+                        error: 'Failed to get user info from GitHub'
+                    }}, '{FRONTEND_URL}');
+                    window.close();
+                </script>
+                <p>Error connecting to GitHub. This window will close automatically.</p>
+            </body>
+            </html>
+        """, status_code=200)
+
+    # Create or get user in database
+    user = await create_or_get_oauth_user(
+        db,
+        provider=AuthProvider.GITHUB,
+        oauth_id=user_info["id"],
+        email=user_info["email"],
+        name=user_info.get("name"),
+        avatar_url=user_info.get("avatar_url")
+    )
+
+    tokens = generate_tokens(user)
+
+    # Return HTML that posts message to opener and closes
+    # Include github_token for API calls (fetching repos, etc.)
+    return HTMLResponse(content=f"""
+        <!DOCTYPE html>
+        <html>
+        <head><title>GitHub Connected</title></head>
+        <body>
+            <script>
+                window.opener.postMessage({{
+                    type: 'oauth-success',
+                    provider: 'github',
+                    user: {{
+                        id: '{user_info["id"]}',
+                        login: '{user_info.get("login", "")}',
+                        email: '{user_info.get("email", "")}',
+                        name: '{user_info.get("name", "") or ""}',
+                        avatar_url: '{user_info.get("avatar_url", "")}'
+                    }},
+                    github_token: '{user_info.get("access_token", "")}',
+                    access_token: '{tokens.access_token}',
+                    refresh_token: '{tokens.refresh_token}'
+                }}, '{FRONTEND_URL}');
+                window.close();
+            </script>
+            <p>GitHub connected successfully! This window will close automatically.</p>
+        </body>
+        </html>
+    """, status_code=200)
 
 
 # ============================================================================

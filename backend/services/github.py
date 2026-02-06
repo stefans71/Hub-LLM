@@ -187,6 +187,28 @@ class GitHubService:
             response.raise_for_status()
             return response.json()
 
+    async def create_repo(
+        self,
+        name: str,
+        description: str = "",
+        private: bool = False,
+        auto_init: bool = True
+    ) -> dict:
+        """Create a new repository for the authenticated user"""
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{GITHUB_API_BASE}/user/repos",
+                headers=self.headers,
+                json={
+                    "name": name,
+                    "description": description,
+                    "private": private,
+                    "auto_init": auto_init  # Initialize with README
+                }
+            )
+            response.raise_for_status()
+            return response.json()
+
 
 # Note: To SSH into a Codespace, users need to:
 # 1. Install GitHub CLI: gh auth login

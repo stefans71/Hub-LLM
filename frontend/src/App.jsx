@@ -1,26 +1,41 @@
 import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import AuthPage from './components/AuthPage'
 import AuthCallback from './components/AuthCallback'
 import Workspace from './components/Workspace'
-import ProjectSidebar from './components/ProjectSidebar'
-import ModelSelector from './components/ModelSelector'
+import DashboardSidebar from './components/DashboardSidebar'
+import HeaderNavigation from './components/HeaderNavigation'
 import SettingsModal from './components/SettingsModal'
-import { Settings, LogOut, User, Loader2 } from 'lucide-react'
+import CreateProject from './pages/CreateProject'
+import Dashboard from './pages/Dashboard'
+import Settings from './pages/Settings'
+import Setup from './pages/Setup'
+import { Loader2 } from 'lucide-react'
 
 // Main App content (requires auth)
 function AppContent() {
   const { user, logout, isAuthenticated, loading, getAuthHeader } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [projects, setProjects] = useState([])
   const [activeProject, setActiveProject] = useState(null)
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
   const [showSettings, setShowSettings] = useState(false)
-  const [showUserMenu, setShowUserMenu] = useState(false)
+  const [setupComplete, setSetupComplete] = useState(null) // null = not yet determined
   const [apiKeys, setApiKeys] = useState({
     openrouter: localStorage.getItem('openrouter_key') || '',
     claude: localStorage.getItem('claude_key') || '',
     github: localStorage.getItem('github_token') || ''
   })
+
+  // Check if user has completed setup
+  useEffect(() => {
+    if (user) {
+      setSetupComplete(user.setup_completed !== false)
+    }
+  }, [user])
 
   // Load projects on mount (with auth)
   useEffect(() => {
@@ -39,6 +54,16 @@ function AppContent() {
       const data = await res.json()
       setProjects(data)
       if (data.length > 0 && !activeProject) {
+        // BUG-21: Check URL for projectId parameter on page refresh
+        const urlProjectId = searchParams.get('projectId')
+        if (urlProjectId) {
+          const urlProject = data.find(p => String(p.id) === urlProjectId)
+          if (urlProject) {
+            setActiveProject(urlProject)
+            return
+          }
+        }
+        // Fallback to first project
         setActiveProject(data[0])
       }
     } catch (err) {
@@ -64,19 +89,46 @@ function AppContent() {
     }
   }
 
+  const handleProjectCreated = (project) => {
+    setProjects([...projects, project])
+    setActiveProject(project)
+    // BUG-21: Include projectId in URL for page refresh persistence
+    navigate(`/workspace?projectId=${project.id}`)
+  }
+
   const handleLogout = async () => {
     await logout()
     setProjects([])
     setActiveProject(null)
+    navigate('/dashboard')
   }
 
   // Show loading spinner while checking auth
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-900">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
       </div>
     )
+  }
+
+  // Wait until setup status is determined (null = still loading)
+  if (setupComplete === null) {
+    return (
+      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
+      </div>
+    )
+  }
+
+  // Redirect to setup if user hasn't completed it (except if already on setup page)
+  if (setupComplete === false && location.pathname !== '/setup') {
+    return <Navigate to="/setup" replace />
+  }
+
+  // If on setup page but already completed, redirect to dashboard
+  if (setupComplete === true && location.pathname === '/setup') {
+    return <Navigate to="/dashboard" replace />
   }
 
   const saveApiKeys = (keys) => {
@@ -88,113 +140,136 @@ function AppContent() {
 
   const hasApiKey = apiKeys.openrouter || apiKeys.claude
 
+  // Determine current view based on route
+  const currentView = location.pathname.replace('/', '') || 'dashboard'
+
+  // Check if we should show the sidebar (Dashboard view only)
+  const showDashboardSidebar = location.pathname === '/dashboard' || location.pathname === '/'
+
   return (
-    <div className="h-screen flex bg-gray-900 text-white">
-      {/* Sidebar */}
-      <ProjectSidebar
-        projects={projects}
-        activeProject={activeProject}
-        onSelectProject={setActiveProject}
-        onCreateProject={createProject}
-      />
+    <div className="h-screen flex flex-col text-white" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      {/* Header Navigation */}
+      <HeaderNavigation onLogout={handleLogout} />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="h-14 border-b border-gray-700 flex items-center justify-between px-4 flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <h1 className="font-semibold">
-              {activeProject?.name || 'HubLLM'}
-            </h1>
-            <ModelSelector
-              selectedModel={selectedModel}
-              onSelectModel={setSelectedModel}
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Dashboard Sidebar (only on dashboard view) */}
+        {showDashboardSidebar && (
+          <DashboardSidebar
+            projects={projects}
+            activeProject={activeProject}
+            onSelectProject={(project) => {
+              setActiveProject(project)
+              // BUG-21: Include projectId in URL for page refresh persistence
+              navigate(`/workspace?projectId=${project.id}`)
+            }}
+            onNavigate={(view, project) => {
+              if (project) setActiveProject(project)
+              // BUG-21: Include projectId in URL when navigating to workspace
+              if (view === 'workspace' && project?.id) {
+                navigate(`/workspace?projectId=${project.id}`)
+              } else {
+                navigate(`/${view}`)
+              }
+            }}
+            onCreateProject={() => navigate('/create-project')}
+            currentView={currentView}
+            onLogout={handleLogout}
+          />
+        )}
+
+        {/* Routes */}
+        <div className="flex-1 overflow-hidden">
+          <Routes>
+            <Route
+              path="/setup"
+              element={
+                <Setup
+                  onComplete={() => {
+                    setSetupComplete(true)
+                    navigate('/dashboard')
+                  }}
+                />
+              }
             />
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="p-2 hover:bg-gray-700 rounded-lg transition"
-              title="Settings"
-            >
-              <Settings size={20} />
-            </button>
-
-            {/* User Menu */}
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 p-2 hover:bg-gray-700 rounded-lg transition"
-              >
-                {user?.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={user.name || user.email}
-                    className="w-6 h-6 rounded-full"
+            <Route
+              path="/"
+              element={<Navigate to="/dashboard" replace />}
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <Dashboard
+                  onNavigate={(view, project) => {
+                    if (project) setActiveProject(project)
+                    // BUG-21: Include projectId in URL when navigating to workspace
+                    if (view === 'workspace' && project?.id) {
+                      navigate(`/workspace?projectId=${project.id}`)
+                    } else {
+                      navigate(`/${view}`)
+                    }
+                  }}
+                  onCreateProject={() => navigate('/create-project')}
+                />
+              }
+            />
+            <Route
+              path="/workspace"
+              element={
+                hasApiKey ? (
+                  <Workspace
+                    project={activeProject}
+                    model={selectedModel}
+                    apiKeys={apiKeys}
+                    onProjectChange={(project) => {
+                      setActiveProject(project)
+                      // BUG-25: Update URL when switching projects within workspace
+                      navigate(`/workspace?projectId=${project.id}`, { replace: true })
+                    }}
                   />
                 ) : (
-                  <User size={20} />
-                )}
-              </button>
-
-              {showUserMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowUserMenu(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-20">
-                    <div className="p-3 border-b border-gray-700">
-                      <p className="font-medium text-white truncate">
-                        {user?.name || 'User'}
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center max-w-md p-8">
+                      <h2 className="text-xl font-semibold mb-4">Welcome to HubLLM</h2>
+                      <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
+                        Add your API key to get started. You can use OpenRouter for access
+                        to multiple models, or your direct Claude API key.
                       </p>
-                      <p className="text-sm text-gray-400 truncate">
-                        {user?.email}
-                      </p>
-                    </div>
-                    <div className="p-1">
                       <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left text-red-400 hover:bg-gray-700 rounded-md transition"
+                        onClick={() => navigate('/settings')}
+                        className="px-6 py-2 rounded-lg transition"
+                        style={{ backgroundColor: 'var(--primary)' }}
                       >
-                        <LogOut size={16} />
-                        <span>Sign Out</span>
+                        Add API Key
                       </button>
                     </div>
                   </div>
-                </>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* Workspace Area */}
-        {!hasApiKey ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center max-w-md p-8">
-              <h2 className="text-xl font-semibold mb-4">Welcome to HubLLM</h2>
-              <p className="text-gray-400 mb-6">
-                Add your API key to get started. You can use OpenRouter for access
-                to multiple models, or your direct Claude API key.
-              </p>
-              <button
-                onClick={() => setShowSettings(true)}
-                className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition"
-              >
-                Add API Key
-              </button>
-            </div>
-          </div>
-        ) : (
-          <Workspace
-            project={activeProject}
-            model={selectedModel}
-            apiKeys={apiKeys}
-          />
-        )}
+                )
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <Settings
+                  onBack={() => navigate('/dashboard')}
+                  onLogout={handleLogout}
+                />
+              }
+            />
+            <Route
+              path="/create-project"
+              element={
+                <CreateProject
+                  onCancel={() => navigate('/dashboard')}
+                  onCreateProject={handleProjectCreated}
+                />
+              }
+            />
+          </Routes>
+        </div>
       </div>
 
-      {/* Settings Modal */}
+      {/* Settings Modal (legacy, may be deprecated) */}
       {showSettings && (
         <SettingsModal
           apiKeys={apiKeys}
@@ -209,25 +284,17 @@ function AppContent() {
 // Router component to handle auth callback
 function AppRouter() {
   const { isAuthenticated, loading } = useAuth()
-  const [currentPath, setCurrentPath] = useState(window.location.pathname)
-
-  // Listen for path changes
-  useEffect(() => {
-    const handlePopState = () => setCurrentPath(window.location.pathname)
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [])
+  const location = useLocation()
 
   // Check for OAuth callback
-  const isAuthCallback = currentPath === '/auth/callback' ||
-    window.location.search.includes('access_token')
+  const isAuthCallback = location.pathname === '/auth/callback' ||
+    location.search.includes('access_token')
 
   if (isAuthCallback) {
     return (
       <AuthCallback
         onComplete={() => {
-          window.history.replaceState({}, '', '/')
-          setCurrentPath('/')
+          window.history.replaceState({}, '', '/dashboard')
         }}
       />
     )
@@ -236,8 +303,8 @@ function AppRouter() {
   // Show loading while checking auth
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-900">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
       </div>
     )
   }
@@ -251,12 +318,14 @@ function AppRouter() {
   return <AppContent />
 }
 
-// Main App with AuthProvider
+// Main App with AuthProvider and BrowserRouter
 function App() {
   return (
-    <AuthProvider>
-      <AppRouter />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 

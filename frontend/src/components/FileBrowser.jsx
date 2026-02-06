@@ -31,25 +31,33 @@ export default function FileBrowser({ serverId, serverName }) {
 
   // Load files when path changes
   useEffect(() => {
-    loadFiles()
+    if (serverId) {
+      loadFiles()
+    }
   }, [serverId, currentPath])
 
   const loadFiles = async () => {
+    if (!serverId) {
+      setError('No server selected')
+      return
+    }
+
     setLoading(true)
     setError(null)
-    
+
     try {
       const res = await fetch(
-        `/api/ssh/servers/${serverId}/files?path=${encodeURIComponent(currentPath)}`
+        `/api/files?serverId=${encodeURIComponent(serverId)}&path=${encodeURIComponent(currentPath)}`
       )
-      
+
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.detail || 'Failed to load files')
       }
-      
+
       const data = await res.json()
-      setFiles(data)
+      // API returns { path, files, server_id }
+      setFiles(data.files || [])
     } catch (err) {
       setError(err.message)
     } finally {
@@ -64,17 +72,19 @@ export default function FileBrowser({ serverId, serverName }) {
       setFileContent('')
       setIsEditing(false)
     } else {
-      // Load file content
+      // Load file content via new F-03 API
       setLoading(true)
+      setError(null)
       try {
         const res = await fetch(
-          `/api/ssh/servers/${serverId}/files/read?path=${encodeURIComponent(file.path)}`
+          `/api/files/content?serverId=${encodeURIComponent(serverId)}&path=${encodeURIComponent(file.path)}`
         )
-        
+
         if (!res.ok) {
-          throw new Error('Failed to read file')
+          const data = await res.json()
+          throw new Error(data.detail || 'Failed to read file')
         }
-        
+
         const data = await res.json()
         setSelectedFile(file)
         setFileContent(data.content)
@@ -89,22 +99,27 @@ export default function FileBrowser({ serverId, serverName }) {
 
   const saveFile = async () => {
     if (!selectedFile) return
-    
+
     setIsSaving(true)
+    setError(null)
     try {
-      const res = await fetch(`/api/ssh/servers/${serverId}/files/write`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path: selectedFile.path,
-          content: fileContent
-        })
-      })
-      
+      const res = await fetch(
+        `/api/files/content?serverId=${encodeURIComponent(serverId)}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            path: selectedFile.path,
+            content: fileContent
+          })
+        }
+      )
+
       if (!res.ok) {
-        throw new Error('Failed to save file')
+        const data = await res.json()
+        throw new Error(data.detail || 'Failed to save file')
       }
-      
+
       setIsEditing(false)
     } catch (err) {
       setError(err.message)
@@ -115,17 +130,19 @@ export default function FileBrowser({ serverId, serverName }) {
 
   const deleteFile = async (file) => {
     if (!confirm(`Delete ${file.name}?`)) return
-    
+
+    setError(null)
     try {
       const res = await fetch(
-        `/api/ssh/servers/${serverId}/files?path=${encodeURIComponent(file.path)}`,
+        `/api/files?serverId=${encodeURIComponent(serverId)}&path=${encodeURIComponent(file.path)}&is_dir=${file.is_dir}`,
         { method: 'DELETE' }
       )
-      
+
       if (!res.ok) {
-        throw new Error('Failed to delete')
+        const data = await res.json()
+        throw new Error(data.detail || 'Failed to delete')
       }
-      
+
       loadFiles()
       if (selectedFile?.path === file.path) {
         setSelectedFile(null)

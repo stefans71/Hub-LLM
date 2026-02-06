@@ -92,7 +92,7 @@ export default function ProjectSidebar({
             ) : (
               <Folder size={16} />
             )}
-            <span className="truncate text-sm">{project.name}</span>
+            <span className="truncate text-sm" title={project.name}>{project.name}</span>
           </button>
         ))}
       </div>

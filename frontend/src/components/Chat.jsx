@@ -1,55 +1,237 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
-import VoiceInput from './VoiceInput'
-import { Send, Loader2 } from 'lucide-react'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { Plus, Mic, Send, Copy, X, Image as ImageIcon } from 'lucide-react'
+import ClaudeCodeTerminalChat from './ClaudeCodeTerminalChat'
 
-export default function Chat({ project, model, apiKeys }) {
+const MAX_IMAGES = 4 // FIFO queue limit to prevent memory bloat
+
+/**
+ * Chat Component (W-54)
+ *
+ * AI chat interface matching mockup specification:
+ * - W-54: Chat Panel Container
+ * - W-55: Chat Messages Container
+ * - W-56-60: Message bubbles (assistant/user)
+ * - W-61-67: Chat Input Area with voice input
+ * - FEAT-08: File drop and paste support
+ * - CLAUDE-02: Routes to Claude Code on VPS when available
+ * - CLAUDE-02-REWORK: Terminal-based chat when Claude Code mode active
+ */
+export default function Chat({ project, model, apiKeys, serverId, claudeCodeStatus }) {
+  // CLAUDE-02-REWORK: Check if we should use terminal-based Claude Code chat
+  const useClaudeCodeTerminal = useMemo(() => {
+    const isAnthropicModel = model?.provider === 'anthropic' ||
+      (typeof model === 'string' && model.toLowerCase().includes('claude'))
+    return isAnthropicModel && claudeCodeStatus?.authenticated && serverId
+  }, [model, claudeCodeStatus, serverId])
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [loadingStatus, setLoadingStatus] = useState('')
+  const [attachedImages, setAttachedImages] = useState([]) // {id, dataUrl, name}
+  const [isDragging, setIsDragging] = useState(false)
   const messagesEndRef = useRef(null)
-  const textareaRef = useRef(null)
+  const inputRef = useRef(null)
+  const fileInputRef = useRef(null)
+  const chatPanelRef = useRef(null)
+  const dragCounterRef = useRef(0) // Track nested drag events
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
+  // Convert file to base64 data URL
+  const fileToDataUrl = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
+  // Add images to queue (FIFO - oldest removed when exceeding MAX_IMAGES)
+  const addImages = useCallback(async (files) => {
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'))
+    if (imageFiles.length === 0) return
+
+    const newImages = await Promise.all(
+      imageFiles.map(async (file) => ({
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        dataUrl: await fileToDataUrl(file),
+        name: file.name
+      }))
+    )
+
+    setAttachedImages(prev => {
+      const combined = [...prev, ...newImages]
+      // FIFO: keep only the last MAX_IMAGES
+      if (combined.length > MAX_IMAGES) {
+        return combined.slice(-MAX_IMAGES)
+      }
+      return combined
+    })
+  }, [])
+
+  // Remove specific image
+  const removeImage = useCallback((id) => {
+    setAttachedImages(prev => prev.filter(img => img.id !== id))
+  }, [])
+
+  // Handle file input change (from Plus button)
+  const handleFileSelect = (e) => {
+    if (e.target.files?.length > 0) {
+      addImages(e.target.files)
+      e.target.value = '' // Reset so same file can be selected again
     }
-  }, [input])
+  }
+
+  // Handle paste event (Ctrl+V)
+  const handlePaste = useCallback((e) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    const imageItems = Array.from(items).filter(item => item.type.startsWith('image/'))
+    if (imageItems.length === 0) return
+
+    e.preventDefault()
+    const files = imageItems.map(item => item.getAsFile()).filter(Boolean)
+    addImages(files)
+  }, [addImages])
+
+  // Drag and drop handlers
+  const handleDragEnter = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounterRef.current++
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragging(true)
+    }
+  }, [])
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounterRef.current--
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false)
+    }
+  }, [])
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }, [])
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    dragCounterRef.current = 0
+    setIsDragging(false)
+
+    const files = e.dataTransfer?.files
+    if (files?.length > 0) {
+      addImages(files)
+    }
+  }, [addImages])
+
+  // Attach paste listener to window
+  useEffect(() => {
+    const panel = chatPanelRef.current
+    if (!panel) return
+
+    panel.addEventListener('paste', handlePaste)
+    return () => panel.removeEventListener('paste', handlePaste)
+  }, [handlePaste])
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return
+    if ((!input.trim() && attachedImages.length === 0) || isLoading) return
 
-    const userMessage = { role: 'user', content: input.trim() }
+    // Build content - either string or array with text + images
+    let content
+    const imagesToSend = [...attachedImages]
+
+    if (imagesToSend.length > 0) {
+      // Multimodal content format for Claude API
+      content = []
+
+      // Add images first
+      for (const img of imagesToSend) {
+        // Extract base64 data and media type from data URL
+        const [header, base64Data] = img.dataUrl.split(',')
+        const mediaType = header.match(/data:([^;]+)/)?.[1] || 'image/png'
+
+        content.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: mediaType,
+            data: base64Data
+          }
+        })
+      }
+
+      // Add text if present
+      if (input.trim()) {
+        content.push({ type: 'text', text: input.trim() })
+      }
+    } else {
+      content = input.trim()
+    }
+
+    // For display, store both text and image previews
+    const userMessage = {
+      role: 'user',
+      content: content,
+      displayText: input.trim(),
+      displayImages: imagesToSend.map(img => img.dataUrl)
+    }
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
     setInput('')
+    setAttachedImages([]) // Clear attached images after sending
     setIsLoading(true)
+    setLoadingStatus('Thinking...')
 
     try {
-      // Determine provider based on available keys
-      const provider = apiKeys.claude ? 'claude_direct' : 'openrouter'
-      const apiKey = provider === 'claude_direct' ? apiKeys.claude : apiKeys.openrouter
+      // CLAUDE-02: Determine provider based on available resources
+      // Priority: Claude Code on VPS > Claude Direct API > OpenRouter
+      let provider = 'openrouter'
+      let useServerId = null
+
+      // Check if we should route through Claude Code on VPS
+      // Conditions: Anthropic model + Claude Code authenticated + VPS connected
+      const isAnthropicModel = model?.provider === 'anthropic' ||
+        (typeof model === 'string' && model.toLowerCase().includes('claude'))
+
+      if (isAnthropicModel && claudeCodeStatus?.authenticated && serverId) {
+        // Route through Claude Code on VPS (uses Pro subscription)
+        provider = 'claude_code_ssh'
+        useServerId = serverId
+      } else if (apiKeys?.claude) {
+        // Use direct Anthropic API
+        provider = 'claude_direct'
+      }
+      // Otherwise use openrouter (default)
 
       const response = await fetch('/api/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-OpenRouter-Key': apiKeys.openrouter || '',
-          'X-Claude-Key': apiKeys.claude || ''
+          'X-OpenRouter-Key': apiKeys?.openrouter || '',
+          'X-Claude-Key': apiKeys?.claude || ''
         },
         body: JSON.stringify({
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-          model,
+          model: typeof model === 'object' ? model.id : model,
           provider,
           stream: true,
-          project_id: project?.id
+          project_id: project?.id,
+          server_id: useServerId
         })
       })
 
@@ -62,6 +244,7 @@ export default function Chat({ project, model, apiKeys }) {
       const decoder = new TextDecoder()
       let assistantMessage = { role: 'assistant', content: '' }
       setMessages([...newMessages, assistantMessage])
+      setLoadingStatus('Generating response...')
 
       while (true) {
         const { done, value } = await reader.read()
@@ -74,7 +257,7 @@ export default function Chat({ project, model, apiKeys }) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6)
             if (data === '[DONE]') continue
-            
+
             try {
               const parsed = JSON.parse(data)
               if (parsed.content) {
@@ -95,111 +278,286 @@ export default function Chat({ project, model, apiKeys }) {
       ])
     } finally {
       setIsLoading(false)
+      setLoadingStatus('')
     }
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault()
       sendMessage()
     }
   }
 
-  const handleVoiceResult = (text) => {
-    setInput(prev => prev + (prev ? ' ' : '') + text)
-    textareaRef.current?.focus()
+  const toggleMic = () => {
+    setIsRecording(!isRecording)
+    // Voice input would be implemented here with Whisper API
+    if (!isRecording) {
+      // Start recording
+      console.log('Starting voice recording...')
+    } else {
+      // Stop recording and process
+      console.log('Stopping voice recording...')
+    }
   }
 
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+  }
+
+  // Extract code language from className
+  const getLanguage = (className) => {
+    const match = /language-(\w+)/.exec(className || '')
+    return match ? match[1] : 'text'
+  }
+
+  // CLAUDE-02-REWORK: Render terminal-based chat when Claude Code mode is active
+  if (useClaudeCodeTerminal) {
+    return (
+      <ClaudeCodeTerminalChat
+        project={project}
+        serverId={serverId}
+        projectSlug={project?.slug}
+      />
+    )
+  }
+
+  // BUG-24: Option D - Check if we should show "Connecting to VPS..." welcome message
+  // instead of "Hello I'm Claude" when serverId exists but ClaudeCodeTerminal hasn't loaded yet
+  const isAnthropicModel = model?.provider === 'anthropic' ||
+    (typeof model === 'string' && model.toLowerCase().includes('claude'))
+  const showConnectingWelcome = isAnthropicModel && serverId && !claudeCodeStatus?.authenticated
+
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div
+      className="chat-panel"
+      id="chat-panel"
+      ref={chatPanelRef}
+      tabIndex={0}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drop Zone Overlay */}
+      {isDragging && (
+        <div className="chat-drop-overlay">
+          <div className="chat-drop-content">
+            <ImageIcon size={48} />
+            <span>Drop images here</span>
+            <span className="chat-drop-hint">Max {MAX_IMAGES} images</span>
+          </div>
+        </div>
+      )}
+
+      {/* W-55: Chat Messages Container */}
+      <div className="chat-messages">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 mt-20">
-            <p className="text-lg">Start a conversation</p>
-            <p className="text-sm mt-2">Type a message or use voice input</p>
+          <div className="chat-message assistant">
+            <div className="avatar claude-avatar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L14.5 9H22L16 14L18.5 21L12 16.5L5.5 21L8 14L2 9H9.5L12 2Z" fill="currentColor"/>
+              </svg>
+            </div>
+            <div className="chat-message-content">
+              {showConnectingWelcome ? (
+                <div className="vps-connecting-welcome">
+                  <div className="vps-connecting-dots">
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                  </div>
+                  <p className="vps-connecting-text">Connecting to your VPS</p>
+                  <p className="vps-connecting-subtext">Setting up Claude Code terminal...</p>
+                </div>
+              ) : (
+                <p>Hello! I'm Claude, your AI coding assistant. Ask me to build, modify, or explain anything about your project.</p>
+              )}
+            </div>
           </div>
         )}
-        
+
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-3xl rounded-2xl px-4 py-3 ${
-                msg.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-800 text-gray-100'
-              }`}
-            >
-              {msg.role === 'assistant' ? (
+          msg.role === 'assistant' ? (
+            // W-56: Assistant Message
+            <div key={i} className="chat-message assistant">
+              {/* W-57: Claude Avatar */}
+              <div className="avatar claude-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L14.5 9H22L16 14L18.5 21L12 16.5L5.5 21L8 14L2 9H9.5L12 2Z" fill="currentColor"/>
+                </svg>
+              </div>
+              {/* W-58: Message Content */}
+              <div className="chat-message-content">
                 <ReactMarkdown
-                  className="prose prose-invert max-w-none"
                   components={{
+                    p: ({ children }) => <p>{children}</p>,
                     code: ({ node, inline, className, children, ...props }) => {
+                      const language = getLanguage(className)
+                      const codeString = String(children).replace(/\n$/, '')
+
                       if (inline) {
                         return (
-                          <code className="bg-gray-700 px-1 rounded" {...props}>
+                          <code style={{
+                            background: 'var(--bg-tertiary)',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '13px'
+                          }} {...props}>
                             {children}
                           </code>
                         )
                       }
+
+                      // W-58: Code block with header
                       return (
-                        <pre className="bg-gray-900 p-3 rounded-lg overflow-x-auto">
-                          <code {...props}>{children}</code>
-                        </pre>
+                        <div className="chat-code-block">
+                          <div className="chat-code-header">
+                            <span>{language.toUpperCase()}</span>
+                            <button onClick={() => copyToClipboard(codeString)} title="Copy code">
+                              <Copy size={14} />
+                            </button>
+                          </div>
+                          <div className="chat-code-content">
+                            <SyntaxHighlighter
+                              style={oneDark}
+                              language={language}
+                              PreTag="div"
+                              customStyle={{
+                                margin: 0,
+                                padding: 0,
+                                background: 'transparent',
+                                fontSize: '13px'
+                              }}
+                            >
+                              {codeString}
+                            </SyntaxHighlighter>
+                          </div>
+                        </div>
                       )
                     }
                   }}
                 >
                   {msg.content}
                 </ReactMarkdown>
-              ) : (
-                <p className="whitespace-pre-wrap">{msg.content}</p>
-              )}
+              </div>
             </div>
-          </div>
+          ) : (
+            // W-59: User Message
+            <div key={i} className="chat-message user">
+              <div className="bubble">
+                {/* Show attached images */}
+                {msg.displayImages?.length > 0 && (
+                  <div className="user-images">
+                    {msg.displayImages.map((dataUrl, idx) => (
+                      <img key={idx} src={dataUrl} alt={`Attachment ${idx + 1}`} />
+                    ))}
+                  </div>
+                )}
+                {/* Show text */}
+                {msg.displayText || (typeof msg.content === 'string' ? msg.content : '')}
+              </div>
+            </div>
+          )
         ))}
-        
-        {isLoading && messages[messages.length - 1]?.role === 'user' && (
-          <div className="flex justify-start">
-            <div className="bg-gray-800 rounded-2xl px-4 py-3">
-              <Loader2 className="animate-spin" size={20} />
+
+        {/* W-60: Loading state with spinner */}
+        {isLoading && (
+          <div className="chat-message assistant">
+            <div className="avatar claude-avatar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L14.5 9H22L16 14L18.5 21L12 16.5L5.5 21L8 14L2 9H9.5L12 2Z" fill="currentColor"/>
+              </svg>
+            </div>
+            <div className="chat-message-content">
+              <div className="chat-status">
+                <div className="spinner"></div>
+                {loadingStatus}
+              </div>
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-gray-700 p-4">
-        <div className="flex items-end gap-2 max-w-4xl mx-auto">
-          <VoiceInput onResult={handleVoiceResult} />
-          
-          <div className="flex-1 relative">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message or use voice..."
-              rows={1}
-              className="w-full bg-gray-800 border border-gray-600 rounded-xl px-4 py-3 pr-12 resize-none focus:outline-none focus:border-blue-500 max-h-40"
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim() || isLoading}
-              className="absolute right-2 bottom-2 p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition"
-            >
-              <Send size={18} />
-            </button>
+      {/* W-61: Chat Input Area */}
+      <div className="chat-input-area">
+        {/* Image Thumbnails (FEAT-08) */}
+        {attachedImages.length > 0 && (
+          <div className="chat-attached-images">
+            {attachedImages.map((img) => (
+              <div key={img.id} className="chat-image-thumb">
+                <img src={img.dataUrl} alt={img.name} />
+                <button
+                  className="chat-image-remove"
+                  onClick={() => removeImage(img.id)}
+                  title="Remove image"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+            {attachedImages.length >= MAX_IMAGES && (
+              <span className="chat-image-limit">Max {MAX_IMAGES} images</span>
+            )}
           </div>
+        )}
+
+        {/* W-62: Chat Input Wrapper */}
+        <div className="chat-input-wrapper">
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            style={{ display: 'none' }}
+            onChange={handleFileSelect}
+          />
+
+          {/* W-63: Plus Button */}
+          <button
+            className="plus-btn"
+            title="Add image"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Plus size={18} />
+          </button>
+
+          {/* W-64: Chat Text Input */}
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask Claude to build something..."
+          />
+
+          {/* W-65: Mic Button */}
+          <button
+            className={`mic-btn ${isRecording ? 'recording' : ''}`}
+            onClick={toggleMic}
+            title="Voice input (Whisper)"
+          >
+            <Mic size={18} />
+          </button>
+
+          {/* W-66: Send Button */}
+          <button
+            className="send-btn"
+            onClick={sendMessage}
+            disabled={(!input.trim() && attachedImages.length === 0) || isLoading}
+          >
+            <Send size={18} />
+          </button>
         </div>
-        <p className="text-xs text-gray-500 text-center mt-2">
-          Model: {model}
-        </p>
+
+        {/* W-67: Input Hint */}
+        <div className="chat-input-hint">
+          Cmd+Enter to send • Drop or paste images • Click mic for voice input
+        </div>
       </div>
     </div>
   )

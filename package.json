@@ -1,0 +1,17 @@
+{
+  "name": "hubllm",
+  "version": "0.2.0",
+  "description": "AI-powered development workspace",
+  "scripts": {
+    "test": "./tests/e2e/run-tests.sh",
+    "test:auth": "./tests/e2e/run-tests.sh test-auth-login",
+    "test:signup": "./tests/e2e/run-tests.sh test-auth-signup",
+    "test:dashboard": "./tests/e2e/run-tests.sh test-dashboard-view",
+    "test:create": "./tests/e2e/run-tests.sh test-create-project-view",
+    "dev": "./init.sh",
+    "browser:install": "agent-browser install"
+  },
+  "devDependencies": {
+    "agent-browser": "^0.1.0"
+  }
+}

@@ -75,10 +75,17 @@ class UserResponse(BaseModel):
     avatar_url: Optional[str]
     email_verified: bool
     auth_provider: str
+    setup_completed: bool
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class UserUpdate(BaseModel):
+    """User profile update"""
+    name: Optional[str] = None
+    email: Optional[str] = None
 
 
 class PasswordResetRequest(BaseModel):
@@ -338,9 +345,11 @@ async def get_github_user(code: str) -> Optional[dict]:
 
         return {
             "id": str(user_data["id"]),
+            "login": user_data.get("login"),
             "email": user_data.get("email"),
             "name": user_data.get("name") or user_data.get("login"),
-            "avatar_url": user_data.get("avatar_url")
+            "avatar_url": user_data.get("avatar_url"),
+            "access_token": access_token  # Include GitHub access token for API calls
         }
 
 
@@ -467,5 +476,28 @@ def user_to_response(user: User) -> UserResponse:
         avatar_url=user.avatar_url,
         email_verified=user.email_verified,
         auth_provider=user.auth_provider.value,
+        setup_completed=user.setup_completed,
         created_at=user.created_at
     )
+
+
+async def update_user(
+    db: AsyncSession,
+    user: User,
+    name: Optional[str] = None,
+    email: Optional[str] = None
+) -> User:
+    """Update user profile"""
+    if name is not None:
+        user.name = name
+    if email is not None and email != user.email:
+        # Check if email is already in use
+        existing = await get_user_by_email(db, email)
+        if existing and existing.id != user.id:
+            raise ValueError("Email already in use")
+        user.email = email
+        user.email_verified = False  # Require re-verification for new email
+
+    await db.commit()
+    await db.refresh(user)
+    return user

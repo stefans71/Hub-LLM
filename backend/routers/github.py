@@ -6,6 +6,7 @@ Endpoints for managing GitHub Codespaces
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional
+import httpx
 
 from services.github import GitHubService, Codespace
 
@@ -185,6 +186,41 @@ async def list_repos(
     service = get_github_service(x_github_token)
     try:
         return await service.list_repos(per_page)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class CreateRepoRequest(BaseModel):
+    name: str
+    description: str = ""
+    private: bool = False
+
+
+@router.post("/repos")
+async def create_repo(
+    request: CreateRepoRequest,
+    x_github_token: Optional[str] = Header(None)
+):
+    """Create a new repository for the authenticated user"""
+    service = get_github_service(x_github_token)
+    try:
+        return await service.create_repo(
+            name=request.name,
+            description=request.description,
+            private=request.private,
+            auto_init=True
+        )
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 422:
+            # Repository name already exists or invalid
+            error_data = e.response.json()
+            errors = error_data.get("errors", [])
+            if errors and errors[0].get("field") == "name":
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Repository name '{request.name}' already exists or is invalid"
+                )
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

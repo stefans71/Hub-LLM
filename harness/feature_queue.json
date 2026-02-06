@@ -1,0 +1,665 @@
+{
+  "version": "6.0",
+  "updated": "2026-02-06",
+  "session_docs": [
+    "CLAUDE.md",
+    "harness/feature_queue.json"
+  ],
+  "vision": {
+    "summary": "Chat-focused workspace with LLM-Dev panel for dev tools",
+    "main_area": "Chat ONLY (no tabs)",
+    "llm_dev_panel": {
+      "tabs": [
+        "Terminal",
+        "Editor",
+        "Docker",
+        "Logs",
+        "Project Context"
+      ],
+      "terminal": "Multi-terminal split panes with color coding"
+    },
+    "left_sidebar": {
+      "status_dots": "\u25cf green=connected, \u25cb gray=disconnected, \ud83d\udd34 red=error",
+      "project_menu": "3-dot menu (Rename, Settings, Delete)",
+      "truncation": "Names truncate with hover tooltip"
+    }
+  },
+  "queue": [
+    {
+      "id": "BUG-30",
+      "name": "Database path is relative — ghost DB causes stale data on fresh start",
+      "size": "XS",
+      "priority": 1,
+      "status": "pending_review",
+      "description": "DATABASE_URL in backend/models/__init__.py line 25 uses relative path 'sqlite+aiosqlite:///./hubllm.db'. This creates the DB wherever uvicorn's CWD is — usually backend/ (correct), but if launched from repo root, a second hubllm.db appears at Hub-LLM/hubllm.db. After deleting one DB to reset, the ghost DB still exists with old user data, causing 'Email already registered' on signup. Additionally init.sh has no DB cleanup step. Refs: learnings line 9 (BUG-29 init_db fix), line 1321 (had to delete hubllm.db to recreate schema), line 1391 (documents ./hubllm.db created on first run).",
+      "change": [
+        "backend/models/__init__.py line 25: Replace relative path with absolute path anchored to the file's own directory. Use `Path(__file__).resolve().parent.parent / 'hubllm.db'` so DB always lands at backend/hubllm.db regardless of CWD. Keep the env var override so DATABASE_URL can still be set externally.",
+        "init.sh: Add a --fresh flag or unconditional cleanup step before starting backend. Use `find /root/dev/Hub-LLM -name 'hubllm.db' -delete` to remove ALL hubllm.db files (not just backend/hubllm.db). Print which files were deleted. Place this BEFORE the uvicorn launch (after line 52, before line 54).",
+        "init.sh line 140: Update the summary to show the resolved absolute path so the operator can verify which DB is in use."
+      ],
+      "test": "Step-by-step: (1) find /root/dev/Hub-LLM -name hubllm.db — note any files. (2) Delete all found files. (3) Run init.sh from repo root. (4) Verify only backend/hubllm.db exists: find /root/dev/Hub-LLM -name hubllm.db. (5) Signup a new user — should succeed. (6) Stop backend, cd to repo root, run 'cd /root/dev/Hub-LLM && python -c \"from backend.models import DATABASE_URL; print(DATABASE_URL)\"' — should show absolute path containing /backend/hubllm.db. Paste the find output and DATABASE_URL print as evidence.",
+      "investigation_id": null,
+      "completion_note": "Changed backend/models/__init__.py: replaced relative './hubllm.db' with absolute path via Path(__file__).resolve().parent.parent / 'hubllm.db'. Added ghost DB cleanup in init.sh Step 0. Updated init.sh summary to show resolved path. Test evidence: python -c 'from backend.models import DATABASE_URL; print(DATABASE_URL)' outputs 'sqlite+aiosqlite:////root/dev/Hub-LLM/backend/hubllm.db'. find shows only backend/hubllm.db exists. Affected areas: any code importing DATABASE_URL from backend.models.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
+      "id": "INFRA-03",
+      "name": "Idle Connection Timeout",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Auto-close SSH connections after inactivity to save server resources",
+      "current": "Connections stay open forever until browser closes or network fails",
+      "change": [
+        "Track last activity time per VPS connection",
+        "Background task checks for idle connections every 5 min",
+        "Close connections idle for 2 hours (configurable in Settings)",
+        "Send connection_status: disconnected to all terminals before closing",
+        "User can reconnect easily via INFRA-02"
+      ],
+      "test": "Open terminal, leave idle for 2+ hours. Connection auto-closes. Dot turns gray. User clicks dot to reconnect."
+    },
+    {
+      "id": "FEAT-10",
+      "name": "Project-Specific Claude Code Sessions",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Ensure Claude Code conversations are isolated per project with no history leaking",
+      "current": "Claude --resume runs in project directory, should isolate history. Needs verification.",
+      "change": [
+        "Verify: switching projects disconnects old Claude session, starts fresh in new project dir",
+        "Verify: claude --resume only shows conversations from current project",
+        "Store last conversation ID per project in localStorage",
+        "On project switch: clear chat messages, reconnect to correct project directory",
+        "Add subtle pulse animation on active project dot when Claude is processing"
+      ],
+      "test": "Chat in Fishing App \u2192 switch to Other Project \u2192 see empty chat \u2192 switch back \u2192 can resume Fishing App conversation"
+    },
+    {
+      "id": "SETTINGS-01",
+      "name": "Wire Settings Connected Status to Real Detection",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "description": "Settings page shows mock 'Anthropic connected' - wire to real Claude Code detection",
+      "current": "Settings shows hardcoded mock status for Anthropic connection",
+      "change": [
+        "In Settings, show real connection status for:",
+        "- OpenRouter: Check if API key exists in localStorage and display status",
+        "- Anthropic: Check if any saved VPS has Claude Code authenticated",
+        "- VPS list: Show which VPSes have Claude Code installed/authenticated",
+        "Reuse detection logic pattern from CLAUDE-01"
+      ],
+      "test": "Settings shows real status - Anthropic only 'connected' if Claude Code detected on a VPS"
+    },
+    {
+      "id": "MODEL-04",
+      "name": "Dynamic Model List from OpenRouter API",
+      "size": "M",
+      "priority": 3,
+      "status": "pending",
+      "description": "Replace hardcoded MODEL_LIST with live data from OpenRouter public API",
+      "current": "Model selector uses hardcoded MODEL_LIST with ~16 models",
+      "change": [
+        "Fetch models from https://openrouter.ai/api/v1/models (public, no auth required)",
+        "Cache results in localStorage with timestamp (refresh daily or on demand)",
+        "Show ALL models in selector, even without API key",
+        "Without key: models greyed out with 'Add OpenRouter key' message",
+        "With key: all OpenRouter models enabled",
+        "Keep Anthropic models special case - show 'Pro Subscription' if Claude Code detected"
+      ],
+      "test": "No API key \u2192 see full model list greyed out. Add key \u2192 all enabled."
+    },
+    {
+      "id": "CLAUDE-03",
+      "name": "Claude Resume Conversation Support (UI Enhancement)",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "description": "Add UI for resuming Claude Code conversations - core functionality already working via --resume",
+      "current": "claude --resume runs automatically on reconnect. User sees terminal picker.",
+      "change": [
+        "Add 'Resume conversation' button/menu in chat header",
+        "Show conversation list in prettier UI (not just terminal picker)",
+        "Display conversation metadata: name, date, message count",
+        "Quick-resume last conversation option",
+        "Store last conversation ID per project"
+      ],
+      "test": "Click Resume \u2192 see pretty list of past conversations \u2192 select one \u2192 continues in chat"
+    },
+    {
+      "id": "BUBBLE-01",
+      "name": "Bubble View Polish and Edge Cases",
+      "size": "S",
+      "priority": 4,
+      "status": "pending",
+      "description": "Address remaining bubble parsing edge cases as discovered during testing",
+      "current": "Bubble view MVP complete - functional for demos. Some UI artifacts occasionally leak through.",
+      "change": [
+        "Add new spinner words as discovered",
+        "Improve tool call visibility (show 'Using Write tool...' indicator)",
+        "Better handling of multi-line code blocks",
+        "Consider headless mode integration for cleaner parsing (future)"
+      ],
+      "test": "Extended use of bubble view without seeing spinner text, status bar fragments, or other UI artifacts"
+    }
+  ],
+  "completed": [
+    {
+      "id": "DOCS-07",
+      "name": "Map production deployment architecture (Docker/Coolify/Traefik/Postgres)",
+      "completed": "2026-02-06",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-06",
+      "review_notes": "Completed by Director directly (CODEBASE_INDEX deployment section, CLAUDE.md patterns, Director CLAUDE.md updates) in commit bcb8153. Engineer further updated dual_db_rule during BUG-28-REOPEN (session 89). All 5 change items verified present.",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "Director-completed. CODEBASE_INDEX has deployment section with all 4 containers, env vars, dual_db_rule. CLAUDE.md has Postgres/migration critical patterns + Docker stack reference. Director CLAUDE.md has Environment, Architecture, and recurring bug pattern updates."
+    },
+    {
+      "id": "BUG-28-REOPEN",
+      "name": "Setup wizard skip — Postgres missing setup_completed column",
+      "completed": "2026-02-06",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-06",
+      "review_notes": "Verified: IS_POSTGRES flag branching, engine-aware init_db (information_schema vs sqlite_master), run_migrations() framework, 001 migration idempotent via inspect. CODEBASE_INDEX updated (dual_db_rule, bugs #14/#15 fixed). Test evidence confirmed: URL construction for both engines, migration add/skip. Production verification deferred to Coolify auto-deploy — migration is idempotent. Commit: bb88d4f.",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "Changed backend/models/__init__.py: (1) Fixed SYNC_DATABASE_URL — now branches on IS_POSTGRES, converts postgresql:// to +asyncpg for async engine, strips for sync. (2) Fixed init_db() — uses information_schema.tables for Postgres, sqlite_master for SQLite. (3) Added run_migrations() — runs backend/migrations/NNN_*.py scripts after create_all. Created backend/migrations/001_add_setup_completed.py — adds setup_completed column via ALTER TABLE if missing (uses SQLAlchemy inspect, works on both SQLite and Postgres). Added psycopg2-binary to requirements.txt."
+    },
+    {
+      "id": "BUG-29",
+      "name": "Signup 500 \u2014 init_db creates 0-byte DB, no tables",
+      "completed": "2026-02-06",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-28",
+      "name": "Setup Wizard Skipped After Account Creation",
+      "completed": "2026-02-06",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "REOPENED — original fix only addressed frontend null-init timing. Real root cause: Postgres production DB missing setup_completed column. ORM model has it but create_all doesn't add columns to existing tables in Postgres. See BUG-28-REOPEN in queue.",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "DOCS-05",
+      "name": "Promote Critical Learnings",
+      "completed": "2026-02-06",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "DOCS-06",
+      "name": "Generate Full CODEBASE_INDEX.yaml",
+      "completed": "2026-02-06",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-25",
+      "name": "Project Click Doesn't Switch Claude Terminal Chat or LLM-Dev Terminal",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-26",
+      "name": "Clickable Status Dots Don't Trigger Reconnect",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "INFRA-02",
+      "name": "VPS Reconnect UX",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-24",
+      "name": "Chat Shows Welcome Instead of Loading After Project Create",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "INFRA-01",
+      "name": "SSH Connection Multiplexing",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "PHASE-2",
+      "name": "Chat Bubble Rendering for Claude Code Output",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-23",
+      "name": "Setup Wizard VPS Validation Rejects Valid SSH Key",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-22",
+      "name": "Chat Terminal Scrollbar and Resize Handle",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-21",
+      "name": "Project Switch/Refresh Doesn't Reconnect VPS",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-20",
+      "name": "Create Project Fails When Adding New VPS Inline (already fixed)",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-19",
+      "name": "Setup Wizard VPS Form Different Validation",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-17",
+      "name": "Setup Wizard VPS Test Connection Not Working",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-18",
+      "name": "Claude Code Terminal in Chat Not Receiving Keyboard Input",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "CLAUDE-02-REWORK",
+      "name": "Chat Area as Terminal Mirror for Claude Code (Phase 1)",
+      "completed": "2026-01-26",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "ONBOARD-01",
+      "name": "Setup Wizard Skeleton",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "MODEL-03",
+      "name": "Billing Switch Warning Popup",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "MODEL-02",
+      "name": "Billing Source Detection and Display",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "CLAUDE-02",
+      "name": "Route Chat to Claude Code on VPS (replaced by rework)",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "MODEL-01",
+      "name": "Per-Project Model Persistence",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "CLAUDE-01",
+      "name": "Detect Claude Code on VPS",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "AUTH-01",
+      "name": "Password Validation Rules",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "CLEANUP-03",
+      "name": "Fix Config Mismatch - Standardize on SQLite + Port 8000",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "FEAT-08",
+      "name": "Chat File Drop and Paste",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-16",
+      "name": "Terminal Pane Can't Resize Smaller",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-15",
+      "name": "Terminal Connection Drops on Panel Toggle",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "FEAT-09",
+      "name": "Multi-Terminal Split Panes with Color Coding",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-14",
+      "name": "Editor Tab Not Loading Selected File",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-13",
+      "name": "TERMINALS Sidebar Not Visible",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-12",
+      "name": "xterm-screen Width Calculation",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "FEAT-07",
+      "name": "Multiple Terminal Tabs",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-11",
+      "name": "LLM-Dev Tabs Don't Switch Content",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "BUG-10",
+      "name": "Terminal Content Cutoff",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "FEAT-04",
+      "name": "Terminal Opens in Project Directory",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "FEAT-03",
+      "name": "Remove Explorer from LLM-Dev Panel",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "FEAT-06",
+      "name": "LLM-Dev Editor Tab",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "UI-06",
+      "name": "Delete Confirmation Modal",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "UI-05",
+      "name": "Project 3-Dot Menu",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "UI-04",
+      "name": "Project Name Truncation",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "UI-03",
+      "name": "Project Status Dots",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "UI-02",
+      "name": "Remove Servers/Codespaces Tabs",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    },
+    {
+      "id": "UI-01",
+      "name": "Simplify Top Bar",
+      "completed": "2026-01-25",
+      "reviewed_by": "Director (pre-template)",
+      "review_notes": "Approved before review template was added",
+      "index_verified": false,
+      "test_evidence_verified": false
+    }
+  ],
+  "_templates": {
+    "_note": "These templates are the REQUIRED format. Both Director and Engineer must follow them exactly.",
+    "new_task": {
+      "_created_by": "Director",
+      "_when": "Director creates this when writing a new task",
+      "id": "[BUG/FEAT/DOCS/INFRA]-XX",
+      "name": "Short descriptive name",
+      "size": "XS/S/M/L",
+      "priority": 1,
+      "status": "pending",
+      "description": "Root cause analysis with file paths and line numbers from CODEBASE_INDEX.yaml. Include learnings session refs. Be specific.",
+      "change": [
+        "file/path.ext line N: specific change description",
+        "file/path.ext line N: specific change description"
+      ],
+      "test": "Step-by-step: (1) do X, (2) expect Y. REQUIRED: specify what output to paste in completion_note as evidence.",
+      "investigation_id": "INV-XX or null if no investigation was needed",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    "engineer_signoff": {
+      "_filled_by": "Lead Engineer when task is done",
+      "_rules": [
+        "Status MUST be 'pending_review' \u2014 NEVER 'done' or 'completed'",
+        "completion_note MUST be 30+ words with file paths and test evidence",
+        "All checklist items MUST be true",
+        "If task test field says 'paste X', you MUST paste X in completion_note"
+      ],
+      "status": "pending_review",
+      "completion_note": "Changed [files]. Fixed [what]. Test evidence: [paste actual output \u2014 sqlite3 results, curl responses, browser console, etc]. Affected areas: [what else might be impacted].",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      }
+    },
+    "director_review": {
+      "_filled_by": "Director when reviewing completed task",
+      "_rules": [
+        "Check completion_note has test evidence (not just description)",
+        "Check status was set to pending_review (not done/completed)",
+        "Check CODEBASE_INDEX.yaml was updated: git log -3 -- harness/CODEBASE_INDEX.yaml",
+        "Check all checklist items are true",
+        "Spot-check one file's line count against index entry",
+        "REJECT if any check fails \u2014 set status back to pending with rejection_note"
+      ],
+      "status": "completed",
+      "reviewed_by": "Director",
+      "reviewed_date": "YYYY-MM-DD",
+      "review_notes": "Verified: [what was checked]. Index commit: [hash]. Test evidence confirmed: [what was verified].",
+      "index_verified": true,
+      "test_evidence_verified": true
+    },
+    "completed_task": {
+      "_note": "This is what goes in the 'completed' array. PRESERVE all fields \u2014 never strip down to just id/name/date.",
+      "id": "[BUG/FEAT/DOCS/INFRA]-XX",
+      "name": "Short descriptive name",
+      "completed": "YYYY-MM-DD",
+      "reviewed_by": "Director",
+      "reviewed_date": "YYYY-MM-DD",
+      "review_notes": "What was verified during review",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "PRESERVED from engineer \u2014 never delete this"
+    },
+    "investigation_request": {
+      "_created_by": "Director when Gate 1 fails (index missing or stale)",
+      "_handed_to": "Code Researcher agent via: 'Investigate the request at harness/investigations/active/INV-XX.md'",
+      "_flow": "Director fills request \u2192 spawns Code Researcher \u2192 agent reads request, scans code, writes to index, saves report \u2192 Director reads report \u2192 Director writes task",
+      "id": "INV-XX",
+      "file": "harness/investigations/active/INV-XX.md",
+      "report": "harness/investigations/reports/INV-XX_report.md"
+    }
+  }
+}

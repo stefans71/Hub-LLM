@@ -125,7 +125,8 @@ class SSHConnection:
     async def read_file(self, path: str) -> str:
         """Read file contents"""
         sftp = await self.get_sftp()
-        async with sftp.open(path, "r") as f:
+        # BUG-14: Use binary mode "rb" to get bytes, then decode
+        async with sftp.open(path, "rb") as f:
             content = await f.read()
             return content.decode("utf-8", errors="replace")
     
@@ -193,6 +194,29 @@ class SSHConnection:
         """Disconnect (alias for close)"""
         await self.close()
 
+    async def run_command(self, command: str, timeout: float = 10.0) -> tuple[str, str, int]:
+        """
+        Run a command and return (stdout, stderr, exit_code).
+        Does not use the interactive shell - runs command directly.
+        """
+        if not self.conn:
+            await self.connect()
+
+        try:
+            result = await asyncio.wait_for(
+                self.conn.run(command),
+                timeout=timeout
+            )
+            return (
+                result.stdout or "",
+                result.stderr or "",
+                result.exit_status or 0
+            )
+        except asyncio.TimeoutError:
+            return ("", f"Command timed out after {timeout}s", -1)
+        except Exception as e:
+            return ("", str(e), -1)
+
     async def close(self):
         """Close the connection"""
         if self.process:
@@ -241,47 +265,67 @@ class SSHManager:
 ssh_manager = SSHManager()
 
 
-# ============ Server Credentials Storage ============
-# Used by routers/servers.py
+# ============ Server Cache (loaded from database) ============
+# In-memory cache for fast SSH operations
+# Loaded from SQLite database by routers/servers.py
 
-@dataclass
-class ServerCredentials:
-    """Server credentials with metadata"""
-    id: str
-    name: str
-    host: str
-    port: int = 22
-    username: str = "root"
-    password: Optional[str] = None
-    private_key: Optional[str] = None
-    project_id: Optional[str] = None
-    created_at: Optional[object] = None  # datetime
-
-
-# In-memory storage for server credentials (MVP)
-servers_db: dict[str, ServerCredentials] = {}
+servers_cache: dict[str, dict] = {}
+"""
+Server data structure (cached from database):
+{
+    "name": str,
+    "host": str,
+    "port": int,
+    "username": str,
+    "auth_type": str,  # "password" or "key"
+    "password": Optional[str],
+    "private_key": Optional[str],
+    "passphrase": Optional[str],
+}
+"""
 
 # Active connections cache
 _connections: dict[str, SSHConnection] = {}
 
 
+async def load_server_to_cache(server) -> None:
+    """Load a server from database model into cache"""
+    servers_cache[server.id] = {
+        "name": server.name,
+        "host": server.host,
+        "port": server.port,
+        "username": server.username,
+        "auth_type": server.auth_type,
+        "password": server.password,
+        "private_key": server.private_key,
+        "passphrase": server.passphrase,
+    }
+
+
+def remove_from_cache(server_id: str) -> None:
+    """Remove a server from cache"""
+    if server_id in servers_cache:
+        del servers_cache[server_id]
+
+
 async def get_connection(server_id: str) -> SSHConnection:
     """Get or create an SSH connection for a server"""
-    if server_id not in servers_db:
-        raise ValueError(f"Server {server_id} not found")
+    if server_id not in servers_cache:
+        raise ValueError(f"Server {server_id} not found in cache. Load from database first.")
 
     # Return existing connection if available
     if server_id in _connections:
         return _connections[server_id]
 
-    # Create new connection
-    server = servers_db[server_id]
+    # Create new connection from cached server data
+    server = servers_cache[server_id]
     credentials = SSHCredentials(
-        host=server.host,
-        port=server.port,
-        username=server.username,
-        password=server.password,
-        private_key=server.private_key
+        host=server["host"],
+        port=server["port"],
+        username=server["username"],
+        password=server.get("password"),
+        private_key=server.get("private_key"),
+        passphrase=server.get("passphrase")
     )
 
     conn = SSHConnection(credentials)
