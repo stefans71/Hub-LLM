@@ -30,23 +30,46 @@
 
 ```
 App.jsx
-├── HeaderNavigation.jsx
-├── AuthPage.jsx
-├── Setup.jsx                       # Onboarding wizard
-├── Dashboard / DashboardSidebar.jsx
-├── Workspace.jsx
-│   ├── WorkspaceTopBar.jsx → ModelSelector.jsx
-│   ├── WorkspaceIconSidebar.jsx
-│   ├── WorkspaceFileExplorer.jsx
-│   ├── Chat.jsx → ClaudeCodeTerminalChat.jsx
-│   ├── ServerManager.jsx
-│   ├── PreviewPanel.jsx
-│   └── LLMDevPanel.jsx
-│       ├── MultiTerminal.jsx (split-pane, xterm.js)
-│       ├── CodeEditor.jsx
-│       └── FileBrowser.jsx
-├── Settings.jsx (~4600 lines)
-└── CreateProject
+├── main.jsx                          # Entry point
+├── contexts/AuthContext.jsx           # Auth state provider
+│
+├── HeaderNavigation.jsx               # Top nav bar
+├── AuthPage.jsx                       # Login/register
+├── AuthCallback.jsx                   # GitHub OAuth callback
+│
+├── pages/
+│   ├── Setup.jsx                      # Onboarding wizard (OpenRouter / Anthropic Pro)
+│   ├── Dashboard.jsx                  # Dashboard wrapper
+│   │   └── DashboardSidebar.jsx       # Project list, status dots, reconnect
+│   ├── Settings.jsx                   # ~4600 lines (agents/skills/MCP modals inline)
+│   │   └── SettingsModal.jsx          # Settings sub-modal
+│   └── CreateProject.jsx              # 5-step wizard
+│
+├── Workspace.jsx                      # Main orchestrator
+│   ├── WorkspaceTopBar.jsx            # Model selector, VPS status, Claude Code detection
+│   │   ├── ModelSelector.jsx          # Dropdown with provider groups
+│   │   └── ModelNotification.jsx      # Model change notifications
+│   ├── WorkspaceIconSidebar.jsx       # Left icon bar
+│   ├── WorkspaceFileExplorer.jsx      # Project tree, status dots
+│   │
+│   ├── Chat.jsx                       # Routes: OpenRouter OR ClaudeCodeTerminalChat
+│   │   └── ClaudeCodeTerminalChat.jsx # Terminal chat + bubble view
+│   │
+│   ├── ServerManager.jsx              # VPS link/unlink
+│   │   └── ServerConnect.jsx          # SSH connection form
+│   ├── CodespacesManager.jsx          # GitHub Codespaces
+│   ├── PreviewPanel.jsx               # Live preview
+│   ├── AnthropicSubscription.jsx      # Anthropic Pro subscription UI
+│   │
+│   └── LLMDevPanel.jsx               # Bottom panel (collapsible, drag-resizable)
+│       ├── MultiTerminal.jsx          # Split-pane terminals (max 4), xterm.js
+│       ├── Terminal.jsx               # Single terminal (legacy)
+│       ├── WorkspaceTerminal.jsx      # Terminal wrapper
+│       ├── CodeEditor.jsx             # Monaco editor
+│       └── FileBrowser.jsx            # SFTP file browser
+│
+├── VoiceInput.jsx                     # Whisper voice input (utility)
+└── ProjectSidebar.jsx                 # Legacy sidebar (may be deprecated)
 ```
 
 ## Backend (`backend/routers/`)

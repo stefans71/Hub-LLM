@@ -1,0 +1,409 @@
+{
+  "version": "5.9",
+  "updated": "2026-02-06",
+  "session_docs": [
+    "CLAUDE.md",
+    "harness/feature_queue.json"
+  ],
+  "vision": {
+    "summary": "Chat-focused workspace with LLM-Dev panel for dev tools",
+    "main_area": "Chat ONLY (no tabs)",
+    "llm_dev_panel": {
+      "tabs": [
+        "Terminal",
+        "Editor",
+        "Docker",
+        "Logs",
+        "Project Context"
+      ],
+      "terminal": "Multi-terminal split panes with color coding"
+    },
+    "left_sidebar": {
+      "status_dots": "\u25cf green=connected, \u25cb gray=disconnected, \ud83d\udd34 red=error",
+      "project_menu": "3-dot menu (Rename, Settings, Delete)",
+      "truncation": "Names truncate with hover tooltip"
+    }
+  },
+  "queue": [
+    {
+      "id": "DOCS-01",
+      "name": "Generate Backend Routes Code Map",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Scan all 12 backend/routers/*.py files. For each: list every endpoint (method, path, params, purpose). Grep frontend/src to find which components call each. Run sqlite3 backend/hubllm.db '.schema' for DB. Save to harness/knowledge/code-maps/backend-routes.md",
+      "change": [
+        "Document every endpoint in all 12 routers",
+        "Cross-reference frontend callers",
+        "Document SQLite schema"
+      ],
+      "test": "backend-routes.md covers all routers + DB schema + frontend refs"
+    },
+    {
+      "id": "DOCS-02",
+      "name": "Generate Chat Components Code Map",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Document Chat.jsx and ClaudeCodeTerminalChat.jsx. FEAT-10, CLAUDE-03, BUBBLE-01 all touch chat with no map. See learnings Sessions 81-82 for claudeCodeStatus timing. Save to harness/knowledge/code-maps/chat-components.md",
+      "change": [
+        "Chat.jsx: state, routing (useClaudeCodeTerminal), props",
+        "ClaudeCodeTerminalChat: connection, bubble parsing, spinner filtering",
+        "Welcome/loading flow"
+      ],
+      "test": "Covers both components with state vars, routing, bubble parsing"
+    },
+    {
+      "id": "DOCS-03",
+      "name": "Generate Setup Wizard Code Map",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending",
+      "description": "Document Setup.jsx: step flow, OpenRouter vs Anthropic Pro paths, localStorage keys, redirect. Save to harness/knowledge/code-maps/setup-wizard.md",
+      "change": [
+        "Step flow + branching",
+        "Storage (localStorage + API calls)",
+        "Post-completion redirect"
+      ],
+      "test": "Describes both onboarding paths accurately"
+    },
+    {
+      "id": "DOCS-04",
+      "name": "Generate State Management Conventions",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending",
+      "description": "Document localStorage vs backend sync \u2014 #1 recurring bug source (Sessions 43, 47, 80). Save to harness/knowledge/conventions/state-management.md",
+      "change": [
+        "All localStorage keys + values",
+        "Sync patterns + direction",
+        "claudeCodeStatus flow",
+        "Bug examples from learnings"
+      ],
+      "test": "Lists all localStorage keys with sync patterns"
+    },
+    {
+      "id": "DOCS-05",
+      "name": "Promote Critical Learnings",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending",
+      "description": "Extract recurring patterns from learnings.md (85 sessions, write-only) into CLAUDE.md or code maps. Key: Sessions 40, 43, 46, 80-82.",
+      "change": [
+        "Scan for patterns appearing 2+ times",
+        "Add missing to CLAUDE.md critical patterns",
+        "5+ patterns promoted minimum"
+      ],
+      "test": "5+ new patterns in CLAUDE.md or code maps"
+    },
+    {
+      "id": "INFRA-03",
+      "name": "Idle Connection Timeout",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Auto-close SSH connections after inactivity to save server resources",
+      "current": "Connections stay open forever until browser closes or network fails",
+      "change": [
+        "Track last activity time per VPS connection",
+        "Background task checks for idle connections every 5 min",
+        "Close connections idle for 2 hours (configurable in Settings)",
+        "Send connection_status: disconnected to all terminals before closing",
+        "User can reconnect easily via INFRA-02"
+      ],
+      "test": "Open terminal, leave idle for 2+ hours. Connection auto-closes. Dot turns gray. User clicks dot to reconnect."
+    },
+    {
+      "id": "FEAT-10",
+      "name": "Project-Specific Claude Code Sessions",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Ensure Claude Code conversations are isolated per project with no history leaking",
+      "current": "Claude --resume runs in project directory, should isolate history. Needs verification.",
+      "change": [
+        "Verify: switching projects disconnects old Claude session, starts fresh in new project dir",
+        "Verify: claude --resume only shows conversations from current project",
+        "Store last conversation ID per project in localStorage",
+        "On project switch: clear chat messages, reconnect to correct project directory",
+        "Add subtle pulse animation on active project dot when Claude is processing"
+      ],
+      "test": "Chat in Fishing App \u2192 switch to Other Project \u2192 see empty chat \u2192 switch back \u2192 can resume Fishing App conversation"
+    },
+    {
+      "id": "SETTINGS-01",
+      "name": "Wire Settings Connected Status to Real Detection",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "description": "Settings page shows mock 'Anthropic connected' - wire to real Claude Code detection",
+      "current": "Settings shows hardcoded mock status for Anthropic connection",
+      "change": [
+        "In Settings, show real connection status for:",
+        "- OpenRouter: Check if API key exists in localStorage and display status",
+        "- Anthropic: Check if any saved VPS has Claude Code authenticated",
+        "- VPS list: Show which VPSes have Claude Code installed/authenticated",
+        "Reuse detection logic pattern from CLAUDE-01"
+      ],
+      "test": "Settings shows real status - Anthropic only 'connected' if Claude Code detected on a VPS"
+    },
+    {
+      "id": "MODEL-04",
+      "name": "Dynamic Model List from OpenRouter API",
+      "size": "M",
+      "priority": 3,
+      "status": "pending",
+      "description": "Replace hardcoded MODEL_LIST with live data from OpenRouter public API",
+      "current": "Model selector uses hardcoded MODEL_LIST with ~16 models",
+      "change": [
+        "Fetch models from https://openrouter.ai/api/v1/models (public, no auth required)",
+        "Cache results in localStorage with timestamp (refresh daily or on demand)",
+        "Show ALL models in selector, even without API key",
+        "Without key: models greyed out with 'Add OpenRouter key' message",
+        "With key: all OpenRouter models enabled",
+        "Keep Anthropic models special case - show 'Pro Subscription' if Claude Code detected"
+      ],
+      "test": "No API key \u2192 see full model list greyed out. Add key \u2192 all enabled."
+    },
+    {
+      "id": "CLAUDE-03",
+      "name": "Claude Resume Conversation Support (UI Enhancement)",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "description": "Add UI for resuming Claude Code conversations - core functionality already working via --resume",
+      "current": "claude --resume runs automatically on reconnect. User sees terminal picker.",
+      "change": [
+        "Add 'Resume conversation' button/menu in chat header",
+        "Show conversation list in prettier UI (not just terminal picker)",
+        "Display conversation metadata: name, date, message count",
+        "Quick-resume last conversation option",
+        "Store last conversation ID per project"
+      ],
+      "test": "Click Resume \u2192 see pretty list of past conversations \u2192 select one \u2192 continues in chat"
+    },
+    {
+      "id": "BUBBLE-01",
+      "name": "Bubble View Polish and Edge Cases",
+      "size": "S",
+      "priority": 4,
+      "status": "pending",
+      "description": "Address remaining bubble parsing edge cases as discovered during testing",
+      "current": "Bubble view MVP complete - functional for demos. Some UI artifacts occasionally leak through.",
+      "change": [
+        "Add new spinner words as discovered",
+        "Improve tool call visibility (show 'Using Write tool...' indicator)",
+        "Better handling of multi-line code blocks",
+        "Consider headless mode integration for cleaner parsing (future)"
+      ],
+      "test": "Extended use of bubble view without seeing spinner text, status bar fragments, or other UI artifacts"
+    }
+  ],
+  "completed": [
+    {
+      "id": "BUG-25",
+      "name": "Project Click Doesn't Switch Claude Terminal Chat or LLM-Dev Terminal",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "BUG-26",
+      "name": "Clickable Status Dots Don't Trigger Reconnect",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "INFRA-02",
+      "name": "VPS Reconnect UX",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "BUG-24",
+      "name": "Chat Shows Welcome Instead of Loading After Project Create",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "INFRA-01",
+      "name": "SSH Connection Multiplexing",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "PHASE-2",
+      "name": "Chat Bubble Rendering for Claude Code Output",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "BUG-23",
+      "name": "Setup Wizard VPS Validation Rejects Valid SSH Key",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "BUG-22",
+      "name": "Chat Terminal Scrollbar and Resize Handle",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "BUG-21",
+      "name": "Project Switch/Refresh Doesn't Reconnect VPS",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "BUG-20",
+      "name": "Create Project Fails When Adding New VPS Inline (already fixed)",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "BUG-19",
+      "name": "Setup Wizard VPS Form Different Validation",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "BUG-17",
+      "name": "Setup Wizard VPS Test Connection Not Working",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "BUG-18",
+      "name": "Claude Code Terminal in Chat Not Receiving Keyboard Input",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "CLAUDE-02-REWORK",
+      "name": "Chat Area as Terminal Mirror for Claude Code (Phase 1)",
+      "completed": "2026-01-26"
+    },
+    {
+      "id": "ONBOARD-01",
+      "name": "Setup Wizard Skeleton",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "MODEL-03",
+      "name": "Billing Switch Warning Popup",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "MODEL-02",
+      "name": "Billing Source Detection and Display",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "CLAUDE-02",
+      "name": "Route Chat to Claude Code on VPS (replaced by rework)",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "MODEL-01",
+      "name": "Per-Project Model Persistence",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "CLAUDE-01",
+      "name": "Detect Claude Code on VPS",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "AUTH-01",
+      "name": "Password Validation Rules",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "CLEANUP-03",
+      "name": "Fix Config Mismatch - Standardize on SQLite + Port 8000",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "FEAT-08",
+      "name": "Chat File Drop and Paste",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "BUG-16",
+      "name": "Terminal Pane Can't Resize Smaller",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "BUG-15",
+      "name": "Terminal Connection Drops on Panel Toggle",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "FEAT-09",
+      "name": "Multi-Terminal Split Panes with Color Coding",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "BUG-14",
+      "name": "Editor Tab Not Loading Selected File",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "BUG-13",
+      "name": "TERMINALS Sidebar Not Visible",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "BUG-12",
+      "name": "xterm-screen Width Calculation",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "FEAT-07",
+      "name": "Multiple Terminal Tabs",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "BUG-11",
+      "name": "LLM-Dev Tabs Don't Switch Content",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "BUG-10",
+      "name": "Terminal Content Cutoff",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "FEAT-04",
+      "name": "Terminal Opens in Project Directory",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "FEAT-03",
+      "name": "Remove Explorer from LLM-Dev Panel",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "FEAT-06",
+      "name": "LLM-Dev Editor Tab",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "UI-06",
+      "name": "Delete Confirmation Modal",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "UI-05",
+      "name": "Project 3-Dot Menu",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "UI-04",
+      "name": "Project Name Truncation",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "UI-03",
+      "name": "Project Status Dots",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "UI-02",
+      "name": "Remove Servers/Codespaces Tabs",
+      "completed": "2026-01-25"
+    },
+    {
+      "id": "UI-01",
+      "name": "Simplify Top Bar",
+      "completed": "2026-01-25"
+    }
+  ]
+}
