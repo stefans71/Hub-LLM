@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import {
-  Key,
   Server,
   Sparkles,
   CheckCircle,
@@ -13,6 +12,8 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react'
+import claudeCodeLogo from '../assets/claude-code-logo.svg'
+import openrouterLogo from '../assets/openrouter-logo.svg'
 
 // CSS Variables matching the project style
 const cssVars = {
@@ -111,7 +112,10 @@ function PathCard({ icon: Icon, title, description, selected, onClick }) {
           justifyContent: 'center',
           transition: 'all 0.2s ease'
         }}>
-          <Icon size={24} style={{ color: selected ? '#fff' : cssVars.textSecondary }} />
+          {typeof Icon === 'string'
+            ? <img src={Icon} alt="" style={{ width: 24, height: 24 }} />
+            : <Icon size={24} style={{ color: selected ? '#fff' : cssVars.textSecondary }} />
+          }
         </div>
         <div>
           <h3 style={{
@@ -160,14 +164,14 @@ function ChoosePathStep({ path, setPath, onNext }) {
         marginBottom: '32px'
       }}>
         <PathCard
-          icon={Key}
+          icon={openrouterLogo}
           title="OpenRouter API Key"
           description="Use your OpenRouter API key to access multiple AI models including Claude, GPT-4, and more. Pay per API call."
           selected={path === 'openrouter'}
           onClick={() => setPath('openrouter')}
         />
         <PathCard
-          icon={Sparkles}
+          icon={claudeCodeLogo}
           title="Anthropic Pro Subscription"
           description="Connect to a VPS with Claude Code installed. Use your Anthropic Pro subscription for unlimited Claude access."
           selected={path === 'anthropic'}

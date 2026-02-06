@@ -953,6 +953,7 @@ deployment:
     pattern: "NNN_description.py with migrate(engine) function"
     existing:
       - {file: "001_add_setup_completed.py", purpose: "Adds setup_completed BOOLEAN column to users table if missing"}
+      - {file: "002_fix_uuid_columns.py", purpose: "Converts UUID columns to VARCHAR(64) in Postgres — idempotent, skips SQLite"}
     execution: "run_migrations() in backend/models/__init__.py — runs on every startup after create_all"
 
   last_verified_session: 90
@@ -1292,11 +1293,11 @@ recurring_bugs:
 
   - id: 16
     desc: "Production Postgres had UUID column types — ORM expects VARCHAR(64)"
-    sessions: [90]
-    affected_files: [backend/models/__init__.py]
-    status: fixed_manually
-    fix: "ALTER TABLE on production DB converted all UUID columns to VARCHAR(64). Dropped FK constraints first. chat_messages recreated with INTEGER autoincrement id."
-    note: "Root cause: production DB was created by older code version using UUID types. ORM uses String(64). Caused 'operator does not exist: uuid = character varying' on login. Not in code — manual DB fix only. Future deployments to new Postgres DBs will create correct types via create_all()."
+    sessions: [90, 91]
+    affected_files: [backend/models/__init__.py, backend/migrations/002_fix_uuid_columns.py]
+    status: fixed
+    fix: "Manual fix on production DB (session 90) + migration script 002_fix_uuid_columns.py (session 91). Migration checks column types via inspect, drops FK constraints, ALTERs UUID→VARCHAR(64). Idempotent, skips SQLite."
+    note: "Root cause: production DB was created by older code version using UUID types. ORM uses String(64). Migration now handles this automatically for any future DB recreations."
 
   - id: 17
     desc: "docker restart breaks Coolify Traefik routing — must use Coolify redeploy"

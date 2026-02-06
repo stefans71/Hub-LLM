@@ -5,9 +5,12 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 91 - 2026-02-06 EST
-**Task**: BUG-31
-**What**: Fixed defensive setupComplete check in App.jsx: changed `!== false` to `=== true` so undefined/null doesn't bypass wizard. Refactored Setup.jsx skip behavior: "Skip for now" calls onComplete() directly (session-only, no backend call, wizard reappears on refresh). Added "Don't show this again" button that calls POST /api/auth/me/setup-complete (permanent dismiss). Also fixed duplicate asyncpg in requirements.txt.
-**Key Learning**: When checking boolean flags from API responses, always use `=== true` (not `!== false`) because undefined/null will pass the `!== false` check. This is especially dangerous with setup/onboarding flows where the field might not exist yet.
+**Tasks**: BUG-31, UI-07, BUG-32
+**What**:
+- BUG-31: Fixed defensive setupComplete check in App.jsx: changed `!== false` to `=== true`. Refactored Setup.jsx: "Skip for now" = session-only (no backend call), "Don't show again" = permanent. Fixed duplicate asyncpg in requirements.txt.
+- UI-07: Moved brand SVGs from repo root to frontend/src/assets/. Updated PathCard to handle both lucide components (`typeof !== 'string'`) and image URLs (`typeof === 'string'`). Replaced Key/Sparkles icons on PathCards with openrouterLogo/claudeCodeLogo. Removed Key from lucide imports (Sparkles kept for line 813).
+- BUG-32: Created backend/migrations/002_fix_uuid_columns.py. Checks column types via SQLAlchemy inspect, drops FK constraints, converts UUID→VARCHAR(64). Idempotent, Postgres-only (skips SQLite).
+**Key Learning**: When checking boolean flags from API responses, always use `=== true` not `!== false`. For icon components that need to support both React components and image URLs, check `typeof icon === 'string'` to branch rendering.
 
 ---
 
