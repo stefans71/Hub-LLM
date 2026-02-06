@@ -50,15 +50,18 @@
     },
     {
       "id": "BUG-31",
-      "name": "Setup wizard check uses !== false — undefined bypasses wizard",
-      "size": "XS",
+      "name": "Setup wizard skip/dismiss UX + defensive setupComplete check",
+      "size": "S",
       "priority": 2,
       "status": "pending",
-      "description": "App.jsx line 36: setSetupComplete(user.setup_completed !== false). If setup_completed is undefined or null (e.g. field missing from API response, network issue, or future schema change), undefined !== false evaluates to true, skipping the setup wizard entirely. This is a defensive coding bug — only an explicit true from the backend should skip the wizard. Ref: Session 90, recurring bug #18 in CODEBASE_INDEX.",
+      "description": "Two related issues with the setup wizard flow:\n\n1. DEFENSIVE BUG (App.jsx line 36): setSetupComplete(user.setup_completed !== false). If setup_completed is undefined/null, undefined !== false = true, skipping wizard. Must use === true instead.\n\n2. SKIP BEHAVIOR (Setup.jsx line 1031): 'Skip for now' calls handleComplete which hits POST /api/auth/me/setup-complete, permanently setting setup_completed=true. This means 'Skip for now' and 'Complete wizard' do the same thing — the wizard never comes back. User wants: (a) 'Skip for now' should just navigate away WITHOUT calling the backend endpoint. setup_completed stays false in DB. Wizard reappears on next login. (b) Add a 'Don't show again' option that DOES call the backend endpoint to permanently dismiss the wizard.\n\nRef: Session 90, CODEBASE_INDEX recurring bug #18.",
       "change": [
-        "frontend/src/App.jsx line 36: Change `setSetupComplete(user.setup_completed !== false)` to `setSetupComplete(user.setup_completed === true)`. This ensures only an explicit true skips the wizard. undefined, null, false all show the wizard."
+        "frontend/src/App.jsx line 36: Change `setSetupComplete(user.setup_completed !== false)` to `setSetupComplete(user.setup_completed === true)`. Only explicit true skips wizard.",
+        "frontend/src/pages/Setup.jsx line 1031: 'Skip for now' button should call onComplete() directly (just navigate away) WITHOUT calling POST /api/auth/me/setup-complete. The in-memory setupComplete state gets set to true (so wizard doesn't re-show during current session), but the DB value stays false (wizard shows again on next login/refresh).",
+        "frontend/src/pages/Setup.jsx lines 1023-1044: Add a 'Don't show this again' link/checkbox near the 'Skip for now' button. When clicked, it DOES call POST /api/auth/me/setup-complete (setting setup_completed=true in DB) and then calls onComplete(). This permanently dismisses the wizard.",
+        "frontend/src/pages/Setup.jsx handleComplete function (line 944-970): Refactor into two functions: handleSkip() (just calls onComplete, no backend call) and handleDismissPermanently() (calls backend endpoint then onComplete). The existing handleComplete can be used for when the user actually fills out the wizard (OpenRouter key or VPS setup)."
       ],
-      "test": "Step-by-step: (1) In browser devtools console, verify the /api/auth/me response includes setup_completed: false for a new user. (2) Confirm the setup wizard appears after signup. (3) Complete the wizard. (4) Verify /api/auth/me now returns setup_completed: true. (5) Refresh page — should NOT show wizard again. Paste console output of /api/auth/me response as evidence.",
+      "test": "Step-by-step: (1) Create new account. Wizard appears. (2) Click 'Skip for now'. Redirects to dashboard. (3) Refresh page (F5). Wizard should appear AGAIN (setup_completed still false). (4) Click 'Don't show again'. Redirects to dashboard. (5) Refresh page. Wizard should NOT appear (setup_completed now true). (6) Check /api/auth/me in devtools Network tab — verify setup_completed: true. Paste the /api/auth/me response after step 5 as evidence.",
       "investigation_id": null,
       "completion_note": "",
       "completion_checklist": {
