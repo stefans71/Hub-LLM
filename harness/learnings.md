@@ -4,6 +4,28 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 86 - 2026-02-06 09:33 EST
+**Task**: DOCS-06 - Generate Full CODEBASE_INDEX.yaml
+**What**: Scanned entire codebase and populated harness/CODEBASE_INDEX.yaml with all sections
+
+**Scope**:
+- 33 .jsx files documented (4 pages, 28 components, 1 context, 1 entry)
+- 12 backend routers with all endpoints listed
+- 6 backend services documented (vps_connection.py classes/methods in detail)
+- 5 DB tables from SQLAlchemy ORM models (users, vps_servers, projects, chat_messages, user_settings)
+- 19 localStorage keys with set_by/read_by/sync_direction
+- 12 recurring bugs cross-referenced from learnings.md sessions
+
+**Approach**:
+- Used 3 parallel Explore agents: frontend JSX scan, backend router scan, localStorage scan
+- Read backend/models/__init__.py for ORM-based DB schema (hubllm.db was empty)
+- Read learnings.md sessions 51-85 for recurring bug patterns
+- Compiled into structured YAML with last_verified_session: 86 on every entry
+
+**Key Finding**: DB file exists but had no tables (fresh deploy). Schema comes from SQLAlchemy ORM models, not SQL DDL.
+
+---
+
 ### Session 85 - 2026-01-26 EST
 **Task**: BUG-25 - Project Click Doesn't Switch Claude Terminal Chat or LLM-Dev Terminal
 **What**: Wired up project switching from WorkspaceFileExplorer to update terminals

@@ -30,7 +30,7 @@
       "name": "Generate Full CODEBASE_INDEX.yaml",
       "size": "M",
       "priority": 1,
-      "status": "pending",
+      "status": "done",
       "description": "Scan entire codebase and populate harness/CODEBASE_INDEX.yaml. Use the code-researcher agent to investigate each area. The agent writes entries directly into the index file. This is the FIRST task \u2014 nothing else gets accurate file references until this is done.",
       "change": [
         "Use code-researcher agent to scan all .jsx files and write entries to index",
