@@ -49,6 +49,48 @@
       }
     },
     {
+      "id": "BUG-31",
+      "name": "Setup wizard check uses !== false — undefined bypasses wizard",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending",
+      "description": "App.jsx line 36: setSetupComplete(user.setup_completed !== false). If setup_completed is undefined or null (e.g. field missing from API response, network issue, or future schema change), undefined !== false evaluates to true, skipping the setup wizard entirely. This is a defensive coding bug — only an explicit true from the backend should skip the wizard. Ref: Session 90, recurring bug #18 in CODEBASE_INDEX.",
+      "change": [
+        "frontend/src/App.jsx line 36: Change `setSetupComplete(user.setup_completed !== false)` to `setSetupComplete(user.setup_completed === true)`. This ensures only an explicit true skips the wizard. undefined, null, false all show the wizard."
+      ],
+      "test": "Step-by-step: (1) In browser devtools console, verify the /api/auth/me response includes setup_completed: false for a new user. (2) Confirm the setup wizard appears after signup. (3) Complete the wizard. (4) Verify /api/auth/me now returns setup_completed: true. (5) Refresh page — should NOT show wizard again. Paste console output of /api/auth/me response as evidence.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "BUG-32",
+      "name": "Production Postgres needs UUID-to-VARCHAR migration script in codebase",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending",
+      "description": "Session 90: Production Postgres had UUID column types (from older code version) while ORM expects String(64)/VARCHAR(64). This was fixed manually via ALTER TABLE on the live DB, but there's no migration script in the codebase to handle this for future deployments or DB recreations. Need backend/migrations/002_fix_uuid_columns.py that: (1) checks if any PK/FK columns are UUID type, (2) drops FK constraints referencing them, (3) converts to VARCHAR(64), (4) is idempotent (skips if already VARCHAR). This protects against the same issue if the DB is ever recreated from the old schema.",
+      "change": [
+        "NEW FILE backend/migrations/002_fix_uuid_columns.py: Migration that uses SQLAlchemy inspect to check column types on users, projects, chat_messages tables. If any id/FK column is UUID type, drop FK constraints, ALTER COLUMN TYPE VARCHAR(64) USING col::varchar, then let create_all recreate FKs. Must be idempotent — skip if columns are already VARCHAR."
+      ],
+      "test": "Step-by-step: (1) Run migration on local SQLite — should skip (no UUID columns). (2) Verify backend starts cleanly. (3) Check migration logs show '002' running and skipping. Paste migration output as evidence.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "INFRA-03",
       "name": "Idle Connection Timeout",
       "size": "S",

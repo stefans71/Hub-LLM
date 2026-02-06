@@ -25,7 +25,7 @@ meta:
   total_localStorage_keys: 19
   total_db_tables: 5
   last_full_index_session: 86
-  last_partial_update_session: 86
+  last_partial_update_session: 90
 
 # ============================================================================
 # FRONTEND — Entry Points
@@ -860,9 +860,9 @@ backend_main:
     - {prefix: "/api/terminal", router: terminal}
     - {prefix: "/api/voice", router: voice}
   lifecycle:
-    startup: "init_db() — create all SQLite tables"
+    startup: "init_db() — create tables (Postgres or SQLite), then run_migrations() for pending migration scripts"
     shutdown: "close_db() — dispose engine"
-  last_verified_session: 86
+  last_verified_session: 90
 
 # ============================================================================
 # DEPLOYMENT — Production Infrastructure
@@ -912,7 +912,27 @@ deployment:
     DATABASE_URL is auto-converted: plain postgresql:// gets +asyncpg for async engine; SYNC_DATABASE_URL strips +asyncpg for psycopg2.
     run_migrations() runs all backend/migrations/NNN_*.py scripts (sorted, idempotent) after create_all on every startup.
 
-  last_verified_session: 89
+  production_schema_history: |
+    The production Postgres DB was originally created by an older version of the code that used UUID column types
+    and had different tables (api_keys, servers). The current ORM uses String(64)/VARCHAR(64) for IDs.
+    Session 90: All UUID columns were manually converted to VARCHAR(64) via ALTER TABLE on the production DB.
+    Legacy tables (api_keys, servers) still exist in production but are NOT in the current ORM — harmless.
+    Production tables (verified session 90): api_keys, chat_messages, projects, servers, user_settings, users, vps_servers
+    ORM tables (5): chat_messages, projects, user_settings, users, vps_servers
+
+  container_names_coolify: |
+    Coolify generates long container names. Use 'docker ps --filter name=backend-' etc.
+    NEVER use 'docker restart' on Coolify containers — it breaks Traefik routing labels.
+    ALWAYS redeploy via Coolify dashboard or 'git push origin main' to trigger proper redeploy.
+
+  migrations:
+    directory: backend/migrations/
+    pattern: "NNN_description.py with migrate(engine) function"
+    existing:
+      - {file: "001_add_setup_completed.py", purpose: "Adds setup_completed BOOLEAN column to users table if missing"}
+    execution: "run_migrations() in backend/models/__init__.py — runs on every startup after create_all"
+
+  last_verified_session: 90
 
 # ============================================================================
 # DATABASE SCHEMA (SQLAlchemy ORM — backend/models/__init__.py)
@@ -920,6 +940,20 @@ deployment:
 database:
   engine: "SQLite (aiosqlite) in dev — backend/hubllm.db (absolute path via Path(__file__)); Postgres 16 in production via DATABASE_URL env var (docker-compose.yml). CRITICAL: create_all() does NOT add columns to existing Postgres tables — every schema change needs a migration script."
   orm: "SQLAlchemy async with mapped_column"
+  init_db_flow:
+    - "1. IS_POSTGRES flag set from DATABASE_URL prefix"
+    - "2. Async engine uses +asyncpg (Postgres) or +aiosqlite (SQLite)"
+    - "3. Sync engine uses plain postgresql:// (Postgres) or sqlite:// (SQLite) for DDL"
+    - "4. create_all() creates missing tables via sync engine"
+    - "5. Table verification via information_schema (Postgres) or sqlite_master (SQLite)"
+    - "6. run_migrations() executes backend/migrations/NNN_*.py scripts in order"
+  production_legacy_tables:
+    - {name: api_keys, note: "Legacy — not in ORM, has id/user_id columns. Harmless."}
+    - {name: servers, note: "Legacy — not in ORM, has id/user_id columns. Replaced by vps_servers."}
+  production_schema_fixes_applied:
+    - {session: 90, fix: "All UUID columns converted to VARCHAR(64) — users.id, projects.id, projects.user_id, api_keys.*, servers.*, chat_messages.*"}
+    - {session: 90, fix: "FK constraints dropped and columns retyped (projects_user_id_fkey, api_keys_user_id_fkey, servers_user_id_fkey)"}
+    - {session: 90, fix: "chat_messages table dropped and recreated with INTEGER autoincrement id (was UUID)"}
   tables:
     users:
       columns:
@@ -1232,3 +1266,25 @@ recurring_bugs:
     affected_files: [backend/models/__init__.py]
     status: fixed
     note: "Fixed in BUG-28-REOPEN: URL handling now branches on IS_POSTGRES. Async URL gets +asyncpg, sync URL uses plain postgresql://."
+
+  - id: 16
+    desc: "Production Postgres had UUID column types — ORM expects VARCHAR(64)"
+    sessions: [90]
+    affected_files: [backend/models/__init__.py]
+    status: fixed_manually
+    fix: "ALTER TABLE on production DB converted all UUID columns to VARCHAR(64). Dropped FK constraints first. chat_messages recreated with INTEGER autoincrement id."
+    note: "Root cause: production DB was created by older code version using UUID types. ORM uses String(64). Caused 'operator does not exist: uuid = character varying' on login. Not in code — manual DB fix only. Future deployments to new Postgres DBs will create correct types via create_all()."
+
+  - id: 17
+    desc: "docker restart breaks Coolify Traefik routing — must use Coolify redeploy"
+    sessions: [90]
+    affected_files: []
+    status: known_pattern
+    note: "Coolify applies Traefik routing labels during deploy. Plain 'docker restart' doesn't reapply labels, causing Host(``) empty matcher errors and 504s. Always use Coolify dashboard or git push to main for restarts."
+
+  - id: 18
+    desc: "setupComplete check uses !== false — undefined/null bypasses setup wizard"
+    sessions: [90]
+    affected_files: [frontend/src/App.jsx]
+    status: open
+    note: "App.jsx line 36: setSetupComplete(user.setup_completed !== false). If setup_completed is undefined (missing from API response), undefined !== false = true, skipping wizard. Should be: user.setup_completed === true. Only explicit true should skip."
