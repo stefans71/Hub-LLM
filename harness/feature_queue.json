@@ -94,6 +94,32 @@
       }
     },
     {
+      "id": "UI-07",
+      "name": "Replace setup wizard path card icons with brand SVG logos",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending",
+      "description": "Setup wizard Step 1 (ChoosePathStep) uses lucide-react icons for the two PathCards. Replace with actual brand logos:\n\n- Anthropic card (line 170): Replace `icon={Sparkles}` with the Claude Code logo SVG at repo root `Claude_Code_Logo_White_tp.svg` (1831 bytes)\n- OpenRouter card (line 163): Replace `icon={Key}` with the OpenRouter logo SVG at repo root `openrouter-logo-v2.svg` (6861 bytes)\n\nThe PathCard component (Setup.jsx line 77) renders icons as `<Icon size={24} style={{ color: ... }} />` — this only works for lucide-react components. It needs to also support SVG image sources.\n\nNOTE: `Sparkles` import must remain — it's still used at line 809 for Claude Code detection indicator. `Key` import is only used at line 163 so can be removed after replacement.",
+      "change": [
+        "Move SVGs to assets: `mv /root/dev/Hub-LLM/Claude_Code_Logo_White_tp.svg frontend/src/assets/claude-code-logo.svg` and `mv /root/dev/Hub-LLM/openrouter-logo-v2.svg frontend/src/assets/openrouter-logo.svg`",
+        "frontend/src/pages/Setup.jsx top: Add imports for the SVG files: `import claudeCodeLogo from '../assets/claude-code-logo.svg'` and `import openrouterLogo from '../assets/openrouter-logo.svg'`",
+        "frontend/src/pages/Setup.jsx line 77 (PathCard): Modify to accept either a lucide component OR an image URL. Check if `typeof Icon === 'string'` — if so, render `<img src={Icon} alt='' style={{ width: 24, height: 24 }} />` instead of `<Icon size={24} ... />`. Keep the same 48x48 container div with background.",
+        "frontend/src/pages/Setup.jsx line 163: Change `icon={Key}` to `icon={openrouterLogo}`",
+        "frontend/src/pages/Setup.jsx line 170: Change `icon={Sparkles}` to `icon={claudeCodeLogo}`",
+        "frontend/src/pages/Setup.jsx line 4: Remove `Key` from the lucide-react imports (no longer used). Keep `Sparkles` (used at line 809)."
+      ],
+      "test": "Step-by-step: (1) Load /setup page. (2) Verify the Anthropic Pro card shows the Claude Code logo (orange/white terminal icon) instead of the Sparkles icon. (3) Verify the OpenRouter card shows the OpenRouter logo instead of the Key icon. (4) Click each card — verify selected styling still works (blue border, blue background on icon container). (5) Verify the Claude Code detection indicator at VPS step still shows Sparkles icon (line 809 unaffected). (6) Check browser console for no import errors. Paste a screenshot filename or describe what you see as evidence.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "INFRA-03",
       "name": "Idle Connection Timeout",
       "size": "S",
