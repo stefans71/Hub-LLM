@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 90 - 2026-02-06 EST
+**Task**: BUG-28-REOPEN
+**What**: Made init_db() dual-DB aware (SQLite dev / Postgres prod). Fixed 3 issues: (1) SYNC_DATABASE_URL construction — now branches on IS_POSTGRES flag, converts postgresql:// to postgresql+asyncpg:// for async engine and strips +asyncpg for sync engine. (2) Table verification — uses information_schema.tables for Postgres, sqlite_master for SQLite. (3) Created migration system: run_migrations() runs all backend/migrations/NNN_*.py scripts after create_all on every startup. First migration 001_add_setup_completed.py adds setup_completed column if missing (the root cause of BUG-28 in production Postgres). Added psycopg2-binary to requirements.txt for sync Postgres DDL.
+**Key Learning**: SQLAlchemy create_all() only creates NEW tables, never alters existing ones. Production Postgres tables created before a new column was added to the ORM model will silently lack that column. Always pair ORM model changes with idempotent ALTER TABLE migrations.
+
+---
+
 ### Session 89 - 2026-02-06 EST
 **Task**: BUG-30
 **What**: Fixed DATABASE_URL using relative path `./hubllm.db` which creates ghost DBs when uvicorn is launched from different CWDs. Changed to absolute path using `Path(__file__).resolve().parent.parent / "hubllm.db"`. Added ghost DB cleanup step in init.sh. Updated init.sh summary to show resolved absolute path.

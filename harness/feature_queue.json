@@ -53,7 +53,7 @@
       "name": "Setup wizard skip — Postgres missing setup_completed column",
       "size": "S",
       "priority": 1,
-      "status": "pending",
+      "status": "pending_review",
       "description": "Root cause: Production runs Postgres via Docker (docker-compose.yml line 11: DATABASE_URL=postgresql://hubllm:hubllm@db:5432/hubllm). The ORM model User has setup_completed (backend/models/__init__.py line 75) but SQLAlchemy's create_all only creates NEW tables in Postgres — it never adds columns to existing tables. The users table was created before setup_completed was added, so the column doesn't exist in production. The original BUG-28 fix (null-init timing in frontend) was correct for a separate issue but didn't address this. Additionally, init_db() at line 242 uses 'SELECT name FROM sqlite_master' which is SQLite-specific and will silently fail on Postgres. ALSO: SYNC_DATABASE_URL at line 30 does replace('+aiosqlite', '') which produces garbage for Postgres URLs.",
       "change": [
         "IMMEDIATE FIX: Run ALTER TABLE users ADD COLUMN IF NOT EXISTS setup_completed BOOLEAN DEFAULT false; on the production Postgres DB. Can be done via: docker exec -it <postgres_container> psql -U hubllm -d hubllm -c \"ALTER TABLE users ADD COLUMN IF NOT EXISTS setup_completed BOOLEAN DEFAULT false;\"",
@@ -63,13 +63,13 @@
       ],
       "test": "Step-by-step: (1) Connect to Postgres: docker exec into postgres container, psql -U hubllm -d hubllm. (2) Run: SELECT column_name FROM information_schema.columns WHERE table_name='users'; — verify setup_completed appears. (3) Sign up a new user. (4) Verify /api/auth/me returns setup_completed: false. (5) Complete setup wizard. (6) Verify /api/auth/me returns setup_completed: true. Paste the column listing and /api/auth/me responses as evidence.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed backend/models/__init__.py: (1) Fixed SYNC_DATABASE_URL — now branches on IS_POSTGRES, converts postgresql:// to +asyncpg for async engine, strips for sync. (2) Fixed init_db() — uses information_schema.tables for Postgres, sqlite_master for SQLite. (3) Added run_migrations() — runs backend/migrations/NNN_*.py scripts after create_all. Created backend/migrations/001_add_setup_completed.py — adds setup_completed column via ALTER TABLE if missing (uses SQLAlchemy inspect, works on both SQLite and Postgres). Added psycopg2-binary to requirements.txt. Test evidence: Local SQLite — DATABASE_URL resolves to sqlite+aiosqlite:////root/dev/Hub-LLM/backend/hubllm.db, SYNC_DATABASE_URL=sqlite:////root/dev/Hub-LLM/backend/hubllm.db. Postgres — DATABASE_URL converts postgresql:// to postgresql+asyncpg://, SYNC stays postgresql://. Migration tested on temp DB: column missing → added; column exists → skipped. Production Postgres test requires Docker deployment (Coolify auto-deploys from main).",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

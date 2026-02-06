@@ -1,11 +1,9 @@
 """
 SQLAlchemy Database Models for HubLLM
 
-Uses SQLite for simplicity. Tables:
-- vps_servers: VPS server configurations
-- projects: Development projects
-- chat_messages: Chat history per project
-- user_settings: Key-value user settings
+Dual-DB: SQLite (local dev) / Postgres (production via Docker/Coolify).
+Tables: users, vps_servers, projects, chat_messages, user_settings
+Migrations in backend/migrations/ run on every startup after create_all.
 """
 from datetime import datetime
 from typing import Optional
@@ -22,12 +20,26 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import DeclarativeBase, relationship, Mapped, mapped_column
 import enum
 
-# Database URL - SQLite for simplicity
+# Database URL - SQLite locally, Postgres in production (Docker/Coolify)
 # Use absolute path so DB always lands at backend/hubllm.db regardless of CWD
 _DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "hubllm.db"
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{_DEFAULT_DB_PATH}")
-# Sync URL for DDL operations (aiosqlite doesn't reliably persist CREATE TABLE)
-SYNC_DATABASE_URL = DATABASE_URL.replace("+aiosqlite", "")
+_RAW_DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{_DEFAULT_DB_PATH}")
+
+IS_POSTGRES = _RAW_DATABASE_URL.startswith("postgresql")
+
+if IS_POSTGRES:
+    # Ensure async engine uses asyncpg driver
+    # docker-compose sets DATABASE_URL=postgresql://... (no driver suffix)
+    if "+asyncpg" not in _RAW_DATABASE_URL:
+        DATABASE_URL = _RAW_DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+    else:
+        DATABASE_URL = _RAW_DATABASE_URL
+    # Sync URL uses psycopg2 (plain postgresql://)
+    SYNC_DATABASE_URL = _RAW_DATABASE_URL.replace("+asyncpg", "")
+else:
+    # SQLite: async uses aiosqlite, sync uses plain sqlite
+    DATABASE_URL = _RAW_DATABASE_URL
+    SYNC_DATABASE_URL = _RAW_DATABASE_URL.replace("+aiosqlite", "")
 
 # Async engine and session
 engine = create_async_engine(DATABASE_URL, echo=False)
@@ -228,25 +240,73 @@ class UserSetting(Base):
 
 # Database initialization functions
 async def init_db():
-    """Create all tables using sync engine (aiosqlite doesn't reliably persist DDL)"""
+    """Create all tables using sync engine, then run pending migrations."""
     expected_tables = set(Base.metadata.tables.keys())
-    print(f"Tables to create: {sorted(expected_tables)}")
+    print(f"[init_db] Engine: {'Postgres' if IS_POSTGRES else 'SQLite'}")
+    print(f"[init_db] Tables to create: {sorted(expected_tables)}")
 
-    # Use sync engine for DDL - most reliable with SQLite
+    # Use sync engine for DDL - most reliable for both SQLite and Postgres
     sync_engine = create_engine(SYNC_DATABASE_URL, echo=False)
     Base.metadata.create_all(sync_engine)
     sync_engine.dispose()
 
-    # Verify tables were actually created
+    # Verify tables were actually created (engine-aware query)
     async with engine.begin() as conn:
-        result = await conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
+        if IS_POSTGRES:
+            result = await conn.execute(text(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = 'public'"
+            ))
+        else:
+            result = await conn.execute(text(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ))
         created_tables = {row[0] for row in result.fetchall()}
 
     missing = expected_tables - created_tables
     if missing:
         raise RuntimeError(f"init_db FAILED: missing tables after create_all: {missing}")
 
-    print(f"Database initialized: {DATABASE_URL} (tables: {sorted(created_tables)})")
+    print(f"[init_db] Database initialized: {DATABASE_URL} (tables: {sorted(created_tables)})")
+
+    # Run pending migrations
+    await run_migrations()
+
+
+async def run_migrations():
+    """Run all migration scripts from backend/migrations/ in order."""
+    migrations_dir = Path(__file__).resolve().parent.parent / "migrations"
+    if not migrations_dir.exists():
+        print("[migrations] No migrations directory found, skipping")
+        return
+
+    import importlib.util
+
+    migration_files = sorted(
+        f for f in migrations_dir.iterdir()
+        if f.name.endswith(".py") and not f.name.startswith("_")
+    )
+
+    if not migration_files:
+        print("[migrations] No migration scripts found")
+        return
+
+    sync_engine = create_engine(SYNC_DATABASE_URL, echo=False)
+    try:
+        for migration_file in migration_files:
+            print(f"[migrations] Running {migration_file.name}...")
+            spec = importlib.util.spec_from_file_location(
+                migration_file.stem, str(migration_file)
+            )
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            if hasattr(mod, "migrate"):
+                mod.migrate(sync_engine)
+                print(f"[migrations] {migration_file.name} complete")
+            else:
+                print(f"[migrations] {migration_file.name} has no migrate() function, skipped")
+    finally:
+        sync_engine.dispose()
 
 
 async def close_db():
