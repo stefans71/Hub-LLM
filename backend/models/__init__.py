@@ -15,7 +15,7 @@ import re
 
 from sqlalchemy import (
     Column, String, Text, DateTime, Boolean, Integer, ForeignKey,
-    create_engine, Enum as SQLEnum
+    create_engine, text, Enum as SQLEnum
 )
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, relationship, Mapped, mapped_column
@@ -23,6 +23,8 @@ import enum
 
 # Database URL - SQLite for simplicity
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./hubllm.db")
+# Sync URL for DDL operations (aiosqlite doesn't reliably persist CREATE TABLE)
+SYNC_DATABASE_URL = DATABASE_URL.replace("+aiosqlite", "")
 
 # Async engine and session
 engine = create_async_engine(DATABASE_URL, echo=False)
@@ -223,10 +225,25 @@ class UserSetting(Base):
 
 # Database initialization functions
 async def init_db():
-    """Create all tables"""
+    """Create all tables using sync engine (aiosqlite doesn't reliably persist DDL)"""
+    expected_tables = set(Base.metadata.tables.keys())
+    print(f"Tables to create: {sorted(expected_tables)}")
+
+    # Use sync engine for DDL - most reliable with SQLite
+    sync_engine = create_engine(SYNC_DATABASE_URL, echo=False)
+    Base.metadata.create_all(sync_engine)
+    sync_engine.dispose()
+
+    # Verify tables were actually created
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    print(f"Database initialized: {DATABASE_URL}")
+        result = await conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
+        created_tables = {row[0] for row in result.fetchall()}
+
+    missing = expected_tables - created_tables
+    if missing:
+        raise RuntimeError(f"init_db FAILED: missing tables after create_all: {missing}")
+
+    print(f"Database initialized: {DATABASE_URL} (tables: {sorted(created_tables)})")
 
 
 async def close_db():

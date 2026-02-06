@@ -252,6 +252,17 @@ agent-browser screenshot verify.png
 
 Do NOT mark task complete without testing (unless backend-only fix).
 
+## Test Evidence in completion_note (MANDATORY)
+
+Every `completion_note` MUST include concrete test evidence — not just a summary of what you changed. Examples:
+- Backend fix: paste the curl response or log output showing it works
+- DB change: paste `sqlite3 ... '.tables'` or query output
+- Frontend fix: note the screenshot filename or console output confirming no errors
+- If the task's `test` field specifies output to paste, you MUST include it
+
+**BAD**: "Fixed race condition, changed init to null"
+**GOOD**: "Fixed race condition. Verified: sqlite3 .tables shows 5 tables, curl /api/auth/signup returns 201, no console errors in agent-browser"
+
 ## After Cleanup Commit
 ALWAYS push:
 ```bash

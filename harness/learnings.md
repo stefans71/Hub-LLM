@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 88 - 2026-02-06 EST
+**Task**: BUG-29
+**What**: Fixed init_db() creating 0-byte DB. Root cause: aiosqlite `conn.run_sync(Base.metadata.create_all)` doesn't reliably persist DDL to disk. Fix: use sync engine (`create_engine` without aiosqlite) for DDL, then verify via sqlite_master query. Added RuntimeError if tables are missing after create_all.
+**Key Learning**: For SQLite DDL with SQLAlchemy async, always use a sync engine. aiosqlite transactions may not flush CREATE TABLE to disk.
+
+---
+
 ### Session 87 - 2026-02-06 EST
 **Task**: BUG-28 + DOCS-05
 **What**:
