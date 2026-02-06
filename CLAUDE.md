@@ -198,6 +198,37 @@ const handleMouseMove = (e) => {
 /* Or use a portal to render outside the clipping context */
 ```
 
+### Production Uses Postgres — Local Dev Uses SQLite (CRITICAL)
+```
+Production (Docker/Coolify):  DATABASE_URL=postgresql://hubllm:hubllm@db:5432/hubllm
+Local dev (no Docker):        DATABASE_URL defaults to sqlite+aiosqlite:///backend/hubllm.db
+```
+
+**Rules:**
+1. ANY schema change (new column, new table, type change) MUST include a migration script in `backend/migrations/`
+2. SQLAlchemy `create_all()` only creates NEW tables — it NEVER adds columns to existing tables in Postgres
+3. Test all DB queries against both SQLite and Postgres syntax (e.g., `sqlite_master` is SQLite-only)
+4. `docker-compose.yml` is the production deployment config — changes there affect hubllm.dev
+5. Never assume the DB engine — always check `DATABASE_URL` prefix if behavior differs between engines
+
+**Migration pattern:**
+```python
+# backend/migrations/NNN_description.py
+# Check if column exists, add if not. Must work on both Postgres and SQLite.
+```
+
+### Docker Production Stack
+```
+docker-compose.yml → Coolify → Traefik → hubllm.dev
+├── backend  (Python 3.12, FastAPI, port 8000)
+├── frontend (Node 20, Vite, port 5173)
+├── db       (Postgres 16-alpine, port 5432)
+└── redis    (Redis 7-alpine, port 6379)
+```
+- `FRONTEND_URL` env var controls CORS origins
+- `APP_URL=https://hubllm.dev` for absolute URLs
+- Coolify deploys from `main` branch automatically
+
 <!-- ADD NEW CRITICAL PATTERNS ABOVE THIS LINE -->
 
 ## Documentation Rule - Document Patterns DURING Implementation

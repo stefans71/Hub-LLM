@@ -13,7 +13,7 @@
 meta:
   repo: /root/dev/Hub-LLM
   branch: feature/harness-v2
-  stack: "FastAPI (Python) + React (Vite) + SQLite"
+  stack: "FastAPI (Python) + React (Vite) + SQLite (dev) / Postgres (prod)"
   frontend_port: 5173
   backend_port: 8000
   total_jsx_files: 33
@@ -865,10 +865,59 @@ backend_main:
   last_verified_session: 86
 
 # ============================================================================
+# DEPLOYMENT — Production Infrastructure
+# ============================================================================
+deployment:
+  config_file: docker-compose.yml
+  orchestrator: "Coolify (auto-deploys from main branch)"
+  reverse_proxy: "Traefik (HTTPS termination, routing for hubllm.dev)"
+  domain: "hubllm.dev (https://www.hubllm.dev)"
+
+  containers:
+    backend:
+      image: "python:3.12-slim (backend/Dockerfile)"
+      port: 8000
+      command: "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+      volumes: ["./backend:/app"]
+      depends_on: [db, redis]
+
+    frontend:
+      image: "node:20-alpine (frontend/Dockerfile)"
+      port: 5173
+      command: "npm run dev -- --host"
+      volumes: ["./frontend:/app", "/app/node_modules"]
+
+    db:
+      image: "postgres:16-alpine"
+      port: 5432
+      credentials: {user: hubllm, password: hubllm, database: hubllm}
+      volume: "postgres_data:/var/lib/postgresql/data"
+
+    redis:
+      image: "redis:7-alpine"
+      port: 6379
+      volume: "redis_data:/data"
+
+  environment_variables:
+    DATABASE_URL: "postgresql://hubllm:hubllm@db:5432/hubllm"
+    REDIS_URL: "redis://redis:6379"
+    FRONTEND_URL: "http://localhost:5173 (controls CORS origins in main.py)"
+    APP_URL: "https://hubllm.dev"
+
+  dual_db_rule: |
+    Production uses Postgres 16. Local dev uses SQLite.
+    SQLAlchemy create_all() only creates NEW tables — it never adds columns to existing Postgres tables.
+    Every ORM model change MUST include a migration script in backend/migrations/.
+    init_db() currently uses sqlite_master which is SQLite-only (BUG-28-REOPEN will fix).
+    SYNC_DATABASE_URL replace trick (line 30) only works for SQLite URLs (BUG-28-REOPEN will fix).
+
+  last_verified_session: 87
+
+# ============================================================================
 # DATABASE SCHEMA (SQLAlchemy ORM — backend/models/__init__.py)
 # ============================================================================
 database:
-  engine: "SQLite (aiosqlite) — backend/hubllm.db (absolute path via Path(__file__), env override via DATABASE_URL)"
+  engine: "SQLite (aiosqlite) in dev — backend/hubllm.db (absolute path via Path(__file__)); Postgres 16 in production via DATABASE_URL env var (docker-compose.yml). CRITICAL: create_all() does NOT add columns to existing Postgres tables — every schema change needs a migration script."
   orm: "SQLAlchemy async with mapped_column"
   tables:
     users:
@@ -1161,3 +1210,24 @@ recurring_bugs:
     affected_files: [AuthContext.jsx]
     status: fixed
     fix: "isRetry flag on fetchUser prevents recursive refresh"
+
+  - id: 13
+    desc: "ORM model changes without DB migrations — create_all() only creates NEW tables, never adds columns to existing Postgres tables"
+    sessions: [87]
+    affected_files: [backend/models/__init__.py]
+    status: known_pattern
+    note: "Every model change (new column, type change, constraint) MUST include ALTER TABLE migration script. Production Postgres will silently ignore new columns added to ORM models. BUG-28 was caused by this."
+
+  - id: 14
+    desc: "SQLite-specific SQL in init_db() — sqlite_master doesn't exist in Postgres"
+    sessions: [87]
+    affected_files: [backend/models/__init__.py]
+    status: open
+    note: "init_db() line 242 uses 'SELECT name FROM sqlite_master' which is SQLite-only. Postgres equivalent is information_schema.tables. BUG-28-REOPEN will fix."
+
+  - id: 15
+    desc: "SYNC_DATABASE_URL construction assumes SQLite — replace('+aiosqlite','') breaks Postgres URLs"
+    sessions: [87]
+    affected_files: [backend/models/__init__.py]
+    status: open
+    note: "Line 30: SYNC_DATABASE_URL = DATABASE_URL.replace('+aiosqlite', ''). For Postgres URLs this is a no-op but the sync engine concept doesn't apply. BUG-28-REOPEN will fix."
