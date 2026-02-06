@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 91 - 2026-02-06 EST
+**Task**: BUG-31
+**What**: Fixed defensive setupComplete check in App.jsx: changed `!== false` to `=== true` so undefined/null doesn't bypass wizard. Refactored Setup.jsx skip behavior: "Skip for now" calls onComplete() directly (session-only, no backend call, wizard reappears on refresh). Added "Don't show this again" button that calls POST /api/auth/me/setup-complete (permanent dismiss). Also fixed duplicate asyncpg in requirements.txt.
+**Key Learning**: When checking boolean flags from API responses, always use `=== true` (not `!== false`) because undefined/null will pass the `!== false` check. This is especially dangerous with setup/onboarding flows where the field might not exist yet.
+
+---
+
 ### Session 90 - 2026-02-06 EST
 **Task**: BUG-28-REOPEN
 **What**: Made init_db() dual-DB aware (SQLite dev / Postgres prod). Fixed 3 issues: (1) SYNC_DATABASE_URL construction — now branches on IS_POSTGRES flag, converts postgresql:// to postgresql+asyncpg:// for async engine and strips +asyncpg for sync engine. (2) Table verification — uses information_schema.tables for Postgres, sqlite_master for SQLite. (3) Created migration system: run_migrations() runs all backend/migrations/NNN_*.py scripts after create_all on every startup. First migration 001_add_setup_completed.py adds setup_completed column if missing (the root cause of BUG-28 in production Postgres). Added psycopg2-binary to requirements.txt for sync Postgres DDL.

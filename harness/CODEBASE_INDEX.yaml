@@ -25,7 +25,7 @@ meta:
   total_localStorage_keys: 19
   total_db_tables: 5
   last_full_index_session: 86
-  last_partial_update_session: 90
+  last_partial_update_session: 91
 
 # ============================================================================
 # FRONTEND — Entry Points
@@ -45,7 +45,7 @@ frontend_entry:
       - {name: projects, type: "useState([])", drives: "project list across app"}
       - {name: activeProject, type: "useState(null)", drives: "currently selected project"}
       - {name: selectedModel, type: "useState('anthropic/claude-sonnet-4')", drives: "global model fallback"}
-      - {name: setupComplete, type: "useState(true)", drives: "setup wizard redirect"}
+      - {name: setupComplete, type: "useState(null)", drives: "setup wizard redirect — null=loading, true=done, false=show wizard"}
       - {name: apiKeys, type: "useState({openrouter,claude,github})", drives: "API key availability"}
     api_calls:
       - {endpoint: "/api/projects/", method: GET, purpose: "load all projects"}
@@ -1307,7 +1307,7 @@ recurring_bugs:
 
   - id: 18
     desc: "setupComplete check uses !== false — undefined/null bypasses setup wizard"
-    sessions: [90]
+    sessions: [90, 91]
     affected_files: [frontend/src/App.jsx]
-    status: open
-    note: "App.jsx line 36: setSetupComplete(user.setup_completed !== false). If setup_completed is undefined (missing from API response), undefined !== false = true, skipping wizard. Should be: user.setup_completed === true. Only explicit true should skip."
+    status: fixed
+    note: "Fixed in BUG-31: Changed to user.setup_completed === true. Only explicit true skips wizard. Also refactored Setup.jsx: 'Skip for now' = session-only (no backend call), 'Don't show again' = permanent (calls POST /api/auth/me/setup-complete)."

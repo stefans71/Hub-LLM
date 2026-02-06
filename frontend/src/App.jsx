@@ -33,7 +33,7 @@ function AppContent() {
   // Check if user has completed setup
   useEffect(() => {
     if (user) {
-      setSetupComplete(user.setup_completed !== false)
+      setSetupComplete(user.setup_completed === true)
     }
   }, [user])
 
