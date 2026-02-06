@@ -53,14 +53,22 @@
       "name": "Promote Critical Learnings",
       "size": "XS",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
       "description": "Extract recurring patterns from learnings.md (85 sessions, write-only) into CLAUDE.md or code maps. Key: Sessions 40, 43, 46, 80-82.",
       "change": [
         "Scan for patterns appearing 2+ times",
         "Add missing to CLAUDE.md critical patterns",
         "5+ patterns promoted minimum"
       ],
-      "test": "5+ new patterns in CLAUDE.md or code maps"
+      "test": "5+ new patterns in CLAUDE.md or code maps",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      },
+      "completion_note": "Added 7 new patterns to CLAUDE.md: CSS visibility toggle, flex constraints for xterm, sync derived state, null init for async state, URL persistence, delta drag resize, overflow for dropdowns."
     },
     {
       "id": "INFRA-03",

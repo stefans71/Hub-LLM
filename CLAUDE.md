@@ -132,6 +132,72 @@ async with sftp.open(path, "rb") as f:
 - Backend servers_db = in-memory (lost on restart)
 - Check localStorage FIRST, then sync to backend
 
+### CSS Visibility Toggle for Stateful Components (Don't Conditional Render)
+```jsx
+// BAD: Conditional render unmounts component, kills WebSockets/state
+{isExpanded && <ComponentWithWebSocket />}
+
+// GOOD: CSS hiding keeps component mounted
+<div style={{ display: isExpanded ? 'flex' : 'none' }}>
+  <ComponentWithWebSocket />
+</div>
+```
+
+### Flex Container Constraints for xterm.js
+```jsx
+// Flex children containing xterm.js or scrollable content need these:
+<div style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
+  {/* Without minWidth:0/minHeight:0, fitAddon calculates wildly wrong dimensions */}
+```
+
+### Sync Derived State from Props with useEffect
+```javascript
+const [linkedServerId, setLinkedServerId] = useState(project?.vps_server_id || null)
+
+// CRITICAL: useState(initialValue) only sets on first mount.
+// Without this, state goes stale on refresh/project switch.
+useEffect(() => {
+  setLinkedServerId(project?.vps_server_id || null)
+}, [project?.id, project?.vps_server_id])
+```
+
+### Initialize Async-Dependent State to null, Gate Renders
+```javascript
+// BAD: Default matches valid state → premature decisions before async resolves
+const [setupComplete, setSetupComplete] = useState(true)
+
+// GOOD: null = "unknown", gate renders until resolved
+const [setupComplete, setSetupComplete] = useState(null)
+if (setupComplete === null) return <LoadingSpinner />
+```
+
+### URL State Persistence for Page Refresh
+```javascript
+// Read on load
+const urlProjectId = searchParams.get('projectId')
+// Write on navigate
+navigate(`/workspace?projectId=${project.id}`)
+// Any state that should survive F5 belongs in URL or localStorage
+```
+
+### Delta-Based Drag Resize (Not Absolute Position)
+```javascript
+// On mousedown: capture start state
+const handleMouseDown = (e) => { startX = e.clientX; startWidth = currentWidth }
+// On mousemove: delta from start (resilient to stale closures)
+const handleMouseMove = (e) => {
+  const newSize = Math.max(MIN, Math.min(MAX, startWidth + (e.clientX - startX)))
+  setSize(newSize)
+}
+```
+
+### overflow:visible for Dropdown Parents
+```css
+/* Parent containers with dropdown children must NOT clip them */
+.parent { overflow: visible; } /* NOT overflow: hidden */
+/* Or use a portal to render outside the clipping context */
+```
+
 <!-- ADD NEW CRITICAL PATTERNS ABOVE THIS LINE -->
 
 ## Documentation Rule - Document Patterns DURING Implementation
