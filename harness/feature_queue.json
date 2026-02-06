@@ -1,5 +1,5 @@
 {
-  "version": "5.9",
+  "version": "6.0",
   "updated": "2026-02-06",
   "session_docs": [
     "CLAUDE.md",
@@ -25,6 +25,31 @@
     }
   },
   "queue": [
+    {
+      "id": "DOCS-06",
+      "name": "Generate Full CODEBASE_INDEX.yaml",
+      "size": "M",
+      "priority": 1,
+      "status": "pending",
+      "description": "Scan entire codebase and populate harness/CODEBASE_INDEX.yaml. Use the code-researcher agent to investigate each area. The agent writes entries directly into the index file. This is the FIRST task \u2014 nothing else gets accurate file references until this is done.",
+      "change": [
+        "Use code-researcher agent to scan all .jsx files and write entries to index",
+        "Use code-researcher agent to scan all backend router .py files and write entries",
+        "Scan backend/services/vps_connection.py \u2014 classes, methods, singleton",
+        "Run sqlite3 backend/hubllm.db '.schema' \u2014 add to database section",
+        "Document all localStorage keys in data_flow section",
+        "Cross-reference recurring bugs from learnings.md with affected files",
+        "Set last_verified_session on every entry",
+        "Update meta section with accurate totals"
+      ],
+      "test": "Director can grep the index for any component and get file path, line numbers, state vars, API calls, and known issues without reading source code",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": false,
+        "committed_pushed": false
+      }
+    },
     {
       "id": "DOCS-01",
       "name": "Generate Backend Routes Code Map",
