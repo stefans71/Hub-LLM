@@ -23,7 +23,7 @@ function AppContent() {
   const [activeProject, setActiveProject] = useState(null)
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
   const [showSettings, setShowSettings] = useState(false)
-  const [setupComplete, setSetupComplete] = useState(true) // Assume complete until proven otherwise
+  const [setupComplete, setSetupComplete] = useState(null) // null = not yet determined
   const [apiKeys, setApiKeys] = useState({
     openrouter: localStorage.getItem('openrouter_key') || '',
     claude: localStorage.getItem('claude_key') || '',
@@ -112,13 +112,22 @@ function AppContent() {
     )
   }
 
+  // Wait until setup status is determined (null = still loading)
+  if (setupComplete === null) {
+    return (
+      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
+      </div>
+    )
+  }
+
   // Redirect to setup if user hasn't completed it (except if already on setup page)
-  if (!setupComplete && location.pathname !== '/setup') {
+  if (setupComplete === false && location.pathname !== '/setup') {
     return <Navigate to="/setup" replace />
   }
 
   // If on setup page but already completed, redirect to dashboard
-  if (setupComplete && location.pathname === '/setup') {
+  if (setupComplete === true && location.pathname === '/setup') {
     return <Navigate to="/dashboard" replace />
   }
 

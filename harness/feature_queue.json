@@ -26,86 +26,27 @@
   },
   "queue": [
     {
-      "id": "DOCS-06",
-      "name": "Generate Full CODEBASE_INDEX.yaml",
-      "size": "M",
+      "id": "BUG-28",
+      "name": "Setup Wizard Skipped After Account Creation",
+      "size": "XS",
       "priority": 1,
-      "status": "done",
-      "description": "Scan entire codebase and populate harness/CODEBASE_INDEX.yaml. Use the code-researcher agent to investigate each area. The agent writes entries directly into the index file. This is the FIRST task \u2014 nothing else gets accurate file references until this is done.",
+      "status": "pending_review",
+      "description": "BLOCKER. After creating a new account, the Setup wizard (/setup) is skipped — user goes straight to /dashboard. Root cause: race condition in App.jsx. setupComplete state initialized to true (line 26), and the useEffect that reads user.setup_completed (lines 34-37) runs AFTER the first render. So the redirect check at lines 116-122 sees setupComplete=true on the initial render and either doesn't redirect to /setup or actively redirects away from it. The backend correctly returns setup_completed:false for new users (models/__init__.py:70, services/auth.py:479).",
       "change": [
-        "Use code-researcher agent to scan all .jsx files and write entries to index",
-        "Use code-researcher agent to scan all backend router .py files and write entries",
-        "Scan backend/services/vps_connection.py \u2014 classes, methods, singleton",
-        "Run sqlite3 backend/hubllm.db '.schema' \u2014 add to database section",
-        "Document all localStorage keys in data_flow section",
-        "Cross-reference recurring bugs from learnings.md with affected files",
-        "Set last_verified_session on every entry",
-        "Update meta section with accurate totals"
+        "frontend/src/App.jsx line 26: Change setupComplete initial state from true to null (unknown). This represents 'not yet determined' state.",
+        "frontend/src/App.jsx lines 116-122: Update redirect logic to treat setupComplete===null as 'still loading, don't redirect yet'. Only redirect to /setup when setupComplete===false. Only redirect away from /setup when setupComplete===true.",
+        "ALSO: SSH into VPS and clear the database so the user can test full signup → setup flow. Find hubllm.db location, delete it, restart backend so init_db() recreates empty tables."
       ],
-      "test": "Director can grep the index for any component and get file path, line numbers, state vars, API calls, and known issues without reading source code",
+      "test": "Delete DB, restart backend. Go to hubllm.dev, create new account. Should land on /setup wizard, NOT /dashboard. Complete setup, confirm redirect to /dashboard. Refresh page — should stay on /dashboard, not loop back to /setup.",
       "completion_checklist": {
         "code_works": true,
         "index_updated": true,
-        "learnings_written": false,
-        "committed_pushed": false
-      }
-    },
-    {
-      "id": "DOCS-01",
-      "name": "Generate Backend Routes Code Map",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Scan all 12 backend/routers/*.py files. For each: list every endpoint (method, path, params, purpose). Grep frontend/src to find which components call each. Run sqlite3 backend/hubllm.db '.schema' for DB. Save to harness/knowledge/code-maps/backend-routes.md",
-      "change": [
-        "Document every endpoint in all 12 routers",
-        "Cross-reference frontend callers",
-        "Document SQLite schema"
-      ],
-      "test": "backend-routes.md covers all routers + DB schema + frontend refs"
-    },
-    {
-      "id": "DOCS-02",
-      "name": "Generate Chat Components Code Map",
-      "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Document Chat.jsx and ClaudeCodeTerminalChat.jsx. FEAT-10, CLAUDE-03, BUBBLE-01 all touch chat with no map. See learnings Sessions 81-82 for claudeCodeStatus timing. Save to harness/knowledge/code-maps/chat-components.md",
-      "change": [
-        "Chat.jsx: state, routing (useClaudeCodeTerminal), props",
-        "ClaudeCodeTerminalChat: connection, bubble parsing, spinner filtering",
-        "Welcome/loading flow"
-      ],
-      "test": "Covers both components with state vars, routing, bubble parsing"
-    },
-    {
-      "id": "DOCS-03",
-      "name": "Generate Setup Wizard Code Map",
-      "size": "XS",
-      "priority": 2,
-      "status": "pending",
-      "description": "Document Setup.jsx: step flow, OpenRouter vs Anthropic Pro paths, localStorage keys, redirect. Save to harness/knowledge/code-maps/setup-wizard.md",
-      "change": [
-        "Step flow + branching",
-        "Storage (localStorage + API calls)",
-        "Post-completion redirect"
-      ],
-      "test": "Describes both onboarding paths accurately"
-    },
-    {
-      "id": "DOCS-04",
-      "name": "Generate State Management Conventions",
-      "size": "XS",
-      "priority": 2,
-      "status": "pending",
-      "description": "Document localStorage vs backend sync \u2014 #1 recurring bug source (Sessions 43, 47, 80). Save to harness/knowledge/conventions/state-management.md",
-      "change": [
-        "All localStorage keys + values",
-        "Sync patterns + direction",
-        "claudeCodeStatus flow",
-        "Bug examples from learnings"
-      ],
-      "test": "Lists all localStorage keys with sync patterns"
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      },
+      "completion_note": "Fixed race condition: setupComplete init changed from true to null, added loading gate before redirect logic. DB reset is a manual testing step for the user.",
+      "status": "pending_review"
     },
     {
       "id": "DOCS-05",
@@ -225,6 +166,11 @@
     }
   ],
   "completed": [
+    {
+      "id": "DOCS-06",
+      "name": "Generate Full CODEBASE_INDEX.yaml",
+      "completed": "2026-02-06"
+    },
     {
       "id": "BUG-25",
       "name": "Project Click Doesn't Switch Claude Terminal Chat or LLM-Dev Terminal",

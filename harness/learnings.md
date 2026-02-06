@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 87 - 2026-02-06 EST
+**Task**: BUG-28 - Setup Wizard Skipped After Account Creation
+**What**: Fixed race condition in App.jsx where setupComplete initialized to true, causing redirect logic to skip /setup before useEffect could read user.setup_completed. Changed initial state to null (unknown) and added loading gate so redirects only fire after setup status is determined.
+**Pattern**: When state depends on async data (useEffect), initialize to null instead of a default that matches a valid state. Gate renders on null to prevent premature decisions.
+
 ### Session 86 - 2026-02-06 09:33 EST
 **Task**: DOCS-06 - Generate Full CODEBASE_INDEX.yaml
 **What**: Scanned entire codebase and populated harness/CODEBASE_INDEX.yaml with all sections
