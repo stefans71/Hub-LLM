@@ -868,7 +868,7 @@ backend_main:
 # DATABASE SCHEMA (SQLAlchemy ORM — backend/models/__init__.py)
 # ============================================================================
 database:
-  engine: "SQLite (aiosqlite) — backend/hubllm.db"
+  engine: "SQLite (aiosqlite) — backend/hubllm.db (absolute path via Path(__file__), env override via DATABASE_URL)"
   orm: "SQLAlchemy async with mapped_column"
   tables:
     users:

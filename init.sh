@@ -46,6 +46,18 @@ kill_port() {
     fi
 }
 
+# Step 0: Clean up ghost databases (only keep backend/hubllm.db)
+echo ""
+echo -e "${GREEN}Step 0: Checking for ghost databases...${NC}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GHOST_DBS=$(find "$SCRIPT_DIR" -name 'hubllm.db' ! -path '*/backend/hubllm.db' 2>/dev/null || true)
+if [ -n "$GHOST_DBS" ]; then
+    echo -e "${YELLOW}  Found ghost database(s):${NC}"
+    echo "$GHOST_DBS" | while read -r f; do echo "    $f (removing)"; rm -f "$f"; done
+else
+    echo "  No ghost databases found"
+fi
+
 # Step 1: Start Backend
 echo ""
 echo -e "${GREEN}Step 1: Starting Backend (FastAPI)...${NC}"
@@ -137,7 +149,7 @@ echo ""
 echo "  🌐 Frontend:  http://localhost:5173"
 echo "  🔧 Backend:   http://localhost:8000"
 echo "  📊 API Docs:  http://localhost:8000/docs"
-echo "  🗄️  Database:  SQLite (backend/hubllm.db)"
+echo "  🗄️  Database:  SQLite ($SCRIPT_DIR/backend/hubllm.db)"
 echo ""
 echo "  Logs:"
 echo "    Backend:  tail -f backend.log"

@@ -26,6 +26,29 @@
   },
   "queue": [
     {
+      "id": "BUG-30",
+      "name": "Database path is relative — ghost DB causes stale data on fresh start",
+      "size": "XS",
+      "priority": 1,
+      "status": "pending_review",
+      "description": "DATABASE_URL in backend/models/__init__.py line 25 uses relative path 'sqlite+aiosqlite:///./hubllm.db'. This creates the DB wherever uvicorn's CWD is — usually backend/ (correct), but if launched from repo root, a second hubllm.db appears at Hub-LLM/hubllm.db. After deleting one DB to reset, the ghost DB still exists with old user data, causing 'Email already registered' on signup. Additionally init.sh has no DB cleanup step. Refs: learnings line 9 (BUG-29 init_db fix), line 1321 (had to delete hubllm.db to recreate schema), line 1391 (documents ./hubllm.db created on first run).",
+      "change": [
+        "backend/models/__init__.py line 25: Replace relative path with absolute path anchored to the file's own directory. Use `Path(__file__).resolve().parent.parent / 'hubllm.db'` so DB always lands at backend/hubllm.db regardless of CWD. Keep the env var override so DATABASE_URL can still be set externally.",
+        "init.sh: Add a --fresh flag or unconditional cleanup step before starting backend. Use `find /root/dev/Hub-LLM -name 'hubllm.db' -delete` to remove ALL hubllm.db files (not just backend/hubllm.db). Print which files were deleted. Place this BEFORE the uvicorn launch (after line 52, before line 54).",
+        "init.sh line 140: Update the summary to show the resolved absolute path so the operator can verify which DB is in use."
+      ],
+      "test": "Step-by-step: (1) find /root/dev/Hub-LLM -name hubllm.db — note any files. (2) Delete all found files. (3) Run init.sh from repo root. (4) Verify only backend/hubllm.db exists: find /root/dev/Hub-LLM -name hubllm.db. (5) Signup a new user — should succeed. (6) Stop backend, cd to repo root, run 'cd /root/dev/Hub-LLM && python -c \"from backend.models import DATABASE_URL; print(DATABASE_URL)\"' — should show absolute path containing /backend/hubllm.db. Paste the find output and DATABASE_URL print as evidence.",
+      "investigation_id": null,
+      "completion_note": "Changed backend/models/__init__.py: replaced relative './hubllm.db' with absolute path via Path(__file__).resolve().parent.parent / 'hubllm.db'. Added ghost DB cleanup in init.sh Step 0. Updated init.sh summary to show resolved path. Test evidence: python -c 'from backend.models import DATABASE_URL; print(DATABASE_URL)' outputs 'sqlite+aiosqlite:////root/dev/Hub-LLM/backend/hubllm.db'. find shows only backend/hubllm.db exists. Affected areas: any code importing DATABASE_URL from backend.models.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
       "id": "INFRA-03",
       "name": "Idle Connection Timeout",
       "size": "S",

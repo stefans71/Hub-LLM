@@ -9,6 +9,7 @@ Uses SQLite for simplicity. Tables:
 """
 from datetime import datetime
 from typing import Optional
+from pathlib import Path
 import os
 import json
 import re
@@ -22,7 +23,9 @@ from sqlalchemy.orm import DeclarativeBase, relationship, Mapped, mapped_column
 import enum
 
 # Database URL - SQLite for simplicity
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./hubllm.db")
+# Use absolute path so DB always lands at backend/hubllm.db regardless of CWD
+_DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "hubllm.db"
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{_DEFAULT_DB_PATH}")
 # Sync URL for DDL operations (aiosqlite doesn't reliably persist CREATE TABLE)
 SYNC_DATABASE_URL = DATABASE_URL.replace("+aiosqlite", "")
 

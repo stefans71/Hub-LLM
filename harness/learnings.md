@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 89 - 2026-02-06 EST
+**Task**: BUG-30
+**What**: Fixed DATABASE_URL using relative path `./hubllm.db` which creates ghost DBs when uvicorn is launched from different CWDs. Changed to absolute path using `Path(__file__).resolve().parent.parent / "hubllm.db"`. Added ghost DB cleanup step in init.sh. Updated init.sh summary to show resolved absolute path.
+**Key Learning**: SQLite relative paths are relative to CWD, not to the Python file. Always use `Path(__file__).resolve()` to anchor DB paths.
+
+---
+
 ### Session 88 - 2026-02-06 EST
 **Task**: BUG-29
 **What**: Fixed init_db() creating 0-byte DB. Root cause: aiosqlite `conn.run_sync(Base.metadata.create_all)` doesn't reliably persist DDL to disk. Fix: use sync engine (`create_engine` without aiosqlite) for DDL, then verify via sqlite_master query. Added RuntimeError if tables are missing after create_all.
