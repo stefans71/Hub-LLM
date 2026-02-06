@@ -14,6 +14,11 @@
 6. Test with `agent-browser` for UI
 7. Add patterns to CLAUDE.md, notes to learnings.md, update code map if needed
 8. `git commit -m "feat(TASK-ID): description"` then `git push`
+9. Update task in `harness/feature_queue.json`:
+   - Set ALL `completion_checklist` items to true (or note why not)
+   - Add `"completion_note": "What was done, any caveats"`
+   - Set `"status": "pending_review"` — **NEVER `done` or `completed`**
+   - Director reviews and moves to `completed[]`
 
 ## Key Docs
 
