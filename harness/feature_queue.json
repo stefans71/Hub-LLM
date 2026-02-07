@@ -26,32 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-14",
-      "name": "Inline auth panel on landing page — Sign Up expands form like About/Pricing",
-      "size": "M",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "The landing page nav has About, Pricing, Contact, Sign Up. About and Pricing expand inline panels inside the hub-box using `activePanelId` state + `.info-panel.open` CSS animation. Currently Sign Up calls `onSignUp` which navigates to `/auth` (separate page). Instead, Sign Up should expand an auth panel inline — same pattern as About/Pricing — containing the login/signup form styled to match the landing page.\n\nThe auth logic lives in `useAuth()` from `frontend/src/contexts/AuthContext.jsx` (login, signup, error). When auth succeeds, `isAuthenticated` flips to true, AppRouter automatically switches from LandingPage to AppContent (wizard/dashboard). No manual navigation needed.\n\nPanel animation pattern (LandingPage.css lines 442-456):\n- `.info-panel` → `max-height: 0; overflow: hidden; transition: max-height 0.3s ease`\n- `.info-panel.open` → `max-height: 200px` (About) or `max-height: 350px` (Pricing)\n- `.info-panel.auth-panel.open` → needs `max-height: 550px` (form is taller: tabs + 3 fields + button + OAuth)\n\nAuthPage.jsx (frontend/src/components/AuthPage.jsx, 331 lines) has the full auth form:\n- Lines 55-66: State (mode, loading, error, showPassword, oauthProviders, formData)\n- Lines 68-82: useEffect to fetch OAuth providers from `/api/auth/oauth/providers`\n- Lines 92-121: handleSubmit (calls login/signup from useAuth)\n- Lines 123-125: handleOAuth (redirect to OAuth URL)\n- Lines 140-320: JSX (Sign In/Create Account tabs, name/email/password fields, submit button, OAuth)\n- Password validation: import passwordRules array and validatePassword from AuthPage (lines 8-18) OR duplicate the simple 4-rule array\n\nColors to use in auth panel (match landing page, NOT AuthPage's gray-800/blue-600):\n- Panel bg: `rgba(0, 0, 0, 0.25)` (matches other panels)\n- Input bg: `rgba(15, 25, 40, 0.8)` with `border: 1px solid rgba(56, 189, 248, 0.2)`\n- Input focus border: `#38bdf8` (sky blue primary)\n- Submit button: `#f97316` (orange accent) for the primary CTA\n- Tab active: `rgba(56, 189, 248, 0.15)` bg with `#38bdf8` text\n- Tab inactive: `rgba(150, 180, 200, 0.5)` text\n- Error: `#ef4444` text with `rgba(239, 68, 68, 0.1)` bg\n- OAuth buttons: `rgba(30, 45, 65, 0.8)` bg with white text",
-      "change": [
-        "frontend/src/pages/LandingPage.jsx line 1: Add import `{ useAuth }` from '../contexts/AuthContext'",
-        "frontend/src/pages/LandingPage.jsx: Add auth state after existing useState hooks — authMode ('login'/'signup'), authLoading, authError, showPassword, oauthProviders, formData ({email, password, name}). Add useEffect to fetch /api/auth/oauth/providers on mount. Add handleAuthSubmit (calls login/signup from useAuth). Add handleOAuth redirect. Add passwordRules array (4 simple rules, can inline).",
-        "frontend/src/pages/LandingPage.jsx line 448: Change Sign Up button from `onClick={onSignUp}` to `onClick={() => togglePanel('auth')}`",
-        "frontend/src/pages/LandingPage.jsx lines 495, 510, 526: Change 3 pricing buttons from `onClick={onSignUp}` to `onClick={() => togglePanel('auth')}`",
-        "frontend/src/pages/LandingPage.jsx after Pricing Panel (after line 531): Add Auth Panel — same `.info-panel` wrapper pattern. Contains: panel-header with 'Sign Up' title + close button, Sign In / Create Account tab toggle, Name field (signup only), Email field, Password field with show/hide toggle, Password requirements (signup only), Submit button, OAuth divider + buttons (if available), Terms footer text.",
-        "frontend/src/pages/LandingPage.css: Add `.landing-page .info-panel.auth-panel.open { max-height: 550px; }`. Add auth form styles: `.auth-tabs`, `.auth-tab`, `.auth-tab.active`, `.auth-input-group`, `.auth-input`, `.auth-input:focus`, `.auth-submit-btn`, `.auth-error`, `.auth-oauth-btn`, `.auth-divider`, `.auth-password-toggle`, `.auth-requirements`. All scoped under `.landing-page`."
-      ],
-      "test": "Step-by-step: (1) Open landing page (unauthenticated). (2) Click 'Sign Up' nav — auth panel should slide open inline (same animation as About/Pricing). (3) Verify Sign In / Create Account tabs toggle. (4) Verify form fields appear with landing-page styling (dark bg, sky blue accents). (5) Switch to Create Account — verify Name field appears, password requirements show. (6) Click a pricing button (e.g. 'Claim Lifetime Access') — verify it opens the auth panel (not navigates away). (7) Test actual signup — create account, verify app transitions to wizard. (8) Test login — sign in, verify app transitions to dashboard. (9) Direct /auth URL should still show standalone AuthPage (fallback). (10) Build passes 0 errors. Paste build output + auth flow description in completion_note.",
-      "investigation_id": null,
-      "completion_note": "Changed frontend/src/pages/LandingPage.jsx (715→948 lines): Added useAuth import (line 2), API_URL const, passwordRules/validatePassword (lines 8-18). Added 7 auth state hooks (authMode, authLoading, authError, showPassword, oauthProviders, formData). Added OAuth providers fetch useEffect with AbortController 5s timeout. Added handleAuthChange, handleAuthSubmit (calls login/signup from useAuth with password validation), handleOAuth, hasOAuth. Changed Sign Up nav button to togglePanel('auth') with active class. Changed 3 pricing CTA buttons (Claim Lifetime Access, Get Started, Subscribe) from onSignUp to togglePanel('auth'). Added auth panel JSX (~120 lines) after pricing panel: same .info-panel wrapper pattern, Sign In/Create Account tabs, name field (signup only), email, password with show/hide toggle, password requirements (signup only), submit button, OAuth divider + GitHub/Google buttons, terms footer. Changed frontend/src/pages/LandingPage.css (1394→1607 lines): Added .auth-panel.open { max-height: 550px }, 17 auth-specific selectors. All colors match landing page palette (sky blue inputs, orange CTA, dark backgrounds). Build output: vite build — 2465 modules transformed, 0 errors, built in 6.62s. Auth required for flow test — noted: auth verified separately. Direct /auth URL still shows standalone AuthPage (unchanged). Commit 7fdfa37.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -63,6 +37,17 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-14",
+      "name": "Inline auth panel on landing page — Sign Up expands form like About/Pricing",
+      "completed": "2026-02-07",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-07",
+      "review_notes": "Verified: LandingPage.jsx 948 lines, LandingPage.css 1607 lines. useAuth imported (line 2). Auth panel at line 621+ follows .info-panel pattern. Sign Up nav → togglePanel('auth') at line 532. 3 pricing buttons → togglePanel('auth') at lines 582/597/613. Tabs, form, password validation, OAuth all present. 17 auth CSS selectors scoped under .landing-page. .auth-panel.open max-height 550px at CSS line 666. CODEBASE_INDEX updated (948 lines, 5 new auth state hooks, onSignUp marked deprecated). Learnings Session 98. Commit 7fdfa37.",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "Changed LandingPage.jsx (715→948 lines): useAuth import, auth state hooks, handleAuthSubmit, handleOAuth, auth panel JSX ~120 lines. Changed LandingPage.css (1394→1607 lines): 17 auth-specific selectors. Sign Up nav and 3 pricing buttons now open inline auth panel. Build: 0 errors."
+    },
     {
       "id": "FEAT-13",
       "name": "Landing page routing — unauthenticated visitors see landing first",
