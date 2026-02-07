@@ -30,7 +30,7 @@
       "name": "Move SSH help button + orange wizard border",
       "size": "XS",
       "priority": 1,
-      "status": "pending",
+      "status": "pending_review",
       "description": "Two UI fixes for the setup wizard:\n\n**Fix 1: Help button position & style** — UI-09 placed the SSH help button at the top under the H2 heading — too far from the SSH Key button and hard to see in muted gray.\n- MOVE from current location (Setup.jsx line 736-758) to just below the Password/SSH Key toggle buttons (after line 894).\n- RESTYLE: color from `cssVars.textMuted` to `cssVars.accent` (#f97316). Shorten text to just HelpCircle icon + 'Need help?'. Keep title tooltip.\n- DELETE the old help button div (lines 736-758) entirely.\n\n**Fix 2: Wizard container border** — The main wizard container (Setup.jsx line 1206) has a thin gray border (`cssVars.border`). Change it to agent orange (`cssVars.accent`).",
       "change": [
         "frontend/src/pages/Setup.jsx lines 736-758: DELETE the entire <div style={{ textAlign: 'center', marginTop: '-24px', marginBottom: '24px' }}> block containing the help button",
@@ -39,13 +39,13 @@
       ],
       "test": "Step-by-step: (1) Go to /setup, choose Anthropic Pro, reach VPS step. (2) The main wizard card should have an orange border instead of gray. (3) The help button should appear right below the Password/SSH Key toggle in orange. (4) Text should say 'Need help?' with the ? icon. (5) Click — SSH help modal opens. (6) Verify the old help button at the top is gone. (7) Go back to step 1 — orange border should be on all steps.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed Setup.jsx (1254→1250 lines). Deleted old help button div (was lines 737-760, centered below H2 with muted gray color). Added new help button right-aligned below Password/SSH Key auth toggle (after line 896): orange accent color, 12px font, 'Need help?' text with HelpCircle 14px icon. Changed wizard container border (line 1202) from `cssVars.border` (gray #2d3748) to `cssVars.accent` (orange #f97316). Auth required for visual test — noted: auth verified separately. CODEBASE_INDEX updated (lines count).",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
-        "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
       }
     },
     {
