@@ -1407,25 +1407,37 @@ billing_and_routing:
   overview: |
     Two billing modes exist: "Pro Subscription" (Claude Code on VPS, free with Anthropic Pro)
     and "OpenRouter" (pay-per-call via API key). Models have a `tier` field that determines
-    which billing mode they belong to. The frontend decides the provider based on the selected
-    model's tier, then the backend routes to the correct service.
+    which billing mode they belong to.
 
-    OpenRouter models are STATELESS — every API call is independent. The frontend sends the
-    full message history with each request. Switching models mid-conversation works but the
-    new model re-reads all history from scratch. Context window limits vary by model.
+    DUAL-PATH ARCHITECTURE (FEAT-24/25, Session 104):
+    The two billing modes use fundamentally different UX paths:
 
-    Claude Code SSH is SESSION-BASED — maintains context through the SSH channel.
+    1. OpenRouter (stateless API): "Define Project with AI" button → inline AI chat in CreateProject
+       → backend /api/ai/expand-brief + /api/ai/chat → provider:'openrouter' hardcoded (FEAT-26).
+    2. Subscription/Claude Code (interactive terminal): "Enhance project with AI" checkbox →
+       Create Project → redirect to workspace with ?enhance=true → ClaudeCodeTerminalChat shows
+       banner with project brief → user copies prompt to clipboard → pastes into Claude Code terminal.
+
+    Claude Code is SESSION-BASED and INTERACTIVE — it asks follow-up questions, needs yes/no
+    confirmations, and runs as a terminal session. This is why CreateProject doesn't route
+    subscription models through the API anymore. The old claude_code_ssh routing in CreateProject
+    was removed in FEAT-26 (dead code after FEAT-24 hid the button for subscription models).
+
+    In Workspace, subscription models still route through Chat.jsx → ClaudeCodeTerminalChat.jsx
+    which connects via WebSocket to the VPS terminal. OpenRouter models route through Chat.jsx →
+    standard chat UI → backend API.
 
   tiers:
     subscription:
       description: "Anthropic models routed through Claude Code CLI on user's VPS"
       defined_in: "ModelSelector.jsx SUBSCRIPTION_MODELS constant (5 models)"
       requires: "VPS with Claude Code installed + authenticated (claudeCodeDetected in localStorage vps_servers)"
-      provider_value: "claude_code_ssh"
+      provider_value: "claude_code_ssh (only used in Workspace Chat.jsx path, NOT in CreateProject)"
       billing: "Free — uses user's Anthropic Pro subscription"
-      service: "backend/services/claude_code_ssh.py → ClaudeCodeSSHService"
+      service: "backend/services/claude_code_ssh.py → ClaudeCodeSSHService (Workspace path only)"
       streaming_only: true
       note: "ClaudeCodeSSHService.chat() returns AsyncGenerator. Non-streaming callers (expand-brief) must collect chunks."
+      create_project_path: "Checkbox → URL ?enhance=true → ClaudeCodeTerminalChat banner → copy-to-clipboard (FEAT-24/25)"
 
     openrouter:
       description: "Any model from OpenRouter's catalog (500+ models, all providers)"
@@ -1434,6 +1446,7 @@ billing_and_routing:
       provider_value: "openrouter"
       billing: "Pay-per-call — charged to user's OpenRouter account"
       service: "backend/services/openrouter.py → OpenRouterService"
+      create_project_path: "'Define Project with AI' button → inline chat → /api/ai/expand-brief + /api/ai/chat"
 
     claude_direct:
       description: "Direct Anthropic API (legacy, rarely used)"
@@ -1442,19 +1455,41 @@ billing_and_routing:
       service: "backend/services/openrouter.py → ClaudeDirectService"
 
   routing_flow:
-    frontend_decision: |
-      1. User selects model in ModelSelector → onChange returns {id, name, tier, provider, billingMode}
-      2. Consumer checks model.tier:
-         - tier === 'subscription' → provider = 'claude_code_ssh', server_id = first VPS with claudeCodeDetected
-         - tier === 'openrouter'   → provider = 'openrouter', X-OpenRouter-Key header
-         - tier === 'claude_direct'→ provider = 'claude_direct', X-Claude-Key header
-      3. POST request includes: { model, provider, server_id? }
+    create_project: |
+      DUAL-PATH (FEAT-24/25/26):
+      1. User selects model in ModelSelector → onChange returns {id, name, tier, ...}
+      2. If tier === 'subscription':
+         - "Define Project with AI" button HIDDEN, checkbox "Enhance project with AI" shown
+         - On Create: onCreateProject(project, { enhance: true }) → App.jsx navigates with &enhance=true
+         - No backend API calls for AI definition — subscription models use terminal interaction
+      3. If tier !== 'subscription' (openrouter):
+         - "Define Project with AI" button shown (existing inline AI chat flow)
+         - All 3 fetch calls hardcode provider:'openrouter' (FEAT-26 removed subscription branches)
+         - POST /api/ai/expand-brief + /api/ai/chat with provider:'openrouter'
+
+    workspace_enhance: |
+      ENHANCE BANNER (FEAT-25):
+      1. App.jsx reads ?enhance=true from URL, captures in enhanceMode state, clears URL param (one-shot)
+      2. Prop threading: App → Workspace → Chat → ClaudeCodeTerminalChat (enhanceWithAI prop)
+      3. ClaudeCodeTerminalChat shows orange banner with truncated brief + "Copy to Clipboard" button
+      4. User copies prompt, pastes into Claude Code terminal when ready
+      5. Banner dismissed via "Dismiss" or auto-hides context (URL already cleared, won't reappear on refresh)
+      Why copy-paste: WebSocket terminal injection is fragile (echo detection, timing, collision — BUBBLE-01 shelved for same reason)
+
+    workspace_chat: |
+      WORKSPACE ROUTING (unchanged):
+      1. Chat.jsx checks: isAnthropicModel && claudeCodeStatus.authenticated && serverId
+         - True → render ClaudeCodeTerminalChat (WebSocket terminal to VPS)
+         - False → render standard chat UI (fetch to /api/ai/chat or /api/chat)
+      2. provider is NOT set in CreateProject fetch calls for subscription models anymore
 
     backend_dispatch: |
       get_service(provider, api_keys, server_id) in ai.py and chat.py:
         - "claude_code_ssh" → ClaudeCodeSSHService(server_id) — 400 if no server_id
         - "claude_direct"   → ClaudeDirectService(api_keys["claude"]) — 401 if no key
         - else (openrouter) → OpenRouterService(api_keys["openrouter"]) — 401 if no key
+      Note: CreateProject now only sends provider:'openrouter'. claude_code_ssh is only
+      triggered from Workspace Chat.jsx path (not from CreateProject).
 
   # FILES TO MODIFY when adding a new subscription provider or API service:
   extension_checklist:
@@ -1464,9 +1499,11 @@ billing_and_routing:
         - file: "frontend/src/components/ModelSelector.jsx"
           what: "Add models to SUBSCRIPTION_MODELS array with new tier value. Update billing toggle to show new provider tab. Update isModelAvailable() and getBillingLabel()."
         - file: "frontend/src/pages/CreateProject.jsx"
-          what: "Update routing logic in handleStartAIDefinition, handleSendChatMessage — add new provider branch."
+          what: "Update tier check in conditional UI (line ~1304) to show checkbox for new tier. The 3 fetch calls are OpenRouter-only now — no routing branches to add."
         - file: "frontend/src/components/Chat.jsx"
-          what: "Update provider detection logic (lines 200-219) — add new provider branch."
+          what: "Update useClaudeCodeTerminal check (line ~24) to detect new provider's models."
+        - file: "frontend/src/components/ClaudeCodeTerminalChat.jsx"
+          what: "If new provider also uses terminal interaction, update enhance banner logic. If not, create a new terminal component."
         - file: "frontend/src/components/WorkspaceTopBar.jsx"
           what: "Update billing warning logic if switching to/from new provider."
         - file: "backend/routers/ai.py"
@@ -1481,6 +1518,8 @@ billing_and_routing:
       files:
         - file: "frontend/src/components/ModelSelector.jsx"
           what: "Add new tier constant. Add models or fetch logic. Update billing toggle."
+        - file: "frontend/src/pages/CreateProject.jsx"
+          what: "If stateless API: add provider branch to the 3 fetch calls. If interactive: add to tier check for checkbox UI."
         - file: "backend/routers/ai.py + chat.py"
           what: "Add provider to get_service()."
         - file: "backend/services/"
@@ -1494,19 +1533,28 @@ billing_and_routing:
       description: "The 'tier' string on model objects ('subscription' | 'openrouter' | 'coming_soon')"
       set_in: "ModelSelector.jsx — SUBSCRIPTION_MODELS has tier:'subscription', parseOpenRouterModels sets tier:'openrouter'"
       read_in: [ModelSelector.jsx, CreateProject.jsx, WorkspaceTopBar.jsx]
-      routing_impact: "tier determines which provider string is sent to backend and which service handles the request"
+      routing_impact: "In CreateProject: tier determines checkbox vs button UI (FEAT-24). In Workspace: tier determines terminal vs API chat routing."
 
     provider_string:
       description: "The 'provider' field in POST request body ('claude_code_ssh' | 'openrouter' | 'claude_direct')"
-      set_in: "Frontend routing logic (CreateProject.jsx, Chat.jsx)"
+      set_in: "CreateProject.jsx (hardcoded 'openrouter' after FEAT-26), Chat.jsx (from serverId/model detection)"
       read_in: "Backend get_service() in ai.py and chat.py"
       must_match: "Exact string match — typo = falls through to openrouter default"
+      note: "CreateProject no longer sends 'claude_code_ssh' — subscription models use terminal path instead"
 
     server_id:
       description: "VPS server ID required for claude_code_ssh provider"
-      set_in: "CreateProject.jsx (from claudeCodeServer.id), Chat.jsx (from serverId prop)"
+      set_in: "Chat.jsx (from serverId prop, derived in Workspace.jsx from project.vps_server_id)"
       read_in: "Backend get_service() → ClaudeCodeSSHService(server_id)"
       failure_mode: "Missing server_id + claude_code_ssh → 400 error"
+      note: "No longer set in CreateProject.jsx (FEAT-26 removed subscription routing from fetch calls)"
+
+    enhance_url_param:
+      description: "?enhance=true URL parameter passed from CreateProject to Workspace"
+      set_in: "App.jsx handleProjectCreated (FEAT-24) — appended when options.enhance is true"
+      read_in: "App.jsx (captured to enhanceMode state, cleared from URL on mount)"
+      threaded_to: "App → Workspace → Chat → ClaudeCodeTerminalChat (enhanceWithAI prop)"
+      one_shot: "URL param cleared after first render via setSearchParams. State survives."
 
     api_keys_object:
       description: "{ openrouter: bool, anthropic: bool } passed to ModelSelector"
@@ -1520,7 +1568,11 @@ billing_and_routing:
     - section: "frontend_components > WorkspaceTopBar.jsx"
       for: "Claude Code status detection, billing warning modal"
     - section: "frontend_pages > CreateProject.jsx"
-      for: "claudeCodeServer detection, routing in fetch calls"
+      for: "Conditional UI (checkbox vs button), enhanceWithAI state, OpenRouter-only fetch calls"
+    - section: "frontend_components > ClaudeCodeTerminalChat.jsx"
+      for: "Enhance banner, copyBriefToClipboard handler, showEnhanceBanner state"
+    - section: "frontend_pages > App.jsx"
+      for: "enhanceMode state, URL param capture/clear, handleProjectCreated options"
     - section: "backend_routers > ai.py"
       for: "get_service() dispatch, expand-brief streaming collection"
     - section: "backend_routers > chat.py"
@@ -1532,7 +1584,7 @@ billing_and_routing:
     - section: "data_flow > localStorage_keys > openrouter_key"
       for: "API key availability check"
 
-  last_verified_session: 101
+  last_verified_session: 104
   added_by: "Director (FEAT-22/FEAT-23 review)"
 
 # ============================================================================
