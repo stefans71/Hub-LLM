@@ -75,7 +75,7 @@ function StepIndicator({ steps, currentStep }) {
 }
 
 // Path selection card
-function PathCard({ icon: Icon, title, description, selected, onClick }) {
+function PathCard({ icon: Icon, iconSize = 24, title, description, selected, onClick }) {
   return (
     <div
       onClick={onClick}
@@ -113,8 +113,8 @@ function PathCard({ icon: Icon, title, description, selected, onClick }) {
           transition: 'all 0.2s ease'
         }}>
           {typeof Icon === 'string'
-            ? <img src={Icon} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-            : <Icon size={24} style={{ color: selected ? '#fff' : cssVars.textSecondary }} />
+            ? <img src={Icon} alt="" style={{ width: iconSize, height: iconSize, objectFit: 'contain' }} />
+            : <Icon size={iconSize} style={{ color: selected ? '#fff' : cssVars.textSecondary }} />
           }
         </div>
         <div>
@@ -172,6 +172,7 @@ function ChoosePathStep({ path, setPath, onNext }) {
         />
         <PathCard
           icon={claudeCodeLogo}
+          iconSize={48}
           title="Anthropic Pro Subscription"
           description="Connect to a VPS with Claude Code installed. Use your Anthropic Pro subscription for unlimited Claude access."
           selected={path === 'anthropic'}

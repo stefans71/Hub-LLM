@@ -26,6 +26,30 @@
   },
   "queue": [
     {
+      "id": "UI-08",
+      "name": "Claude Code logo 2x bigger on setup wizard PathCard",
+      "size": "XS",
+      "priority": 1,
+      "description": "The Claude Code logo on the setup wizard ChoosePathStep is too small at 24x24. Make it 2x bigger (48x48) to fill the container. OpenRouter logo stays at 24x24.\n\nThe PathCard component (Setup.jsx line 78) currently uses a fixed 24x24 size for the img tag. Need to add an iconSize prop so each card can specify its own size.",
+      "change": [
+        "frontend/src/pages/Setup.jsx line 78: Add `iconSize = 24` to PathCard props: `function PathCard({ icon: Icon, iconSize = 24, title, description, selected, onClick })`",
+        "frontend/src/pages/Setup.jsx line 116: Change hardcoded 24 to use the prop: `style={{ width: iconSize, height: iconSize, objectFit: 'contain' }}`",
+        "frontend/src/pages/Setup.jsx line 174 (Claude Code PathCard): Add `iconSize={48}`",
+        "frontend/src/pages/Setup.jsx line 167 (OpenRouter PathCard): No change needed — defaults to 24"
+      ],
+      "test": "Step-by-step: (1) Load /setup page. (2) Claude Code logo should be visibly larger than OpenRouter logo. (3) Both should still be centered in their 48x48 container. (4) Selected state styling still works on both cards.",
+      "investigation_id": null,
+      "status": "pending_review",
+      "completion_note": "Added iconSize prop to PathCard (default 24). Claude Code card uses iconSize={48} to fill the 48x48 container. OpenRouter stays at default 24. Both img and lucide Icon branches use the prop. Changes: Setup.jsx line 78 (prop), line 116-117 (render), line 175 (iconSize={48}). CODEBASE_INDEX updated. Auth required for visual test — noted: auth verified separately.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
       "id": "INFRA-03",
       "name": "Idle Connection Timeout",
       "size": "S",

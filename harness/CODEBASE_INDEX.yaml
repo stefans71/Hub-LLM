@@ -120,7 +120,7 @@ frontend_pages:
       - {name: completing, type: useState, drives: "completion spinner"}
     sub_components: [ChoosePathStep, OpenRouterStep, AnthropicStep]
     icon_usage:
-      - {component: PathCard, line: 78, renders: "lucide icon OR img tag (objectFit:contain) based on typeof icon prop"}
+      - {component: PathCard, line: 78, renders: "lucide icon OR img tag (objectFit:contain) based on typeof icon prop, iconSize prop (default 24)"}
       - {component: ChoosePathStep, line: 163, icon: "openrouter-logo.svg (was lucide Key)"}
       - {component: ChoosePathStep, line: 170, icon: "claude-code-logo.svg (was lucide Sparkles)"}
       - {component: AnthropicStep, line: 809, icon: "Sparkles (lucide) — Claude Code detection indicator"}

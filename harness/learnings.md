@@ -9,6 +9,7 @@ Track discoveries, patterns, and friction points for harness improvement.
 **What**:
 - BUG-33: Created backend/migrations/003_add_projects_columns.py. Adds 10 missing columns to projects table in Postgres production. Idempotent via SQLAlchemy inspect. Populates slug from name. Skips on SQLite.
 - UI-07 re-fix: SVG logos weren't rendering because (1) XML declaration + DOCTYPE in SVGs may cause issues with Vite/browser <img> rendering, (2) OpenRouter SVG was a full wordmark (833x128 = 6.5:1 ratio) invisible at 24x24. Fixed: cleaned XML declarations, cropped OpenRouter to icon-mark-only (152x128), added objectFit:'contain'.
+- UI-08: Added iconSize prop to PathCard (default 24). Claude Code card uses iconSize={48} to fill the 48x48 container.
 **Key Learning**: SVGs used as <img src> in Vite should be clean (no XML declaration/DOCTYPE) and appropriately sized/cropped for their render context. Wide wordmark SVGs become invisible in square icon containers — use the icon mark portion only.
 
 ---
