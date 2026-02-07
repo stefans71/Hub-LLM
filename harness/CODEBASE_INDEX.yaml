@@ -94,8 +94,8 @@ frontend_pages:
 
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
-    lines: 2386
-    purpose: "5-step project creation wizard with AI-assisted brief expansion, dynamic model selector, OpenRouter-only for AI definition"
+    lines: 2387
+    purpose: "5-step project creation wizard with AI-assisted brief expansion, dynamic model selector, OpenRouter-only for AI definition. isSubscriptionModel derived from SUBSCRIPTION_MODELS array."
     props: "{onCancel, onCreateProject}"
     imports: [ModelSelector]
     key_state:
@@ -105,6 +105,7 @@ frontend_pages:
       - {name: selectedModelMeta, type: "useState(null)", drives: "full model object from ModelSelector (includes tier for routing)"}
       - {name: claudeCodeServer, type: useMemo, drives: "first VPS with Claude Code detected from savedVpsServers"}
       - {name: hasClaudeCode, type: derived, drives: "boolean — whether any VPS has Claude Code"}
+      - {name: isSubscriptionModel, type: derived, drives: "boolean — true if selectedModel is in SUBSCRIPTION_MODELS or selectedModelMeta.tier is subscription"}
       - {name: selectedAgents, type: "useState([])", drives: "agent selection"}
       - {name: selectedMCPServers, type: "useState([])", drives: "MCP server selection"}
       - {name: enhanceWithAI, type: "useState(false)", drives: "checkbox for AI enhancement after creation (subscription models only)"}
@@ -395,7 +396,7 @@ frontend_components:
     lines: 805
     purpose: "Reusable model selector dropdown — fetches OpenRouter models, billing mode toggle, search/filter, version-descending sort"
     props: "{value, onChange, apiKeys, claudeCodeStatus, isConnected, showSubscriptionModels, compact, className, style}"
-    exports: "default ModelSelector, getProviderName, getProviderColor, getModelDisplay"
+    exports: "default ModelSelector, SUBSCRIPTION_MODELS, getProviderName, getProviderColor, getModelDisplay"
     key_state:
       - {name: dropdownOpen, type: useState, drives: "dropdown open/close"}
       - {name: searchFilter, type: useState, drives: "model search filtering"}

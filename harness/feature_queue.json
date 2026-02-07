@@ -30,7 +30,7 @@
       "name": "Fix selectedModelMeta null on mount + default model ID mismatch in CreateProject",
       "size": "S",
       "priority": 1,
-      "status": "pending",
+      "status": "pending_review",
       "description": "CreateProject's conditional UI (FEAT-24) is broken on mount. selectedModelMeta initializes to null (line 418) and ModelSelector's onChange only fires on user click, not on mount. So selectedModelMeta?.tier === 'subscription' at line 1298 is always false on initial render — shows 'Define Project with AI' button instead of checkbox, even when a subscription model is the default.\n\nAdditionally, the default model ID 'anthropic/claude-sonnet-4' (line 417) doesn't match any SUBSCRIPTION_MODELS ID. Those use 'claude-sonnet-4.5' format without the 'anthropic/' prefix. This also causes the trigger badge to show 'PAID' instead of 'PRO' because modelList.find() at ModelSelector line 371 can't find the model.\n\nFix: Export SUBSCRIPTION_MODELS from ModelSelector, import in CreateProject, derive isSubscriptionModel from the array (works without onChange click), fix default model ID to match SUBSCRIPTION_MODELS format.\n\nRef: Screenshot from production shows 'PAID' badge + 'Define Project with AI' button visible for Anthropic Claude Sonnet 4 with Claude Code Ready in dropdown.",
       "change": [
         "frontend/src/components/ModelSelector.jsx line 36: Change 'const SUBSCRIPTION_MODELS' to 'export const SUBSCRIPTION_MODELS' — add export keyword so CreateProject can import it",
@@ -42,13 +42,13 @@
       ],
       "test": "Step-by-step: (1) Load /create-project WITHOUT clicking the model selector at all. (2) With a VPS configured (vps_servers in localStorage with claudeCodeDetected:true and lastTestSuccess:true): trigger button should show 'PRO' green badge (NOT 'PAID' amber), and checkbox 'Enhance project with AI after creation' should be visible (NOT the 'Define Project with AI' button). (3) Click dropdown, select an OpenRouter model → 'Define Project with AI' button reappears, badge shows 'PAID'. (4) Click dropdown, select a subscription model back → checkbox reappears, 'PRO' badge. (5) npm run build — 0 errors. Paste the trigger badge JSX and the isSubscriptionModel derivation in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed ModelSelector.jsx line 36: added export to SUBSCRIPTION_MODELS. Changed CreateProject.jsx (2386→2387 lines): (1) Line 5: import ModelSelector, { SUBSCRIPTION_MODELS } from '../components/ModelSelector'. (2) Line 417: default model 'anthropic/claude-sonnet-4' → 'claude-sonnet-4.5'. (3) Line 446: const isSubscriptionModel = SUBSCRIPTION_MODELS.some(m => m.id === selectedModel) || selectedModelMeta?.tier === 'subscription'. (4) Line 1299: conditional render uses isSubscriptionModel. (5) Line 1141: onCreateProject call uses isSubscriptionModel. Trigger badge now shows 'PRO' for subscription models on mount without user clicking dropdown. Build: vite build 0 errors.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

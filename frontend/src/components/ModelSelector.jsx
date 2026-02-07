@@ -33,7 +33,7 @@ const PROVIDER_COLORS = {
 }
 
 // Anthropic models that route through Claude Code on VPS (subscription tier)
-const SUBSCRIPTION_MODELS = [
+export const SUBSCRIPTION_MODELS = [
   { id: 'claude-opus-4.5', name: 'Claude Opus 4.5', provider: 'anthropic', tier: 'subscription', recommended: true },
   { id: 'claude-sonnet-4.5', name: 'Claude Sonnet 4.5', provider: 'anthropic', tier: 'subscription' },
   { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'anthropic', tier: 'subscription' },

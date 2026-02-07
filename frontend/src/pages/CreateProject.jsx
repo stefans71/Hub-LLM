@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useVoice } from '../components/VoiceInput'
 import StatusLinePreview from '../components/StatusLinePreview'
-import ModelSelector from '../components/ModelSelector'
+import ModelSelector, { SUBSCRIPTION_MODELS } from '../components/ModelSelector'
 import {
   ChevronRight, ChevronDown, Upload, Mic, MicOff, Send, X, Plus,
   Cloud, Server, Check, Sparkles, Zap, ExternalLink, Loader,
@@ -414,7 +414,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [createRepoError, setCreateRepoError] = useState('')
 
   // AI model selector state
-  const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
+  const [selectedModel, setSelectedModel] = useState('claude-sonnet-4.5')
   const [selectedModelMeta, setSelectedModelMeta] = useState(null) // full model object from ModelSelector onChange
 
   // UI state
@@ -443,6 +443,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
     [savedVpsServers]
   )
   const hasClaudeCode = !!claudeCodeServer
+  const isSubscriptionModel = SUBSCRIPTION_MODELS.some(m => m.id === selectedModel) || selectedModelMeta?.tier === 'subscription'
 
   // Load saved VPS servers from localStorage (Settings > VPS Connections)
   useEffect(() => {
@@ -1138,7 +1139,7 @@ In the meantime, I can help you think through your project. What would you like 
           }
         }
 
-        onCreateProject?.(project, { enhance: enhanceWithAI && selectedModelMeta?.tier === 'subscription' })
+        onCreateProject?.(project, { enhance: enhanceWithAI && isSubscriptionModel })
       } else {
         const error = await res.json()
         setCreateProjectError(error.detail || 'Failed to create project')
@@ -1295,7 +1296,7 @@ Examples:
                   showSubscriptionModels={true}
                   compact={true}
                 />
-                {selectedModelMeta?.tier === 'subscription' ? (
+                {isSubscriptionModel ? (
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-secondary)' }}>
                     <input
                       type="checkbox"

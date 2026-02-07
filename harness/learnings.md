@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 110 - 2026-02-07 EST
+**Task**: BUG-41
+**What**: Fixed selectedModelMeta null on mount causing checkbox to never show. Default model 'anthropic/claude-sonnet-4' didn't match SUBSCRIPTION_MODELS IDs ('claude-sonnet-4.5' format). Added export to SUBSCRIPTION_MODELS, imported in CreateProject, derived isSubscriptionModel from the array (works without onChange click). Changed default model to 'claude-sonnet-4.5'. Build: 0 errors (2387 lines).
+**Key Learning**: When conditional rendering depends on a value set only by user interaction (onChange), it will be wrong on mount. Derive from static data (SUBSCRIPTION_MODELS array) as primary check, with onChange-driven state as fallback — isSubscriptionModel = SUBSCRIPTION_MODELS.some(m => m.id === selectedModel) || selectedModelMeta?.tier === 'subscription'.
+
+---
+
 ### Session 109 - 2026-02-07 EST
 **Task**: FEAT-26
 **What**: Cleaned up dead subscription code paths in CreateProject.jsx's 3 AI handler functions. Removed isSubscription/isSub/isSub2 ternaries, hardcoded provider:'openrouter', removed server_id conditional spread. These paths became dead code after FEAT-24 replaced the 'Define Project with AI' button with a checkbox for subscription models. CreateProject.jsx 2392→2386 lines. Build: 0 errors.
