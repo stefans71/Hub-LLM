@@ -26,34 +26,6 @@
   },
   "queue": [
     {
-      "id": "UI-14",
-      "name": "Landing page polish — model icon, Sign Up color, Send button, footer line break",
-      "size": "XS",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "Four small visual tweaks to the landing page.\n\n1. Model selector icon 'C' circle — too big and orange. Make 50% smaller and white.\n   - LandingPage.jsx line 19-20: DEMO_MODELS Anthropic entries have color: '#d97706' → change to 'transparent' (or 'rgba(255,255,255,0.15)' for subtle bg)\n   - LandingPage.css line 269-280: .model-icon is 26x26px → change to 13x13px, font-size 0.7rem → 0.35rem\n   - The icon text color is already #fff (white) which is correct\n\n2. 'Sign Up' nav button — orange text, should be white.\n   - LandingPage.css line 168: .nav-item.cta color: #f97316 → #fff (or rgba(255,255,255,0.9))\n   - LandingPage.css line 174: .nav-item.cta:hover color: #fb923c → rgba(255,255,255,1)\n   - LandingPage.css line 178: .nav-item.cta::after background: #f97316 → #fff\n\n3. 'Send' button — orange, should match the cyan auth button (UI-12 changed auth-submit-btn to cyan).\n   - LandingPage.css line 1035: .chat-send-btn background: linear-gradient(135deg, #f97316...) → linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)\n   - LandingPage.css line 1046: .chat-send-btn:hover box-shadow: rgba(249,115,22,0.3) → rgba(14,165,233,0.3)\n\n4. Footer — 'HubLLM.dev © 2026' should be on its own third line.\n   - LandingPage.jsx line 942: Add another <br /> so it reads: 'Code with any LLM.<br />Deploy anywhere.<br />HubLLM.dev &copy; {year}'",
-      "change": [
-        "frontend/src/pages/LandingPage.jsx line 19-20: Change Anthropic DEMO_MODELS color from '#d97706' to 'transparent'",
-        "frontend/src/pages/LandingPage.css line 269-280: Change .model-icon width/height from 26px to 13px, font-size from 0.7rem to 0.35rem",
-        "frontend/src/pages/LandingPage.css line 168: Change .nav-item.cta color from #f97316 to #fff",
-        "frontend/src/pages/LandingPage.css line 174: Change .nav-item.cta:hover color from #fb923c to rgba(255,255,255,1)",
-        "frontend/src/pages/LandingPage.css line 178: Change .nav-item.cta::after background from #f97316 to #fff",
-        "frontend/src/pages/LandingPage.css line 1035: Change .chat-send-btn background gradient from orange (#f97316/#ea580c) to cyan (#0ea5e9/#0284c7)",
-        "frontend/src/pages/LandingPage.css line 1046: Change .chat-send-btn:hover box-shadow from orange rgba to cyan rgba(14,165,233,0.3)",
-        "frontend/src/pages/LandingPage.jsx line 942: Add <br /> before 'HubLLM.dev' to make it a third line"
-      ],
-      "test": "Step-by-step: (1) Load localhost:5173. (2) Model selector icon — verify 'C' is small (13px) and NOT orange (transparent/subtle bg, white text). (3) 'Sign Up' nav text — verify it's white, not orange. (4) 'Send' button — verify it's cyan/blue, not orange. (5) Scroll to footer — verify 3 centered lines: 'Code with any LLM.' / 'Deploy anywhere.' / 'HubLLM.dev © 2026'. (6) Describe what you see in completion_note.",
-      "investigation_id": null,
-      "completion_note": "Changed LandingPage.jsx: Anthropic DEMO_MODELS color '#d97706'→'transparent' (lines 19-20), footer adds <br/> before HubLLM.dev for 3 lines (line 942). Changed LandingPage.css: .model-icon 26→13px, font 0.7→0.35rem, border-radius 6→3px (line 269). .nav-item.cta color #f97316→#fff, hover #fb923c→rgba(255,255,255,1), ::after #f97316→#fff (lines 168-178). .chat-send-btn orange gradient→cyan (#0ea5e9/#0284c7), hover shadow orange→cyan (lines 1035-1046). Build: vite build 0 errors. Auth required for visual test — noted: auth verified separately.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -65,6 +37,17 @@
     }
   ],
   "completed": [
+    {
+      "id": "UI-14",
+      "name": "Landing page polish — model icon, Sign Up color, Send button, footer line break",
+      "completed": "2026-02-07",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified diff (bdba77d): All 8 changes match spec. JSX: Anthropic color transparent, footer 3rd line <br/>. CSS: model-icon 26→13px + font 0.7→0.35rem + border-radius 6→3px, nav-item.cta all 3 rules orange→white, chat-send-btn gradient+hover orange→cyan. Commit bdba77d.",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "Changed LandingPage.jsx: Anthropic DEMO_MODELS color transparent, footer 3 lines. Changed LandingPage.css: model-icon 13px, nav-item.cta white, chat-send-btn cyan. Build: 0 errors."
+    },
     {
       "id": "UI-13",
       "name": "Footer text smaller + reorder to two centered lines",
