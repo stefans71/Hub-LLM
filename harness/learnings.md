@@ -4,6 +4,12 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 97 - 2026-02-07 EST
+**Task**: FEAT-13
+**What**: Wired LandingPage into App.jsx routing for unauthenticated visitors. Added `useNavigate` to AppRouter, replaced single `<AuthPage />` return with `<Routes>` block: `/` shows LandingPage, `/auth` shows AuthPage, `*` redirects to `/`. onSignUp callback navigates to `/auth`. 3 lines changed in App.jsx. Build passes 0 errors.
+
+---
+
 ### Session 96 - 2026-02-07 EST
 **Task**: FEAT-12
 **What**: Converted 2058-line HTML landing page prototype (hubllm-demo-v7_3.html) into React. Created LandingPage.jsx (~370 lines) with 10+ useState hooks, useEffect for particles/traveling light animations with proper cleanup, model selector with search/filter, fake chat with typing indicator, VS Code-style file explorer, terminal with command handling, VPS cards with cable animations, about/pricing info panels. Created LandingPage.css (~950 lines) with all selectors scoped under `.landing-page`, 6 @keyframes prefixed `lp-` to avoid conflicts, mobile responsive media query. Key patterns: renamed `.hidden` to `.lp-hidden` (Tailwind conflict), used `useCallback` for all handlers, `requestAnimationFrame` with `cancelAnimationFrame` cleanup for traveling light, particle DOM elements cleaned up on unmount. All 4 CTA buttons wired to `onSignUp` prop. Build passes with 0 errors.

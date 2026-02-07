@@ -11,6 +11,7 @@ import CreateProject from './pages/CreateProject'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import Setup from './pages/Setup'
+import LandingPage from './pages/LandingPage'
 import { Loader2 } from 'lucide-react'
 
 // Main App content (requires auth)
@@ -285,6 +286,7 @@ function AppContent() {
 function AppRouter() {
   const { isAuthenticated, loading } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
 
   // Check for OAuth callback
   const isAuthCallback = location.pathname === '/auth/callback' ||
@@ -309,9 +311,15 @@ function AppRouter() {
     )
   }
 
-  // Show auth page if not authenticated
+  // Show landing page or auth page if not authenticated
   if (!isAuthenticated) {
-    return <AuthPage />
+    return (
+      <Routes>
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/" element={<LandingPage onSignUp={() => navigate('/auth')} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    )
   }
 
   // Show main app

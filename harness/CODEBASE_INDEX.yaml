@@ -39,8 +39,8 @@ frontend_entry:
 
   App.jsx:
     path: frontend/src/App.jsx
-    lines: 323
-    purpose: "Root app — routing, auth redirect, project state, setup flow control"
+    lines: 340
+    purpose: "Root app — routing, auth redirect, project state, setup flow control. Unauthenticated visitors see LandingPage at / with CTA to /auth"
     key_state:
       - {name: projects, type: "useState([])", drives: "project list across app"}
       - {name: activeProject, type: "useState(null)", drives: "currently selected project"}
@@ -53,7 +53,7 @@ frontend_entry:
       - {key: openrouter_key, direction: both}
       - {key: claude_key, direction: both}
       - {key: github_token, direction: both}
-    children: [AuthProvider, HeaderNavigation, DashboardSidebar, Workspace, Dashboard, Settings, Setup, CreateProject, AuthPage, AuthCallback, SettingsModal]
+    children: [AuthProvider, HeaderNavigation, DashboardSidebar, Workspace, Dashboard, Settings, Setup, CreateProject, AuthPage, AuthCallback, SettingsModal, LandingPage]
     routes:
       - {path: "/", redirect: "/dashboard"}
       - {path: "/auth", component: AuthPage}
@@ -63,7 +63,11 @@ frontend_entry:
       - {path: "/workspace", component: Workspace}
       - {path: "/settings", component: Settings}
       - {path: "/create-project", component: CreateProject}
-    last_verified_session: 86
+    unauthenticated_routes:
+      - {path: "/", component: LandingPage, note: "onSignUp navigates to /auth"}
+      - {path: "/auth", component: AuthPage}
+      - {path: "*", redirect: "/"}
+    last_verified_session: 97
 
 # ============================================================================
 # FRONTEND — Pages (frontend/src/pages/)
@@ -216,8 +220,8 @@ frontend_pages:
     api_calls: []
     localStorage_keys: []
     children: []
-    imported_by: []
-    last_verified_session: 95
+    imported_by: [App.jsx]
+    last_verified_session: 97
 
   LandingPage.css:
     path: frontend/src/pages/LandingPage.css
