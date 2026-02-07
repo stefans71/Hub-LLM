@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react'
 import claudeCodeLogo from '../assets/claude-code-logo.svg'
+import StatusLinePreview from '../components/StatusLinePreview'
 import openrouterLogo from '../assets/openrouter-logo.svg'
 
 // CSS Variables matching the project style
@@ -624,6 +625,9 @@ function AnthropicStep({ onBack, onComplete }) {
   const [claudeCodeDetected, setClaudeCodeDetected] = useState(false)
   const [serverInfo, setServerInfo] = useState(null)
   const [showSSHHelp, setShowSSHHelp] = useState(false)
+  const [installStatusLine, setInstallStatusLine] = useState(true)
+  const [installingStatusLine, setInstallingStatusLine] = useState(false)
+  const [savedServerId, setSavedServerId] = useState(null)
 
   const connectVPS = async () => {
     if (!host || !username) {
@@ -695,6 +699,7 @@ function AnthropicStep({ onBack, onComplete }) {
 
       servers.push(newServer)
       localStorage.setItem('vps_servers', JSON.stringify(servers))
+      setSavedServerId(newServerId)
 
       // Use claude_code_detected from the test connection response
       setClaudeCodeDetected(data.claude_code_detected || false)
@@ -710,8 +715,25 @@ function AnthropicStep({ onBack, onComplete }) {
   }
 
   const saveVPSConfig = async () => {
-    // VPS is already saved to localStorage in connectVPS()
-    // Just complete the setup
+    // Install status line hook if requested and Claude Code was detected
+    if (installStatusLine && claudeCodeDetected && savedServerId) {
+      setInstallingStatusLine(true)
+      try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 15000)
+        await fetch(`/api/ssh/servers/${savedServerId}/status-line`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'install' }),
+          signal: controller.signal
+        })
+        clearTimeout(timeout)
+      } catch (err) {
+        console.warn('Status line install failed (non-blocking):', err.message)
+      } finally {
+        setInstallingStatusLine(false)
+      }
+    }
     onComplete()
   }
 
@@ -984,11 +1006,43 @@ function AnthropicStep({ onBack, onComplete }) {
               marginBottom: '16px'
             }}>
               {claudeCodeDetected ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Sparkles size={20} style={{ color: cssVars.success }} />
-                  <span style={{ fontSize: '14px', color: cssVars.success }}>
-                    Claude Code detected and ready!
-                  </span>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <Sparkles size={20} style={{ color: cssVars.success }} />
+                    <span style={{ fontSize: '14px', color: cssVars.success }}>
+                      Claude Code detected and ready!
+                    </span>
+                  </div>
+
+                  {/* Status line install option */}
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    color: cssVars.textPrimary,
+                    marginBottom: '10px'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={installStatusLine}
+                      onChange={(e) => setInstallStatusLine(e.target.checked)}
+                      style={{ accentColor: cssVars.primary, width: '16px', height: '16px' }}
+                    />
+                    Install enhanced status line
+                  </label>
+
+                  {installStatusLine && (
+                    <StatusLinePreview
+                      serverName={serverInfo?.hostname || host || 'VPS'}
+                      folderName="my-project"
+                      branch="main"
+                      model="Opus"
+                      tokensUsed="128k"
+                      tokensTotal="200k"
+                    />
+                  )}
                 </div>
               ) : (
                 <div>
@@ -1086,6 +1140,7 @@ function AnthropicStep({ onBack, onComplete }) {
           ) : (
             <button
               onClick={saveVPSConfig}
+              disabled={installingStatusLine}
               style={{
                 flex: 1,
                 display: 'flex',
@@ -1093,18 +1148,27 @@ function AnthropicStep({ onBack, onComplete }) {
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '12px 20px',
-                background: cssVars.success,
+                background: installingStatusLine ? cssVars.bgTertiary : cssVars.success,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontWeight: 600,
-                cursor: 'pointer',
+                cursor: installingStatusLine ? 'wait' : 'pointer',
                 transition: 'all 0.2s ease'
               }}
             >
-              Complete Setup
-              <CheckCircle size={16} />
+              {installingStatusLine ? (
+                <>
+                  <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  Installing status line...
+                </>
+              ) : (
+                <>
+                  Complete Setup
+                  <CheckCircle size={16} />
+                </>
+              )}
             </button>
           )}
         </div>

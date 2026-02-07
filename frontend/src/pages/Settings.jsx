@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import AnthropicSubscription from '../components/AnthropicSubscription'
+import StatusLinePreview from '../components/StatusLinePreview'
 import {
   LayoutDashboard,
   Lock,
@@ -4122,6 +4123,71 @@ function VPSModal({ show, onClose, onSave, editServer }) {
   )
 }
 
+// Status Line Install/Uninstall Button per VPS
+function StatusLineInstallButton({ serverId }) {
+  const [status, setStatus] = useState('idle') // idle, installing, installed, uninstalling, error
+
+  const handleAction = async (action) => {
+    setStatus(action === 'install' ? 'installing' : 'uninstalling')
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+      const res = await fetch(`/api/ssh/servers/${serverId}/status-line`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+        signal: controller.signal
+      })
+      clearTimeout(timeout)
+      if (res.ok) {
+        setStatus(action === 'install' ? 'installed' : 'idle')
+      } else {
+        setStatus('error')
+        setTimeout(() => setStatus('idle'), 3000)
+      }
+    } catch {
+      setStatus('error')
+      setTimeout(() => setStatus('idle'), 3000)
+    }
+  }
+
+  if (status === 'installing' || status === 'uninstalling') {
+    return <span style={{ fontSize: '12px', color: cssVars.textMuted }}>{status === 'installing' ? 'Installing...' : 'Removing...'}</span>
+  }
+  if (status === 'installed') {
+    return (
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <span style={{ fontSize: '12px', color: cssVars.success }}>✓ Installed</span>
+        <button
+          onClick={() => handleAction('uninstall')}
+          style={{ fontSize: '11px', background: 'none', border: 'none', color: cssVars.textMuted, cursor: 'pointer', textDecoration: 'underline' }}
+        >
+          Remove
+        </button>
+      </div>
+    )
+  }
+  if (status === 'error') {
+    return <span style={{ fontSize: '12px', color: cssVars.error }}>Failed</span>
+  }
+  return (
+    <button
+      onClick={() => handleAction('install')}
+      style={{
+        padding: '4px 10px',
+        fontSize: '12px',
+        background: cssVars.primary,
+        color: '#fff',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer'
+      }}
+    >
+      Install
+    </button>
+  )
+}
+
 // VPS Connections Settings Section
 function VPSConnectionsSettings() {
   const [servers, setServers] = useState([])
@@ -4502,6 +4568,38 @@ function VPSConnectionsSettings() {
           ))
         )}
       </div>
+
+      {/* Status Line Hook Section */}
+      {servers.some(s => s.claudeCodeDetected) && (
+        <div style={{
+          marginTop: '16px',
+          padding: '20px',
+          background: cssVars.bgTertiary,
+          borderRadius: '12px'
+        }}>
+          <div style={{ fontWeight: '500', marginBottom: '8px' }}>Enhanced Status Line</div>
+          <div style={{ fontSize: '12px', color: cssVars.textMuted, marginBottom: '12px' }}>
+            Install a custom status line for Claude Code showing location, git branch, model, and token usage.
+          </div>
+          <StatusLinePreview />
+          <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {servers.filter(s => s.claudeCodeDetected).map(server => (
+              <div key={server.id} style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                background: cssVars.bgSecondary,
+                borderRadius: '6px',
+                fontSize: '13px'
+              }}>
+                <span style={{ color: cssVars.textPrimary }}>{server.name}</span>
+                <StatusLineInstallButton serverId={server.id} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Info Box */}
       <div style={{

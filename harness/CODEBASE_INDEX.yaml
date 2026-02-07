@@ -111,7 +111,7 @@ frontend_pages:
 
   Setup.jsx:
     path: frontend/src/pages/Setup.jsx
-    lines: 1250
+    lines: 1314
     purpose: "Post-signup wizard — choose OpenRouter API key OR VPS+Anthropic Pro path"
     props: "{onComplete}"
     key_state:
@@ -140,7 +140,7 @@ frontend_pages:
 
   Settings.jsx:
     path: frontend/src/pages/Settings.jsx
-    lines: 4791
+    lines: 4889
     purpose: "Comprehensive settings — profile, API keys, models, VPS (with idle timeout toggle), agents, skills, MCP, appearance"
     props: "{onBack, onLogout}"
     sub_components:
@@ -493,6 +493,14 @@ frontend_components:
       - {key: vps_servers, direction: read}
     last_verified_session: 94
 
+  StatusLinePreview.jsx:
+    path: frontend/src/components/StatusLinePreview.jsx
+    lines: 89
+    purpose: "Reusable HTML/CSS mock of Claude Code terminal status line — shows location, folder, git, model, tokens, context bar, LIVE"
+    props: "{serverName, folderName, branch, model, tokensUsed, tokensTotal} (all with defaults)"
+    used_by: [Setup.jsx, Settings.jsx, CreateProject.jsx]
+    last_verified_session: 94
+
   SettingsModal.jsx:
     path: frontend/src/components/SettingsModal.jsx
     lines: 169
@@ -620,9 +628,9 @@ backend_routers:
 
   ssh.py:
     path: backend/routers/ssh.py
-    lines: 622
+    lines: 713
     prefix: "/api/ssh"
-    purpose: "SSH server management, Claude Code detection, legacy terminal WebSocket, SFTP file ops"
+    purpose: "SSH server management, Claude Code detection, status line hook install, legacy terminal WebSocket, SFTP file ops"
     endpoints:
       - {method: GET, path: "/servers", purpose: "list all servers"}
       - {method: POST, path: "/servers", purpose: "add new server"}
@@ -630,6 +638,7 @@ backend_routers:
       - {method: POST, path: "/servers/{id}/connect", purpose: "establish SSH connection"}
       - {method: POST, path: "/servers/{id}/disconnect", purpose: "disconnect from server"}
       - {method: GET, path: "/servers/{id}/claude-code", purpose: "detect Claude Code installation"}
+      - {method: POST, path: "/servers/{id}/status-line", purpose: "install/uninstall status line hook via SSH+SFTP"}
       - {method: POST, path: "/test", purpose: "test SSH connection (no store), also runs 'which claude' and returns claude_code_detected"}
       - {method: WS, path: "/servers/{id}/terminal", purpose: "WebSocket terminal (legacy)"}
       - {method: GET, path: "/servers/{id}/files", purpose: "list files via SFTP"}
@@ -640,7 +649,7 @@ backend_routers:
       - {method: POST, path: "/servers/{id}/files/rename", purpose: "rename/move file"}
     called_by_frontend: [Workspace.jsx, WorkspaceFileExplorer.jsx, DashboardSidebar.jsx, WorkspaceTopBar.jsx, Setup.jsx, CreateProject.jsx, Settings.jsx]
     db_tables: [vps_servers]
-    last_verified_session: 86
+    last_verified_session: 94
 
   terminal.py:
     path: backend/routers/terminal.py
@@ -879,6 +888,19 @@ backend_services:
     purpose: "GitHub API service — user info, Codespaces CRUD, repos, OAuth"
     class: GitHubService
     last_verified_session: 86
+
+# ============================================================================
+# BACKEND — Templates (backend/templates/)
+# ============================================================================
+backend_templates:
+  status_line_hook.py:
+    path: backend/templates/status_line_hook.py
+    lines: 176
+    purpose: "Generalized Claude Code status line hook — reads stdin JSON from Claude Code, outputs ANSI-colored status line"
+    features: [hostname_auto_detect, git_branch_dirty_ahead_behind, model_parsing, token_bar, live_pulse]
+    installed_to: "~/.claude/hooks/status_line.py on VPS via POST /api/ssh/servers/{id}/status-line"
+    no_dependencies: true
+    last_verified_session: 94
 
 # ============================================================================
 # BACKEND — Main (backend/main.py)

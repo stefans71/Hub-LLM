@@ -623,3 +623,90 @@ async def rename_file(server_id: str, old_path: str, new_path: str):
         return {"status": "renamed", "old_path": old_path, "new_path": new_path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# === Status Line Hook ===
+
+class StatusLineRequest(BaseModel):
+    action: str = "install"  # "install" or "uninstall"
+
+@router.post("/servers/{server_id}/status-line")
+async def manage_status_line(server_id: str, request: StatusLineRequest):
+    """Install or uninstall the Claude Code status line hook on a VPS."""
+    from pathlib import Path
+
+    if server_id not in servers_cache:
+        # Try to load from DB
+        async with async_session() as session:
+            result = await session.execute(
+                select(VPSServerModel).where(VPSServerModel.id == server_id)
+            )
+            server = result.scalar_one_or_none()
+            if server:
+                await load_server_to_cache(server)
+
+    from services.ssh import get_connection
+    try:
+        conn = await get_connection(server_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Cannot connect: {str(e)}")
+
+    hook_path = "/root/.claude/hooks/status_line.py"
+    settings_path = "/root/.claude/settings.json"
+
+    if request.action == "uninstall":
+        try:
+            stdout, stderr, exit_code = await conn.run_command(f"rm -f {hook_path}")
+            # Remove statusLine from settings.json if present
+            try:
+                cat_out, _, cat_exit = await conn.run_command(f"cat {settings_path}")
+                if cat_exit == 0 and cat_out.strip():
+                    settings = json.loads(cat_out)
+                    if "statusLine" in settings:
+                        del settings["statusLine"]
+                        settings_json = json.dumps(settings, indent=2)
+                        await conn.write_file(settings_path, settings_json)
+            except Exception:
+                pass
+            return {"status": "uninstalled", "message": "Status line hook removed"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # Install
+    try:
+        # Read the template script
+        template_path = Path(__file__).resolve().parent.parent / "templates" / "status_line_hook.py"
+        script_content = template_path.read_text()
+
+        # Ensure directories exist
+        await conn.run_command("mkdir -p /root/.claude/hooks")
+
+        # Write the hook script
+        await conn.write_file(hook_path, script_content)
+        await conn.run_command(f"chmod +x {hook_path}")
+
+        # Update Claude Code settings.json to register the hook
+        existing_settings = {}
+        try:
+            cat_out, _, cat_exit = await conn.run_command(f"cat {settings_path}")
+            if cat_exit == 0 and cat_out.strip():
+                existing_settings = json.loads(cat_out)
+        except Exception:
+            pass
+
+        existing_settings["statusLine"] = {
+            "type": "command",
+            "command": f"python3 {hook_path}"
+        }
+
+        settings_json = json.dumps(existing_settings, indent=2)
+        await conn.write_file(settings_path, settings_json)
+
+        return {
+            "status": "installed",
+            "message": "Status line hook installed and configured",
+            "hook_path": hook_path
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to install: {str(e)}")

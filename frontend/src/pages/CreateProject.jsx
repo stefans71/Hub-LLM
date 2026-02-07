@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useVoice } from '../components/VoiceInput'
+import StatusLinePreview from '../components/StatusLinePreview'
 import {
   ChevronRight, ChevronDown, Upload, Mic, MicOff, Send, X, Plus,
   Cloud, Server, Check, Sparkles, Zap, ExternalLink, Loader,
@@ -428,6 +429,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [testingVps, setTestingVps] = useState(false)
   const [vpsTestResult, setVpsTestResult] = useState(null) // { success: bool, message: string, server_info: {} }
   const [savedVpsServers, setSavedVpsServers] = useState([])
+  const [installStatusLine, setInstallStatusLine] = useState(true)
 
   // Load saved VPS servers from localStorage (Settings > VPS Connections)
   useEffect(() => {
@@ -625,6 +627,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
           const serverIndex = servers.findIndex(s => s.id === formData.vpsServerId)
           if (serverIndex >= 0) {
             servers[serverIndex].lastTestSuccess = true
+            servers[serverIndex].claudeCodeDetected = data.claude_code_detected || servers[serverIndex].claudeCodeDetected || false
             servers[serverIndex].serverInfo = data.server_info || servers[serverIndex].serverInfo
             localStorage.setItem('vps_servers', JSON.stringify(servers))
             setSavedVpsServers(servers)
@@ -640,6 +643,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
             username: 'root',
             privateKey: formData.vpsKey.trim() || '',
             lastTestSuccess: true,
+            claudeCodeDetected: data.claude_code_detected || false,
             serverInfo: data.server_info || null,
             createdAt: new Date().toISOString()
           }
@@ -1103,6 +1107,24 @@ In the meantime, I can help you think through your project. What would you like 
 
       if (res.ok) {
         const project = await res.json()
+
+        // Install status line hook if opted in and VPS has Claude Code
+        if (installStatusLine && formData.vpsServerId && vpsTestResult?.claude_code_detected) {
+          try {
+            const controller = new AbortController()
+            const timeout = setTimeout(() => controller.abort(), 15000)
+            await fetch(`/api/ssh/servers/${formData.vpsServerId}/status-line`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'install' }),
+              signal: controller.signal
+            })
+            clearTimeout(timeout)
+          } catch (err) {
+            console.warn('Status line install failed (non-blocking):', err.message)
+          }
+        }
+
         onCreateProject?.(project)
       } else {
         const error = await res.json()
@@ -1906,6 +1928,34 @@ Examples:
                                   <span style={{ color: cssVars.textMuted }}>OS:</span>{' '}
                                   {vpsTestResult.server_info.os}
                                 </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Status line install option */}
+                          {vpsTestResult.success && vpsTestResult.claude_code_detected && (
+                            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${cssVars.border}` }}>
+                              <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                color: cssVars.textPrimary,
+                                marginBottom: '8px'
+                              }}>
+                                <input
+                                  type="checkbox"
+                                  checked={installStatusLine}
+                                  onChange={(e) => setInstallStatusLine(e.target.checked)}
+                                  style={{ accentColor: cssVars.primary, width: '14px', height: '14px' }}
+                                />
+                                Install enhanced status line
+                              </label>
+                              {installStatusLine && (
+                                <StatusLinePreview
+                                  serverName={vpsTestResult.server_info?.hostname || formData.vpsIp || 'VPS'}
+                                />
                               )}
                             </div>
                           )}
