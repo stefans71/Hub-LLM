@@ -4,6 +4,10 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 93 - 2026-02-06 19:54 EST
+**Task**: BUG-34
+**What**: Setup wizard hardcoded `setClaudeCodeDetected(false)` instead of using test connection response. Fix: added `claude_code_detected` field to `TestConnectionResponse` model, added `which claude` check in `test_connection` endpoint (ssh.py), and wired frontend to read `data.claude_code_detected` from the response. Backend-only detection — no separate endpoint call needed since the SSH connection is already open during test.
+
 ### Session 92 - 2026-02-07 EST
 **Tasks**: BUG-33, UI-07 (re-fix)
 **What**:

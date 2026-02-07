@@ -542,9 +542,8 @@ function AnthropicStep({ onBack, onComplete }) {
       servers.push(newServer)
       localStorage.setItem('vps_servers', JSON.stringify(servers))
 
-      // Check for Claude Code (would need to call detection endpoint)
-      // For now, we'll leave this as false and let the workspace detect it
-      setClaudeCodeDetected(false)
+      // Use claude_code_detected from the test connection response
+      setClaudeCodeDetected(data.claude_code_detected || false)
     } catch (err) {
       if (err.name === 'AbortError') {
         setError('Connection timed out. Please check your VPS settings.')

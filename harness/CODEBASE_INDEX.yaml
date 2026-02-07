@@ -608,7 +608,7 @@ backend_routers:
 
   ssh.py:
     path: backend/routers/ssh.py
-    lines: 614
+    lines: 622
     prefix: "/api/ssh"
     purpose: "SSH server management, Claude Code detection, legacy terminal WebSocket, SFTP file ops"
     endpoints:
@@ -618,7 +618,7 @@ backend_routers:
       - {method: POST, path: "/servers/{id}/connect", purpose: "establish SSH connection"}
       - {method: POST, path: "/servers/{id}/disconnect", purpose: "disconnect from server"}
       - {method: GET, path: "/servers/{id}/claude-code", purpose: "detect Claude Code installation"}
-      - {method: POST, path: "/test", purpose: "test SSH connection (no store)"}
+      - {method: POST, path: "/test", purpose: "test SSH connection (no store), also runs 'which claude' and returns claude_code_detected"}
       - {method: WS, path: "/servers/{id}/terminal", purpose: "WebSocket terminal (legacy)"}
       - {method: GET, path: "/servers/{id}/files", purpose: "list files via SFTP"}
       - {method: GET, path: "/servers/{id}/files/read", purpose: "read file via SFTP"}

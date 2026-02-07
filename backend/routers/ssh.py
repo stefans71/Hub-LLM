@@ -85,6 +85,7 @@ class TestConnectionResponse(BaseModel):
     success: bool
     message: str
     server_info: Optional[dict] = None
+    claude_code_detected: bool = False
 
 
 # === Server Management ===
@@ -333,12 +334,21 @@ async def test_connection(request: TestConnectionRequest):
         except Exception:
             server_info["user"] = request.username
 
+        # Check if Claude Code is installed
+        claude_detected = False
+        try:
+            process = await conn.conn.run("which claude", timeout=5)
+            claude_detected = process.exit_status == 0 and bool(process.stdout.strip())
+        except Exception:
+            claude_detected = False
+
         await conn.close()
 
         return TestConnectionResponse(
             success=True,
             message=f"Successfully connected to {request.host}:{request.port}",
-            server_info=server_info
+            server_info=server_info,
+            claude_code_detected=claude_detected
         )
 
     except asyncio.TimeoutError:
