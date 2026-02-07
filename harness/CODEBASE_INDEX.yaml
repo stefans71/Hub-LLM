@@ -1097,6 +1097,8 @@ deployment:
     Coolify generates long container names. Use 'docker ps --filter name=backend-' etc.
     NEVER use 'docker restart' on Coolify containers — it breaks Traefik routing labels.
     ALWAYS redeploy via Coolify dashboard or 'git push origin main' to trigger proper redeploy.
+    NEVER add domains to Coolify UI for the frontend service — Coolify beta.459 generates
+    broken Traefik labels (Host('')). All routing is managed in docker-compose.yml.
 
   migrations:
     directory: backend/migrations/
@@ -1465,29 +1467,31 @@ recurring_bugs:
 
   - id: 17
     desc: "Coolify Traefik label poisoning — Host('') errors block all Docker-based routes"
-    sessions: [90, 98]
-    affected_files: []
-    status: known_pattern
+    sessions: [90, 98, 99]
+    affected_files: [docker-compose.yml]
+    status: fixed
+    fix: |
+      Root cause: Coolify's Domains field for the frontend service was set to bare
+      'hubllm.dev,www.hubllm.dev' without https:// prefix. This is a known Coolify bug
+      (GitHub #5813, #7092, #7121) in beta.459 — the domain goes into PathPrefix() instead
+      of Host(), generating broken labels: Host(``) && PathPrefix(`hubllm.dev`).
+      Adding https:// prefix did NOT fix it in this Coolify version.
+
+      Fix (Session 99): Cleared the Coolify Domains field entirely for the frontend service.
+      The docker-compose.yml already has correct Traefik labels (Host(`hubllm.dev`), HTTPS
+      entrypoint, letsencrypt certresolver, port 5173). With the Domains field empty, Coolify
+      stops generating its broken auto-labels and the compose file labels work correctly.
+
+      Also added HTTP→HTTPS redirect labels to docker-compose.yml so redirects are handled
+      in version-controlled code rather than Coolify UI.
+
+      CRITICAL: Never re-add domains to Coolify UI for this service — all Traefik routing
+      is managed in docker-compose.yml. If Coolify fixes this bug in a future version,
+      this policy can be revisited.
     note: |
-      Coolify generates BROKEN HTTP router labels on every deploy:
-        traefik.http.routers.http-0-....rule=Host(``) && PathPrefix(`hubllm.dev`)
-      The empty Host('') causes Traefik to spam errors every few seconds. The HTTPS router
-      label looks correct (Host(`hubllm.dev`) || Host(`www.hubllm.dev`)) but appears to be
-      rejected because it's on the same container as the broken HTTP labels.
-
-      Evidence (Session 98): TLS handshake succeeds, HTTP/2 request sent, but Traefik never
-      responds (hangs → 504). Meanwhile, file-based routes (Coolify dashboard at hq.vibeship.cloud)
-      work instantly. Container is healthy, responds to direct Docker-network requests with
-      correct Host header. Issue is specifically Traefik's Docker label provider.
-
-      Root cause: likely a Coolify "Custom Domains" or "Proxy" setting that's misconfigured
-      for the HTTP→HTTPS redirect. The HTTP router labels use PathPrefix(domain) instead of
-      Host(domain), and Host is empty.
-
-      Workaround: Redeploy from Coolify dashboard (sometimes takes 5-15min after deploy).
-      NEVER use 'docker restart' — makes it worse.
-
-      Permanent fix needed: INFRA-04 — investigate Coolify proxy settings.
+      Verified: curl https://hubllm.dev/ returns 200. Container labels show only clean
+      docker-compose.yml labels (no Host(''), no Caddy labels). Traefik proxy logs clean
+      after redeploy — no more 'empty args for matcher Host' errors.
 
   - id: 18
     desc: "setupComplete check uses !== false — undefined/null bypasses setup wizard"

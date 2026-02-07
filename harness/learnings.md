@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 99 - 2026-02-07 EST
+**Task**: INFRA-04
+**What**: Fixed Coolify Traefik label poisoning that caused hubllm.dev to 504 timeout on every deploy. Root cause: Coolify's Domains field for the frontend service had bare `hubllm.dev,www.hubllm.dev` without `https://` prefix. Known Coolify bug (GitHub #5813, #7092, #7121) in beta.459 — domain goes into PathPrefix() instead of Host(), generating `Host('') && PathPrefix('hubllm.dev')`. Adding `https://` prefix did NOT fix it in this version. Fix: cleared Coolify Domains field entirely so it stops generating broken auto-labels. The docker-compose.yml already had correct Traefik labels. Also added HTTP→HTTPS redirect labels to docker-compose.yml so redirects are code-managed. Verified: curl returns 200, container labels clean, no Traefik errors after redeploy.
+**Pattern**: For Coolify docker-compose apps, NEVER use the Coolify UI Domains field — it generates broken Traefik labels in beta.459. Manage all Traefik routing via labels in docker-compose.yml. Caddy labels also appear alongside Traefik labels when Domains field is populated (even when proxy is Traefik) — another sign of the bug. Dynamic configs at `/data/coolify/proxy/dynamic/` are for Coolify's own dashboard only, not app routing.
+
+---
+
 ### Session 98 - 2026-02-07 EST
 **Task**: FEAT-14
 **What**: Added inline auth panel to LandingPage that expands like About/Pricing panels using same `activePanelId`/`togglePanel` pattern. Imported `useAuth` from AuthContext. Added auth state (authMode, authLoading, authError, showPassword, oauthProviders, formData), OAuth providers fetch with AbortController 5s timeout, handleAuthSubmit (calls login/signup from useAuth), handleOAuth, password validation rules (same 4 rules as AuthPage). Sign Up nav button and 3 pricing CTA buttons now call `togglePanel('auth')` instead of `onSignUp`. Auth panel has: tabs (Sign In/Create Account), name/email/password fields, show/hide password toggle, real-time password requirements, submit button, OAuth divider + GitHub/Google buttons, terms footer. CSS: `.auth-panel.open { max-height: 550px }`, all form styles scoped under `.landing-page`. On auth success, `isAuthenticated` flips true and AppRouter auto-switches to wizard/dashboard — no manual navigation needed. Build passes 0 errors.

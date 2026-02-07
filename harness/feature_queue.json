@@ -30,7 +30,7 @@
       "name": "Fix Coolify Traefik label poisoning — broken Host('') HTTP routers on every deploy",
       "size": "S",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
       "description": "Every Coolify deploy generates broken Traefik HTTP router labels with empty Host('') matchers. This causes Traefik to spam errors and can block HTTPS routing for the entire site (504 timeouts).\n\nBroken labels observed on frontend container:\n  traefik.http.routers.http-0-....rule=Host(``) && PathPrefix(`hubllm.dev`)\n  traefik.http.routers.http-1-....rule=Host(``) && PathPrefix(`www.hubllm.dev`)\n\nThe HTTPS router label is correct:\n  traefik.http.routers.hubllm.rule=Host(`hubllm.dev`) || Host(`www.hubllm.dev`)\n\nBut being on the same container as the broken labels, Traefik's Docker provider may reject all routes from that container.\n\nDiagnosis steps:\n1. Log into Coolify dashboard at hq.vibeship.cloud\n2. Find the Hub-LLM project/service\n3. Check 'Proxy' or 'Advanced' settings — look for 'Custom Domains' config\n4. The HTTP router labels suggest Coolify is trying to set up HTTP→HTTPS redirect but putting the domain in PathPrefix instead of Host\n5. Look for a setting like 'Custom Port' or 'Custom Domain' that might be misconfigured\n6. Compare with Coolify docs for proper HTTPS domain setup\n\nThis is a Coolify dashboard configuration task, NOT a code change. The fix is adjusting Coolify's proxy settings so it generates correct Traefik labels.\n\nRecurring bug #17 in CODEBASE_INDEX.yaml. Sessions: 90, 98.",
       "change": [
         "Coolify dashboard: Investigate and fix proxy/domain settings for the Hub-LLM service so HTTP router labels use Host(`hubllm.dev`) instead of Host(``) && PathPrefix(`hubllm.dev`)",
@@ -38,13 +38,13 @@
       ],
       "test": "Step-by-step: (1) Push a commit to main to trigger Coolify deploy. (2) Wait for containers to restart. (3) Run `docker logs coolify-proxy --tail 20 2>&1 | grep 'Host(\\`\\`)'` — should find NO empty Host errors. (4) Run `curl -sk --resolve hubllm.dev:443:127.0.0.1 -o /dev/null -w '%{http_code}' --max-time 10 https://hubllm.dev/` — should return 200 within seconds, not timeout. (5) Open hubllm.dev in browser — should load immediately after deploy.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Coolify dashboard fix + docker-compose.yml change. Root cause: Coolify Domains field had bare 'hubllm.dev,www.hubllm.dev' without https:// prefix — known Coolify bug (GitHub #5813, #7092) in beta.459 generates Host('') && PathPrefix('domain') instead of Host('domain'). Adding https:// did NOT fix it. Fix: cleared Coolify Domains field entirely so no broken auto-labels are generated. docker-compose.yml already had correct Traefik labels (lines 31-35). Added HTTP→HTTPS redirect labels to docker-compose.yml (lines 36-39). Test evidence: curl -sk https://hubllm.dev/ returns 200. docker inspect shows only clean compose labels — no Host(''), no Caddy labels. docker logs coolify-proxy shows no errors after redeploy. CODEBASE_INDEX bug #17 updated to fixed, container_names_coolify updated with 'never add domains to Coolify UI' rule.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

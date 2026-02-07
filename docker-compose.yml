@@ -29,10 +29,16 @@ services:
     command: npm run dev -- --host
     labels:
       - "traefik.enable=true"
+      # HTTPS router
       - "traefik.http.routers.hubllm.rule=Host(`hubllm.dev`) || Host(`www.hubllm.dev`)"
       - "traefik.http.routers.hubllm.entrypoints=https"
       - "traefik.http.routers.hubllm.tls.certresolver=letsencrypt"
       - "traefik.http.services.hubllm.loadbalancer.server.port=5173"
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.hubllm-http.rule=Host(`hubllm.dev`) || Host(`www.hubllm.dev`)"
+      - "traefik.http.routers.hubllm-http.entrypoints=http"
+      - "traefik.http.routers.hubllm-http.middlewares=hubllm-redirect-https"
+      - "traefik.http.middlewares.hubllm-redirect-https.redirectscheme.scheme=https"
     networks:
       - coolify
       - default
