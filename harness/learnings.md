@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 102 - 2026-02-08 EST
+**Task**: FEAT-21
+**What**: Extracted ModelSelector from WorkspaceTopBar into reusable component. Created frontend/src/components/ModelSelector.jsx (712 lines) with all model-related constants, cache helpers, state, effects, filtering/grouping logic, version-descending sort, and full dropdown JSX. WorkspaceTopBar.jsx reduced from 954→305 lines — now handles only project name, collapse toggle, export button, billing warning intercepts, and Claude Code detection. ModelSelector accepts props: value, onChange, apiKeys, claudeCodeStatus, isConnected, showSubscriptionModels, compact. Updated POPULAR_MODEL_IDS to current flagships (GPT-5.2, Gemini 3, etc). Added version-descending sort within provider groups via parseVersionForSort().
+**Key Learning**: When extracting a component that has interception logic (billing warnings), keep the intercept in the parent and let the extracted component call onChange directly. Parent wraps onChange to check conditions before committing.
+
+---
+
 ### Session 101 - 2026-02-07 EST
 **Task**: BUG-39, UI-17
 **What (UI-17)**: Centered Create Project button row under setup cards. Added maxWidth:'720px', margin:'0 auto', width:'100%' to the action bar button row div (line 2307). Matches the card container constraint at line 1172.

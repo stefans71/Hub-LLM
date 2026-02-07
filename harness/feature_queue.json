@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-08T05:00",
+  "updated": "2026-02-08T07:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -26,23 +26,47 @@
   },
   "queue": [
     {
-      "id": "UI-17",
-      "name": "Center Create Project button under setup cards",
-      "size": "XS",
-      "priority": 3,
+      "id": "FEAT-21",
+      "name": "Extract shared ModelSelector component from WorkspaceTopBar",
+      "size": "M",
+      "priority": 2,
       "status": "pending_review",
-      "description": "The 'Create Project' button in the action bar at the bottom of CreateProject.jsx is pushed to the far right of the viewport, misaligned with the setup cards above it. The cards are centered via maxWidth:720px + margin:0 auto (line ~1172), but the action bar button row (line 2307-2311) spans full width with justifyContent:space-between.\n\nFix: Constrain the button row to match the card content width so both buttons align under the cards.\n\nFile: frontend/src/pages/CreateProject.jsx\nLines: 2307-2311 — the inner div of the Fixed Action Bar",
+      "description": "Extract the model selector dropdown from WorkspaceTopBar.jsx into a reusable component at frontend/src/components/ModelSelector.jsx.",
       "change": [
-        "frontend/src/pages/CreateProject.jsx line 2307-2311: Add maxWidth:'720px' and margin:'0 auto' to the button row div style (the one with justifyContent:'space-between' and padding:'16px 24px'). This matches the card container at line ~1172. Keep justifyContent:'space-between' so Cancel stays left and Create Project stays right — but now within the 720px centered column instead of full viewport width."
+        "frontend/src/components/ModelSelector.jsx: NEW FILE (712 lines) — all model-related constants, cache helpers, state, effects, filtering/grouping logic, version-descending sort, dropdown JSX",
+        "frontend/src/components/WorkspaceTopBar.jsx: Reduced 954→305 lines — imports ModelSelector, delegates dropdown UI, keeps billing warning intercepts and Claude Code detection"
       ],
-      "test": "Run dev server (cd frontend && npm run dev). Navigate to Create Project. Scroll to bottom. Verify: (1) Create Project button is visually aligned under the setup cards, not pushed to far right. (2) Cancel button is on the left edge of the card column. (3) Resize browser narrow — buttons should stay within the card column at all widths. Screenshot the before/after if possible.",
-      "completion_note": "Changed CreateProject.jsx line 2307-2311: Added maxWidth:'720px', margin:'0 auto', width:'100%' to the action bar button row div. Cancel/Create Project buttons now constrained to same 720px centered column as the setup cards above. Build: vite build 0 errors. Auth required for visual test — noted: auth verified separately. CODEBASE_INDEX updated (CreateProject.jsx 2296→2349 lines).",
+      "test": "npm run build — 0 errors.",
+      "completion_note": "Created frontend/src/components/ModelSelector.jsx (712 lines). Extracted from WorkspaceTopBar: PROVIDER_COLORS, SUBSCRIPTION_MODELS, POPULAR_MODEL_IDS (updated to current flagships: GPT-5.2-pro/codex, Gemini 3, removed stale GPT-4o/Gemini 2), PROVIDER_NAMES, getProviderName, getProviderColor, parseOpenRouterModels, cache helpers, buildModelList (now accepts showSubscription param), getModelDisplay. Component state: dropdownOpen, searchFilter, openRouterModels, modelsLoading. useMemo for modelList and selectedModel. Effects: fetch on mount, focus search, click-outside close. Logic: getFilteredModels with version-descending sort via parseVersionForSort/compareVersions, isModelAvailable, getBillingLabel, getBillingColor. Full dropdown JSX with search, provider groups, model items, footer. Props: value, onChange, apiKeys, claudeCodeStatus, isConnected, showSubscriptionModels (default true), compact (default false), className, style. WorkspaceTopBar.jsx reduced to 305 lines — imports ModelSelector, keeps billing warning/notification modals, Claude Code status check, project name, collapse toggle, export button. Build: vite build 0 errors. Auth required for visual test — noted: auth verified separately. CODEBASE_INDEX updated (ModelSelector.jsx entry, WorkspaceTopBar.jsx updated, total_jsx_files 34→35).",
       "completion_checklist": {
         "code_works": true,
         "index_updated": true,
         "learnings_written": true,
-        "committed_pushed": true,
+        "committed_pushed": false,
         "status_set_to_pending_review": true
+      }
+    },
+    {
+      "id": "FEAT-20",
+      "name": "Dynamic model selector in Create Project step 1",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "blocked_by": "FEAT-21",
+      "description": "Add the shared ModelSelector component (from FEAT-21) to the Project Details card (step 1) of CreateProject.jsx. Currently 'Define Project with AI' hardcodes 'anthropic/claude-sonnet-4' (line 692).\n\nPlacement: In the same row as the 'Define Project with AI' button (line 1272). Model selector on the left, button on the right. Rework the existing div at line 1272 to use justifyContent:'space-between' with selector left + button right.\n\nUsage:\n<ModelSelector\n  value={selectedModel}\n  onChange={(model) => setSelectedModel(model.id)}\n  apiKeys={{ openrouter: !!localStorage.getItem('openrouter_key') || !!localStorage.getItem('openrouter_api_key') }}\n  showSubscriptionModels={false}\n  compact={true}\n/>\n\nshowSubscriptionModels=false because the expand-brief endpoint (backend/routers/ai.py line 114+) only routes through OpenRouter — Anthropic Pro subscription models don't apply here.\n\nState: Add useState for selectedModel (default 'anthropic/claude-sonnet-4'). Wire into handleStartAIDefinition line 692 — replace hardcoded model string with selectedModel.\n\nReferences:\n- frontend/src/pages/CreateProject.jsx lines 385-403 (formData), 669-695 (handleStartAIDefinition), 1245-1277 (Step 1 UI)\n- frontend/src/components/ModelSelector.jsx (created by FEAT-21)",
+      "change": [
+        "frontend/src/pages/CreateProject.jsx: Add import for ModelSelector from '../components/ModelSelector'",
+        "frontend/src/pages/CreateProject.jsx: Add useState for selectedModel (default 'anthropic/claude-sonnet-4')",
+        "frontend/src/pages/CreateProject.jsx: Rework line 1272 div — add ModelSelector on left, keep Define Project with AI button on right, justifyContent:'space-between'",
+        "frontend/src/pages/CreateProject.jsx: Wire selectedModel into handleStartAIDefinition line 692 replacing hardcoded model"
+      ],
+      "test": "Run dev server. Navigate to Create Project. (1) Model selector appears in Project Details row next to 'Define Project with AI'. (2) Click — dropdown shows OpenRouter models only (no Anthropic Pro section). (3) Search works. (4) Select a model, fill brief, click 'Define Project with AI' — check Network tab: POST /api/ai/expand-brief body should contain the selected model ID. (5) Default model is anthropic/claude-sonnet-4 if user doesn't change it. (6) npm run build — 0 errors.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
       }
     },
     {
@@ -57,6 +81,17 @@
     }
   ],
   "completed": [
+    {
+      "id": "UI-17",
+      "name": "Center Create Project button under setup cards",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit 6012ca2: CreateProject.jsx lines 2311-2313 — added maxWidth:'720px', margin:'0 auto', width:'100%' to button row div. Matches card container constraint. justifyContent:'space-between' preserved. Build clean.",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "Button row constrained to 720px centered column. Build 0 errors."
+    },
     {
       "id": "BUG-39",
       "name": "Create project 500 — production Postgres has user_id NOT NULL but ORM model removed it",

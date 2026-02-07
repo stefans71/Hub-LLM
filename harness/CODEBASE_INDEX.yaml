@@ -16,7 +16,7 @@ meta:
   stack: "FastAPI (Python) + React (Vite) + SQLite (dev) / Postgres (prod)"
   frontend_port: 5173
   backend_port: 8000
-  total_jsx_files: 34
+  total_jsx_files: 35
   total_pages: 5
   total_components: 28
   total_contexts: 1
@@ -379,33 +379,58 @@ frontend_components:
       - "Delete modal with archive/permanent options"
     last_verified_session: 86
 
-  WorkspaceTopBar.jsx:
-    path: frontend/src/components/WorkspaceTopBar.jsx
-    lines: 954
-    purpose: "Top bar — dynamic model selector (OpenRouter API + subscription), Claude Code detection, billing labels"
-    props: "{project, model, onModelChange, onExport, linkedServerId, isConnected, onClaudeCodeStatusChange}"
+  ModelSelector.jsx:
+    path: frontend/src/components/ModelSelector.jsx
+    lines: 712
+    purpose: "Reusable model selector dropdown — fetches OpenRouter models, shows subscription + OpenRouter, search/filter, version-descending sort"
+    props: "{value, onChange, apiKeys, claudeCodeStatus, isConnected, showSubscriptionModels, compact, className, style}"
+    exports: "default ModelSelector, getProviderName, getProviderColor, getModelDisplay"
     key_state:
-      - {name: dropdownOpen, type: useState, drives: "model selector open/close"}
-      - {name: showBillingWarning, type: useState, drives: "billing switch modal"}
+      - {name: dropdownOpen, type: useState, drives: "dropdown open/close"}
+      - {name: searchFilter, type: useState, drives: "model search filtering"}
       - {name: openRouterModels, type: useState, drives: "dynamic model list from OpenRouter API"}
       - {name: modelsLoading, type: useState, drives: "loading indicator during fetch"}
       - {name: modelList, type: useMemo, drives: "merged subscription + OpenRouter models"}
+      - {name: selectedModel, type: useMemo, drives: "display info for current value"}
     constants:
       - "SUBSCRIPTION_MODELS — hardcoded Anthropic models (tier: subscription, route via Claude Code)"
-      - "POPULAR_MODEL_IDS — Set of ~20 curated popular OpenRouter model IDs"
-      - "PROVIDER_COLORS/PROVIDER_NAMES — color and display name maps for providers"
+      - "POPULAR_MODEL_IDS — Set of ~16 curated flagship model IDs (updated Feb 2026)"
+      - "PROVIDER_COLORS/PROVIDER_NAMES — color and display name maps for 10 providers"
+    features:
+      - "Version-descending sort within provider groups (newest models first)"
+      - "Popular models shown by default, full list on search"
+      - "24h localStorage cache for OpenRouter model list"
+      - "Manual refresh button in footer"
+      - "Compact mode for smaller trigger button"
+      - "showSubscriptionModels prop to hide Anthropic Pro section"
+    api_calls:
+      - {endpoint: "https://openrouter.ai/api/v1/models", method: GET, purpose: "fetch dynamic model list, cached 24h in localStorage"}
+    localStorage_keys:
+      - {key: openrouter_models, direction: both, purpose: "cached OpenRouter model list (JSON)"}
+      - {key: openrouter_models_fetched, direction: both, purpose: "cache timestamp for 24h TTL"}
+    used_by: [WorkspaceTopBar.jsx, CreateProject.jsx]
+    extracted_from: "WorkspaceTopBar.jsx (FEAT-21)"
+    last_verified_session: 101
+
+  WorkspaceTopBar.jsx:
+    path: frontend/src/components/WorkspaceTopBar.jsx
+    lines: 305
+    purpose: "Top bar — project name, collapse toggle, model selector (via ModelSelector), export button, billing warnings"
+    props: "{project, model, onModelChange, onExport, linkedServerId, isConnected, onClaudeCodeStatusChange}"
+    key_state:
+      - {name: showBillingWarning, type: useState, drives: "billing switch modal"}
+      - {name: selectedModelValue, type: useState, drives: "current model ID for ModelSelector value"}
+      - {name: apiKeys, type: useState, drives: "API key availability for billing logic"}
+      - {name: claudeCodeStatus, type: useState, drives: "Claude Code detection status"}
     api_calls:
       - {endpoint: "/api/ssh/servers/{id}/claude-code", method: GET, purpose: "detect Claude Code on VPS"}
-      - {endpoint: "https://openrouter.ai/api/v1/models", method: GET, purpose: "fetch dynamic model list, cached 24h in localStorage"}
     localStorage_keys:
       - {key: openrouter_api_key, direction: read}
       - {key: openrouter_key, direction: read}
       - {key: hide_billing_switch_warning, direction: both}
-      - {key: openrouter_models, direction: both, purpose: "cached OpenRouter model list (JSON)"}
-      - {key: openrouter_models_fetched, direction: both, purpose: "cache timestamp for 24h TTL"}
-    children: [ModelNotification]
-    notes: "MODEL-04: Replaced hardcoded MODEL_LIST with dynamic fetch. Shows popular ~20 by default, full list on search. Manual refresh button in footer."
-    last_verified_session: 92
+    children: [ModelSelector, ModelNotification]
+    notes: "FEAT-21: Model selector extracted to ModelSelector.jsx. WorkspaceTopBar now handles billing warning intercepts and Claude Code detection, delegates dropdown UI to ModelSelector."
+    last_verified_session: 101
 
   LLMDevPanel.jsx:
     path: frontend/src/components/LLMDevPanel.jsx
