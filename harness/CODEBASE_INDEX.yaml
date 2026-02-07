@@ -25,7 +25,7 @@ meta:
   total_localStorage_keys: 19
   total_db_tables: 5
   last_full_index_session: 86
-  last_partial_update_session: 95
+  last_partial_update_session: 98
 
 # ============================================================================
 # FRONTEND — Entry Points
@@ -178,9 +178,9 @@ frontend_pages:
 
   LandingPage.jsx:
     path: frontend/src/pages/LandingPage.jsx
-    lines: 715
-    purpose: "Interactive HTML prototype landing page converted to React — full demo with model selector, chat, file explorer, terminal, VPS cards"
-    props: "{onSignUp} — callback for 4 CTA buttons (Sign Up nav, Claim Lifetime Access, Get Started, Subscribe)"
+    lines: 948
+    purpose: "Interactive HTML prototype landing page converted to React — full demo with model selector, chat, file explorer, terminal, VPS cards, and inline auth panel (FEAT-14)"
+    props: "{onSignUp} — DEPRECATED callback, now uses inline auth panel instead"
     key_state:
       - {name: selectedModel, type: "useState(DEMO_MODELS[0])", drives: "currently selected model from 9-model dropdown"}
       - {name: isModelDropdownOpen, type: "useState(false)", drives: "model dropdown visibility"}
@@ -191,41 +191,53 @@ frontend_pages:
       - {name: isFileExplorerOpen, type: "useState(false)", drives: "file explorer panel collapse"}
       - {name: isTerminalOpen, type: "useState(false)", drives: "terminal panel collapse"}
       - {name: isVPSOpen, type: "useState(true)", drives: "VPS section collapse"}
-      - {name: activePanelId, type: "useState(null)", drives: "about/pricing panel toggle"}
+      - {name: activePanelId, type: "useState(null)", drives: "about/pricing/auth panel toggle"}
       - {name: terminalLines, type: "useState([])", drives: "terminal output lines"}
       - {name: expandedFolders, type: "useState({})", drives: "file tree folder expansion state"}
       - {name: selectedFile, type: "useState(null)", drives: "highlighted file in tree"}
       - {name: chatInput, type: "useState('')", drives: "chat input field"}
       - {name: terminalInput, type: "useState('')", drives: "terminal input field"}
       - {name: isCursorVisible, type: "useState(true)", drives: "terminal cursor blink"}
+      - {name: authTab, type: "useState('signup')", drives: "auth panel tab (signup/login)", line: 219}
+      - {name: formData, type: "useState({name,email,password})", drives: "auth form fields", line: 220}
+      - {name: authError, type: "useState('')", drives: "auth error message", line: 225}
+      - {name: authLoading, type: "useState(false)", drives: "auth submit loading state", line: 226}
+      - {name: oauthProviders, type: "useState({github,google})", drives: "available OAuth providers", line: 227}
     static_data:
       - "DEMO_MODELS — 9 models (Claude, GPT, Gemini, Llama, DeepSeek, Mistral) with provider colors"
       - "DEMO_PROJECTS — 3 projects (Landing Page, API Server, Mobile App) with VPS names + file trees"
       - "VPS_CARDS — 3 VPS cards (DigitalOcean, Vultr, Vercel) with names/IPs"
       - "INITIAL_MESSAGES — 3 demo chat messages"
+      - "passwordRules — 3 validation rules (min 8 chars, uppercase, number+special)"
     features:
       - "Model selector dropdown with search/filter"
       - "Fake AI chat with typing indicator, auto-scroll, message bubbles"
       - "File explorer with project switcher, VS Code-style tree, folder expand/collapse"
       - "Fake terminal with working ls/pwd/cd/clear commands"
       - "VPS cards with animated cable connections (SVG paths) — cable highlights for active project"
-      - "About/Pricing info panels (collapsible)"
+      - "About/Pricing/Auth info panels (collapsible)"
+      - "Inline auth panel with signup/login tabs, OAuth (GitHub/Google), password validation"
       - "Sticky header with logo, pipeline, nav menu"
       - "Floating particle animation background"
       - "Traveling light animation on hub-box border"
+    auth_integration:
+      - {hook: useAuth, line: 2, purpose: "access signup/login/handleOAuthCallback"}
+      - {fetch_oauth_providers: "/api/auth/oauth/providers", line: 267}
+      - {auth_panel_trigger: "togglePanel('auth')", callers: "Sign Up nav button, 3 pricing buttons"}
     useEffect_cleanup:
       - "Particles DOM nodes cleanup on unmount"
       - "Traveling light requestAnimationFrame cancelAnimationFrame cleanup"
       - "Outside click handler cleanup for model dropdown"
-    api_calls: []
+    api_calls:
+      - {endpoint: "/api/auth/oauth/providers", method: GET, purpose: "fetch OAuth providers", line: 268}
     localStorage_keys: []
     children: []
     imported_by: [App.jsx]
-    last_verified_session: 97
+    last_verified_session: 98
 
   LandingPage.css:
     path: frontend/src/pages/LandingPage.css
-    lines: 1394
+    lines: 1607
     purpose: "Scoped CSS for LandingPage component — all selectors prefixed with .landing-page to avoid global conflicts"
     animations:
       - {name: lp-float, purpose: "particle floating from bottom to top"}
@@ -245,10 +257,27 @@ frontend_pages:
       - "Gradient backgrounds for hub-box, VPS cards, pricing featured card"
       - "Traveling light glow effect via multiple box-shadows"
       - "Cable SVG paths with stroke-dasharray animation for data flow"
-      - "Max-height transitions for collapsible panels (info, pricing, file explorer, terminal, VPS)"
+      - "Max-height transitions for collapsible panels (info, pricing, auth, file explorer, terminal, VPS)"
+    auth_panel_styles:
+      - {class: ".auth-panel.open", max_height: "550px", line: 666}
+      - {class: ".auth-tabs", purpose: "tab navigation container", line: 674}
+      - {class: ".auth-tab", purpose: "individual tab button", line: 682}
+      - {class: ".auth-error", purpose: "error message styling", line: 706}
+      - {class: ".auth-form", purpose: "form container", line: 716}
+      - {class: ".auth-input-group", purpose: "input field wrapper", line: 722}
+      - {class: ".auth-input", purpose: "styled input field", line: 729}
+      - {class: ".auth-password-wrapper", purpose: "password field container", line: 753}
+      - {class: ".auth-password-toggle", purpose: "show/hide password button", line: 761}
+      - {class: ".auth-requirements", purpose: "password requirements list", line: 783}
+      - {class: ".auth-req-item", purpose: "requirement item with check/x icon", line: 791}
+      - {class: ".auth-submit-btn", purpose: "submit button", line: 814}
+      - {class: ".auth-divider", purpose: "OR divider with line", line: 825}
+      - {class: ".auth-oauth-buttons", purpose: "OAuth button container", line: 842}
+      - {class: ".auth-oauth-btn", purpose: "GitHub/Google OAuth buttons", line: 848}
+      - {class: ".auth-terms", purpose: "terms/privacy links", line: 870}
     responsive:
       - "@media (max-width: 768px) — stacks pricing cards, hides header features, single-column VPS grid, adjusts chat header layout"
-    last_verified_session: 95
+    last_verified_session: 98
 
 # ============================================================================
 # FRONTEND — Components (frontend/src/components/)

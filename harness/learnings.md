@@ -4,6 +4,12 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 98 - 2026-02-07 EST
+**Task**: FEAT-14
+**What**: Added inline auth panel to LandingPage that expands like About/Pricing panels using same `activePanelId`/`togglePanel` pattern. Imported `useAuth` from AuthContext. Added auth state (authMode, authLoading, authError, showPassword, oauthProviders, formData), OAuth providers fetch with AbortController 5s timeout, handleAuthSubmit (calls login/signup from useAuth), handleOAuth, password validation rules (same 4 rules as AuthPage). Sign Up nav button and 3 pricing CTA buttons now call `togglePanel('auth')` instead of `onSignUp`. Auth panel has: tabs (Sign In/Create Account), name/email/password fields, show/hide password toggle, real-time password requirements, submit button, OAuth divider + GitHub/Google buttons, terms footer. CSS: `.auth-panel.open { max-height: 550px }`, all form styles scoped under `.landing-page`. On auth success, `isAuthenticated` flips true and AppRouter auto-switches to wizard/dashboard — no manual navigation needed. Build passes 0 errors.
+
+---
+
 ### Session 97 - 2026-02-07 EST
 **Task**: FEAT-13
 **What**: Wired LandingPage into App.jsx routing for unauthenticated visitors. Added `useNavigate` to AppRouter, replaced single `<AuthPage />` return with `<Routes>` block: `/` shows LandingPage, `/auth` shows AuthPage, `*` redirects to `/`. onSignUp callback navigates to `/auth`. 3 lines changed in App.jsx. Build passes 0 errors.
