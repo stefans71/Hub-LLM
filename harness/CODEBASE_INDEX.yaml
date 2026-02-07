@@ -16,8 +16,8 @@ meta:
   stack: "FastAPI (Python) + React (Vite) + SQLite (dev) / Postgres (prod)"
   frontend_port: 5173
   backend_port: 8000
-  total_jsx_files: 33
-  total_pages: 4
+  total_jsx_files: 34
+  total_pages: 5
   total_components: 28
   total_contexts: 1
   total_backend_routers: 12
@@ -25,7 +25,7 @@ meta:
   total_localStorage_keys: 19
   total_db_tables: 5
   last_full_index_session: 86
-  last_partial_update_session: 91
+  last_partial_update_session: 95
 
 # ============================================================================
 # FRONTEND — Entry Points
@@ -171,6 +171,80 @@ frontend_pages:
       - {endpoint: "/api/settings/", method: GET, purpose: "load user settings"}
       - {endpoint: "/api/ssh/servers", method: "GET/POST/DELETE", purpose: "VPS CRUD + backend sync"}
     last_verified_session: 86
+
+  LandingPage.jsx:
+    path: frontend/src/pages/LandingPage.jsx
+    lines: 715
+    purpose: "Interactive HTML prototype landing page converted to React — full demo with model selector, chat, file explorer, terminal, VPS cards"
+    props: "{onSignUp} — callback for 4 CTA buttons (Sign Up nav, Claim Lifetime Access, Get Started, Subscribe)"
+    key_state:
+      - {name: selectedModel, type: "useState(DEMO_MODELS[0])", drives: "currently selected model from 9-model dropdown"}
+      - {name: isModelDropdownOpen, type: "useState(false)", drives: "model dropdown visibility"}
+      - {name: modelSearchQuery, type: "useState('')", drives: "model search filter"}
+      - {name: currentProject, type: "useState(1)", drives: "active demo project (1-3) — controls VPS cables, file tree, terminal path"}
+      - {name: messages, type: "useState(INITIAL_MESSAGES)", drives: "chat message history"}
+      - {name: isTyping, type: "useState(false)", drives: "AI typing indicator"}
+      - {name: isFileExplorerOpen, type: "useState(false)", drives: "file explorer panel collapse"}
+      - {name: isTerminalOpen, type: "useState(false)", drives: "terminal panel collapse"}
+      - {name: isVPSOpen, type: "useState(true)", drives: "VPS section collapse"}
+      - {name: activePanelId, type: "useState(null)", drives: "about/pricing panel toggle"}
+      - {name: terminalLines, type: "useState([])", drives: "terminal output lines"}
+      - {name: expandedFolders, type: "useState({})", drives: "file tree folder expansion state"}
+      - {name: selectedFile, type: "useState(null)", drives: "highlighted file in tree"}
+      - {name: chatInput, type: "useState('')", drives: "chat input field"}
+      - {name: terminalInput, type: "useState('')", drives: "terminal input field"}
+      - {name: isCursorVisible, type: "useState(true)", drives: "terminal cursor blink"}
+    static_data:
+      - "DEMO_MODELS — 9 models (Claude, GPT, Gemini, Llama, DeepSeek, Mistral) with provider colors"
+      - "DEMO_PROJECTS — 3 projects (Landing Page, API Server, Mobile App) with VPS names + file trees"
+      - "VPS_CARDS — 3 VPS cards (DigitalOcean, Vultr, Vercel) with names/IPs"
+      - "INITIAL_MESSAGES — 3 demo chat messages"
+    features:
+      - "Model selector dropdown with search/filter"
+      - "Fake AI chat with typing indicator, auto-scroll, message bubbles"
+      - "File explorer with project switcher, VS Code-style tree, folder expand/collapse"
+      - "Fake terminal with working ls/pwd/cd/clear commands"
+      - "VPS cards with animated cable connections (SVG paths) — cable highlights for active project"
+      - "About/Pricing info panels (collapsible)"
+      - "Sticky header with logo, pipeline, nav menu"
+      - "Floating particle animation background"
+      - "Traveling light animation on hub-box border"
+    useEffect_cleanup:
+      - "Particles DOM nodes cleanup on unmount"
+      - "Traveling light requestAnimationFrame cancelAnimationFrame cleanup"
+      - "Outside click handler cleanup for model dropdown"
+    api_calls: []
+    localStorage_keys: []
+    children: []
+    imported_by: []
+    last_verified_session: 95
+
+  LandingPage.css:
+    path: frontend/src/pages/LandingPage.css
+    lines: 1394
+    purpose: "Scoped CSS for LandingPage component — all selectors prefixed with .landing-page to avoid global conflicts"
+    animations:
+      - {name: lp-float, purpose: "particle floating from bottom to top"}
+      - {name: lp-pulse, purpose: "status dot pulsing"}
+      - {name: lp-fadeIn, purpose: "chat message fade-in"}
+      - {name: lp-typingBounce, purpose: "typing indicator bounce"}
+      - {name: lp-blink, purpose: "terminal cursor blink"}
+      - {name: lp-flow, purpose: "cable data flow animation (stroke-dashoffset)"}
+    color_palette:
+      - {color: "#38bdf8", usage: "sky blue primary — model dropdown, borders, accents"}
+      - {color: "#f97316", usage: "orange accent — CTA buttons, active cables, Pro tier"}
+      - {color: "#22c55e", usage: "green success — status indicators, terminal prompt"}
+      - {note: "Intentionally different from app palette — landing page is marketing, not app UI"}
+    design_patterns:
+      - "Grid background via ::before pseudo-element with fixed positioning"
+      - "Renamed .hidden → .lp-hidden to avoid Tailwind conflict"
+      - "Gradient backgrounds for hub-box, VPS cards, pricing featured card"
+      - "Traveling light glow effect via multiple box-shadows"
+      - "Cable SVG paths with stroke-dasharray animation for data flow"
+      - "Max-height transitions for collapsible panels (info, pricing, file explorer, terminal, VPS)"
+    responsive:
+      - "@media (max-width: 768px) — stacks pricing cards, hides header features, single-column VPS grid, adjusts chat header layout"
+    last_verified_session: 95
 
 # ============================================================================
 # FRONTEND — Components (frontend/src/components/)

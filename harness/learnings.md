@@ -4,6 +4,12 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 96 - 2026-02-07 EST
+**Task**: FEAT-12
+**What**: Converted 2058-line HTML landing page prototype (hubllm-demo-v7_3.html) into React. Created LandingPage.jsx (~370 lines) with 10+ useState hooks, useEffect for particles/traveling light animations with proper cleanup, model selector with search/filter, fake chat with typing indicator, VS Code-style file explorer, terminal with command handling, VPS cards with cable animations, about/pricing info panels. Created LandingPage.css (~950 lines) with all selectors scoped under `.landing-page`, 6 @keyframes prefixed `lp-` to avoid conflicts, mobile responsive media query. Key patterns: renamed `.hidden` to `.lp-hidden` (Tailwind conflict), used `useCallback` for all handlers, `requestAnimationFrame` with `cancelAnimationFrame` cleanup for traveling light, particle DOM elements cleaned up on unmount. All 4 CTA buttons wired to `onSignUp` prop. Build passes with 0 errors.
+
+---
+
 ### Session 95 - 2026-02-07 EST
 **Tasks**: MODEL-04, BUG-35
 **What**: MODEL-04: Replaced hardcoded MODEL_LIST (16 models) with dynamic fetch from OpenRouter API (~90 models). Anthropic subscription models stay hardcoded at top. OpenRouter models cached in localStorage with 24h TTL. Shows ~20 curated popular models by default, full list when searching. Added refresh button in dropdown footer. Deleted unused ModelSelector.jsx. Provider colors/names extended dynamically. Used `_subscription` group key to ensure Anthropic Pro models always sort first.
