@@ -26,6 +26,25 @@
   },
   "queue": [
     {
+      "id": "UI-17",
+      "name": "Center Create Project button under setup cards",
+      "size": "XS",
+      "priority": 3,
+      "status": "pending",
+      "description": "The 'Create Project' button in the action bar at the bottom of CreateProject.jsx is pushed to the far right of the viewport, misaligned with the setup cards above it. The cards are centered via maxWidth:720px + margin:0 auto (line ~1172), but the action bar button row (line 2307-2311) spans full width with justifyContent:space-between.\n\nFix: Constrain the button row to match the card content width so both buttons align under the cards.\n\nFile: frontend/src/pages/CreateProject.jsx\nLines: 2307-2311 — the inner div of the Fixed Action Bar",
+      "change": [
+        "frontend/src/pages/CreateProject.jsx line 2307-2311: Add maxWidth:'720px' and margin:'0 auto' to the button row div style (the one with justifyContent:'space-between' and padding:'16px 24px'). This matches the card container at line ~1172. Keep justifyContent:'space-between' so Cancel stays left and Create Project stays right — but now within the 720px centered column instead of full viewport width."
+      ],
+      "test": "Run dev server (cd frontend && npm run dev). Navigate to Create Project. Scroll to bottom. Verify: (1) Create Project button is visually aligned under the setup cards, not pushed to far right. (2) Cancel button is on the left edge of the card column. (3) Resize browser narrow — buttons should stay within the card column at all widths. Screenshot the before/after if possible.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "BUG-39",
       "name": "Create project 500 — production Postgres has user_id NOT NULL but ORM model removed it",
       "size": "XS",
@@ -42,7 +61,7 @@
         "code_works": true,
         "index_updated": true,
         "learnings_written": true,
-        "committed_pushed": false,
+        "committed_pushed": true,
         "status_set_to_pending_review": true
       }
     },
