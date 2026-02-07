@@ -26,27 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-21",
-      "name": "Extract shared ModelSelector component from WorkspaceTopBar",
-      "size": "M",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "Extract the model selector dropdown from WorkspaceTopBar.jsx into a reusable component at frontend/src/components/ModelSelector.jsx.",
-      "change": [
-        "frontend/src/components/ModelSelector.jsx: NEW FILE (712 lines) — all model-related constants, cache helpers, state, effects, filtering/grouping logic, version-descending sort, dropdown JSX",
-        "frontend/src/components/WorkspaceTopBar.jsx: Reduced 954→305 lines — imports ModelSelector, delegates dropdown UI, keeps billing warning intercepts and Claude Code detection"
-      ],
-      "test": "npm run build — 0 errors.",
-      "completion_note": "Created frontend/src/components/ModelSelector.jsx (712 lines). Extracted from WorkspaceTopBar: PROVIDER_COLORS, SUBSCRIPTION_MODELS, POPULAR_MODEL_IDS (updated to current flagships: GPT-5.2-pro/codex, Gemini 3, removed stale GPT-4o/Gemini 2), PROVIDER_NAMES, getProviderName, getProviderColor, parseOpenRouterModels, cache helpers, buildModelList (now accepts showSubscription param), getModelDisplay. Component state: dropdownOpen, searchFilter, openRouterModels, modelsLoading. useMemo for modelList and selectedModel. Effects: fetch on mount, focus search, click-outside close. Logic: getFilteredModels with version-descending sort via parseVersionForSort/compareVersions, isModelAvailable, getBillingLabel, getBillingColor. Full dropdown JSX with search, provider groups, model items, footer. Props: value, onChange, apiKeys, claudeCodeStatus, isConnected, showSubscriptionModels (default true), compact (default false), className, style. WorkspaceTopBar.jsx reduced to 305 lines — imports ModelSelector, keeps billing warning/notification modals, Claude Code status check, project name, collapse toggle, export button. Build: vite build 0 errors. Auth required for visual test — noted: auth verified separately. CODEBASE_INDEX updated (ModelSelector.jsx entry, WorkspaceTopBar.jsx updated, total_jsx_files 34→35).",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "FEAT-20",
       "name": "Dynamic model selector in Create Project step 1",
       "size": "S",
@@ -81,6 +60,17 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-21",
+      "name": "Extract shared ModelSelector component from WorkspaceTopBar",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit 0d0487f. ModelSelector.jsx (712 lines): constants, cache, fetch, version-descending sort (parseVersionForSort/compareVersions), full dropdown JSX. Props API matches spec. POPULAR_MODEL_IDS updated — GPT-5.2-pro/codex, Gemini 3 in; stale GPT-4o/Gemini 2 out. WorkspaceTopBar.jsx 954→305 lines, imports ModelSelector. Build 0 errors. Index updated (file count 34→35). Minor nit: localStorage keys openrouter_models/openrouter_models_fetched still reference WorkspaceTopBar in index — should be ModelSelector. Non-blocking.",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "Shared ModelSelector extracted. WorkspaceTopBar delegates to it. Version sort + updated popular models included."
+    },
     {
       "id": "UI-17",
       "name": "Center Create Project button under setup cards",
