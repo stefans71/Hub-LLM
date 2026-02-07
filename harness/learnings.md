@@ -4,6 +4,12 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 100 - 2026-02-07 EST
+**Task**: UI-12
+**What**: Auth panel spotlight illumination. Added `panel-open` class to hub-box when any panel is active — traveling light fades out via CSS opacity transition (0.3s). Added `::before` pseudo-element to `.info-panel` with cyan gradient glow (rgba(56,189,248)) shining downward from top, plus border-top glow and box-shadow on `.info-panel.open`. Auth panel gets stronger glow (height 100px, 4-stop gradient at 0.2 opacity). Replaced orange auth submit button with cyan gradient (#0ea5e9→#0284c7). All glow colors match traveling light hue #38bdf8. LandingPage.css 1602→1636 lines (+34 lines of spotlight/glow rules).
+
+---
+
 ### Session 99 - 2026-02-07 EST
 **Tasks**: INFRA-04, BUG-36, BUG-37, UI-10, UI-11, BUG-38
 **What (INFRA-04)**: Fixed Coolify Traefik label poisoning that caused hubllm.dev to 504 timeout on every deploy. Root cause: Coolify's Domains field for the frontend service had bare `hubllm.dev,www.hubllm.dev` without `https://` prefix. Known Coolify bug (GitHub #5813, #7092, #7121) in beta.459 — domain goes into PathPrefix() instead of Host(), generating `Host('') && PathPrefix('hubllm.dev')`. Adding `https://` prefix did NOT fix it in this version. Fix: cleared Coolify Domains field entirely so it stops generating broken auto-labels. The docker-compose.yml already had correct Traefik labels. Also added HTTP→HTTPS redirect labels to docker-compose.yml so redirects are code-managed. Verified: curl returns 200, container labels clean, no Traefik errors after redeploy.

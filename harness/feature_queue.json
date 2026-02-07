@@ -26,6 +26,36 @@
   },
   "queue": [
     {
+      "id": "UI-12",
+      "name": "Auth panel spotlight illumination — roving light transforms to top glow on panel open",
+      "size": "S",
+      "priority": 2,
+      "status": "pending_review",
+      "description": "The auth/sign-up panel blends into the landing page too much. When a user clicks 'Sign Up' and the panel opens, it doesn't stand out enough. The roving light dot should fade out and a spotlight glow should illuminate the panel from above. Also, the orange Sign In button overpowers the auth area — replace with cyan to match the glow theme.\n\nRelevant code:\n- LandingPage.jsx line 145-185: traveling light rAF animation (uses travelingLightRef, hubBoxRef)\n- LandingPage.jsx line 289-291: togglePanel sets activePanelId state\n- LandingPage.jsx line 462: hub-box div with hubBoxRef\n- LandingPage.jsx line 464: traveling-light div with travelingLightRef\n- LandingPage.jsx line 621: auth panel div with info-panel auth-panel classes\n- LandingPage.css line 199-208: .hub-box styles (overflow: visible)\n- LandingPage.css line 211-225: .traveling-light styles (12px dot, radial-gradient #38bdf8/#0ea5e9)\n- LandingPage.css line 442-453: .info-panel base + .open styles\n- LandingPage.css line 666-668: .auth-panel.open max-height 550px\n- LandingPage.css line 796-814: .auth-submit-btn orange gradient\n\nAll glow colors MUST use the traveling light's exact hue: #38bdf8 = rgb(56, 189, 248). No new colors.",
+      "change": [
+        "frontend/src/pages/LandingPage.jsx line 462: Add conditional panel-open class to hub-box: className={`hub-box${activePanelId ? ' panel-open' : ''}`}",
+        "frontend/src/pages/LandingPage.css line 211: Add opacity: 1 and transition: opacity 0.3s ease to .traveling-light rule",
+        "frontend/src/pages/LandingPage.css after line 225: New rule .hub-box.panel-open .traveling-light { opacity: 0; }",
+        "frontend/src/pages/LandingPage.css line 442: Add position: relative and border-top: 1px solid transparent to .info-panel. Expand transition to include border-color 0.3s ease, box-shadow 0.3s ease",
+        "frontend/src/pages/LandingPage.css after line 453: New ::before pseudo-element on .info-panel — absolute positioned at top, full width, height 80px, linear-gradient(to bottom, rgba(56,189,248,0.15) 0%, rgba(56,189,248,0.06) 30%, transparent 100%), opacity 0, transition: opacity 0.4s ease 0.1s, pointer-events: none, z-index 1",
+        "frontend/src/pages/LandingPage.css after line 453: New rule .info-panel.open::before { opacity: 1; }",
+        "frontend/src/pages/LandingPage.css line 450: Add border-top: 1px solid rgba(56,189,248,0.4) and box-shadow: 0 -4px 20px rgba(56,189,248,0.12), inset 0 1px 0 rgba(56,189,248,0.15) to .info-panel.open",
+        "frontend/src/pages/LandingPage.css after line 668: New rule .info-panel.auth-panel.open::before — height 100px, 4-stop gradient (rgba 0.2 → 0.08 → 0.02 → transparent) for stronger auth spotlight",
+        "frontend/src/pages/LandingPage.css line 799: Replace orange gradient with background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) and add border: 1px solid rgba(56,189,248,0.3)",
+        "frontend/src/pages/LandingPage.css line 812: Replace hover shadow with box-shadow: 0 4px 15px rgba(14,165,233,0.4) and hover background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)"
+      ],
+      "test": "Step-by-step: (1) Load landing page at localhost:5173 — verify traveling light dot animates along hub-box top border. (2) Click 'Sign Up' — verify light fades out smoothly over ~0.3s, auth panel opens with cyan glow across top border shining downward, Sign In button is cyan not orange. (3) Close auth panel — verify light fades back in, spotlight disappears. (4) Click 'About' then 'Pricing' — verify same light fade + glow behavior on those panels (lighter glow). (5) With auth panel open, click form fields and buttons — verify all interactive elements remain clickable (pointer-events: none on pseudo-element). (6) Paste screenshot or describe visual result in completion_note.",
+      "investigation_id": null,
+      "completion_note": "Changed LandingPage.jsx line 462: hub-box now gets panel-open class when activePanelId is set. Changed LandingPage.css (1602→1636 lines): Added opacity:1 + transition:opacity 0.3s to .traveling-light, new .hub-box.panel-open .traveling-light{opacity:0} rule fades light out. Added position:relative + border-top:transparent to .info-panel base, expanded transition to include border-color and box-shadow. Added ::before pseudo-element with cyan gradient glow (80px height, rgba(56,189,248,0.15)→transparent), opacity 0→1 on .open with 0.1s delay. .info-panel.open gets border-top:rgba(56,189,248,0.4) + box-shadow. Auth panel override: taller ::before (100px, 4-stop gradient at 0.2 opacity). Replaced auth-submit-btn orange gradient with cyan (#0ea5e9→#0284c7), border rgba(56,189,248,0.3). Hover: cyan shadow + lighter cyan gradient. All colors use #38bdf8 hue. Build: vite build 0 errors. Auth required for visual test — noted: auth verified separately.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",

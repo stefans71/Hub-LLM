@@ -459,7 +459,7 @@ export default function LandingPage({ onSignUp }) {
       {/* Main Container */}
       <div className="main-container">
         {/* Hub Box */}
-        <div className="hub-box" ref={hubBoxRef}>
+        <div className={`hub-box${activePanelId ? ' panel-open' : ''}`} ref={hubBoxRef}>
           {/* Traveling Light */}
           <div className="traveling-light" ref={travelingLightRef} />
 

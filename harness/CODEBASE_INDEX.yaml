@@ -220,7 +220,8 @@ frontend_pages:
       - "Inline auth panel with signup/login tabs, OAuth (GitHub/Google), password validation"
       - "Sticky header with logo, pipeline, nav menu"
       - "Floating particle animation background"
-      - "Traveling light animation on hub-box border"
+      - "Traveling light animation on hub-box border — fades out when any panel opens (panel-open class)"
+      - "Spotlight glow ::before pseudo-element on info-panel.open — cyan gradient shining downward, stronger on auth-panel"
     auth_integration:
       - {hook: useAuth, line: 2, purpose: "access signup/login/handleOAuthCallback"}
       - {fetch_oauth_providers: "/api/auth/oauth/providers", line: 267}
@@ -238,8 +239,8 @@ frontend_pages:
 
   LandingPage.css:
     path: frontend/src/pages/LandingPage.css
-    lines: 1602
-    purpose: "Scoped CSS for LandingPage component — all selectors prefixed with .landing-page to avoid global conflicts"
+    lines: 1636
+    purpose: "Scoped CSS for LandingPage component — all selectors prefixed with .landing-page to avoid global conflicts. Includes spotlight glow effects (UI-12) and cyan auth submit button"
     animations:
       - {name: lp-float, purpose: "particle floating from bottom to top"}
       - {name: lp-pulse, purpose: "status dot pulsing"}
