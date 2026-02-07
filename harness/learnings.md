@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 111 - 2026-02-07 EST
+**Task**: BUG-43
+**What**: Removed claude --resume auto-start from ClaudeCodeTerminalChat. Added autoStart prop (default false). When false, writes a cyan ANSI hint to terminal telling user to type 'claude' or 'claude --resume'. Sets claudeStartedRef.current=true and status='claude_ready' so terminal accepts input immediately. Build: 0 errors (1075 lines).
+**Key Learning**: Auto-sending commands via WebSocket on connection is fragile — if the command fails (e.g. 'No conversations to resume'), the user can't Ctrl+C from the chat input. Better to show hints and let the user decide when to start.
+
+---
+
 ### Session 110 - 2026-02-07 EST
 **Task**: BUG-41
 **What**: Fixed selectedModelMeta null on mount causing checkbox to never show. Default model 'anthropic/claude-sonnet-4' didn't match SUBSCRIPTION_MODELS IDs ('claude-sonnet-4.5' format). Added export to SUBSCRIPTION_MODELS, imported in CreateProject, derived isSubscriptionModel from the array (works without onChange click). Changed default model to 'claude-sonnet-4.5'. Build: 0 errors (2387 lines).

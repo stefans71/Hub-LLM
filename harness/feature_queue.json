@@ -47,7 +47,7 @@
         "code_works": true,
         "index_updated": true,
         "learnings_written": true,
-        "committed_pushed": false,
+        "committed_pushed": true,
         "status_set_to_pending_review": true
       }
     },
@@ -56,7 +56,7 @@
       "name": "Remove claude --resume auto-start, show terminal hint instead",
       "size": "S",
       "priority": 1,
-      "status": "pending",
+      "status": "pending_review",
       "description": "ClaudeCodeTerminalChat auto-sends 'claude --resume' on every WebSocket 'connected' event (line 273, no conditions). For new projects with no prior conversation, claude --resume shows 'No conversations to resume' and prompts Ctrl+C, which doesn't work from the chat input — user is stuck.\n\nAnthropic changed --resume behavior: when there's nothing to resume, it hangs waiting for Ctrl+C. The auto-start approach is fundamentally broken.\n\nFix: Add autoStart prop (default false). When false, don't call startClaudeCode(). Instead write a cyan hint to the terminal telling user to type 'claude' or 'claude --resume'. Set claudeStartedRef.current=true and status='claude_ready' so the terminal accepts input. Keep startClaudeCode function available for future explicit use.\n\nNo changes needed to Chat.jsx or Workspace.jsx — they don't pass autoStart so it defaults to false.\n\nRef: startClaudeCode at lines 518-552, auto-call at line 273 in case 'connected', session tracking via localStorage claude_session_{slug}.",
       "change": [
         "frontend/src/components/ClaudeCodeTerminalChat.jsx line 173: Add autoStart = false to props destructuring after enhanceWithAI",
@@ -64,13 +64,13 @@
       ],
       "test": "Step-by-step: (1) Open workspace with a subscription model and VPS connected. (2) Terminal should show 'Connected to {server}' and cyan hint text. (3) Terminal should NOT show 'Starting Claude Code session...' and should NOT auto-run 'claude --resume'. (4) Type 'claude' in terminal input area → command appears in terminal, Claude Code starts normally. (5) npm run build — 0 errors. Paste the modified case 'connected' handler code from ClaudeCodeTerminalChat.jsx in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed ClaudeCodeTerminalChat.jsx (1064→1075 lines). Added autoStart=false prop at line 173. Modified case 'connected' handler (lines 263-285): if (autoStart) { writeln 'Starting Claude Code session...' + startClaudeCode() } else { writeln cyan hint 'Type \"claude\" to start a new session, or \"claude --resume\" to resume a previous one.', set claudeStartedRef.current=true, setStatus('claude_ready') }. Terminal accepts input immediately without auto-running any command. Build: vite build 0 errors.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

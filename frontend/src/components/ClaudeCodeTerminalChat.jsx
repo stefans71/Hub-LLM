@@ -170,7 +170,7 @@ function ChatBubble({ message, isUser }) {
     </div>
   )
 }
-export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug, onProcessingChange, enhanceWithAI }) {
+export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug, onProcessingChange, enhanceWithAI, autoStart = false }) {
   const terminalRef = useRef(null)
   const xtermRef = useRef(null)
   const wsRef = useRef(null)
@@ -265,12 +265,23 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
             setServerInfo({ server: message.server, host: message.host })
             if (xtermRef.current) {
               xtermRef.current.writeln(`\x1b[32mConnected to ${message.server}\x1b[0m`)
-              xtermRef.current.writeln('\x1b[90mStarting Claude Code session...\x1b[0m')
-              xtermRef.current.writeln('')
-              xtermRef.current.scrollToBottom()
             }
-            // Auto-start Claude Code after connection
-            startClaudeCode()
+            if (autoStart) {
+              if (xtermRef.current) {
+                xtermRef.current.writeln('\x1b[90mStarting Claude Code session...\x1b[0m')
+                xtermRef.current.writeln('')
+                xtermRef.current.scrollToBottom()
+              }
+              startClaudeCode()
+            } else {
+              if (xtermRef.current) {
+                xtermRef.current.writeln('\x1b[36mType "claude" to start a new session, or "claude --resume" to resume a previous one.\x1b[0m')
+                xtermRef.current.writeln('')
+                xtermRef.current.scrollToBottom()
+              }
+              claudeStartedRef.current = true
+              setStatus('claude_ready')
+            }
             break
 
           case 'output':
