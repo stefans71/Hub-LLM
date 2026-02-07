@@ -797,36 +797,34 @@ export default function LandingPage({ onSignUp }) {
           </div>
 
           {/* File Explorer */}
-          <div className="file-explorer">
-            <div
-              className={`file-header${isFileExplorerOpen ? ' open' : ''}`}
-              onClick={toggleFileExplorer}
-            >
-              <svg className="folder-icon" viewBox="0 0 24 24">
-                <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
-              </svg>
-              Project Files
-              <svg className="chevron" viewBox="0 0 24 24" width="12" height="12">
-                <path d="M7 10l5 5 5-5z" fill="currentColor" />
-              </svg>
-            </div>
+          <div
+            className={`file-header${isFileExplorerOpen ? ' open' : ''}`}
+            onClick={toggleFileExplorer}
+          >
+            <svg className="folder-icon" viewBox="0 0 24 24">
+              <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+            </svg>
+            Project Files
+            <svg className="chevron" viewBox="0 0 24 24" width="12" height="12">
+              <path d="M7 10l5 5 5-5z" fill="currentColor" />
+            </svg>
+          </div>
 
-            <div className={`file-content${isFileExplorerOpen ? ' open' : ''}`}>
-              <div className="project-selector">
-                <label>Project:</label>
-                <select
-                  className="project-dropdown"
-                  value={currentProject}
-                  onChange={handleProjectChange}
-                >
-                  <option value={1}>Landing Page</option>
-                  <option value={2}>API Server</option>
-                  <option value={3}>Mobile App</option>
-                </select>
-              </div>
-              <div className="file-tree">
-                {renderTreeItems(project.files, 0)}
-              </div>
+          <div className={`file-content${isFileExplorerOpen ? ' open' : ''}`}>
+            <div className="project-selector">
+              <label>Project:</label>
+              <select
+                className="project-dropdown"
+                value={currentProject}
+                onChange={handleProjectChange}
+              >
+                <option value={1}>Landing Page</option>
+                <option value={2}>API Server</option>
+                <option value={3}>Mobile App</option>
+              </select>
+            </div>
+            <div className="file-tree">
+              {renderTreeItems(project.files, 0)}
             </div>
           </div>
 

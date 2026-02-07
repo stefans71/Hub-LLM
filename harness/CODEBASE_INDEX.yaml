@@ -179,7 +179,7 @@ frontend_pages:
 
   LandingPage.jsx:
     path: frontend/src/pages/LandingPage.jsx
-    lines: 948
+    lines: 946
     purpose: "Interactive HTML prototype landing page converted to React — full demo with model selector, chat, file explorer, terminal, VPS cards, and inline auth panel (FEAT-14)"
     props: "{onSignUp} — DEPRECATED callback, now uses inline auth panel instead"
     key_state:
@@ -238,7 +238,7 @@ frontend_pages:
 
   LandingPage.css:
     path: frontend/src/pages/LandingPage.css
-    lines: 1609
+    lines: 1602
     purpose: "Scoped CSS for LandingPage component — all selectors prefixed with .landing-page to avoid global conflicts"
     animations:
       - {name: lp-float, purpose: "particle floating from bottom to top"}

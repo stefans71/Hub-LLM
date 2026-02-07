@@ -1014,11 +1014,6 @@
 }
 
 /* File Explorer */
-.landing-page .file-explorer {
-    border-top: 1px solid rgba(56, 189, 248, 0.15);
-    background: rgba(0, 0, 0, 0.1);
-}
-
 .landing-page .file-header {
     display: flex;
     align-items: center;
@@ -1030,8 +1025,6 @@
     font-size: 0.9rem;
     color: #38bdf8;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     border-top: 1px solid rgba(56, 189, 248, 0.1);
@@ -1062,7 +1055,7 @@
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .landing-page .file-content.open {

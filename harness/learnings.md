@@ -11,7 +11,7 @@ Track discoveries, patterns, and friction points for harness improvement.
 **What (BUG-37)**: handleComplete catch block called onComplete() even on API failure — user navigated away but setup_completed stayed false. Removed onComplete() from catch, added skipError state with inline error message ('Failed to save — please try again').
 **What (UI-10)**: Landing page nav links, AI Ready text, footer — all too dim. Bumped nav-item and chat-title rgba opacity 0.6→0.8 (brighter base), footer 0.3→0.55 and font-size 0.7rem→1.4rem. Added copyright with dynamic year.
 **What (UI-11)**: Auth panel text too dim — bumped inactive tab 0.5→0.7, placeholder 0.4→0.6, password reqs 0.5→0.65, divider 0.4→0.6, terms 0.35→0.55. No text below 0.55 opacity now.
-**What (BUG-38)**: PROJECT FILES header missing text-transform:uppercase and letter-spacing:0.1em that TERMINAL and VPS SERVERS had. Added both to .file-header CSS.
+**What (BUG-38)**: REJECTED first attempt (added duplicate CSS). Real fix: removed `.file-explorer` wrapper div from JSX — `.file-header` is now a direct child of `.hub-box` like `.terminal-toggle`. Removed `.file-explorer` CSS rule (border-top + background). Merged background into `.file-content`. Removed duplicate text-transform/letter-spacing lines. Structure now matches terminal-toggle exactly.
 **Pattern**: For Coolify docker-compose apps, NEVER use the Coolify UI Domains field — it generates broken Traefik labels in beta.459. Manage all Traefik routing via labels in docker-compose.yml. Caddy labels also appear alongside Traefik labels when Domains field is populated (even when proxy is Traefik) — another sign of the bug. Dynamic configs at `/data/coolify/proxy/dynamic/` are for Coolify's own dashboard only, not app routing.
 
 ---
