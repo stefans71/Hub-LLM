@@ -954,9 +954,10 @@ deployment:
     existing:
       - {file: "001_add_setup_completed.py", purpose: "Adds setup_completed BOOLEAN column to users table if missing"}
       - {file: "002_fix_uuid_columns.py", purpose: "Converts UUID columns to VARCHAR(64) in Postgres — idempotent, skips SQLite"}
+      - {file: "003_add_projects_columns.py", purpose: "Adds 10 missing columns to projects table in Postgres (slug, brief, workspace, connection_type, github_repo, vps_server_id, agent_ids, mcp_server_ids, status, selected_model) — idempotent, skips SQLite"}
     execution: "run_migrations() in backend/models/__init__.py — runs on every startup after create_all"
 
-  last_verified_session: 90
+  last_verified_session: 92
 
 # ============================================================================
 # DATABASE SCHEMA (SQLAlchemy ORM — backend/models/__init__.py)

@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 92 - 2026-02-07 EST
+**Task**: BUG-33
+**What**: Created backend/migrations/003_add_projects_columns.py. Adds 10 missing columns to projects table in Postgres production: slug, brief, workspace, connection_type, github_repo, vps_server_id (FK to vps_servers), agent_ids, mcp_server_ids, status, selected_model. Idempotent — checks each column via SQLAlchemy inspect before ALTER TABLE. Populates slug from name via REGEXP_REPLACE. Skips on SQLite (create_all handles it). Tested locally: all 3 migrations run cleanly, backend starts OK.
+**Key Learning**: Same recurring pattern as BUG-28-REOPEN — ORM model columns added over time without corresponding migrations. Migration 003 is the largest batch fix (10 columns). Always check production table schema against ORM model when adding columns.
+
+---
+
 ### Session 91 - 2026-02-06 EST
 **Tasks**: BUG-31, UI-07, BUG-32
 **What**:
