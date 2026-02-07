@@ -207,6 +207,9 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
   const [showEnhanceBanner, setShowEnhanceBanner] = useState(!!enhanceWithAI)
   const [copied, setCopied] = useState(false)
 
+  // FEAT-27: Floating hint overlay state
+  const [showCommandHint, setShowCommandHint] = useState(false)
+
   const copyBriefToClipboard = useCallback(() => {
     if (!project?.brief) return
     const cleanBrief = project.brief.trim().replace(/\n+/g, ' ').substring(0, 500)
@@ -281,6 +284,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
               }
               claudeStartedRef.current = true
               setStatus('claude_ready')
+              setShowCommandHint(true)
             }
             break
 
@@ -657,6 +661,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ type: 'input', data }))
         }
+        // FEAT-27: Dismiss hint overlay on first keystroke
+        setShowCommandHint(false)
       })
 
       // Focus terminal for keyboard input
@@ -1007,12 +1013,40 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
 
         {/* Terminal Display Area - always rendered but hidden when in bubbles mode */}
         {/* BUG-18 FIX: Click to focus terminal for keyboard input */}
-        <div
-          ref={terminalRef}
-          className="claude-code-terminal-area"
-          onClick={handleTerminalClick}
-          style={{ display: viewMode === 'terminal' && terminalReady ? 'block' : 'none' }}
-        />
+        <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+          <div
+            ref={terminalRef}
+            className="claude-code-terminal-area"
+            onClick={handleTerminalClick}
+            style={{ display: viewMode === 'terminal' && terminalReady ? 'block' : 'none', height: '100%' }}
+          />
+          {/* FEAT-27: Floating hint overlay */}
+          {showCommandHint && viewMode === 'terminal' && (
+            <div style={{
+              position: 'absolute',
+              bottom: '24px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(15, 20, 25, 0.85)',
+              backdropFilter: 'blur(8px)',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              border: '1px solid rgba(56, 189, 248, 0.2)',
+              maxWidth: '400px',
+              textAlign: 'center',
+              zIndex: 10
+            }}>
+              <div style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '6px' }}>
+                {showEnhanceBanner
+                  ? 'Copy your project brief above, then type claude to start'
+                  : 'Type claude to start a new session'}
+              </div>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>
+                or claude --resume to continue a previous one
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Chat Input Area - only shown in bubble view */}
         {viewMode === 'bubbles' && (

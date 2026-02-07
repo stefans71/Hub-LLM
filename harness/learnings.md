@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 112 - 2026-02-07 EST
+**Task**: FEAT-27
+**What**: Added floating hint overlay inside terminal container. Semi-transparent card with backdrop blur positioned at bottom center of terminal area. Shows 'Type claude to start a new session' or context-aware text when enhance banner is visible ('Copy your project brief above, then type claude to start'). Auto-dismisses on first xterm onData event (keystroke). Build: 0 errors (1109 lines).
+**Key Learning**: For overlays inside xterm.js containers, wrap the terminal div in a position:relative parent and use position:absolute on the overlay. The terminal div must have height:100% to fill the wrapper. Use zIndex:10 to float above terminal content.
+
+---
+
 ### Session 111 - 2026-02-07 EST
 **Task**: BUG-43
 **What**: Removed claude --resume auto-start from ClaudeCodeTerminalChat. Added autoStart prop (default false). When false, writes a cyan ANSI hint to terminal telling user to type 'claude' or 'claude --resume'. Sets claudeStartedRef.current=true and status='claude_ready' so terminal accepts input immediately. Build: 0 errors (1075 lines).

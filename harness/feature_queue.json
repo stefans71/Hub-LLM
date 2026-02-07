@@ -69,7 +69,7 @@
         "code_works": true,
         "index_updated": true,
         "learnings_written": true,
-        "committed_pushed": false,
+        "committed_pushed": true,
         "status_set_to_pending_review": true
       }
     },
@@ -78,7 +78,7 @@
       "name": "Terminal floating hint overlay for Claude Code commands",
       "size": "S",
       "priority": 3,
-      "status": "pending",
+      "status": "pending_review",
       "depends_on": "BUG-43",
       "description": "After BUG-43 removes auto-start, polish the terminal hint from ANSI text into a floating overlay card. Semi-transparent card positioned inside the terminal container area showing command suggestions. Auto-dismisses when user starts typing.\n\nChanges:\n- Add showCommandHint state — true when autoStart===false and status becomes 'connected'\n- Render absolutely-positioned overlay div inside terminal container with command suggestions\n- Dismiss on first xterm onData event (user starts typing)\n- When showEnhanceBanner is also true, hint text says 'Copy your project brief above, then type claude to start'\n\nRef: BUG-43 must land first (adds autoStart prop and hint text foundation).",
       "change": [
@@ -89,13 +89,13 @@
       ],
       "test": "Step-by-step: (1) Open workspace with VPS connected. (2) See floating hint card over terminal area. (3) Type any character → hint card disappears. (4) Create project with enhance checked → see both enhance banner AND hint overlay, hint says 'Copy your project brief above, then type claude to start'. (5) npm run build — 0 errors. Paste the overlay JSX block in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed ClaudeCodeTerminalChat.jsx (1075→1109 lines). Added showCommandHint useState(false) after enhance banner states. Set true in case 'connected' when autoStart===false (line 286). Dismiss on first xterm onData event (line 666: setShowCommandHint(false)). Wrapped terminal area in position:relative container. Overlay JSX: <div style={{ position:'absolute', bottom:'24px', left:'50%', transform:'translateX(-50%)', background:'rgba(15,20,25,0.85)', backdropFilter:'blur(8px)', borderRadius:'8px', padding:'12px 16px', border:'1px solid rgba(56,189,248,0.2)', maxWidth:'400px', textAlign:'center', zIndex:10 }}><div style={{ fontSize:'13px', color:'#e2e8f0', marginBottom:'6px' }}>{showEnhanceBanner ? 'Copy your project brief above, then type claude to start' : 'Type claude to start a new session'}</div><div style={{ fontSize:'12px', color:'#64748b' }}>or claude --resume to continue a previous one</div></div>. Build: vite build 0 errors.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {
