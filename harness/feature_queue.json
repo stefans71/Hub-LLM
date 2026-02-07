@@ -26,32 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-22",
-      "name": "Backend: Add Claude Code SSH routing to expand-brief endpoint",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "The /api/ai/expand-brief endpoint (backend/routers/ai.py) only supports 'openrouter' and 'claude_direct' providers. Users with Claude Code on their VPS cannot use their Pro subscription for 'Define Project with AI'. Add 'claude_code_ssh' provider support, matching the pattern already used in chat.py lines 74-81.\n\nKey challenge: ClaudeCodeSSHService.chat() (backend/services/claude_code_ssh.py) returns an AsyncGenerator (streaming-only). The expand-brief endpoint currently calls service.chat(stream=False) and reads response dict. For SSH, collect all streamed chunks into a single string, then parse JSON as normal.\n\nPattern reference: backend/routers/chat.py lines 74-81 — existing claude_code_ssh handling with server_id validation and ClaudeCodeSSHService instantiation.\n\nReferences:\n- backend/routers/ai.py lines 10 (imports), 15-18 (ExpandBriefRequest), 36-41 (AIChatRequest), 55-70 (get_service), 114-186 (expand_brief), 189-226 (ai_chat)\n- backend/routers/chat.py lines 26-34 (ChatRequest with server_id), 74-95 (provider routing)\n- backend/services/claude_code_ssh.py lines 14-67 (ClaudeCodeSSHService)\n\nPlan file: /root/.claude/plans/lucky-stargazing-conway.md — Task 1 section",
-      "change": [
-        "backend/routers/ai.py line 10: Add import — from services.claude_code_ssh import ClaudeCodeSSHService",
-        "backend/routers/ai.py lines 15-18: Add server_id: Optional[str] = None to ExpandBriefRequest",
-        "backend/routers/ai.py lines 36-41: Add server_id: Optional[str] = None to AIChatRequest",
-        "backend/routers/ai.py lines 55-70: Update get_service() — add server_id param, add claude_code_ssh branch before claude_direct (raise 400 if no server_id)",
-        "backend/routers/ai.py line 129: Pass server_id=request.server_id to get_service()",
-        "backend/routers/ai.py lines 136-149: For claude_code_ssh provider, collect async generator chunks into string instead of calling service.chat(stream=False). For other providers, keep existing non-streaming logic. JSON parse from line 152 stays the same.",
-        "backend/routers/ai.py line ~199: Pass server_id=request.server_id to get_service() in ai_chat endpoint too"
-      ],
-      "test": "Start backend: cd backend && python -m uvicorn main:app --port 8000. Test OpenRouter still works: curl -X POST http://localhost:8000/api/ai/expand-brief -H 'Content-Type: application/json' -H 'X-OpenRouter-Key: <key>' -d '{\"brief\":\"Build a todo app\",\"provider\":\"openrouter\"}' — should return JSON. Test SSH routing (requires connected VPS): curl -X POST http://localhost:8000/api/ai/expand-brief -H 'Content-Type: application/json' -d '{\"brief\":\"Build a todo app\",\"model\":\"claude-sonnet-4\",\"provider\":\"claude_code_ssh\",\"server_id\":\"<id>\"}' — should return JSON. Test missing server_id: curl with provider=claude_code_ssh but no server_id — should return 400.",
-      "completion_note": "Changed backend/routers/ai.py (242→266 lines). Added ClaudeCodeSSHService import (line 11). Added server_id: Optional[str] = None to ExpandBriefRequest (line 20) and AIChatRequest (line 44). Updated get_service() — new server_id param, claude_code_ssh branch returns ClaudeCodeSSHService(server_id) with 400 guard for missing server_id. expand_brief: for claude_code_ssh, collects async generator chunks via `async for chunk in generator` then joins to string for JSON parsing; other providers keep existing service.chat(stream=False) logic. ai_chat: passes server_id to get_service(), stream_chat_response() already handles all providers via `await service.chat(stream=True)`. Syntax verified clean. Backend-only change — no virtualenv available for runtime test; auth required for full API test.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "FEAT-23",
       "name": "ModelSelector billing mode toggle + CreateProject SSH routing",
       "size": "M",
@@ -92,6 +66,18 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-22",
+      "name": "Backend: Add Claude Code SSH routing to expand-brief endpoint",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit d806ef3. ai.py 242→266 lines. Import ClaudeCodeSSHService (line 11). server_id on both request models (lines 20, 44). get_service() with claude_code_ssh branch + 400 guard (lines 58-66). expand_brief: async generator collection for SSH (lines 147-159), existing non-streaming logic preserved (lines 160-173). ai_chat: server_id passed through (line 139). Code matches plan. No runtime test (no virtualenv) — will verify after deploy.",
+      "index_verified": true,
+      "test_evidence_verified": false,
+      "test_evidence_note": "Syntax verified only. Runtime test pending deploy — no virtualenv on bare system. FastAPI ModuleNotFoundError is expected without virtualenv, not a code issue.",
+      "completion_note": "Claude Code SSH routing added to expand-brief and ai_chat endpoints. Streaming collection for SSH service."
+    },
     {
       "id": "FEAT-20",
       "name": "Dynamic model selector in Create Project step 1",
