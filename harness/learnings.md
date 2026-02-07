@@ -5,10 +5,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 99 - 2026-02-07 EST
-**Tasks**: INFRA-04, BUG-36, BUG-37
+**Tasks**: INFRA-04, BUG-36, BUG-37, UI-10, UI-11, BUG-38
 **What (INFRA-04)**: Fixed Coolify Traefik label poisoning that caused hubllm.dev to 504 timeout on every deploy. Root cause: Coolify's Domains field for the frontend service had bare `hubllm.dev,www.hubllm.dev` without `https://` prefix. Known Coolify bug (GitHub #5813, #7092, #7121) in beta.459 — domain goes into PathPrefix() instead of Host(), generating `Host('') && PathPrefix('hubllm.dev')`. Adding `https://` prefix did NOT fix it in this version. Fix: cleared Coolify Domains field entirely so it stops generating broken auto-labels. The docker-compose.yml already had correct Traefik labels. Also added HTTP→HTTPS redirect labels to docker-compose.yml so redirects are code-managed. Verified: curl returns 200, container labels clean, no Traefik errors after redeploy.
 **What (BUG-36)**: Setup wizard 'Skip for now' only called onComplete() locally without persisting to DB — users got trapped in /setup redirect loop. Merged handleSkip into handleComplete so 'Skip setup' now calls POST /api/auth/me/setup-complete. Removed redundant 'Don't show this again' button (11px, 60% opacity — nearly invisible).
 **What (BUG-37)**: handleComplete catch block called onComplete() even on API failure — user navigated away but setup_completed stayed false. Removed onComplete() from catch, added skipError state with inline error message ('Failed to save — please try again').
+**What (UI-10)**: Landing page nav links, AI Ready text, footer — all too dim. Bumped nav-item and chat-title rgba opacity 0.6→0.8 (brighter base), footer 0.3→0.55 and font-size 0.7rem→1.4rem. Added copyright with dynamic year.
+**What (UI-11)**: Auth panel text too dim — bumped inactive tab 0.5→0.7, placeholder 0.4→0.6, password reqs 0.5→0.65, divider 0.4→0.6, terms 0.35→0.55. No text below 0.55 opacity now.
+**What (BUG-38)**: PROJECT FILES header missing text-transform:uppercase and letter-spacing:0.1em that TERMINAL and VPS SERVERS had. Added both to .file-header CSS.
 **Pattern**: For Coolify docker-compose apps, NEVER use the Coolify UI Domains field — it generates broken Traefik labels in beta.459. Manage all Traefik routing via labels in docker-compose.yml. Caddy labels also appear alongside Traefik labels when Domains field is populated (even when proxy is Traefik) — another sign of the bug. Dynamic configs at `/data/coolify/proxy/dynamic/` are for Coolify's own dashboard only, not app routing.
 
 ---

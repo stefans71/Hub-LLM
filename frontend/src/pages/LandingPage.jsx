@@ -941,7 +941,7 @@ export default function LandingPage({ onSignUp }) {
 
       {/* Footer */}
       <div className="footer">
-        HubLLM.dev — Code with any LLM. Deploy anywhere.
+        &copy; {new Date().getFullYear()} HubLLM.dev — Code with any LLM. Deploy anywhere.
       </div>
     </div>
   )

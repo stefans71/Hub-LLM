@@ -238,7 +238,7 @@ frontend_pages:
 
   LandingPage.css:
     path: frontend/src/pages/LandingPage.css
-    lines: 1607
+    lines: 1609
     purpose: "Scoped CSS for LandingPage component — all selectors prefixed with .landing-page to avoid global conflicts"
     animations:
       - {name: lp-float, purpose: "particle floating from bottom to top"}

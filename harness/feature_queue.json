@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-08T03:00",
+  "updated": "2026-02-08T03:30",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,77 @@
     }
   },
   "queue": [
+    {
+      "id": "UI-10",
+      "name": "Landing page nav links and footer too dim/small — brightness + copyright",
+      "size": "XS",
+      "priority": 3,
+      "status": "pending_review",
+      "description": "Three landing page text issues from visual review:\n\n1. **Nav grey links too dim** — 'About', 'Pricing', 'Contact' are `rgba(150, 180, 200, 0.6)` (LandingPage.css line 138). Need to be ~80% brighter. Bump to `rgba(180, 210, 230, 0.8)` or similar. 'Sign Up' (orange) and 'AI Ready' are fine.\n\n2. **Footer text too small and dim** — 'HubLLM.dev — Code with any LLM. Deploy anywhere.' is `0.7rem` at `rgba(150, 180, 200, 0.3)` (LandingPage.css line 1557). Needs: font-size 200% bigger (→ ~1.4rem), 80% brighter (→ `rgba(180, 210, 230, 0.55)`), and add copyright: '© {year} HubLLM.dev — Code with any LLM. Deploy anywhere.' where year auto-updates via `new Date().getFullYear()`.\n\n3. **'AI Ready' status text** — also at `rgba(150, 180, 200, 0.6)` (CSS line 425). Bump same as nav links.\n\nFiles: LandingPage.css lines 138, 425, 1551-1558. LandingPage.jsx line 943-945 (footer text — add copyright + dynamic year).",
+      "change": [
+        "frontend/src/pages/LandingPage.css line 138: Change nav-item color from rgba(150, 180, 200, 0.6) to rgba(180, 210, 230, 0.8)",
+        "frontend/src/pages/LandingPage.css line 425: Change AI Ready text color to match brighter nav links",
+        "frontend/src/pages/LandingPage.css line 1557: Change footer color from rgba(150, 180, 200, 0.3) to ~rgba(180, 210, 230, 0.55)",
+        "frontend/src/pages/LandingPage.css line 1553: Change footer font-size from 0.7rem to 1.4rem",
+        "frontend/src/pages/LandingPage.jsx lines 943-945: Change footer text to include © symbol and dynamic year — e.g. `© ${new Date().getFullYear()} HubLLM.dev — Code with any LLM. Deploy anywhere.`"
+      ],
+      "test": "Step-by-step: (1) Build passes. (2) Visual check: nav links About/Pricing/Contact noticeably brighter than before. (3) Footer text is larger (~2x) and brighter. (4) Footer shows '© 2026 HubLLM.dev — ...' with current year. Paste screenshot or describe visual diff.",
+      "investigation_id": null,
+      "completion_note": "Changed LandingPage.css: nav-item rgba(150,180,200,0.6)→rgba(180,210,230,0.8), chat-title same bump, footer font-size 0.7rem→1.4rem, footer color rgba(150,180,200,0.3)→rgba(180,210,230,0.55). Changed LandingPage.jsx: footer text now '© {year} HubLLM.dev — Code with any LLM. Deploy anywhere.' with dynamic year via new Date().getFullYear(). Build passes 0 errors.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
+      "id": "UI-11",
+      "name": "Landing page auth panel text too dim — form fields, tabs, terms",
+      "size": "XS",
+      "priority": 3,
+      "status": "pending_review",
+      "description": "The inline auth panel (Sign In / Create Account) opened via 'Sign Up' button has multiple text elements that are too dim to read comfortably on the dark background.\n\nCurrent values (LandingPage.css):\n- Input placeholder: `rgba(150, 180, 200, 0.4)` at line 746 — bump to 0.6\n- Inactive tab text ('Create Account' when Sign In selected): `rgba(150, 180, 200, 0.5)` at line 689 — bump to 0.7\n- Auth divider text ('or continue with'): `rgba(150, 180, 200, 0.4)` at line 838 — bump to 0.6\n- Terms text ('By continuing...'): `rgba(150, 180, 200, 0.35)` at line 872 — bump to 0.55\n- Password requirements text: `rgba(150, 180, 200, 0.5)` at line 788 — bump to 0.65\n\nGeneral rule: no text on the auth panel should be below 0.5 opacity. These are functional UI elements, not decorative.\n\nFile: frontend/src/pages/LandingPage.css lines 689, 746, 788, 838, 872.",
+      "change": [
+        "frontend/src/pages/LandingPage.css line 746: Input placeholder rgba opacity 0.4 → 0.6",
+        "frontend/src/pages/LandingPage.css line 689: Inactive tab text rgba opacity 0.5 → 0.7",
+        "frontend/src/pages/LandingPage.css line 838: Auth divider text rgba opacity 0.4 → 0.6",
+        "frontend/src/pages/LandingPage.css line 872: Terms text rgba opacity 0.35 → 0.55",
+        "frontend/src/pages/LandingPage.css line 788: Password requirements rgba opacity 0.5 → 0.65"
+      ],
+      "test": "Step-by-step: (1) Build passes. (2) Click 'Sign Up' on landing page. (3) All form text (placeholders, tabs, terms, divider) should be clearly readable — no squinting. (4) Switch to 'Create Account' tab — password requirements text visible. Describe visual diff.",
+      "investigation_id": null,
+      "completion_note": "Changed LandingPage.css: inactive tab 0.5→0.7, placeholder 0.4→0.6, password reqs 0.5→0.65, divider 0.4→0.6, terms 0.35→0.55. All auth panel text now ≥0.55 opacity. Build passes 0 errors.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
+      "id": "BUG-38",
+      "name": "Landing page PROJECT FILES section not centered — misaligned vs TERMINAL and VPS SERVERS",
+      "size": "XS",
+      "priority": 3,
+      "status": "pending_review",
+      "description": "On the landing page demo section, the three collapsible headers (PROJECT FILES, TERMINAL, VPS SERVERS) should all be centered. In the live site, PROJECT FILES appears left-aligned while TERMINAL and VPS SERVERS are correctly centered.\n\nCSS classes:\n- PROJECT FILES: `.file-header` (LandingPage.css line 1022-1028) — has `justify-content: center`\n- TERMINAL: `.terminal-toggle` (line 1185-1199) — has `justify-content: center`\n- VPS SERVERS: `.vps-toggle` (line 1328-1345) — has `justify-content: center`\n\nAll three CSS classes specify center. The issue may be that `.file-header` has additional content or padding that shifts it left, or the parent container has different alignment. Compare the three sections' parent structure in JSX.\n\nJSX: PROJECT FILES at line 801-812, TERMINAL at line 834-845, VPS SERVERS at line 888-899.\n\nInvestigate why the rendered output is left-aligned despite CSS centering, then fix to match TERMINAL/VPS SERVERS alignment.",
+      "change": [
+        "frontend/src/pages/LandingPage.css or LandingPage.jsx: Fix PROJECT FILES header alignment to be centered like TERMINAL and VPS SERVERS — investigate parent container styles and width constraints"
+      ],
+      "test": "Step-by-step: (1) Build passes. (2) Visual check: all three collapsible section headers (PROJECT FILES, TERMINAL, VPS SERVERS) are centered and aligned identically. Paste screenshot or describe layout.",
+      "investigation_id": null,
+      "completion_note": "Root cause: .file-header was missing text-transform:uppercase and letter-spacing:0.1em that .terminal-toggle and .vps-toggle both had. The text content 'Project Files' rendered in mixed case with normal spacing, which made the flex centering appear off compared to the uppercase headers. Added both properties to .file-header CSS. Build passes 0 errors.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      }
+    },
     {
       "id": "BUG-36",
       "name": "Setup wizard 'Skip' traps users in /setup redirect loop",
