@@ -176,6 +176,7 @@ export default function ModelSelector({
   const [searchFilter, setSearchFilter] = useState('')
   const [openRouterModels, setOpenRouterModels] = useState(() => getCachedModels() || [])
   const [modelsLoading, setModelsLoading] = useState(false)
+  const [activeBillingMode, setActiveBillingMode] = useState('auto') // 'auto'|'subscription'|'openrouter'
   const dropdownRef = useRef(null)
   const searchInputRef = useRef(null)
 
@@ -263,6 +264,13 @@ export default function ModelSelector({
       filtered = modelList.filter(m => m.tier === 'subscription' || m.isPopular)
     }
 
+    // Apply billing mode filter
+    if (activeBillingMode === 'subscription') {
+      filtered = filtered.filter(m => m.tier === 'subscription')
+    } else if (activeBillingMode === 'openrouter') {
+      filtered = filtered.filter(m => m.tier !== 'subscription')
+    }
+
     // Group by provider, subscription (anthropic) first
     const grouped = {}
     filtered.forEach(model => {
@@ -316,7 +324,7 @@ export default function ModelSelector({
 
   const handleModelSelect = (modelItem) => {
     const color = getProviderColor(modelItem.provider)
-    const newModel = { name: modelItem.name, color, id: modelItem.id, provider: modelItem.provider }
+    const newModel = { name: modelItem.name, color, id: modelItem.id, provider: modelItem.provider, tier: modelItem.tier }
     setDropdownOpen(false)
     setSearchFilter('')
     onChange?.(newModel)
@@ -451,8 +459,93 @@ export default function ModelSelector({
             </div>
           </div>
 
+          {/* Billing mode toggle — only when subscription models are enabled */}
+          {showSubscriptionModels && (
+            <div style={{
+              display: 'flex',
+              gap: '4px',
+              padding: '6px 12px',
+              background: 'var(--bg-secondary)',
+              borderBottom: '1px solid var(--border)'
+            }}>
+              {[
+                { key: 'subscription', label: 'Pro Subscription', available: apiKeys.anthropic },
+                { key: 'openrouter', label: 'OpenRouter', available: apiKeys.openrouter }
+              ].map(tab => {
+                const isActive = activeBillingMode === tab.key
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveBillingMode(prev => prev === tab.key ? 'auto' : tab.key)}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '5px 8px',
+                      fontSize: '11px',
+                      fontWeight: isActive ? 600 : 400,
+                      color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      background: isActive ? 'var(--bg-tertiary)' : 'transparent',
+                      border: isActive ? '1px solid var(--border)' : '1px solid transparent',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: tab.available ? 'var(--success)' : 'var(--text-muted)',
+                      flexShrink: 0
+                    }} />
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Not-set-up banner when a billing tab is selected but credentials missing */}
+          {activeBillingMode === 'subscription' && !apiKeys.anthropic && (
+            <div style={{
+              padding: '8px 12px',
+              fontSize: '12px',
+              color: 'var(--text-muted)',
+              background: 'rgba(245, 158, 11, 0.08)',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <span style={{ color: 'var(--warning, #f59e0b)' }}>⚠</span>
+              Connect a VPS with Claude Code to use Pro models
+            </div>
+          )}
+          {activeBillingMode === 'openrouter' && !apiKeys.openrouter && (
+            <div
+              style={{
+                padding: '8px 12px',
+                fontSize: '12px',
+                color: 'var(--primary)',
+                background: 'rgba(59, 130, 246, 0.08)',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer'
+              }}
+              onClick={() => window.location.href = '/settings?tab=apikeys'}
+            >
+              <Key size={12} />
+              Add OpenRouter API Key to unlock models
+            </div>
+          )}
+
           {/* Popular hint or loading */}
-          {!searchFilter && openRouterModels.length > 0 && (
+          {!searchFilter && openRouterModels.length > 0 && activeBillingMode !== 'subscription' && (
             <div style={{
               padding: '4px 12px',
               fontSize: '10px',

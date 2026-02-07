@@ -93,28 +93,31 @@ frontend_pages:
 
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
-    lines: 2360
-    purpose: "5-step project creation wizard with AI-assisted brief expansion, dynamic model selector"
+    lines: 2377
+    purpose: "5-step project creation wizard with AI-assisted brief expansion, dynamic model selector, SSH routing for Pro models"
     props: "{onCancel, onCreateProject}"
     imports: [ModelSelector]
     key_state:
       - {name: step, type: useState, drives: "wizard step (0-4)"}
       - {name: formData, type: useState, drives: "project metadata"}
-      - {name: selectedModel, type: "useState('anthropic/claude-sonnet-4')", drives: "AI model for brief expansion and chat"}
+      - {name: selectedModel, type: "useState('anthropic/claude-sonnet-4')", drives: "AI model ID for brief expansion and chat"}
+      - {name: selectedModelMeta, type: "useState(null)", drives: "full model object from ModelSelector (includes tier for routing)"}
+      - {name: claudeCodeServer, type: useMemo, drives: "first VPS with Claude Code detected from savedVpsServers"}
+      - {name: hasClaudeCode, type: derived, drives: "boolean — whether any VPS has Claude Code"}
       - {name: selectedAgents, type: "useState([])", drives: "agent selection"}
       - {name: selectedMCPServers, type: "useState([])", drives: "MCP server selection"}
     api_calls:
       - {endpoint: "/api/projects/", method: POST, purpose: "create project"}
       - {endpoint: "/api/ssh/test", method: POST, purpose: "test VPS connection"}
-      - {endpoint: "/api/ai/expand-brief", method: POST, purpose: "AI brief expansion (uses selectedModel)"}
-      - {endpoint: "/api/ai/chat", method: POST, purpose: "AI planning chat (uses selectedModel)"}
+      - {endpoint: "/api/ai/expand-brief", method: POST, purpose: "AI brief expansion (routes via claude_code_ssh or openrouter based on tier)"}
+      - {endpoint: "/api/ai/chat", method: POST, purpose: "AI planning chat (routes via claude_code_ssh or openrouter based on tier)"}
     localStorage_keys:
       - {key: vps_servers, direction: both}
       - {key: global_agents, direction: read}
       - {key: mcp_servers, direction: read}
       - {key: openrouter_key, direction: read}
       - {key: openrouter_api_key, direction: read}
-    last_verified_session: 86
+    last_verified_session: 105
 
   Setup.jsx:
     path: frontend/src/pages/Setup.jsx
@@ -384,8 +387,8 @@ frontend_components:
 
   ModelSelector.jsx:
     path: frontend/src/components/ModelSelector.jsx
-    lines: 712
-    purpose: "Reusable model selector dropdown — fetches OpenRouter models, shows subscription + OpenRouter, search/filter, version-descending sort"
+    lines: 805
+    purpose: "Reusable model selector dropdown — fetches OpenRouter models, billing mode toggle, search/filter, version-descending sort"
     props: "{value, onChange, apiKeys, claudeCodeStatus, isConnected, showSubscriptionModels, compact, className, style}"
     exports: "default ModelSelector, getProviderName, getProviderColor, getModelDisplay"
     key_state:
@@ -393,6 +396,7 @@ frontend_components:
       - {name: searchFilter, type: useState, drives: "model search filtering"}
       - {name: openRouterModels, type: useState, drives: "dynamic model list from OpenRouter API"}
       - {name: modelsLoading, type: useState, drives: "loading indicator during fetch"}
+      - {name: activeBillingMode, type: "useState('auto')", drives: "billing tab filter: auto|subscription|openrouter"}
       - {name: modelList, type: useMemo, drives: "merged subscription + OpenRouter models"}
       - {name: selectedModel, type: useMemo, drives: "display info for current value"}
     constants:
@@ -400,12 +404,15 @@ frontend_components:
       - "POPULAR_MODEL_IDS — Set of ~16 curated flagship model IDs (updated Feb 2026)"
       - "PROVIDER_COLORS/PROVIDER_NAMES — color and display name maps for 10 providers"
     features:
+      - "Billing mode toggle pills (Pro Subscription / OpenRouter) with green/grey availability dots"
+      - "Not-set-up banners when billing tab selected but credentials missing"
+      - "onChange includes tier in model object for routing decisions"
       - "Version-descending sort within provider groups (newest models first)"
       - "Popular models shown by default, full list on search"
       - "24h localStorage cache for OpenRouter model list"
       - "Manual refresh button in footer"
       - "Compact mode for smaller trigger button"
-      - "showSubscriptionModels prop to hide Anthropic Pro section"
+      - "showSubscriptionModels prop controls billing toggle visibility"
     api_calls:
       - {endpoint: "https://openrouter.ai/api/v1/models", method: GET, purpose: "fetch dynamic model list, cached 24h in localStorage"}
     localStorage_keys:

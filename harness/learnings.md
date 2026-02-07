@@ -4,6 +4,16 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 105 - 2026-02-08 EST
+**Task**: FEAT-23
+**What**: Two-part change: (A) Added billing mode toggle pills to ModelSelector dropdown — Pro Subscription and OpenRouter tabs with green/grey availability dots. activeBillingMode state filters getFilteredModels(). Not-set-up banners shown when tab selected but credentials missing. handleModelSelect now includes tier in the model object. (B) CreateProject.jsx: derived claudeCodeServer (first VPS with claudeCodeDetected) and hasClaudeCode from savedVpsServers via useMemo. Added selectedModelMeta state to capture full model object (including tier) from onChange. All 3 fetch calls now route via provider='claude_code_ssh' + server_id when tier=subscription, else provider='openrouter'. ModelSelector props updated: showSubscriptionModels=true, apiKeys.anthropic=hasClaudeCode.
+**Key Learnings**:
+- Toggle pill UX: clicking same pill again returns to 'auto' mode (show all) — avoids user getting stuck in filtered view.
+- Popular hint should hide when subscription-only mode is active (no OpenRouter popular models to show).
+- When passing tier through onChange, the parent needs a separate `selectedModelMeta` state since `selectedModel` only stores the string ID for the fetch body.
+
+---
+
 ### Session 104 - 2026-02-08 EST
 **Task**: FEAT-22
 **What**: Added claude_code_ssh provider support to backend/routers/ai.py (expand-brief + chat endpoints). Key challenge: ClaudeCodeSSHService.chat() always returns AsyncGenerator (streaming-only), while expand-brief needs a full string to JSON-parse. Solution: for SSH provider, collect all chunks via `async for chunk in generator`, join, then pass to existing JSON parser. For ai_chat (already streaming SSE), the existing stream_chat_response() already calls `await service.chat(..., stream=True)` which works for all 3 providers. Added server_id field to both ExpandBriefRequest and AIChatRequest. Updated get_service() with claude_code_ssh branch matching chat.py pattern. ai.py 242→266 lines.

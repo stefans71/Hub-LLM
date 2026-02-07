@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useVoice } from '../components/VoiceInput'
 import StatusLinePreview from '../components/StatusLinePreview'
@@ -415,6 +415,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
 
   // AI model selector state
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
+  const [selectedModelMeta, setSelectedModelMeta] = useState(null) // full model object from ModelSelector onChange
 
   // UI state
   const [showAIChat, setShowAIChat] = useState(false)
@@ -434,6 +435,13 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [vpsTestResult, setVpsTestResult] = useState(null) // { success: bool, message: string, server_info: {} }
   const [savedVpsServers, setSavedVpsServers] = useState([])
   const [installStatusLine, setInstallStatusLine] = useState(true)
+
+  // Derive Claude Code availability from saved VPS servers
+  const claudeCodeServer = useMemo(() =>
+    savedVpsServers.find(s => s.claudeCodeDetected && s.lastTestSuccess) || null,
+    [savedVpsServers]
+  )
+  const hasClaudeCode = !!claudeCodeServer
 
   // Load saved VPS servers from localStorage (Settings > VPS Connections)
   useEffect(() => {
@@ -688,13 +696,15 @@ export default function CreateProject({ onCancel, onCreateProject }) {
         headers['X-OpenRouter-Key'] = apiKey
       }
 
+      const isSubscription = selectedModelMeta?.tier === 'subscription'
       const res = await fetch('/api/ai/expand-brief', {
         method: 'POST',
         headers,
         body: JSON.stringify({
           brief: formData.projectBrief,
           model: selectedModel,
-          provider: 'openrouter'
+          provider: isSubscription ? 'claude_code_ssh' : 'openrouter',
+          ...(isSubscription && claudeCodeServer ? { server_id: claudeCodeServer.id } : {})
         })
       })
 
@@ -764,6 +774,7 @@ In the meantime, I can help you think through your project. What would you like 
       // Build message history for context
       const messages = [...chatMessages, { role: 'user', content: userMessage }]
 
+      const isSub = selectedModelMeta?.tier === 'subscription'
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers,
@@ -776,7 +787,8 @@ In the meantime, I can help you think through your project. What would you like 
             context: formData.context
           },
           model: selectedModel,
-          provider: 'openrouter'
+          provider: isSub ? 'claude_code_ssh' : 'openrouter',
+          ...(isSub && claudeCodeServer ? { server_id: claudeCodeServer.id } : {})
         })
       })
 
@@ -875,13 +887,15 @@ In the meantime, I can help you think through your project. What would you like 
         headers['X-OpenRouter-Key'] = apiKey
       }
 
+      const isSub2 = selectedModelMeta?.tier === 'subscription'
       const res = await fetch('/api/ai/expand-brief', {
         method: 'POST',
         headers,
         body: JSON.stringify({
           brief: formData.projectBrief,
           model: selectedModel,
-          provider: 'openrouter'
+          provider: isSub2 ? 'claude_code_ssh' : 'openrouter',
+          ...(isSub2 && claudeCodeServer ? { server_id: claudeCodeServer.id } : {})
         })
       })
 
@@ -1276,9 +1290,12 @@ Examples:
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
                 <ModelSelector
                   value={selectedModel}
-                  onChange={(model) => setSelectedModel(model.id)}
-                  apiKeys={{ openrouter: !!(localStorage.getItem('openrouter_key') || localStorage.getItem('openrouter_api_key')) }}
-                  showSubscriptionModels={false}
+                  onChange={(model) => { setSelectedModel(model.id); setSelectedModelMeta(model) }}
+                  apiKeys={{
+                    openrouter: !!(localStorage.getItem('openrouter_key') || localStorage.getItem('openrouter_api_key')),
+                    anthropic: hasClaudeCode
+                  }}
+                  showSubscriptionModels={true}
                   compact={true}
                 />
                 <Button variant="accent" onClick={handleStartAIDefinition}>
