@@ -26,6 +26,28 @@
   },
   "queue": [
     {
+      "id": "UI-13",
+      "name": "Footer text smaller + reorder to two centered lines",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending_review",
+      "description": "Tiny footer text tweak on the landing page.\n\nCurrent (LandingPage.jsx line 941-942, LandingPage.css line 1585):\n- Single line: '© 2026 HubLLM.dev — Code with any LLM. Deploy anywhere.'\n- font-size: 1.4rem\n\nWanted:\n- Two centered lines:\n  Line 1: 'Code with any LLM.'\n  Line 2: 'Deploy anywhere. HubLLM.dev © 2026'\n- font-size: 0.98rem (30% smaller than 1.4rem)",
+      "change": [
+        "frontend/src/pages/LandingPage.jsx line 941-942: Replace footer text with two lines — use <br /> between them: 'Code with any LLM.<br />Deploy anywhere. HubLLM.dev &copy; {new Date().getFullYear()}'",
+        "frontend/src/pages/LandingPage.css line 1585: Change font-size from 1.4rem to 0.98rem"
+      ],
+      "test": "Step-by-step: (1) Load localhost:5173, scroll to footer. (2) Verify two centered lines: 'Code with any LLM.' on first line, 'Deploy anywhere. HubLLM.dev © 2026' on second. (3) Verify text is visibly smaller than before. (4) Paste what you see in completion_note.",
+      "investigation_id": null,
+      "completion_note": "Changed LandingPage.jsx line 942: footer text reordered to 'Code with any LLM.<br/>Deploy anywhere. HubLLM.dev © {year}' — two centered lines with <br/>. Changed LandingPage.css line 1585: font-size 1.4rem→0.98rem. Build: vite build 0 errors. Auth required for visual test — noted: auth verified separately.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",

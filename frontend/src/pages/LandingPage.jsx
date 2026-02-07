@@ -939,7 +939,7 @@ export default function LandingPage({ onSignUp }) {
 
       {/* Footer */}
       <div className="footer">
-        &copy; {new Date().getFullYear()} HubLLM.dev — Code with any LLM. Deploy anywhere.
+        Code with any LLM.<br />Deploy anywhere. HubLLM.dev &copy; {new Date().getFullYear()}
       </div>
     </div>
   )
