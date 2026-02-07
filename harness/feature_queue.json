@@ -30,7 +30,7 @@
       "name": "ModelSelector billing mode toggle + CreateProject SSH routing",
       "size": "M",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
       "blocked_by": "FEAT-22",
       "description": "Two-part frontend change: (A) Add a billing mode toggle to the ModelSelector dropdown — two pill buttons at the top: 'Pro Subscription' and 'OpenRouter', each with a green/grey availability dot. Clicking one filters the model list to that tier only. (B) Wire CreateProject to detect Claude Code availability from localStorage and route through claude_code_ssh when subscription models are selected.\n\nPart A — ModelSelector.jsx:\n- Add activeBillingMode state ('auto'|'subscription'|'openrouter'). 'auto' = show both (default, backward compat for WorkspaceTopBar).\n- Insert toggle UI between search bar (~line 451) and popular hint (~line 455). Only render when showSubscriptionModels={true}.\n- Update getFilteredModels() (line 253) to filter by activeBillingMode.\n- Update onChange callback (~line 317) to include tier and billingMode in the model object.\n- Show 'not set up' banners when a tab is selected but the required key/VPS isn't configured.\n- WorkspaceTopBar gets the toggle automatically (showSubscriptionModels defaults true). No WorkspaceTopBar changes needed.\n\nPart B — CreateProject.jsx:\n- Derive claudeCodeServer from savedVpsServers (find first with claudeCodeDetected && lastTestSuccess). Derive hasClaudeCode boolean.\n- Add selectedModelMeta state to store full model object from onChange (including tier).\n- Change showSubscriptionModels from false to true. Pass apiKeys.anthropic: hasClaudeCode. Pass claudeCodeStatus.\n- Update handleStartAIDefinition (line 691-698): if selectedModelMeta.tier === 'subscription' → provider='claude_code_ssh', server_id=claudeCodeServer.id. Else → provider='openrouter'.\n- Apply same routing to handleSendChatMessage (~line 778) and follow-up calls (~line 883).\n\nEdge cases: No VPS → hasClaudeCode=false, Subscription tab grey, OpenRouter selected by default. No OpenRouter key AND no Claude Code → both tabs grey with setup links. Multiple VPS → first with Claude Code used.\n\nReferences:\n- frontend/src/components/ModelSelector.jsx lines 164-174 (props), 175-180 (state), 253-291 (getFilteredModels), 317-323 (handleModelSelect), 451-455 (search/hint area)\n- frontend/src/pages/CreateProject.jsx lines 417 (selectedModel state), 435 (savedVpsServers), 691-698 (handleStartAIDefinition), 778 (handleSendChatMessage), 883 (follow-up), 1277-1283 (ModelSelector JSX)\n\nPlan file: /root/.claude/plans/lucky-stargazing-conway.md — Task 2 section",
       "change": [
@@ -46,12 +46,13 @@
         "frontend/src/pages/CreateProject.jsx: Apply same routing pattern to handleSendChatMessage and follow-up fetch calls"
       ],
       "test": "Run dev server (cd frontend && npm run dev). (1) Create Project — billing toggle appears at top of model dropdown with Pro Subscription and OpenRouter pills. (2) If VPS with Claude Code exists in localStorage: Pro tab shows green dot, click it, subscription models appear. Select one, fill brief, click Define Project with AI — Network tab shows provider:claude_code_ssh and server_id in request body. (3) Click OpenRouter tab — shows OpenRouter models, if key exists models are available, if not shows setup link. Select one, click Define Project with AI — Network tab shows provider:openrouter. (4) Clear vps_servers from localStorage, reload — Pro tab shows grey dot. (5) Open Workspace — model selector in top bar also has billing toggle, still works correctly. (6) npm run build — 0 errors.",
+      "completion_note": "Changed ModelSelector.jsx (712→805 lines): activeBillingMode state, toggle pills with availability dots (only when showSubscriptionModels=true), getFilteredModels() billing filter, tier in onChange model object, not-set-up banners. Changed CreateProject.jsx (2360→2377 lines): claudeCodeServer useMemo, hasClaudeCode derived, selectedModelMeta state, showSubscriptionModels=true + apiKeys.anthropic=hasClaudeCode, all 3 fetch calls route claude_code_ssh+server_id for subscription tier. Build: 0 errors. Commit 6785e97.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
-        "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
       }
     },
     {
