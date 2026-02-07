@@ -120,7 +120,7 @@ frontend_pages:
       - {name: completing, type: useState, drives: "completion spinner"}
     sub_components: [ChoosePathStep, OpenRouterStep, AnthropicStep]
     icon_usage:
-      - {component: PathCard, line: 77, renders: "lucide icon OR img tag based on typeof icon prop"}
+      - {component: PathCard, line: 78, renders: "lucide icon OR img tag (objectFit:contain) based on typeof icon prop"}
       - {component: ChoosePathStep, line: 163, icon: "openrouter-logo.svg (was lucide Key)"}
       - {component: ChoosePathStep, line: 170, icon: "claude-code-logo.svg (was lucide Sparkles)"}
       - {component: AnthropicStep, line: 809, icon: "Sparkles (lucide) — Claude Code detection indicator"}
@@ -527,16 +527,16 @@ frontend_assets:
   _note: "SVG brand logos used in Setup wizard PathCards. Imported via Vite as URL strings."
   claude-code-logo.svg:
     path: frontend/src/assets/claude-code-logo.svg
-    purpose: "Claude Code brand logo (white, transparent bg) — used on Anthropic Pro PathCard in Setup wizard"
+    purpose: "Claude Code brand logo (orange #db7658 pixel face, transparent bg) — used on Anthropic Pro PathCard in Setup wizard"
     original_location: "repo root Claude_Code_Logo_White_tp.svg (moved by UI-07)"
     used_by: [Setup.jsx]
-    size_bytes: 1831
+    note: "Cleaned: removed XML declaration/DOCTYPE. viewBox 0 0 165 144 (roughly square). Renders at 24x24 with objectFit:contain."
   openrouter-logo.svg:
     path: frontend/src/assets/openrouter-logo.svg
-    purpose: "OpenRouter brand logo v2 — used on OpenRouter PathCard in Setup wizard"
-    original_location: "repo root openrouter-logo-v2.svg (moved by UI-07)"
+    purpose: "OpenRouter icon mark only (blue #0a5aec arrows) — used on OpenRouter PathCard in Setup wizard"
+    original_location: "repo root openrouter-logo-v2.svg (moved by UI-07, cropped to icon mark)"
     used_by: [Setup.jsx]
-    size_bytes: 6861
+    note: "Cropped from full wordmark (833x128) to icon mark only (152x128). Cleaned: removed XML declaration/DOCTYPE and text paths. Renders at 24x24 with objectFit:contain."
 
 # ============================================================================
 # BACKEND — Routers (backend/routers/)

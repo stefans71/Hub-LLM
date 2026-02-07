@@ -113,7 +113,7 @@ function PathCard({ icon: Icon, title, description, selected, onClick }) {
           transition: 'all 0.2s ease'
         }}>
           {typeof Icon === 'string'
-            ? <img src={Icon} alt="" style={{ width: 24, height: 24 }} />
+            ? <img src={Icon} alt="" style={{ width: 24, height: 24, objectFit: 'contain' }} />
             : <Icon size={24} style={{ color: selected ? '#fff' : cssVars.textSecondary }} />
           }
         </div>

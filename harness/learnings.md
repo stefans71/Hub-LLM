@@ -5,9 +5,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 92 - 2026-02-07 EST
-**Task**: BUG-33
-**What**: Created backend/migrations/003_add_projects_columns.py. Adds 10 missing columns to projects table in Postgres production: slug, brief, workspace, connection_type, github_repo, vps_server_id (FK to vps_servers), agent_ids, mcp_server_ids, status, selected_model. Idempotent — checks each column via SQLAlchemy inspect before ALTER TABLE. Populates slug from name via REGEXP_REPLACE. Skips on SQLite (create_all handles it). Tested locally: all 3 migrations run cleanly, backend starts OK.
-**Key Learning**: Same recurring pattern as BUG-28-REOPEN — ORM model columns added over time without corresponding migrations. Migration 003 is the largest batch fix (10 columns). Always check production table schema against ORM model when adding columns.
+**Tasks**: BUG-33, UI-07 (re-fix)
+**What**:
+- BUG-33: Created backend/migrations/003_add_projects_columns.py. Adds 10 missing columns to projects table in Postgres production. Idempotent via SQLAlchemy inspect. Populates slug from name. Skips on SQLite.
+- UI-07 re-fix: SVG logos weren't rendering because (1) XML declaration + DOCTYPE in SVGs may cause issues with Vite/browser <img> rendering, (2) OpenRouter SVG was a full wordmark (833x128 = 6.5:1 ratio) invisible at 24x24. Fixed: cleaned XML declarations, cropped OpenRouter to icon-mark-only (152x128), added objectFit:'contain'.
+**Key Learning**: SVGs used as <img src> in Vite should be clean (no XML declaration/DOCTYPE) and appropriately sized/cropped for their render context. Wide wordmark SVGs become invisible in square icon containers — use the icon mark portion only.
 
 ---
 
