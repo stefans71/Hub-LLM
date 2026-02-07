@@ -1295,6 +1295,8 @@ Examples:
                     openrouter: !!(localStorage.getItem('openrouter_key') || localStorage.getItem('openrouter_api_key')),
                     anthropic: hasClaudeCode
                   }}
+                  isConnected={hasClaudeCode}
+                  claudeCodeStatus={{ installed: hasClaudeCode, authenticated: hasClaudeCode, checking: false }}
                   showSubscriptionModels={true}
                   compact={true}
                 />

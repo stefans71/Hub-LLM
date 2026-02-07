@@ -93,7 +93,7 @@ frontend_pages:
 
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
-    lines: 2377
+    lines: 2379
     purpose: "5-step project creation wizard with AI-assisted brief expansion, dynamic model selector, SSH routing for Pro models"
     props: "{onCancel, onCreateProject}"
     imports: [ModelSelector]

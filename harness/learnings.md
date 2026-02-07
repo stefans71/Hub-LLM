@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 106 - 2026-02-07 EST
+**Task**: BUG-40
+**What**: Fixed CreateProject ModelSelector missing isConnected and claudeCodeStatus props. Root cause: ModelSelector defaults isConnected=false and claudeCodeStatus.installed=false, so even when hasClaudeCode is true, the status display showed '○ Connect VPS'. Added isConnected={hasClaudeCode} and claudeCodeStatus={{ installed: hasClaudeCode, authenticated: hasClaudeCode, checking: false }} to the ModelSelector props in CreateProject.jsx. Build: 0 errors (2379 lines).
+**Key Learning**: When reusing a shared component (ModelSelector) in a new context (CreateProject), check ALL props that affect display state — not just the data-flow props. The billing toggle worked (apiKeys.anthropic) but the status indicator didn't because isConnected/claudeCodeStatus were separate display props with falsy defaults.
+
+---
+
 ### Session 105 - 2026-02-08 EST
 **Task**: FEAT-23
 **What**: Two-part change: (A) Added billing mode toggle pills to ModelSelector dropdown — Pro Subscription and OpenRouter tabs with green/grey availability dots. activeBillingMode state filters getFilteredModels(). Not-set-up banners shown when tab selected but credentials missing. handleModelSelect now includes tier in the model object. (B) CreateProject.jsx: derived claudeCodeServer (first VPS with claudeCodeDetected) and hasClaudeCode from savedVpsServers via useMemo. Added selectedModelMeta state to capture full model object (including tier) from onChange. All 3 fetch calls now route via provider='claude_code_ssh' + server_id when tier=subscription, else provider='openrouter'. ModelSelector props updated: showSubscriptionModels=true, apiKeys.anthropic=hasClaudeCode.

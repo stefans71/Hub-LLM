@@ -30,7 +30,7 @@
       "name": "CreateProject ModelSelector missing isConnected + claudeCodeStatus props",
       "size": "XS",
       "priority": 1,
-      "status": "pending",
+      "status": "pending_review",
       "description": "CreateProject's ModelSelector shows '○ CONNECT VPS' and 'PAID' badge even when user has Claude Code installed on VPS. Root cause: CreateProject.jsx line 1291-1300 passes apiKeys.anthropic=hasClaudeCode (which makes the billing toggle green dot work) but does NOT pass isConnected or claudeCodeStatus props. ModelSelector.jsx defaults: isConnected=false (line 169), claudeCodeStatus.installed=false (line 168). Status flow at lines 620-625: !isConnected → '○ Connect VPS'. Even if isConnected were true, claudeCodeStatus.installed defaults to false → '⚠ Install Claude Code'. Both props must be passed. hasClaudeCode is already derived at line 444 from savedVpsServers.find(s => s.claudeCodeDetected && s.lastTestSuccess).",
       "change": [
         "frontend/src/pages/CreateProject.jsx line 1298 (after showSubscriptionModels={true}): Add isConnected={hasClaudeCode}",
@@ -38,13 +38,13 @@
       ],
       "test": "Step-by-step: (1) Have a VPS with Claude Code in localStorage (vps_servers with claudeCodeDetected:true and lastTestSuccess:true). (2) Go to Create Project. (3) Open model selector dropdown. (4) Pro Subscription tab should show green dot AND Anthropic section header should say '✓ Claude Code Ready' (NOT '○ Connect VPS'). (5) Select a subscription model (e.g. Claude Opus 4.5) — trigger button should show 'PRO' badge in green (not 'PAID' in amber). (6) npm run build — 0 errors. Paste the ModelSelector JSX props block from CreateProject.jsx in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed CreateProject.jsx line 1298-1299: Added isConnected={hasClaudeCode} and claudeCodeStatus={{ installed: hasClaudeCode, authenticated: hasClaudeCode, checking: false }} to ModelSelector props. ModelSelector JSX props block: <ModelSelector value={selectedModel} onChange={(model) => { setSelectedModel(model.id); setSelectedModelMeta(model) }} apiKeys={{ openrouter: !!(localStorage.getItem('openrouter_key') || localStorage.getItem('openrouter_api_key')), anthropic: hasClaudeCode }} isConnected={hasClaudeCode} claudeCodeStatus={{ installed: hasClaudeCode, authenticated: hasClaudeCode, checking: false }} showSubscriptionModels={true} compact={true} />. Build: vite build 0 errors, 2379 lines. CODEBASE_INDEX lines updated 2377→2379.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {
