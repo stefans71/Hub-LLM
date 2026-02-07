@@ -26,23 +26,27 @@
   },
   "queue": [
     {
-      "id": "INFRA-03",
-      "name": "Idle Connection Timeout",
-      "size": "S",
-      "priority": 2,
-      "status": "rejected",
-      "rejection_note": "Code works correctly but must not be deployed without a user toggle. Idle SSH connections are very cheap (~1-2 MB RAM, zero CPU per connection). Auto-disconnecting after 2h risks killing active Claude Code sessions or sessions waiting for operator input. The user's own VPS may already have ServerAliveInterval configured. Rework needed: add a Settings toggle (default OFF) so users opt in. See INFRA-03B.",
-      "description": "Auto-close SSH connections after inactivity to save server resources",
-      "current": "Connections stay open forever until browser closes or network fails",
+      "id": "UI-09B",
+      "name": "Move SSH help button + orange wizard border",
+      "size": "XS",
+      "priority": 1,
+      "status": "pending",
+      "description": "Two UI fixes for the setup wizard:\n\n**Fix 1: Help button position & style** — UI-09 placed the SSH help button at the top under the H2 heading — too far from the SSH Key button and hard to see in muted gray.\n- MOVE from current location (Setup.jsx line 736-758) to just below the Password/SSH Key toggle buttons (after line 894).\n- RESTYLE: color from `cssVars.textMuted` to `cssVars.accent` (#f97316). Shorten text to just HelpCircle icon + 'Need help?'. Keep title tooltip.\n- DELETE the old help button div (lines 736-758) entirely.\n\n**Fix 2: Wizard container border** — The main wizard container (Setup.jsx line 1206) has a thin gray border (`cssVars.border`). Change it to agent orange (`cssVars.accent`).",
       "change": [
-        "Track last activity time per VPS connection",
-        "Background task checks for idle connections every 5 min",
-        "Close connections idle for 2 hours (configurable in Settings)",
-        "Send connection_status: disconnected to all terminals before closing",
-        "User can reconnect easily via INFRA-02"
+        "frontend/src/pages/Setup.jsx lines 736-758: DELETE the entire <div style={{ textAlign: 'center', marginTop: '-24px', marginBottom: '24px' }}> block containing the help button",
+        "frontend/src/pages/Setup.jsx after line 894 (after the SSH Key </button></div>): Add a new help button: `<div style={{ textAlign: 'right', marginTop: '8px' }}><button onClick={() => setShowSSHHelp(true)} title='Need help with SSH keys?' style={{ background: 'none', border: 'none', color: cssVars.accent, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', padding: '2px 0' }}><HelpCircle size={14} /> Need help?</button></div>`",
+        "frontend/src/pages/Setup.jsx line 1206: Change `border: \\`1px solid ${cssVars.border}\\`` to `border: \\`1px solid ${cssVars.accent}\\``"
       ],
-      "test": "Open terminal, leave idle for 2+ hours. Connection auto-closes. Dot turns gray. User clicks dot to reconnect.",
-      "completion_note": "Changed backend/services/vps_connection.py: added last_activity (time.time()) and touch() to VPSConnection (lines 101-105). touch() called in connect(), create_channel(), run_command(). VPSConnectionManager gains idle_timeout=7200, start/stop_idle_checker(), _idle_check_loop (every 300s), _close_idle_connections(). Changed backend/main.py: lifespan starts idle checker on startup, stops it + closes all connections on shutdown. Changed backend/routers/ssh.py and terminal.py: both WebSocket handlers call vps_conn.touch() on terminal input. close_connection() already notifies status listeners (connection_status: disconnected) which propagates to WebSocket clients. Backend-only change — cannot test 2hr idle in dev, but logic is straightforward: background asyncio task compares time.time() - last_activity > 7200."
+      "test": "Step-by-step: (1) Go to /setup, choose Anthropic Pro, reach VPS step. (2) The main wizard card should have an orange border instead of gray. (3) The help button should appear right below the Password/SSH Key toggle in orange. (4) Text should say 'Need help?' with the ? icon. (5) Click — SSH help modal opens. (6) Verify the old help button at the top is gone. (7) Go back to step 1 — orange border should be on all steps.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
     },
     {
       "id": "SETTINGS-01",
@@ -80,37 +84,14 @@
       "test": "No API key \u2192 see full model list greyed out. Add key \u2192 all enabled."
     },
     {
-      "id": "CLAUDE-03",
-      "name": "Claude Resume Conversation Support (UI Enhancement)",
-      "size": "S",
-      "priority": 3,
-      "status": "pending",
-      "description": "Add UI for resuming Claude Code conversations - core functionality already working via --resume",
-      "current": "claude --resume runs automatically on reconnect. User sees terminal picker.",
-      "change": [
-        "Add 'Resume conversation' button/menu in chat header",
-        "Show conversation list in prettier UI (not just terminal picker)",
-        "Display conversation metadata: name, date, message count",
-        "Quick-resume last conversation option",
-        "Store last conversation ID per project"
-      ],
-      "test": "Click Resume \u2192 see pretty list of past conversations \u2192 select one \u2192 continues in chat"
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
       "priority": 4,
-      "status": "pending",
+      "status": "shelved",
+      "shelved_reason": "Blocked by terminal-mirror architecture. Prompt injection into terminal doesn't work reliably, and users must click the terminal to answer Claude Code's yes/no questions. Needs headless/API mode for Claude Code to unblock. Revisit when Anthropic ships a proper CLI API.",
       "description": "Address remaining bubble parsing edge cases as discovered during testing",
-      "current": "Bubble view MVP complete - functional for demos. Some UI artifacts occasionally leak through.",
-      "change": [
-        "Add new spinner words as discovered",
-        "Improve tool call visibility (show 'Using Write tool...' indicator)",
-        "Better handling of multi-line code blocks",
-        "Consider headless mode integration for cleaner parsing (future)"
-      ],
-      "test": "Extended use of bubble view without seeing spinner text, status bar fragments, or other UI artifacts"
+      "current": "Bubble view MVP complete - functional for demos. Some UI artifacts occasionally leak through."
     }
   ],
   "completed": [
