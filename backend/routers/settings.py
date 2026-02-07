@@ -94,3 +94,38 @@ async def bulk_update_settings(bulk: SettingsBulkUpdate) -> Dict[str, Optional[s
         await session.commit()
 
     return bulk.settings
+
+
+# INFRA-03B: Idle timeout configuration endpoint
+class IdleTimeoutConfig(BaseModel):
+    enabled: bool
+    timeout_minutes: int = 120
+
+
+@router.post("/idle-timeout")
+async def configure_idle_timeout(config: IdleTimeoutConfig):
+    """Enable/disable idle connection timeout at runtime"""
+    from services.vps_connection import vps_manager
+
+    if config.enabled:
+        vps_manager.idle_timeout = config.timeout_minutes * 60
+        vps_manager.start_idle_checker()
+        return {"status": "enabled", "timeout_minutes": config.timeout_minutes}
+    else:
+        vps_manager.stop_idle_checker()
+        return {"status": "disabled"}
+
+
+@router.get("/idle-timeout")
+async def get_idle_timeout_status():
+    """Get current idle timeout configuration"""
+    from services.vps_connection import vps_manager
+
+    is_running = (
+        vps_manager._idle_checker_task is not None
+        and not vps_manager._idle_checker_task.done()
+    )
+    return {
+        "enabled": is_running,
+        "timeout_minutes": vps_manager.idle_timeout // 60
+    }

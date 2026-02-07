@@ -4128,6 +4128,50 @@ function VPSConnectionsSettings() {
   const [editingServer, setEditingServer] = useState(null)
   const [showHelp, setShowHelp] = useState(false)
 
+  // INFRA-03B: Idle timeout toggle
+  const [idleTimeoutEnabled, setIdleTimeoutEnabled] = useState(() => {
+    return localStorage.getItem('idle_timeout_enabled') === 'true'
+  })
+  const [idleTimeoutMinutes, setIdleTimeoutMinutes] = useState(() => {
+    return parseInt(localStorage.getItem('idle_timeout_minutes')) || 120
+  })
+
+  // INFRA-03B: Sync idle timeout setting to backend
+  const syncIdleTimeout = async (enabled, minutes) => {
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
+      await fetch('/api/settings/idle-timeout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled, timeout_minutes: minutes }),
+        signal: controller.signal
+      })
+      clearTimeout(timeout)
+    } catch (err) {
+      console.error('Failed to sync idle timeout setting:', err)
+    }
+  }
+
+  const handleIdleToggle = (enabled) => {
+    setIdleTimeoutEnabled(enabled)
+    localStorage.setItem('idle_timeout_enabled', enabled.toString())
+    syncIdleTimeout(enabled, idleTimeoutMinutes)
+  }
+
+  const handleIdleDurationChange = (minutes) => {
+    setIdleTimeoutMinutes(minutes)
+    localStorage.setItem('idle_timeout_minutes', minutes.toString())
+    if (idleTimeoutEnabled) {
+      syncIdleTimeout(true, minutes)
+    }
+  }
+
+  // Sync idle timeout state to backend on mount
+  useEffect(() => {
+    syncIdleTimeout(idleTimeoutEnabled, idleTimeoutMinutes)
+  }, [])
+
   // Load servers from localStorage and sync to backend
   useEffect(() => {
     const loadAndSyncServers = async () => {
@@ -4462,6 +4506,91 @@ function VPSConnectionsSettings() {
         <div style={{ fontSize: '12px', color: cssVars.textSecondary }}>
           <strong>🔒 Security:</strong> Your SSH keys are stored locally in your browser only. We never store or transmit your private keys to any server.
         </div>
+      </div>
+
+      {/* INFRA-03B: Idle Connection Timeout Toggle */}
+      <div style={{
+        marginTop: '24px',
+        padding: '20px',
+        background: cssVars.bgTertiary,
+        borderRadius: '12px'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: idleTimeoutEnabled ? '16px' : '0'
+        }}>
+          <div>
+            <div style={{ fontWeight: '500', marginBottom: '4px' }}>Auto-disconnect idle connections</div>
+            <div style={{ fontSize: '12px', color: cssVars.textMuted }}>
+              Automatically close SSH connections after a period of inactivity
+            </div>
+          </div>
+          <button
+            onClick={() => handleIdleToggle(!idleTimeoutEnabled)}
+            style={{
+              width: '44px',
+              height: '24px',
+              borderRadius: '12px',
+              border: 'none',
+              background: idleTimeoutEnabled ? cssVars.primary : cssVars.bgSecondary,
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'background 0.2s ease',
+              flexShrink: 0
+            }}
+          >
+            <span style={{
+              position: 'absolute',
+              top: '3px',
+              left: idleTimeoutEnabled ? '23px' : '3px',
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              background: '#fff',
+              transition: 'left 0.2s ease'
+            }} />
+          </button>
+        </div>
+
+        {idleTimeoutEnabled && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            paddingTop: '12px',
+            borderTop: `1px solid ${cssVars.border}`
+          }}>
+            <span style={{ fontSize: '13px', color: cssVars.textSecondary }}>Disconnect after:</span>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {[
+                { label: '30m', value: 30 },
+                { label: '1h', value: 60 },
+                { label: '2h', value: 120 },
+                { label: '4h', value: 240 }
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleIdleDurationChange(opt.value)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: idleTimeoutMinutes === opt.value ? cssVars.primary : cssVars.bgSecondary,
+                    color: idleTimeoutMinutes === opt.value ? '#fff' : cssVars.textSecondary,
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal */}

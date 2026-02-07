@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     # Startup
     print("Starting HubLLM API...")
     await init_db()
-    vps_manager.start_idle_checker()
+    # INFRA-03B: Idle checker defaults to OFF — user enables via Settings toggle
     yield
     # Shutdown
     print("Shutting down HubLLM API...")

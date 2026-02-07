@@ -135,8 +135,8 @@ frontend_pages:
 
   Settings.jsx:
     path: frontend/src/pages/Settings.jsx
-    lines: 4653
-    purpose: "Comprehensive settings — profile, API keys, models, VPS, agents, skills, MCP, appearance"
+    lines: 4782
+    purpose: "Comprehensive settings — profile, API keys, models, VPS (with idle timeout toggle), agents, skills, MCP, appearance"
     props: "{onBack, onLogout}"
     sub_components:
       - ProfileSettings
@@ -734,18 +734,20 @@ backend_routers:
 
   settings.py:
     path: backend/routers/settings.py
-    lines: 96
+    lines: 131
     prefix: "/api/settings"
-    purpose: "Key-value user settings store"
+    purpose: "Key-value user settings store + idle timeout config"
     endpoints:
       - {method: GET, path: "/", purpose: "list all settings"}
       - {method: GET, path: "/{key}", purpose: "get setting by key"}
       - {method: PUT, path: "/{key}", purpose: "set setting"}
       - {method: DELETE, path: "/{key}", purpose: "delete setting"}
       - {method: POST, path: "/bulk", purpose: "update multiple settings"}
+      - {method: POST, path: "/idle-timeout", purpose: "enable/disable idle connection timeout at runtime"}
+      - {method: GET, path: "/idle-timeout", purpose: "get idle timeout status"}
     called_by_frontend: [Settings.jsx]
     db_tables: [user_settings]
-    last_verified_session: 86
+    last_verified_session: 93
 
   voice.py:
     path: backend/routers/voice.py
