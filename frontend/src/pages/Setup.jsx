@@ -1183,13 +1183,14 @@ export default function Setup({ onComplete }) {
   const [step, setStep] = useState(0)
   const [path, setPath] = useState(null)
   const [completing, setCompleting] = useState(false)
+  const [skipError, setSkipError] = useState(null)
 
   const steps = ['Choose Path', 'Configure', 'Done']
 
-  // Called when user actually completes the wizard (OpenRouter key or VPS setup)
-  // or clicks "Don't show again" — marks setup_completed=true in DB
+  // Persists setup_completed=true in DB, then navigates away
   const handleComplete = async () => {
     setCompleting(true)
+    setSkipError(null)
     try {
       const res = await fetch('/api/auth/me/setup-complete', {
         method: 'POST',
@@ -1205,16 +1206,10 @@ export default function Setup({ onComplete }) {
       onComplete()
     } catch (err) {
       console.error('Failed to complete setup:', err)
-      onComplete()
+      setSkipError('Failed to save — please try again')
     } finally {
       setCompleting(false)
     }
-  }
-
-  // "Skip for now" — navigate away without calling backend.
-  // setup_completed stays false in DB, wizard reappears on next login/refresh.
-  const handleSkip = () => {
-    onComplete()
   }
 
   const renderStep = () => {
@@ -1269,7 +1264,7 @@ export default function Setup({ onComplete }) {
         <StepIndicator steps={steps} currentStep={step} />
         {renderStep()}
 
-        {/* Skip options */}
+        {/* Skip setup */}
         <div style={{
           textAlign: 'center',
           marginTop: '32px',
@@ -1281,7 +1276,8 @@ export default function Setup({ onComplete }) {
           gap: '8px'
         }}>
           <button
-            onClick={handleSkip}
+            onClick={handleComplete}
+            disabled={completing}
             style={{
               background: 'none',
               border: 'none',
@@ -1291,22 +1287,13 @@ export default function Setup({ onComplete }) {
               textDecoration: 'underline'
             }}
           >
-            Skip for now
+            {completing ? 'Skipping...' : 'Skip setup'}
           </button>
-          <button
-            onClick={handleComplete}
-            disabled={completing}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: cssVars.textMuted,
-              fontSize: '11px',
-              cursor: 'pointer',
-              opacity: 0.6
-            }}
-          >
-            {completing ? 'Dismissing...' : "Don't show this again"}
-          </button>
+          {skipError && (
+            <span style={{ color: cssVars.error, fontSize: '12px' }}>
+              {skipError}
+            </span>
+          )}
         </div>
       </div>
     </div>

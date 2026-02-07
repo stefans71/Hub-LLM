@@ -115,13 +115,14 @@ frontend_pages:
 
   Setup.jsx:
     path: frontend/src/pages/Setup.jsx
-    lines: 1315
+    lines: 1301
     purpose: "Post-signup wizard — choose OpenRouter API key OR VPS+Anthropic Pro path"
     props: "{onComplete}"
     key_state:
       - {name: step, type: "useState(0)", drives: "wizard step"}
       - {name: path, type: "useState(null)", drives: "'openrouter' or 'anthropic'"}
       - {name: completing, type: useState, drives: "completion spinner"}
+      - {name: skipError, type: "useState(null)", drives: "inline error when skip API fails"}
     sub_components: [ChoosePathStep, OpenRouterStep, SSHHelpModal, AnthropicStep]
     icon_usage:
       - {component: PathCard, line: 78, renders: "lucide icon OR img tag (objectFit:contain) based on typeof icon prop, iconSize prop (default 24)"}
@@ -1498,4 +1499,4 @@ recurring_bugs:
     sessions: [90, 91]
     affected_files: [frontend/src/App.jsx]
     status: fixed
-    note: "Fixed in BUG-31: Changed to user.setup_completed === true. Only explicit true skips wizard. Also refactored Setup.jsx: 'Skip for now' = session-only (no backend call), 'Don't show again' = permanent (calls POST /api/auth/me/setup-complete)."
+    note: "Fixed in BUG-31: Changed to user.setup_completed === true. Only explicit true skips wizard. BUG-36/37 (Session 99): Merged skip+dismiss into single 'Skip setup' button that always persists to DB. Catch block no longer calls onComplete() on failure — shows inline error instead."

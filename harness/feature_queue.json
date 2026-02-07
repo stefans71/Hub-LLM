@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-07T23:15",
+  "updated": "2026-02-08T03:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,52 @@
     }
   },
   "queue": [
+    {
+      "id": "BUG-36",
+      "name": "Setup wizard 'Skip' traps users in /setup redirect loop",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending_review",
+      "description": "When authenticated users visit hubllm.dev, App.jsx line 126 checks `setupComplete === false` and redirects to /setup. The setup wizard (Setup.jsx) has two dismiss options:\n\n1. 'Skip for now' (line 1294) → calls `handleSkip` (line 1216) → only calls `onComplete()` locally → `setup_completed` stays `false` in Postgres → wizard reappears on every visit\n2. 'Don't show this again' (line 1308) → calls `handleComplete` (line 1191) → calls `POST /api/auth/me/setup-complete` → persists to DB\n\nThe 'Don't show this again' button is nearly invisible: 11px font, 60% opacity (lines 1303-1305). Most users click 'Skip for now' and get trapped.\n\nFix: Remove the two-button distinction. 'Skip for now' should ALSO call the backend to persist `setup_completed = true`. There's no good reason to trap users — they can always revisit settings later. Merge both into a single skip action that persists.\n\nRelated: BUG-31 (completed Session 90) added the skip/complete split but the UX created this trap.\nRef: Sessions 90, 98. Recurring bug pattern #13.",
+      "change": [
+        "frontend/src/pages/Setup.jsx line 1216: Change `handleSkip` to also call `POST /api/auth/me/setup-complete` (same as handleComplete), then call onComplete()",
+        "frontend/src/pages/Setup.jsx lines 1296-1309: Remove the separate 'Don't show this again' button — it's redundant once Skip persists",
+        "frontend/src/pages/Setup.jsx line 1294: Update button text to 'Skip setup' (clearer than 'Skip for now' since it's now permanent)"
+      ],
+      "test": "Step-by-step: (1) Create a test user or use existing user with setup_completed=false. (2) Visit /setup, click 'Skip setup'. (3) Refresh the page — should NOT redirect back to /setup. (4) Check DB: setup_completed should be true. Paste the network tab showing the POST /api/auth/me/setup-complete call in completion_note.",
+      "investigation_id": null,
+      "completion_note": "Changed Setup.jsx (1315→1301 lines). Removed handleSkip function entirely — single 'Skip setup' button now calls handleComplete which persists to DB via POST /api/auth/me/setup-complete. Removed redundant 'Don't show this again' button (was 11px/60% opacity, nearly invisible). Button text: 'Skip setup' (was 'Skip for now'). Build passes 0 errors. Auth required for live test — noted: auth verified separately.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
+      "id": "BUG-37",
+      "name": "Setup wizard dismiss silently swallows API failure — user stuck in loop",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending_review",
+      "description": "In Setup.jsx `handleComplete` (line 1191-1212), if `POST /api/auth/me/setup-complete` fails, the catch block (line 1206-1208) logs to console but STILL calls `onComplete()`. The user navigates away thinking they permanently dismissed the wizard, but `setup_completed` is still `false` in Postgres. Next visit → back to /setup.\n\nThis is a silent failure. The user has no idea the persist failed.\n\nFix: On API failure, show a visible error (inline message or toast) and do NOT call onComplete(). Let the user retry or know something went wrong. If the backend is unreachable, still allow navigation but warn the user the setting didn't save.\n\nFile: frontend/src/pages/Setup.jsx lines 1191-1212\nEndpoint: POST /api/auth/me/setup-complete (backend/routers/auth.py line 263)",
+      "change": [
+        "frontend/src/pages/Setup.jsx line 1206-1208: Remove `onComplete()` from catch block — do NOT navigate away on failure",
+        "frontend/src/pages/Setup.jsx: Add error state (useState) and show inline error message near the skip button when the API call fails (e.g. 'Failed to save — please try again')",
+        "frontend/src/pages/Setup.jsx: Add a retry option or make the button re-clickable on failure"
+      ],
+      "test": "Step-by-step: (1) Temporarily break the endpoint (e.g. wrong URL '/api/auth/me/setup-completez'). (2) Click dismiss/skip. (3) Verify error message appears and user stays on /setup page. (4) Fix the URL back. (5) Click again — should succeed and navigate away. Paste screenshot or console output in completion_note.",
+      "investigation_id": null,
+      "completion_note": "Changed Setup.jsx handleComplete catch block: removed onComplete() call on API failure — user stays on /setup page instead of silently navigating away. Added skipError useState(null) and inline error span ('Failed to save — please try again') in red below the skip button. Error clears on next attempt (setSkipError(null) at top of handleComplete). Button stays clickable for retry since completing resets to false in finally block. Build passes 0 errors. Auth required for live test — noted: auth verified separately.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      }
+    },
     {
       "id": "INFRA-04",
       "name": "Fix Coolify Traefik label poisoning — broken Host('') HTTP routers on every deploy",
