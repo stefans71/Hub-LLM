@@ -1250,17 +1250,18 @@ export default function Setup({ onComplete }) {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: '100%',
       background: cssVars.bgPrimary,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '20px'
+      padding: '20px',
+      overflowY: 'auto'
     }}>
       <div style={{
         width: '100%',
         maxWidth: '640px',
-        padding: '40px',
+        padding: 'clamp(20px, 5vw, 40px)',
         background: cssVars.bgSecondary,
         borderRadius: '16px',
         border: `1px solid ${cssVars.accent}`

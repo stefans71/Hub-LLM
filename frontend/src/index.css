@@ -19,6 +19,11 @@
   --text-muted: #6b7280;
 }
 
+/* BUG-35: Prevent white bleed-through on any page */
+html, body {
+  background-color: #0f1419;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
