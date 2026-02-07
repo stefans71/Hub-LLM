@@ -49,6 +49,32 @@
       }
     },
     {
+      "id": "FEAT-11",
+      "name": "Optional Claude Code status line install during VPS setup",
+      "size": "M",
+      "priority": 2,
+      "status": "pending",
+      "description": "After Claude Code is detected on a VPS during setup wizard, offer to install an enhanced status line hook. Reference screenshot: /root/dev/Hub-LLM/Claude_Code_Status_Line.png\n\nThe status line shows (left to right): location icon + label (orange), current folder (blue), git branch+dirty (pink), model name (cyan), token usage count (yellow), remaining context bar graph (green/gray), percentage, and a pulsing LIVE indicator (green).\n\n**Three parts:**\n\n**Part 1: StatusLinePreview component (reusable)**\n- Create a `StatusLinePreview` component in `frontend/src/components/StatusLinePreview.jsx`\n- Renders an HTML/CSS mock of the status line that matches the terminal screenshot (dark bg, colored spans, monospace font)\n- Props: `serverName` (for location label), `folderName`, `branch`, `model`, `tokensUsed`, `tokensTotal`\n- Use sensible defaults for the preview: serverName='VPS', folderName='my-project', branch='main', model='Opus', tokensUsed='128k', tokensTotal='200k'\n- **Mobile responsive**: On wide screens show all segments in one row. On narrow screens (<480px) wrap to two rows — top row: location + folder + git, bottom row: model + tokens + bar + LIVE. Use flexWrap.\n- Reusable in: Setup wizard (VPSStep), Settings (VPS section), Create Project (VPS step)\n- Style with cssVars matching the terminal dark theme\n\n**Part 2: Backend — install script via SSH**\n- After 'Claude Code detected' in setup wizard, show checkbox: 'Install enhanced status line' (checked by default) with the StatusLinePreview below it as a visual preview\n- If checked, write the status line Python script to `~/.claude/hooks/status_line.py` on the VPS via SSH (the SSH connection is already open during test)\n- The script is a generalized version — remove hardcoded hostname checks (DO/Vultr/etc), instead detect from hostname OR accept the server name from Hub-LLM\n- Configure Claude Code to use the hook (check how Claude Code registers status_line hooks — may need `~/.claude/settings.json`)\n\n**Part 3: Reuse in Settings + Create Project**\n- Settings VPS section: show StatusLinePreview + install/uninstall button for each server with Claude Code\n- Create Project VPS step: same checkbox + preview pattern as setup wizard\n- SSH help modal (SSHHelpModal from UI-09) is already a reusable pattern — follow the same approach\n\nThe generalized script should:\n- Auto-detect location from hostname OR fall back to 'VPS' generic label\n- Keep all features: folder, git branch/dirty/ahead-behind, model, token bar, pulse\n- Be a single self-contained Python file with no dependencies beyond stdlib",
+      "change": [
+        "frontend/src/components/StatusLinePreview.jsx: NEW FILE — reusable component rendering an HTML mock of the Claude Code status line. Dark bg, monospace, colored segments. Responsive: single row on wide, two rows on <480px via flexWrap. Props: serverName, folderName, branch, model, tokensUsed, tokensTotal with sensible defaults",
+        "Create a generalized status line Python script — store in backend/templates/status_line_hook.py or similar. Based on user's script but with hostname-specific logic replaced by generic detection",
+        "backend/routers/ssh.py: Add endpoint or extend test_connection — if install_status_line flag is set, write the script to ~/.claude/hooks/status_line.py via SSH and configure Claude Code hook",
+        "frontend/src/pages/Setup.jsx VPSStep: After 'Claude Code detected' green status, show checkbox 'Install enhanced status line' (default checked) with StatusLinePreview component below as visual preview",
+        "frontend/src/pages/Settings.jsx VPS section: Add StatusLinePreview + install/uninstall button per server with Claude Code detected",
+        "frontend/src/pages/CreateProject.jsx or equivalent: Same checkbox + preview in VPS setup step"
+      ],
+      "test": "Step-by-step: (1) Setup wizard, connect VPS with Claude Code. (2) See checkbox 'Install enhanced status line' with a visual preview below showing the colored status bar mock. (3) Preview should be responsive — resize to mobile width, segments wrap to two rows. (4) Complete setup with box checked. (5) Open terminal, start Claude Code. Status line shows location, folder, git, model, tokens, LIVE. (6) Check Settings VPS section — same preview + install option visible. (7) Uncheck box on a different VPS — status line NOT installed.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "MODEL-04",
       "name": "Dynamic Model List from OpenRouter API",
       "size": "M",
