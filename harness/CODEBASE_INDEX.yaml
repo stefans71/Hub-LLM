@@ -47,6 +47,7 @@ frontend_entry:
       - {name: selectedModel, type: "useState('anthropic/claude-sonnet-4')", drives: "global model fallback"}
       - {name: setupComplete, type: "useState(null)", drives: "setup wizard redirect — null=loading, true=done, false=show wizard"}
       - {name: apiKeys, type: "useState({openrouter,claude,github})", drives: "API key availability"}
+      - {name: enhanceMode, type: "useState(() => searchParams.get('enhance') === 'true')", drives: "one-shot flag for AI enhance banner in workspace (FEAT-25)"}
     api_calls:
       - {endpoint: "/api/projects/", method: GET, purpose: "load all projects"}
     localStorage_keys:
@@ -67,7 +68,7 @@ frontend_entry:
       - {path: "/", component: LandingPage, note: "onSignUp navigates to /auth"}
       - {path: "/auth", component: AuthPage}
       - {path: "*", redirect: "/"}
-    last_verified_session: 97
+    last_verified_session: 105
 
 # ============================================================================
 # FRONTEND — Pages (frontend/src/pages/)
@@ -317,7 +318,7 @@ frontend_components:
     children: [Chat, WorkspaceTopBar, WorkspaceIconSidebar, WorkspaceFileExplorer, LLMDevPanel, PreviewPanel]
     known_issues:
       - {desc: "linkedServerId not updating on project change", sessions: [73], status: fixed}
-    last_verified_session: 86
+    last_verified_session: 105
 
   Chat.jsx:
     path: frontend/src/components/Chat.jsx
@@ -335,7 +336,7 @@ frontend_components:
     children: [ClaudeCodeTerminalChat, VoiceInput]
     known_issues:
       - {desc: "claudeCodeStatus timing — shows welcome before check", sessions: [81, 82], status: fixed}
-    last_verified_session: 86
+    last_verified_session: 105
 
   ClaudeCodeTerminalChat.jsx:
     path: frontend/src/components/ClaudeCodeTerminalChat.jsx
@@ -349,6 +350,8 @@ frontend_components:
       - {name: processingText, type: useState, drives: "spinner word display"}
       - {name: waitingForEchoRef, type: useRef, drives: "echo detection skip"}
       - {name: outputBufferRef, type: useRef, drives: "accumulated terminal output"}
+      - {name: showEnhanceBanner, type: "useState(!!enhanceWithAI)", drives: "orange banner visibility (FEAT-25)"}
+      - {name: copied, type: "useState(false)", drives: "2s 'Copied!' feedback on clipboard button"}
     features:
       - "xterm.js terminal with WebSocket to VPS"
       - "Auto-runs 'claude' command on connect"
@@ -356,8 +359,9 @@ frontend_components:
       - "Echo detection to skip user input in Claude output"
       - "Spinner word filtering (50+ words)"
       - "Processing indicator with bouncing dots"
+      - "Enhance banner — shows project brief with copy-to-clipboard button when enhanceWithAI prop is true (FEAT-25)"
     websocket: "/api/terminal/ws?serverId={serverId}"
-    last_verified_session: 86
+    last_verified_session: 105
 
   WorkspaceFileExplorer.jsx:
     path: frontend/src/components/WorkspaceFileExplorer.jsx
