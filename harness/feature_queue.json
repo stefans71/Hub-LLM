@@ -53,7 +53,7 @@
       "name": "Wire Settings Connected Status to Real Detection",
       "size": "S",
       "priority": 3,
-      "status": "pending",
+      "status": "pending_review",
       "description": "Settings page shows mock 'Anthropic connected' - wire to real Claude Code detection",
       "current": "Settings shows hardcoded mock status for Anthropic connection",
       "change": [
@@ -63,7 +63,15 @@
         "- VPS list: Show which VPSes have Claude Code installed/authenticated",
         "Reuse detection logic pattern from CLAUDE-01"
       ],
-      "test": "Settings shows real status - Anthropic only 'connected' if Claude Code detected on a VPS"
+      "test": "Settings shows real status - Anthropic only 'connected' if Claude Code detected on a VPS",
+      "completion_note": "Changed AnthropicSubscription.jsx (425→419 lines): replaced hardcoded `useState(true)` with real detection — reads vps_servers from localStorage on mount, derives isConnected from claudeCodeVps.length > 0 (useMemo). Shows 3 states: green 'Claude Code Detected' with VPS names, yellow 'VPS Connected — Claude Code Not Detected', red 'No VPS Connected'. CLI status shows real detection state and VPS count. Changed Setup.jsx: added `claudeCodeDetected: data.claude_code_detected || false` to VPS server object saved to localStorage (line 691). Changed Settings.jsx VPSModal handleSave: added `claudeCodeDetected: testResult?.claude_code_detected ?? editServer?.claudeCodeDetected ?? false` (line 3699). VPS Connections server list now shows per-server Claude Code status ('✓ Claude Code' or '✗ No Claude Code') below connection status. OpenRouter status was already wired — APIKeysSettings reads key from localStorage (line 765). Auth required for visual test — noted: auth verified separately. CODEBASE_INDEX updated for AnthropicSubscription (lines, purpose, key_state, derived_state, localStorage_keys) and Settings.jsx (lines).",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      }
     },
     {
       "id": "MODEL-04",
