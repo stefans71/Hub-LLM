@@ -111,7 +111,7 @@ frontend_pages:
 
   Setup.jsx:
     path: frontend/src/pages/Setup.jsx
-    lines: 1254
+    lines: 1250
     purpose: "Post-signup wizard — choose OpenRouter API key OR VPS+Anthropic Pro path"
     props: "{onComplete}"
     key_state:

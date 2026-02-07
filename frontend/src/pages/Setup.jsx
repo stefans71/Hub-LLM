@@ -734,31 +734,6 @@ function AnthropicStep({ onBack, onComplete }) {
       }}>
         Connect to a VPS with Claude Code installed to use your Anthropic Pro subscription
       </p>
-      <div style={{ textAlign: 'center', marginTop: '-24px', marginBottom: '24px' }}>
-        <button
-          onClick={() => setShowSSHHelp(true)}
-          title="Need help with SSH keys?"
-          style={{
-            background: 'none',
-            border: 'none',
-            color: cssVars.textMuted,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '13px',
-            padding: '4px 8px',
-            borderRadius: '6px',
-            transition: 'color 0.2s ease'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.color = cssVars.primary}
-          onMouseLeave={(e) => e.currentTarget.style.color = cssVars.textMuted}
-        >
-          <HelpCircle size={16} />
-          Need help with SSH keys?
-        </button>
-      </div>
-
       {showSSHHelp && <SSHHelpModal onClose={() => setShowSSHHelp(false)} />}
 
       <div style={{ maxWidth: '480px', margin: '0 auto' }}>
@@ -892,6 +867,26 @@ function AnthropicStep({ onBack, onComplete }) {
                   }}
                 >
                   SSH Key
+                </button>
+              </div>
+              <div style={{ textAlign: 'right', marginTop: '-4px', marginBottom: '8px' }}>
+                <button
+                  onClick={() => setShowSSHHelp(true)}
+                  title="Need help with SSH keys?"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: cssVars.accent,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '12px',
+                    padding: '2px 0'
+                  }}
+                >
+                  <HelpCircle size={14} />
+                  Need help?
                 </button>
               </div>
 
@@ -1204,7 +1199,7 @@ export default function Setup({ onComplete }) {
         padding: '40px',
         background: cssVars.bgSecondary,
         borderRadius: '16px',
-        border: `1px solid ${cssVars.border}`
+        border: `1px solid ${cssVars.accent}`
       }}>
         <StepIndicator steps={steps} currentStep={step} />
         {renderStep()}
