@@ -10,7 +10,9 @@ import {
   AlertCircle,
   ExternalLink,
   Eye,
-  EyeOff
+  EyeOff,
+  HelpCircle,
+  X
 } from 'lucide-react'
 import claudeCodeLogo from '../assets/claude-code-logo.svg'
 import openrouterLogo from '../assets/openrouter-logo.svg'
@@ -457,6 +459,156 @@ function OpenRouterStep({ onBack, onComplete }) {
   )
 }
 
+// SSH Help Modal for VPS step
+function SSHHelpModal({ onClose }) {
+  const codeStyle = {
+    display: 'block',
+    background: cssVars.bgPrimary,
+    border: `1px solid ${cssVars.border}`,
+    borderRadius: '6px',
+    padding: '12px',
+    fontFamily: 'monospace',
+    fontSize: '13px',
+    color: cssVars.accent,
+    overflowX: 'auto',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-all',
+    marginTop: '8px',
+    marginBottom: '4px'
+  }
+
+  const sectionStyle = {
+    marginBottom: '20px'
+  }
+
+  const headingStyle = {
+    fontSize: '15px',
+    fontWeight: 600,
+    color: cssVars.textPrimary,
+    marginBottom: '8px'
+  }
+
+  const textStyle = {
+    fontSize: '13px',
+    color: cssVars.textSecondary,
+    lineHeight: '1.6'
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '16px'
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: cssVars.bgSecondary,
+          border: `1px solid ${cssVars.border}`,
+          borderRadius: '12px',
+          width: '100%',
+          maxWidth: '520px',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          padding: '24px'
+        }}
+      >
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: 700,
+            color: cssVars.textPrimary,
+            margin: 0
+          }}>
+            SSH Key Setup Guide
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: cssVars.textMuted,
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div style={sectionStyle}>
+          <h4 style={headingStyle}>1. Generate an SSH key</h4>
+          <p style={textStyle}>
+            Run this command in your local terminal (Mac/Linux) or PowerShell (Windows):
+          </p>
+          <code style={codeStyle}>ssh-keygen -t ed25519 -C "your_email@example.com"</code>
+          <p style={textStyle}>
+            Press Enter to accept the default file location. Optionally set a passphrase for extra security.
+          </p>
+        </div>
+
+        <div style={sectionStyle}>
+          <h4 style={headingStyle}>2. Add the public key to your VPS</h4>
+          <p style={textStyle}>
+            The easiest way is with <code style={{ color: cssVars.accent, fontFamily: 'monospace' }}>ssh-copy-id</code>:
+          </p>
+          <code style={codeStyle}>ssh-copy-id user@your-vps-ip</code>
+          <p style={textStyle}>
+            Or manually: copy the contents of your public key and paste it into <code style={{ color: cssVars.accent, fontFamily: 'monospace' }}>~/.ssh/authorized_keys</code> on your VPS.
+          </p>
+          <code style={codeStyle}>cat ~/.ssh/id_ed25519.pub</code>
+          <p style={textStyle}>
+            Copy the output and append it to the VPS file:
+          </p>
+          <code style={codeStyle}>echo "your-public-key" &gt;&gt; ~/.ssh/authorized_keys</code>
+        </div>
+
+        <div style={sectionStyle}>
+          <h4 style={headingStyle}>3. Find your private key</h4>
+          <p style={textStyle}>Default locations:</p>
+          <ul style={{ ...textStyle, paddingLeft: '20px', margin: '8px 0' }}>
+            <li><strong>Linux/Mac:</strong> <code style={{ color: cssVars.accent, fontFamily: 'monospace' }}>~/.ssh/id_ed25519</code></li>
+            <li><strong>Windows:</strong> <code style={{ color: cssVars.accent, fontFamily: 'monospace' }}>C:\Users\YourName\.ssh\id_ed25519</code></li>
+          </ul>
+          <p style={textStyle}>
+            The file <em>without</em> the <code style={{ color: cssVars.accent, fontFamily: 'monospace' }}>.pub</code> extension is your private key.
+          </p>
+        </div>
+
+        <div style={{ marginBottom: '4px' }}>
+          <h4 style={headingStyle}>4. Copy the private key to paste into Hub-LLM</h4>
+          <p style={textStyle}>
+            Display your private key so you can copy it:
+          </p>
+          <code style={codeStyle}>cat ~/.ssh/id_ed25519</code>
+          <p style={textStyle}>
+            On Windows PowerShell:
+          </p>
+          <code style={codeStyle}>Get-Content $env:USERPROFILE\.ssh\id_ed25519</code>
+          <p style={textStyle}>
+            Copy the entire output (including the <code style={{ color: cssVars.accent, fontFamily: 'monospace' }}>-----BEGIN</code> and <code style={{ color: cssVars.accent, fontFamily: 'monospace' }}>-----END</code> lines) and paste it into the SSH Key field above.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Step 2b: Anthropic Pro / VPS Setup
 function AnthropicStep({ onBack, onComplete }) {
   const [host, setHost] = useState('')
@@ -471,6 +623,7 @@ function AnthropicStep({ onBack, onComplete }) {
   const [connected, setConnected] = useState(false)
   const [claudeCodeDetected, setClaudeCodeDetected] = useState(false)
   const [serverInfo, setServerInfo] = useState(null)
+  const [showSSHHelp, setShowSSHHelp] = useState(false)
 
   const connectVPS = async () => {
     if (!host || !username) {
@@ -580,6 +733,32 @@ function AnthropicStep({ onBack, onComplete }) {
       }}>
         Connect to a VPS with Claude Code installed to use your Anthropic Pro subscription
       </p>
+      <div style={{ textAlign: 'center', marginTop: '-24px', marginBottom: '24px' }}>
+        <button
+          onClick={() => setShowSSHHelp(true)}
+          title="Need help with SSH keys?"
+          style={{
+            background: 'none',
+            border: 'none',
+            color: cssVars.textMuted,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '13px',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            transition: 'color 0.2s ease'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.color = cssVars.primary}
+          onMouseLeave={(e) => e.currentTarget.style.color = cssVars.textMuted}
+        >
+          <HelpCircle size={16} />
+          Need help with SSH keys?
+        </button>
+      </div>
+
+      {showSSHHelp && <SSHHelpModal onClose={() => setShowSSHHelp(false)} />}
 
       <div style={{ maxWidth: '480px', margin: '0 auto' }}>
         {!connected ? (

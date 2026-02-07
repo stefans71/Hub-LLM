@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 94 - 2026-02-07 12:00 EST
+**Task**: UI-09
+**What**:
+- UI-09: Added SSH help tooltip + modal to setup wizard VPS step. New `SSHHelpModal` component (fixed overlay, backdrop click to close, X button, 4 sections with monospace code blocks). Help button with HelpCircle icon below subtitle, hover turns blue. Modal covers: generate SSH key, add public key to VPS, find private key location (Linux/Mac/Windows), copy private key to paste into Hub-LLM. Responsive via maxWidth:520px + padding:16px on container.
+
 ### Session 93 - 2026-02-06 19:54 EST
 **Tasks**: BUG-34, INFRA-03, FEAT-10, INFRA-03B
 **What**:

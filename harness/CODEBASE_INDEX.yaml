@@ -111,19 +111,24 @@ frontend_pages:
 
   Setup.jsx:
     path: frontend/src/pages/Setup.jsx
-    lines: 1048
+    lines: 1254
     purpose: "Post-signup wizard — choose OpenRouter API key OR VPS+Anthropic Pro path"
     props: "{onComplete}"
     key_state:
       - {name: step, type: "useState(0)", drives: "wizard step"}
       - {name: path, type: "useState(null)", drives: "'openrouter' or 'anthropic'"}
       - {name: completing, type: useState, drives: "completion spinner"}
-    sub_components: [ChoosePathStep, OpenRouterStep, AnthropicStep]
+    sub_components: [ChoosePathStep, OpenRouterStep, SSHHelpModal, AnthropicStep]
     icon_usage:
       - {component: PathCard, line: 78, renders: "lucide icon OR img tag (objectFit:contain) based on typeof icon prop, iconSize prop (default 24)"}
       - {component: ChoosePathStep, line: 163, icon: "openrouter-logo.svg (was lucide Key)"}
       - {component: ChoosePathStep, line: 170, icon: "claude-code-logo.svg (was lucide Sparkles)"}
-      - {component: AnthropicStep, line: 809, icon: "Sparkles (lucide) — Claude Code detection indicator"}
+      - {component: SSHHelpModal, line: 462, icon: "X (lucide) — close button"}
+      - {component: AnthropicStep, line: 737, icon: "HelpCircle (lucide) — SSH help button"}
+      - {component: AnthropicStep, line: 989, icon: "Sparkles (lucide) — Claude Code detection indicator"}
+    ui_features:
+      - {component: SSHHelpModal, line: 462, desc: "Fixed overlay modal with backdrop, 4-section SSH key guide (generate, add to VPS, find key, copy to Hub-LLM). Responsive: full-width on mobile <600px via maxWidth+padding."}
+      - {component: AnthropicStep, line: 737, desc: "Help button with HelpCircle icon below subtitle, hover highlights blue, opens SSHHelpModal"}
     api_calls:
       - {endpoint: "https://openrouter.ai/api/v1/models", method: GET, purpose: "validate OpenRouter key"}
       - {endpoint: "/api/ssh/test", method: POST, purpose: "test VPS connection"}
@@ -131,7 +136,7 @@ frontend_pages:
     localStorage_keys:
       - {key: openrouter_key, direction: both}
       - {key: vps_servers, direction: both}
-    last_verified_session: 90
+    last_verified_session: 93
 
   Settings.jsx:
     path: frontend/src/pages/Settings.jsx
