@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useVoice } from '../components/VoiceInput'
 import StatusLinePreview from '../components/StatusLinePreview'
+import ModelSelector from '../components/ModelSelector'
 import {
   ChevronRight, ChevronDown, Upload, Mic, MicOff, Send, X, Plus,
   Cloud, Server, Check, Sparkles, Zap, ExternalLink, Loader,
@@ -412,6 +413,9 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [creatingRepo, setCreatingRepo] = useState(false)
   const [createRepoError, setCreateRepoError] = useState('')
 
+  // AI model selector state
+  const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
+
   // UI state
   const [showAIChat, setShowAIChat] = useState(false)
   const [showVPSFields, setShowVPSFields] = useState(false)
@@ -689,7 +693,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
         headers,
         body: JSON.stringify({
           brief: formData.projectBrief,
-          model: 'anthropic/claude-sonnet-4',
+          model: selectedModel,
           provider: 'openrouter'
         })
       })
@@ -771,7 +775,7 @@ In the meantime, I can help you think through your project. What would you like 
             standards: formData.codeStandards,
             context: formData.context
           },
-          model: 'anthropic/claude-sonnet-4',
+          model: selectedModel,
           provider: 'openrouter'
         })
       })
@@ -876,7 +880,7 @@ In the meantime, I can help you think through your project. What would you like 
         headers,
         body: JSON.stringify({
           brief: formData.projectBrief,
-          model: 'anthropic/claude-sonnet-4',
+          model: selectedModel,
           provider: 'openrouter'
         })
       })
@@ -1269,7 +1273,14 @@ Examples:
                 }}
               />
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                <ModelSelector
+                  value={selectedModel}
+                  onChange={(model) => setSelectedModel(model.id)}
+                  apiKeys={{ openrouter: !!(localStorage.getItem('openrouter_key') || localStorage.getItem('openrouter_api_key')) }}
+                  showSubscriptionModels={false}
+                  compact={true}
+                />
                 <Button variant="accent" onClick={handleStartAIDefinition}>
                   <Sparkles size={16} />
                   Define Project with AI

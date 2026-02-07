@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 103 - 2026-02-08 EST
+**Task**: FEAT-20
+**What**: Added shared ModelSelector component to CreateProject.jsx step 1. ModelSelector appears in the row next to "Define Project with AI" button (left=selector, right=button). showSubscriptionModels=false since expand-brief only routes through OpenRouter. selectedModel state (default 'anthropic/claude-sonnet-4') wired into all 3 API calls (expand-brief, chat, and follow-up). Replaced hardcoded model string in 3 places with selectedModel. Build: 0 errors (2360 lines).
+**Key Learning**: CreateProject.jsx uses the same hardcoded model string in 3 separate fetch calls (expand-brief, chat initial, chat follow-up) — use replace_all when wiring a new state variable to avoid missing occurrences.
+
+---
+
 ### Session 102 - 2026-02-08 EST
 **Task**: FEAT-21
 **What**: Extracted ModelSelector from WorkspaceTopBar into reusable component. Created frontend/src/components/ModelSelector.jsx (712 lines) with all model-related constants, cache helpers, state, effects, filtering/grouping logic, version-descending sort, and full dropdown JSX. WorkspaceTopBar.jsx reduced from 954→305 lines — now handles only project name, collapse toggle, export button, billing warning intercepts, and Claude Code detection. ModelSelector accepts props: value, onChange, apiKeys, claudeCodeStatus, isConnected, showSubscriptionModels, compact. Updated POPULAR_MODEL_IDS to current flagships (GPT-5.2, Gemini 3, etc). Added version-descending sort within provider groups via parseVersionForSort().
