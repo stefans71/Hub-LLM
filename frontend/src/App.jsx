@@ -19,9 +19,19 @@ function AppContent() {
   const { user, logout, isAuthenticated, loading, getAuthHeader } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [projects, setProjects] = useState([])
   const [activeProject, setActiveProject] = useState(null)
+
+  // FEAT-25: Capture enhance param as state (survives URL clearing), one-shot
+  const [enhanceMode, setEnhanceMode] = useState(() => searchParams.get('enhance') === 'true')
+  useEffect(() => {
+    if (searchParams.get('enhance') === 'true') {
+      const newParams = new URLSearchParams(searchParams)
+      newParams.delete('enhance')
+      setSearchParams(newParams, { replace: true })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
   const [showSettings, setShowSettings] = useState(false)
   const [setupComplete, setSetupComplete] = useState(null) // null = not yet determined
@@ -223,6 +233,7 @@ function AppContent() {
                     project={activeProject}
                     model={selectedModel}
                     apiKeys={apiKeys}
+                    enhanceWithAI={enhanceMode}
                     onProjectChange={(project) => {
                       setActiveProject(project)
                       // BUG-25: Update URL when switching projects within workspace

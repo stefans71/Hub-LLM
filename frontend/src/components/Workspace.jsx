@@ -30,7 +30,7 @@ import {
  * - LLM-Dev Panel (Terminal, Editor, Docker, Logs)
  * - File Explorer (left sidebar)
  */
-export default function Workspace({ project, model, apiKeys, onProjectChange }) {
+export default function Workspace({ project, model, apiKeys, onProjectChange, enhanceWithAI }) {
   const navigate = useNavigate()
   const [activeServer, setActiveServer] = useState(null)
   const [terminals, setTerminals] = useState([]) // Multiple terminals
@@ -414,6 +414,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange }) 
                 serverId={linkedServerId}
                 claudeCodeStatus={claudeCodeStatus}
                 onProcessingChange={setIsClaudeProcessing}
+                enhanceWithAI={enhanceWithAI}
               />
             </div>
 

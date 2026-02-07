@@ -39,8 +39,8 @@ frontend_entry:
 
   App.jsx:
     path: frontend/src/App.jsx
-    lines: 341
-    purpose: "Root app — routing, auth redirect, project state, setup flow control. Unauthenticated visitors see LandingPage at / with CTA to /auth. handleProjectCreated accepts options.enhance for AI enhancement redirect."
+    lines: 352
+    purpose: "Root app — routing, auth redirect, project state, setup flow control. Unauthenticated visitors see LandingPage at / with CTA to /auth. handleProjectCreated accepts options.enhance for AI enhancement redirect. enhanceMode state captured from URL, cleared after first render."
     key_state:
       - {name: projects, type: "useState([])", drives: "project list across app"}
       - {name: activeProject, type: "useState(null)", drives: "currently selected project"}
@@ -294,9 +294,9 @@ frontend_pages:
 frontend_components:
   Workspace.jsx:
     path: frontend/src/components/Workspace.jsx
-    lines: 528
-    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout, Claude processing state"
-    props: "{project, model, apiKeys, onProjectChange}"
+    lines: 529
+    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout, Claude processing state, enhance banner threading"
+    props: "{project, model, apiKeys, onProjectChange, enhanceWithAI}"
     key_state:
       - {name: isConnected, type: useState, drives: "SSH connection status"}
       - {name: isConnecting, type: useState, drives: "connecting spinner"}
@@ -321,9 +321,9 @@ frontend_components:
 
   Chat.jsx:
     path: frontend/src/components/Chat.jsx
-    lines: 565
+    lines: 566
     purpose: "Chat panel — routes to OpenRouter chat or ClaudeCodeTerminalChat based on model+VPS"
-    props: "{project, model, apiKeys, serverId, claudeCodeStatus, onProcessingChange}"
+    props: "{project, model, apiKeys, serverId, claudeCodeStatus, onProcessingChange, enhanceWithAI}"
     key_state:
       - {name: messages, type: "useState([])", drives: "chat history"}
       - {name: input, type: useState, drives: "user input"}
@@ -339,9 +339,9 @@ frontend_components:
 
   ClaudeCodeTerminalChat.jsx:
     path: frontend/src/components/ClaudeCodeTerminalChat.jsx
-    lines: 1004
-    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking"
-    props: "{project, serverId, projectSlug, onProcessingChange}"
+    lines: 1064
+    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard"
+    props: "{project, serverId, projectSlug, onProcessingChange, enhanceWithAI}"
     key_state:
       - {name: messages, type: "useState([])", drives: "parsed chat bubbles"}
       - {name: viewMode, type: useState, drives: "'terminal' or 'bubbles'"}

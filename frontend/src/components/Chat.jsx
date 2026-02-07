@@ -19,7 +19,7 @@ const MAX_IMAGES = 4 // FIFO queue limit to prevent memory bloat
  * - CLAUDE-02: Routes to Claude Code on VPS when available
  * - CLAUDE-02-REWORK: Terminal-based chat when Claude Code mode active
  */
-export default function Chat({ project, model, apiKeys, serverId, claudeCodeStatus, onProcessingChange }) {
+export default function Chat({ project, model, apiKeys, serverId, claudeCodeStatus, onProcessingChange, enhanceWithAI }) {
   // CLAUDE-02-REWORK: Check if we should use terminal-based Claude Code chat
   const useClaudeCodeTerminal = useMemo(() => {
     const isAnthropicModel = model?.provider === 'anthropic' ||
@@ -319,6 +319,7 @@ export default function Chat({ project, model, apiKeys, serverId, claudeCodeStat
         serverId={serverId}
         projectSlug={project?.slug}
         onProcessingChange={onProcessingChange}
+        enhanceWithAI={enhanceWithAI}
       />
     )
   }

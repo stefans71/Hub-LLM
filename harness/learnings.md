@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 108 - 2026-02-07 EST
+**Task**: FEAT-25
+**What**: Added enhance banner to ClaudeCodeTerminalChat. Prop threading: App.jsx (enhanceMode state from URL, cleared after first render) → Workspace → Chat → ClaudeCodeTerminalChat. Banner shows project brief preview, 'Copy to Clipboard' button (orange gradient), and 'Dismiss' button. Copy builds a prompt string from the brief. Banner state captured on mount via useState(!!enhanceWithAI) so it survives URL clearing and prop changes.
+**Key Learning**: When passing a URL-derived prop through multiple component layers where the URL gets cleared early, capture the value as state in both the top-level component (App.jsx enhanceMode) AND the leaf component (ClaudeCodeTerminalChat showEnhanceBanner). This guards against timing issues where the leaf component mounts after the URL is already cleared (e.g. ClaudeCodeTerminalChat is conditionally rendered based on claudeCodeStatus).
+
+---
+
 ### Session 107 - 2026-02-07 EST
 **Task**: FEAT-24
 **What**: Added conditional UI in CreateProject based on billing mode. When subscription model selected, the 'Define Project with AI' button is replaced with an 'Enhance project with AI after creation' checkbox. The checkbox state (enhanceWithAI) is reset when switching to a non-subscription model. The enhance flag is passed through onCreateProject callback to App.jsx, which appends &enhance=true to the workspace URL. Build: 0 errors (2392 lines CreateProject.jsx, 341 lines App.jsx).

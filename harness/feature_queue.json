@@ -69,7 +69,7 @@
         "code_works": true,
         "index_updated": true,
         "learnings_written": true,
-        "committed_pushed": false,
+        "committed_pushed": true,
         "status_set_to_pending_review": true
       }
     },
@@ -78,7 +78,7 @@
       "name": "Workspace enhance banner: copy project brief for Claude Code",
       "size": "S",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
       "depends_on": "FEAT-24",
       "description": "When workspace opens with ?enhance=true in the URL, ClaudeCodeTerminalChat shows a banner with the project brief and a 'Copy to Clipboard' button. User copies the prompt, then pastes it into Claude Code's input when ready. No programmatic terminal injection — terminal WebSocket input is fragile (same reason BUBBLE-01 is shelved). Banner dismissed via 'Dismiss' or after copy. One-shot — URL param cleared after first render.\n\nWhy copy-paste over terminal injection: Programmatic terminal input via WebSocket is fragile — echo detection, timing, and collision issues are exactly why BUBBLE-01 is shelved. Copy-paste is zero risk of terminal corruption, no dependency on status === 'claude_ready' timing, user has full control over when to send, works regardless of Claude Code's loading state.\n\nProp threading chain:\n- App.jsx line 219-230: Read searchParams.get('enhance'), pass enhanceWithAI={true} to Workspace. useEffect to clear 'enhance' param from URL (replace: true) after first render.\n- Workspace.jsx line 33: Accept enhanceWithAI prop. Pass through to Chat at line 410-417.\n- Chat.jsx line 22: Accept enhanceWithAI prop. Line 317-322: Pass enhanceWithAI to ClaudeCodeTerminalChat.\n- ClaudeCodeTerminalChat.jsx line 173: Accept enhanceWithAI prop. New state + copy handler + banner UI.",
       "change": [
@@ -90,13 +90,13 @@
       ],
       "test": "Step-by-step: (1) Create project with subscription model + 'Enhance' checked → workspace opens with banner visible showing brief preview. (2) Banner shows truncated brief + 'Copy to Clipboard' button + 'Dismiss' button. (3) Click 'Copy to Clipboard' → button text changes to 'Copied!' for 2s, clipboard contains the formatted prompt. (4) Click 'Dismiss' → banner disappears. (5) Refresh page → no banner (URL param cleared). (6) Create project WITHOUT enhance → no banner in workspace. (7) npm run build — 0 errors. Paste the banner JSX block and copyBriefToClipboard handler from ClaudeCodeTerminalChat.jsx in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed 4 files. App.jsx (341→352): Added enhanceMode state from searchParams, useEffect to clear enhance param (one-shot), pass enhanceWithAI={enhanceMode} to Workspace. Workspace.jsx (528→529): Added enhanceWithAI prop, threaded to Chat. Chat.jsx (565→566): Added enhanceWithAI prop, threaded to ClaudeCodeTerminalChat. ClaudeCodeTerminalChat.jsx (1004→1064): Added enhanceWithAI prop, showEnhanceBanner/copied state, copyBriefToClipboard handler: const copyBriefToClipboard = useCallback(() => { if (!project?.brief) return; const cleanBrief = project.brief.trim().replace(/\\n+/g, ' ').substring(0, 500); const prompt = `I just created this project. Here's my brief: ${cleanBrief}. Help me set up the project structure, dependencies, and initial files.`; navigator.clipboard.writeText(prompt); setCopied(true); setTimeout(() => setCopied(false), 2000) }, [project?.brief]). Banner JSX: orange-tinted container (rgba(249,115,22,0.08) bg, border-bottom), brief preview (100 char truncated), helper text, Dismiss button (grey), Copy to Clipboard button (orange gradient #f97316→#ea580c, shows 'Copied!' 2s). Build: vite build 0 errors.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

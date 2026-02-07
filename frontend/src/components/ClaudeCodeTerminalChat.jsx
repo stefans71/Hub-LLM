@@ -170,7 +170,7 @@ function ChatBubble({ message, isUser }) {
     </div>
   )
 }
-export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug, onProcessingChange }) {
+export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug, onProcessingChange, enhanceWithAI }) {
   const terminalRef = useRef(null)
   const xtermRef = useRef(null)
   const wsRef = useRef(null)
@@ -202,6 +202,19 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
   const [isProcessing, setIsProcessing] = useState(false) // True when waiting for Claude's response
   const [processingText, setProcessingText] = useState('') // Current spinner text (e.g., "Channeling...")
   const [terminalReady, setTerminalReady] = useState(false) // True when xterm is mounted and ready
+
+  // FEAT-25: Enhance banner state (captured on mount, survives prop changes)
+  const [showEnhanceBanner, setShowEnhanceBanner] = useState(!!enhanceWithAI)
+  const [copied, setCopied] = useState(false)
+
+  const copyBriefToClipboard = useCallback(() => {
+    if (!project?.brief) return
+    const cleanBrief = project.brief.trim().replace(/\n+/g, ' ').substring(0, 500)
+    const prompt = `I just created this project. Here's my brief: ${cleanBrief}. Help me set up the project structure, dependencies, and initial files.`
+    navigator.clipboard.writeText(prompt)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }, [project?.brief])
 
   // FEAT-10: Propagate processing state to parent (for project dot pulse animation)
   useEffect(() => {
@@ -874,6 +887,53 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
             )}
           </div>
         </div>
+
+        {/* FEAT-25: Enhance banner */}
+        {showEnhanceBanner && (
+          <div style={{
+            padding: '12px 16px',
+            background: 'rgba(249, 115, 22, 0.08)',
+            borderBottom: '1px solid rgba(249, 115, 22, 0.2)'
+          }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginBottom: '4px' }}>
+              {project?.brief ? (project.brief.length > 100 ? project.brief.substring(0, 100) + '...' : project.brief) : 'No brief provided'}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              Paste this into Claude Code when ready
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setShowEnhanceBanner(false)}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '12px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-tertiary)',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer'
+                }}
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={copyBriefToClipboard}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '12px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #f97316, #ea580c)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontWeight: 500
+                }}
+              >
+                {copied ? 'Copied!' : 'Copy to Clipboard'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* PHASE-2: Chat Bubbles View */}
         {viewMode === 'bubbles' && (
