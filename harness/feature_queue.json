@@ -43,7 +43,7 @@
         "code_works": true,
         "index_updated": true,
         "learnings_written": true,
-        "committed_pushed": false,
+        "committed_pushed": true,
         "status_set_to_pending_review": true
       }
     },
@@ -52,7 +52,7 @@
       "name": "CreateProject conditional UI: checkbox vs Define-with-AI button based on billing mode",
       "size": "S",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
       "depends_on": "BUG-40",
       "description": "When user selects a subscription-tier model (Claude Code via VPS), replace the 'Define Project with AI' button with a checkbox: 'Enhance project with AI after creation'. When OpenRouter model is selected, keep the existing inline AI chat flow unchanged. This is the frontend pivot point for the dual-path rearchitecture — Claude Code is interactive (terminal), so the current stateless API chat approach can't work for it. Instead, user checks the box → creates project → gets redirected to workspace where Claude Code launches in terminal.\n\nKey lines:\n- CreateProject.jsx line 430: Add `enhanceWithAI` state near other UI state\n- CreateProject.jsx line 1290-1305: Conditional render — if selectedModelMeta?.tier === 'subscription' → checkbox, else → existing button\n- CreateProject.jsx line 1293 onChange: Reset enhanceWithAI when switching away from subscription model\n- CreateProject.jsx line 1146: Pass enhance flag through onCreateProject callback: onCreateProject?.(project, { enhance: enhanceWithAI && selectedModelMeta?.tier === 'subscription' })\n- App.jsx line 93-98: handleProjectCreated accepts options param, appends &enhance=true to URL\n\nDependency: BUG-40 must land first so the billing toggle correctly identifies subscription models.",
       "change": [
@@ -64,13 +64,13 @@
       ],
       "test": "Step-by-step: (1) Select a subscription model (e.g. Claude Opus 4.5) in CreateProject → 'Define Project with AI' button should be hidden, checkbox 'Enhance project with AI after creation' visible. (2) Check the box, fill in project name + brief, click Create Project → URL should contain '&enhance=true'. (3) Switch model to an OpenRouter model → checkbox disappears, 'Define Project with AI' button reappears, enhanceWithAI resets to false. (4) With OpenRouter model, click 'Define Project with AI' → existing inline AI chat flow still works. (5) npm run build — 0 errors. Paste the conditional rendering JSX block and the handleProjectCreated function from App.jsx in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed CreateProject.jsx (2377→2392 lines): Added enhanceWithAI useState(false) at line 432. onChange handler resets enhanceWithAI when tier !== 'subscription'. Conditional rendering at lines 1304-1319: {selectedModelMeta?.tier === 'subscription' ? (<label style={{ display:'flex', alignItems:'center', gap:'8px', cursor:'pointer', fontSize:'14px', color:'var(--text-secondary)' }}><input type='checkbox' checked={enhanceWithAI} onChange={(e) => setEnhanceWithAI(e.target.checked)} style={{ accentColor:'#f97316', width:'16px', height:'16px', cursor:'pointer' }} />Enhance project with AI after creation</label>) : (<Button variant='accent' onClick={handleStartAIDefinition}><Sparkles size={16} />Define Project with AI</Button>)}. onCreateProject call at line 1147: onCreateProject?.(project, { enhance: enhanceWithAI && selectedModelMeta?.tier === 'subscription' }). Changed App.jsx (340→341 lines): handleProjectCreated = (project, options = {}) => { ... const enhanceParam = options.enhance ? '&enhance=true' : ''; navigate(`/workspace?projectId=${project.id}${enhanceParam}`) }. Build: vite build 0 errors.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

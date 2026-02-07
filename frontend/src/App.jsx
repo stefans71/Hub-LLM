@@ -90,11 +90,12 @@ function AppContent() {
     }
   }
 
-  const handleProjectCreated = (project) => {
+  const handleProjectCreated = (project, options = {}) => {
     setProjects([...projects, project])
     setActiveProject(project)
     // BUG-21: Include projectId in URL for page refresh persistence
-    navigate(`/workspace?projectId=${project.id}`)
+    const enhanceParam = options.enhance ? '&enhance=true' : ''
+    navigate(`/workspace?projectId=${project.id}${enhanceParam}`)
   }
 
   const handleLogout = async () => {

@@ -429,6 +429,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [contextGenerated, setContextGenerated] = useState(false)
   const [uploadedFileName, setUploadedFileName] = useState(null)
+  const [enhanceWithAI, setEnhanceWithAI] = useState(false)
 
   // VPS test connection state
   const [testingVps, setTestingVps] = useState(false)
@@ -1143,7 +1144,7 @@ In the meantime, I can help you think through your project. What would you like 
           }
         }
 
-        onCreateProject?.(project)
+        onCreateProject?.(project, { enhance: enhanceWithAI && selectedModelMeta?.tier === 'subscription' })
       } else {
         const error = await res.json()
         setCreateProjectError(error.detail || 'Failed to create project')
@@ -1290,7 +1291,7 @@ Examples:
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
                 <ModelSelector
                   value={selectedModel}
-                  onChange={(model) => { setSelectedModel(model.id); setSelectedModelMeta(model) }}
+                  onChange={(model) => { setSelectedModel(model.id); setSelectedModelMeta(model); if (model.tier !== 'subscription') setEnhanceWithAI(false) }}
                   apiKeys={{
                     openrouter: !!(localStorage.getItem('openrouter_key') || localStorage.getItem('openrouter_api_key')),
                     anthropic: hasClaudeCode
@@ -1300,10 +1301,22 @@ Examples:
                   showSubscriptionModels={true}
                   compact={true}
                 />
-                <Button variant="accent" onClick={handleStartAIDefinition}>
-                  <Sparkles size={16} />
-                  Define Project with AI
-                </Button>
+                {selectedModelMeta?.tier === 'subscription' ? (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                    <input
+                      type="checkbox"
+                      checked={enhanceWithAI}
+                      onChange={(e) => setEnhanceWithAI(e.target.checked)}
+                      style={{ accentColor: '#f97316', width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    Enhance project with AI after creation
+                  </label>
+                ) : (
+                  <Button variant="accent" onClick={handleStartAIDefinition}>
+                    <Sparkles size={16} />
+                    Define Project with AI
+                  </Button>
+                )}
               </div>
 
               {/* AI Chat Panel */}

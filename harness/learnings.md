@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 107 - 2026-02-07 EST
+**Task**: FEAT-24
+**What**: Added conditional UI in CreateProject based on billing mode. When subscription model selected, the 'Define Project with AI' button is replaced with an 'Enhance project with AI after creation' checkbox. The checkbox state (enhanceWithAI) is reset when switching to a non-subscription model. The enhance flag is passed through onCreateProject callback to App.jsx, which appends &enhance=true to the workspace URL. Build: 0 errors (2392 lines CreateProject.jsx, 341 lines App.jsx).
+**Key Learning**: Conditional rendering based on model tier creates a clean pivot point — subscription models use terminal-based Claude Code (interactive), while OpenRouter uses stateless API chat. The checkbox approach avoids needing to inject prompts into the terminal.
+
+---
+
 ### Session 106 - 2026-02-07 EST
 **Task**: BUG-40
 **What**: Fixed CreateProject ModelSelector missing isConnected and claudeCodeStatus props. Root cause: ModelSelector defaults isConnected=false and claudeCodeStatus.installed=false, so even when hasClaudeCode is true, the status display showed '○ Connect VPS'. Added isConnected={hasClaudeCode} and claudeCodeStatus={{ installed: hasClaudeCode, authenticated: hasClaudeCode, checking: false }} to the ModelSelector props in CreateProject.jsx. Build: 0 errors (2379 lines).
