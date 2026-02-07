@@ -224,6 +224,7 @@ async def terminal_websocket(
 
                     if msg_type == "input":
                         await channel.write_input(msg.get("data", ""))
+                        vps_conn.touch()
 
                     elif msg_type == "resize":
                         await channel.resize(

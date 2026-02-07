@@ -8,6 +8,7 @@ import os
 
 from routers import chat, projects, voice, ssh, github, servers, auth, ai, stats, terminal, files, settings
 from models import init_db, close_db
+from services.vps_connection import vps_manager
 
 
 @asynccontextmanager
@@ -15,9 +16,12 @@ async def lifespan(app: FastAPI):
     # Startup
     print("Starting HubLLM API...")
     await init_db()
+    vps_manager.start_idle_checker()
     yield
     # Shutdown
     print("Shutting down HubLLM API...")
+    vps_manager.stop_idle_checker()
+    await vps_manager.close_all()
     await close_db()
 
 

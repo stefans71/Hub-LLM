@@ -632,7 +632,7 @@ backend_routers:
 
   terminal.py:
     path: backend/routers/terminal.py
-    lines: 295
+    lines: 296
     prefix: "/api/terminal"
     purpose: "New multiplexed terminal — one SSH connection per VPS, multiple PTY channels"
     endpoints:
@@ -765,8 +765,8 @@ backend_routers:
 backend_services:
   vps_connection.py:
     path: backend/services/vps_connection.py
-    lines: 386
-    purpose: "Multiplexed SSH connection manager — singleton, one connection per VPS, multiple PTY channels"
+    lines: 443
+    purpose: "Multiplexed SSH connection manager — singleton, one connection per VPS, multiple PTY channels, idle timeout auto-close"
     classes:
       ConnectionStatus:
         type: Enum
@@ -787,6 +787,7 @@ backend_services:
           - "status: ConnectionStatus"
           - "_status_listeners: list[Callable]"
           - "_connect_lock: asyncio.Lock"
+          - "last_activity: float (time.time(), updated by touch())"
         methods:
           - "connect(timeout=15.0) — establish SSH with lock"
           - "create_channel(cols=80, rows=24) → PTYChannel"
@@ -796,11 +797,13 @@ backend_services:
           - "run_command(command, timeout=10.0) → (stdout, stderr, exit_code)"
           - "close() — close all channels + connection"
       VPSConnectionManager:
-        purpose: "Singleton managing all VPS connections"
+        purpose: "Singleton managing all VPS connections with idle timeout"
         pattern: "Singleton via __new__"
         key_state:
           - "_connections: dict[str, VPSConnection]"
           - "_lock: asyncio.Lock (lazy)"
+          - "idle_timeout: int (default 7200s / 2 hours)"
+          - "_idle_checker_task: asyncio.Task (background loop every 300s)"
         methods:
           - "get_connection(server_id, credentials) → VPSConnection"
           - "get_existing_connection(server_id) → Optional[VPSConnection]"
@@ -808,8 +811,10 @@ backend_services:
           - "close_all()"
           - "get_status(server_id) → (ConnectionStatus, error_msg)"
           - "get_all_statuses() → dict"
+          - "start_idle_checker() — starts background task (called from app lifespan)"
+          - "stop_idle_checker() — cancels background task"
     global_instance: "vps_manager = VPSConnectionManager()"
-    last_verified_session: 86
+    last_verified_session: 93
 
   ssh.py:
     path: backend/services/ssh.py

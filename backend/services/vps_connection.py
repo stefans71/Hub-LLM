@@ -7,6 +7,7 @@ All terminals to the same VPS share fate - if connection drops, all drop togethe
 import asyncio
 import asyncssh
 import logging
+import time
 from typing import Optional, Callable, AsyncGenerator
 from dataclasses import dataclass, field
 from enum import Enum
@@ -101,6 +102,13 @@ class VPSConnection:
         # Lock for connection operations
         self._connect_lock = asyncio.Lock()
 
+        # Last activity timestamp for idle detection
+        self.last_activity: float = time.time()
+
+    def touch(self):
+        """Update last activity timestamp"""
+        self.last_activity = time.time()
+
     def add_status_listener(self, listener: StatusListener):
         """Add a listener for connection status changes"""
         self._status_listeners.append(listener)
@@ -161,6 +169,7 @@ class VPSConnection:
 
                 logger.info(f"SSH connection established to {self.credentials.host}")
                 self.status = ConnectionStatus.CONNECTED
+                self.touch()
                 await self._notify_status_change()
                 return True
 
@@ -225,6 +234,7 @@ class VPSConnection:
         )
 
         self.channels[channel_id] = channel
+        self.touch()
         return channel
 
     def get_channel(self, channel_id: str) -> Optional[PTYChannel]:
@@ -250,6 +260,7 @@ class VPSConnection:
         if not self.conn or self.status != ConnectionStatus.CONNECTED:
             await self.connect()
 
+        self.touch()
         try:
             result = await asyncio.wait_for(
                 self.conn.run(command),
@@ -319,6 +330,12 @@ class VPSConnectionManager:
         # Lock for creating connections (lazy init to avoid event loop issues)
         self._lock: Optional[asyncio.Lock] = None
 
+        # Idle timeout in seconds (default 2 hours)
+        self.idle_timeout: int = 7200
+
+        # Background task for idle checking
+        self._idle_checker_task: Optional[asyncio.Task] = None
+
     def _get_lock(self) -> asyncio.Lock:
         """Get or create the lock (lazy init for event loop compatibility)"""
         if self._lock is None:
@@ -380,6 +397,46 @@ class VPSConnectionManager:
             }
             for server_id, conn in self._connections.items()
         }
+
+    def start_idle_checker(self):
+        """Start the background idle connection checker (call from app lifespan)"""
+        if self._idle_checker_task is None or self._idle_checker_task.done():
+            self._idle_checker_task = asyncio.create_task(self._idle_check_loop())
+            logger.info(f"Idle connection checker started (timeout={self.idle_timeout}s, check every 300s)")
+
+    def stop_idle_checker(self):
+        """Stop the background idle connection checker"""
+        if self._idle_checker_task and not self._idle_checker_task.done():
+            self._idle_checker_task.cancel()
+            self._idle_checker_task = None
+            logger.info("Idle connection checker stopped")
+
+    async def _idle_check_loop(self):
+        """Background loop that closes idle connections every 5 minutes"""
+        try:
+            while True:
+                await asyncio.sleep(300)  # Check every 5 minutes
+                await self._close_idle_connections()
+        except asyncio.CancelledError:
+            pass
+
+    async def _close_idle_connections(self):
+        """Close any connections that have been idle longer than idle_timeout"""
+        now = time.time()
+        to_close = []
+
+        for server_id, conn in self._connections.items():
+            if conn.status == ConnectionStatus.CONNECTED:
+                idle_seconds = now - conn.last_activity
+                if idle_seconds > self.idle_timeout:
+                    logger.info(
+                        f"Closing idle connection {server_id} "
+                        f"(idle {idle_seconds:.0f}s > {self.idle_timeout}s)"
+                    )
+                    to_close.append(server_id)
+
+        for server_id in to_close:
+            await self.close_connection(server_id)
 
 
 # Global singleton instance

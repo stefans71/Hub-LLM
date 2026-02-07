@@ -5,8 +5,10 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 93 - 2026-02-06 19:54 EST
-**Task**: BUG-34
-**What**: Setup wizard hardcoded `setClaudeCodeDetected(false)` instead of using test connection response. Fix: added `claude_code_detected` field to `TestConnectionResponse` model, added `which claude` check in `test_connection` endpoint (ssh.py), and wired frontend to read `data.claude_code_detected` from the response. Backend-only detection — no separate endpoint call needed since the SSH connection is already open during test.
+**Tasks**: BUG-34, INFRA-03
+**What**:
+- BUG-34: Setup wizard hardcoded `setClaudeCodeDetected(false)` instead of using test connection response. Fix: added `claude_code_detected` field to `TestConnectionResponse` model, added `which claude` check in `test_connection` endpoint (ssh.py), and wired frontend to read `data.claude_code_detected` from the response.
+- INFRA-03: Added idle connection timeout. `VPSConnection` now tracks `last_activity` via `touch()` (called on connect, create_channel, run_command, and terminal input). `VPSConnectionManager` has background task checking every 5 min, closes connections idle > 2 hours. Started/stopped in main.py lifespan. Both ssh.py and terminal.py WebSocket handlers call `vps_conn.touch()` on input.
 
 ### Session 92 - 2026-02-07 EST
 **Tasks**: BUG-33, UI-07 (re-fix)

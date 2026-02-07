@@ -500,6 +500,7 @@ async def terminal_websocket(websocket: WebSocket, server_id: str):
 
                     if message["type"] == "input":
                         await channel.write_input(message["data"])
+                        vps_conn.touch()
                     elif message["type"] == "resize":
                         await channel.resize(
                             message.get("cols", 120),
