@@ -26,6 +26,79 @@
   },
   "queue": [
     {
+      "id": "BUG-41",
+      "name": "Fix selectedModelMeta null on mount + default model ID mismatch in CreateProject",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "CreateProject's conditional UI (FEAT-24) is broken on mount. selectedModelMeta initializes to null (line 418) and ModelSelector's onChange only fires on user click, not on mount. So selectedModelMeta?.tier === 'subscription' at line 1298 is always false on initial render — shows 'Define Project with AI' button instead of checkbox, even when a subscription model is the default.\n\nAdditionally, the default model ID 'anthropic/claude-sonnet-4' (line 417) doesn't match any SUBSCRIPTION_MODELS ID. Those use 'claude-sonnet-4.5' format without the 'anthropic/' prefix. This also causes the trigger badge to show 'PAID' instead of 'PRO' because modelList.find() at ModelSelector line 371 can't find the model.\n\nFix: Export SUBSCRIPTION_MODELS from ModelSelector, import in CreateProject, derive isSubscriptionModel from the array (works without onChange click), fix default model ID to match SUBSCRIPTION_MODELS format.\n\nRef: Screenshot from production shows 'PAID' badge + 'Define Project with AI' button visible for Anthropic Claude Sonnet 4 with Claude Code Ready in dropdown.",
+      "change": [
+        "frontend/src/components/ModelSelector.jsx line 36: Change 'const SUBSCRIPTION_MODELS' to 'export const SUBSCRIPTION_MODELS' — add export keyword so CreateProject can import it",
+        "frontend/src/pages/CreateProject.jsx line 5: Change default import to include named import — import ModelSelector, { SUBSCRIPTION_MODELS } from '../components/ModelSelector'",
+        "frontend/src/pages/CreateProject.jsx line 417: Change default model from 'anthropic/claude-sonnet-4' to 'claude-sonnet-4.5' (matches SUBSCRIPTION_MODELS ID format)",
+        "frontend/src/pages/CreateProject.jsx after line 444 (after hasClaudeCode): Add derived const: const isSubscriptionModel = SUBSCRIPTION_MODELS.some(m => m.id === selectedModel) || selectedModelMeta?.tier === 'subscription'",
+        "frontend/src/pages/CreateProject.jsx line 1298: Change selectedModelMeta?.tier === 'subscription' to isSubscriptionModel",
+        "frontend/src/pages/CreateProject.jsx line 1147 (onCreateProject call): Change selectedModelMeta?.tier === 'subscription' to isSubscriptionModel"
+      ],
+      "test": "Step-by-step: (1) Load /create-project WITHOUT clicking the model selector at all. (2) With a VPS configured (vps_servers in localStorage with claudeCodeDetected:true and lastTestSuccess:true): trigger button should show 'PRO' green badge (NOT 'PAID' amber), and checkbox 'Enhance project with AI after creation' should be visible (NOT the 'Define Project with AI' button). (3) Click dropdown, select an OpenRouter model → 'Define Project with AI' button reappears, badge shows 'PAID'. (4) Click dropdown, select a subscription model back → checkbox reappears, 'PRO' badge. (5) npm run build — 0 errors. Paste the trigger badge JSX and the isSubscriptionModel derivation in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "BUG-43",
+      "name": "Remove claude --resume auto-start, show terminal hint instead",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "ClaudeCodeTerminalChat auto-sends 'claude --resume' on every WebSocket 'connected' event (line 273, no conditions). For new projects with no prior conversation, claude --resume shows 'No conversations to resume' and prompts Ctrl+C, which doesn't work from the chat input — user is stuck.\n\nAnthropic changed --resume behavior: when there's nothing to resume, it hangs waiting for Ctrl+C. The auto-start approach is fundamentally broken.\n\nFix: Add autoStart prop (default false). When false, don't call startClaudeCode(). Instead write a cyan hint to the terminal telling user to type 'claude' or 'claude --resume'. Set claudeStartedRef.current=true and status='claude_ready' so the terminal accepts input. Keep startClaudeCode function available for future explicit use.\n\nNo changes needed to Chat.jsx or Workspace.jsx — they don't pass autoStart so it defaults to false.\n\nRef: startClaudeCode at lines 518-552, auto-call at line 273 in case 'connected', session tracking via localStorage claude_session_{slug}.",
+      "change": [
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx line 173: Add autoStart = false to props destructuring after enhanceWithAI",
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx lines 267-273: Replace 'Starting Claude Code session...' writeln and startClaudeCode() call with conditional: if (autoStart !== false) { startClaudeCode() } else { write cyan hint: 'Type \"claude\" to start a new session, or \"claude --resume\" to resume a previous one.', set claudeStartedRef.current=true, setStatus('claude_ready') }"
+      ],
+      "test": "Step-by-step: (1) Open workspace with a subscription model and VPS connected. (2) Terminal should show 'Connected to {server}' and cyan hint text. (3) Terminal should NOT show 'Starting Claude Code session...' and should NOT auto-run 'claude --resume'. (4) Type 'claude' in terminal input area → command appears in terminal, Claude Code starts normally. (5) npm run build — 0 errors. Paste the modified case 'connected' handler code from ClaudeCodeTerminalChat.jsx in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-27",
+      "name": "Terminal floating hint overlay for Claude Code commands",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "depends_on": "BUG-43",
+      "description": "After BUG-43 removes auto-start, polish the terminal hint from ANSI text into a floating overlay card. Semi-transparent card positioned inside the terminal container area showing command suggestions. Auto-dismisses when user starts typing.\n\nChanges:\n- Add showCommandHint state — true when autoStart===false and status becomes 'connected'\n- Render absolutely-positioned overlay div inside terminal container with command suggestions\n- Dismiss on first xterm onData event (user starts typing)\n- When showEnhanceBanner is also true, hint text says 'Copy your project brief above, then type claude to start'\n\nRef: BUG-43 must land first (adds autoStart prop and hint text foundation).",
+      "change": [
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx: Add showCommandHint useState(false), set true in case 'connected' when autoStart===false",
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx: Add overlay JSX inside terminal container — semi-transparent card with dark bg, shows 'Type claude to start' / 'Type claude --resume to resume'. Styled with position:absolute, rounded corners, padding 12px 16px, backdrop blur",
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx: Add xterm onData listener to dismiss overlay on first keystroke — setShowCommandHint(false)",
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx: When showEnhanceBanner && showCommandHint, overlay text changes to 'Copy your project brief above, then type claude to start'"
+      ],
+      "test": "Step-by-step: (1) Open workspace with VPS connected. (2) See floating hint card over terminal area. (3) Type any character → hint card disappears. (4) Create project with enhance checked → see both enhance banner AND hint overlay, hint says 'Copy your project brief above, then type claude to start'. (5) npm run build — 0 errors. Paste the overlay JSX block in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
