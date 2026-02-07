@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-08T04:00",
+  "updated": "2026-02-08T05:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,27 @@
     }
   },
   "queue": [
+    {
+      "id": "BUG-39",
+      "name": "Create project 500 — production Postgres has user_id NOT NULL but ORM model removed it",
+      "size": "XS",
+      "priority": 1,
+      "status": "pending_review",
+      "description": "Creating a project on production returns 'Internal Server Error' (500). The frontend shows: 'Network error: Unexpected token I, Internal S... is not valid JSON'.\n\nRoot cause: The production Postgres 'projects' table was originally created with a user_id column (likely NOT NULL). The current ORM model (backend/models/__init__.py line 140-176) has NO user_id field. Migration 003 added 10 missing columns but never addressed user_id. When the INSERT runs, Postgres rejects it because user_id has no default and is NOT NULL.\n\nRecurring bug pattern #8 (ORM model changes without DB migrations).\n\nFix: Create migration 004 to make user_id nullable (or drop it). Making it nullable is safer in case existing rows have user_id values.\n\nReferences:\n- backend/models/__init__.py line 140-176: Project class — NO user_id field\n- backend/routers/projects.py line 198-234: create_project — no user_id in INSERT\n- backend/migrations/003_add_projects_columns.py: comment at line 6 confirms original table had user_id\n- Learnings: Sessions 87-90 (dual-DB drift, Postgres migration patterns)\n- Recurring bug #8, #10 in CLAUDE.md",
+      "change": [
+        "backend/migrations/004_fix_projects_user_id.py: Create new migration — use SQLAlchemy inspect to check if projects.user_id exists and is NOT NULL. If so, ALTER TABLE projects ALTER COLUMN user_id DROP NOT NULL. Postgres-only (skip SQLite). Follow the idempotent pattern from migrations 001-003."
+      ],
+      "test": "Step-by-step: (1) Run local backend: cd backend && python -c 'from models import *; import asyncio; asyncio.run(init_db())' — verify migration 004 runs (should print skip message on SQLite). (2) On production after deploy: curl -s -X POST https://www.hubllm.dev/api/projects/ -H 'Content-Type: application/json' -d '{\"name\":\"test-project\"}' — should return JSON with project data (not 'Internal Server Error'). Paste the curl response in completion_note. (3) If the project was created, clean it up: curl -s -X DELETE https://www.hubllm.dev/api/projects/{id}.",
+      "investigation_id": null,
+      "completion_note": "Created backend/migrations/004_fix_projects_user_id.py. Uses SQLAlchemy inspect to check if projects.user_id exists and is NOT NULL — if so, runs ALTER TABLE projects ALTER COLUMN user_id DROP NOT NULL. Idempotent, Postgres-only (skips SQLite). Test evidence: python3 -c 'from backend.models import *; import asyncio; asyncio.run(init_db())' output: '[004] Not Postgres (SQLite), skipping user_id fix' — migration loads and runs cleanly on SQLite. All 4 migrations run in sequence without errors. Production test (curl POST /api/projects/) pending Director merge to main and Coolify auto-deploy. CODEBASE_INDEX updated with migration 004 entry. Learnings Session 101 written.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      }
+    },
     {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",

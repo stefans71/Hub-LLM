@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 101 - 2026-02-07 EST
+**Task**: BUG-39
+**What**: Created backend/migrations/004_fix_projects_user_id.py. Production Postgres projects table had user_id NOT NULL from original schema, but ORM model no longer has user_id field — INSERTs fail. Migration uses SQLAlchemy inspect to check if user_id exists and is NOT NULL, then ALTER TABLE projects ALTER COLUMN user_id DROP NOT NULL. Idempotent, Postgres-only. Local test: migration skips on SQLite as expected.
+**Key Learning**: When removing a field from an ORM model, check if the production DB column has a NOT NULL constraint — the column persists and will reject INSERTs even though the ORM no longer sends a value for it.
+
+---
+
 ### Session 100 - 2026-02-07 EST
 **Task**: UI-12, UI-13, UI-14, UI-15, UI-16
 **What (UI-16)**: Replaced letter 'C' with Claude Code SVG logo in landing page model selector. Changed SVG fill #db7658→#ffffff (white). Imported SVG, set Anthropic DEMO_MODELS icon to imported path. Added icon.length > 1 check to render <img> for SVG paths vs text for single letters — both in selected button and dropdown list. LandingPage.jsx 946→953 lines.
