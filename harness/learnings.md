@@ -5,7 +5,9 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 101 - 2026-02-07 EST
-**Task**: BUG-39
+**Task**: BUG-39, UI-17
+**What (UI-17)**: Centered Create Project button row under setup cards. Added maxWidth:'720px', margin:'0 auto', width:'100%' to the action bar button row div (line 2307). Matches the card container constraint at line 1172.
+**What (BUG-39)**:
 **What**: Created backend/migrations/004_fix_projects_user_id.py. Production Postgres projects table had user_id NOT NULL from original schema, but ORM model no longer has user_id field — INSERTs fail. Migration uses SQLAlchemy inspect to check if user_id exists and is NOT NULL, then ALTER TABLE projects ALTER COLUMN user_id DROP NOT NULL. Idempotent, Postgres-only. Local test: migration skips on SQLite as expected.
 **Key Learning**: When removing a field from an ORM model, check if the production DB column has a NOT NULL constraint — the column persists and will reject INSERTs even though the ORM no longer sends a value for it.
 

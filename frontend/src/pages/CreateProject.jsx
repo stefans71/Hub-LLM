@@ -2307,7 +2307,10 @@ Examples:
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          padding: '16px 24px'
+          padding: '16px 24px',
+          maxWidth: '720px',
+          margin: '0 auto',
+          width: '100%'
         }}>
           <Button variant="secondary" onClick={onCancel} disabled={creatingProject}>
             Cancel

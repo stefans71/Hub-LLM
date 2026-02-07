@@ -93,7 +93,7 @@ frontend_pages:
 
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
-    lines: 2296
+    lines: 2349
     purpose: "5-step project creation wizard with AI-assisted brief expansion"
     props: "{onCancel, onCreateProject}"
     key_state:
