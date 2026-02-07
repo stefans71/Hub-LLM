@@ -8,6 +8,7 @@ from typing import Optional
 import json
 
 from services.openrouter import OpenRouterService, ClaudeDirectService
+from services.claude_code_ssh import ClaudeCodeSSHService
 
 router = APIRouter()
 
@@ -16,6 +17,7 @@ class ExpandBriefRequest(BaseModel):
     brief: str
     model: str = "anthropic/claude-sonnet-4"
     provider: str = "openrouter"
+    server_id: Optional[str] = None
 
 
 class ExpandBriefResponse(BaseModel):
@@ -39,6 +41,7 @@ class AIChatRequest(BaseModel):
     project_context: Optional[dict] = None
     model: str = "anthropic/claude-sonnet-4"
     provider: str = "openrouter"
+    server_id: Optional[str] = None
 
 
 def get_api_key(
@@ -52,9 +55,16 @@ def get_api_key(
     }
 
 
-def get_service(provider: str, api_keys: dict):
+def get_service(provider: str, api_keys: dict, server_id: Optional[str] = None):
     """Get the appropriate AI service based on provider"""
-    if provider == "claude_direct":
+    if provider == "claude_code_ssh":
+        if not server_id:
+            raise HTTPException(
+                status_code=400,
+                detail="server_id required for claude_code_ssh provider. Connect to a VPS with Claude Code installed."
+            )
+        return ClaudeCodeSSHService(server_id)
+    elif provider == "claude_direct":
         if not api_keys.get("claude"):
             raise HTTPException(
                 status_code=401,
@@ -126,7 +136,7 @@ async def expand_brief(
     if not request.brief.strip():
         raise HTTPException(status_code=400, detail="Brief cannot be empty")
 
-    service = get_service(request.provider, api_keys)
+    service = get_service(request.provider, api_keys, server_id=request.server_id)
 
     messages = [
         {"role": "system", "content": EXPAND_BRIEF_SYSTEM_PROMPT},
@@ -134,19 +144,33 @@ async def expand_brief(
     ]
 
     try:
-        response = await service.chat(
-            messages=messages,
-            model=request.model,
-            temperature=0.7,
-            max_tokens=2048,
-            stream=False
-        )
-
-        # Extract content based on provider
-        if request.provider == "claude_direct":
-            content = response["content"][0]["text"]
+        if request.provider == "claude_code_ssh":
+            # SSH service returns AsyncGenerator — collect all chunks
+            generator = await service.chat(
+                messages=messages,
+                model=request.model,
+                temperature=0.7,
+                max_tokens=2048,
+                stream=True
+            )
+            chunks = []
+            async for chunk in generator:
+                chunks.append(chunk)
+            content = "".join(chunks)
         else:
-            content = response["choices"][0]["message"]["content"]
+            response = await service.chat(
+                messages=messages,
+                model=request.model,
+                temperature=0.7,
+                max_tokens=2048,
+                stream=False
+            )
+
+            # Extract content based on provider
+            if request.provider == "claude_direct":
+                content = response["content"][0]["text"]
+            else:
+                content = response["choices"][0]["message"]["content"]
 
         # Parse the JSON response
         try:
@@ -196,7 +220,7 @@ async def ai_chat(
 
     Returns a streaming response for real-time chat experience.
     """
-    service = get_service(request.provider, api_keys)
+    service = get_service(request.provider, api_keys, server_id=request.server_id)
 
     # Build context string if available
     context_str = ""

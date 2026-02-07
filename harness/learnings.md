@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 104 - 2026-02-08 EST
+**Task**: FEAT-22
+**What**: Added claude_code_ssh provider support to backend/routers/ai.py (expand-brief + chat endpoints). Key challenge: ClaudeCodeSSHService.chat() always returns AsyncGenerator (streaming-only), while expand-brief needs a full string to JSON-parse. Solution: for SSH provider, collect all chunks via `async for chunk in generator`, join, then pass to existing JSON parser. For ai_chat (already streaming SSE), the existing stream_chat_response() already calls `await service.chat(..., stream=True)` which works for all 3 providers. Added server_id field to both ExpandBriefRequest and AIChatRequest. Updated get_service() with claude_code_ssh branch matching chat.py pattern. ai.py 242→266 lines.
+**Key Learning**: ClaudeCodeSSHService.chat() signature: `async def chat(...) -> AsyncGenerator` — it's an async function that returns an async generator, so usage is `generator = await service.chat(...)` then `async for chunk in generator`.
+
+---
+
 ### Session 103 - 2026-02-08 EST
 **Task**: FEAT-20
 **What**: Added shared ModelSelector component to CreateProject.jsx step 1. ModelSelector appears in the row next to "Define Project with AI" button (left=selector, right=button). showSubscriptionModels=false since expand-brief only routes through OpenRouter. selectedModel state (default 'anthropic/claude-sonnet-4') wired into all 3 API calls (expand-brief, chat, and follow-up). Replaced hardcoded model string in 3 places with selectedModel. Build: 0 errors (2360 lines).
