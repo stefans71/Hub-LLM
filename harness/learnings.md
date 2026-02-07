@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 109 - 2026-02-07 EST
+**Task**: FEAT-26
+**What**: Cleaned up dead subscription code paths in CreateProject.jsx's 3 AI handler functions. Removed isSubscription/isSub/isSub2 ternaries, hardcoded provider:'openrouter', removed server_id conditional spread. These paths became dead code after FEAT-24 replaced the 'Define Project with AI' button with a checkbox for subscription models. CreateProject.jsx 2392→2386 lines. Build: 0 errors.
+**Key Learning**: After a UI pivot that hides a button for certain model types, the handlers that button called become dead code for those types. Clean up promptly to avoid confusion.
+
+---
+
 ### Session 108 - 2026-02-07 EST
 **Task**: FEAT-25
 **What**: Added enhance banner to ClaudeCodeTerminalChat. Prop threading: App.jsx (enhanceMode state from URL, cleared after first render) → Workspace → Chat → ClaudeCodeTerminalChat. Banner shows project brief preview, 'Copy to Clipboard' button (orange gradient), and 'Dismiss' button. Copy builds a prompt string from the brief. Banner state captured on mount via useState(!!enhanceWithAI) so it survives URL clearing and prop changes.

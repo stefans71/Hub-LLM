@@ -697,15 +697,13 @@ export default function CreateProject({ onCancel, onCreateProject }) {
         headers['X-OpenRouter-Key'] = apiKey
       }
 
-      const isSubscription = selectedModelMeta?.tier === 'subscription'
       const res = await fetch('/api/ai/expand-brief', {
         method: 'POST',
         headers,
         body: JSON.stringify({
           brief: formData.projectBrief,
           model: selectedModel,
-          provider: isSubscription ? 'claude_code_ssh' : 'openrouter',
-          ...(isSubscription && claudeCodeServer ? { server_id: claudeCodeServer.id } : {})
+          provider: 'openrouter'
         })
       })
 
@@ -775,7 +773,6 @@ In the meantime, I can help you think through your project. What would you like 
       // Build message history for context
       const messages = [...chatMessages, { role: 'user', content: userMessage }]
 
-      const isSub = selectedModelMeta?.tier === 'subscription'
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers,
@@ -788,8 +785,7 @@ In the meantime, I can help you think through your project. What would you like 
             context: formData.context
           },
           model: selectedModel,
-          provider: isSub ? 'claude_code_ssh' : 'openrouter',
-          ...(isSub && claudeCodeServer ? { server_id: claudeCodeServer.id } : {})
+          provider: 'openrouter'
         })
       })
 
@@ -888,15 +884,13 @@ In the meantime, I can help you think through your project. What would you like 
         headers['X-OpenRouter-Key'] = apiKey
       }
 
-      const isSub2 = selectedModelMeta?.tier === 'subscription'
       const res = await fetch('/api/ai/expand-brief', {
         method: 'POST',
         headers,
         body: JSON.stringify({
           brief: formData.projectBrief,
           model: selectedModel,
-          provider: isSub2 ? 'claude_code_ssh' : 'openrouter',
-          ...(isSub2 && claudeCodeServer ? { server_id: claudeCodeServer.id } : {})
+          provider: 'openrouter'
         })
       })
 

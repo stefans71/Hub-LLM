@@ -95,7 +95,7 @@
         "code_works": true,
         "index_updated": true,
         "learnings_written": true,
-        "committed_pushed": false,
+        "committed_pushed": true,
         "status_set_to_pending_review": true
       }
     },
@@ -104,7 +104,7 @@
       "name": "Clean up dead subscription path in CreateProject AI definition handlers",
       "size": "XS",
       "priority": 4,
-      "status": "pending",
+      "status": "pending_review",
       "depends_on": "FEAT-24",
       "description": "After FEAT-24, the 'Define Project with AI' button is hidden for subscription models. The claude_code_ssh branches in handleStartAIDefinition (line 699: isSubscription provider check), handleSendChatMessage (line 777: isSub provider check), and handleGenerateContext (line 890: isSub2 provider check) are now dead code — subscription models will never trigger these handlers because the button is replaced with a checkbox. Simplify all three functions to OpenRouter-only: remove the isSubscription/isSub/isSub2 ternary, hardcode provider:'openrouter', remove server_id spread. This is cosmetic cleanup — the dead code is harmless. Low priority, defer to next cleanup pass.",
       "change": [
@@ -114,13 +114,13 @@
       ],
       "test": "Step-by-step: (1) Select an OpenRouter model in CreateProject. (2) Click 'Define Project with AI' — verify expand-brief call uses provider:'openrouter' (check Network tab). (3) Send a chat message — verify ai/chat call uses provider:'openrouter'. (4) Click 'Generate Context' — verify expand-brief call uses provider:'openrouter'. (5) npm run build — 0 errors. Paste the simplified fetch body from handleStartAIDefinition in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed CreateProject.jsx (2392→2386 lines). Removed 3 dead subscription code paths: (1) handleStartAIDefinition line 700: removed const isSubscription, simplified body to { brief: formData.projectBrief, model: selectedModel, provider: 'openrouter' }. (2) handleSendChatMessage line 775: removed const isSub, simplified body to { messages, brief, project_context, model: selectedModel, provider: 'openrouter' }. (3) handleGenerateContext line 885: removed const isSub2, simplified body to { brief: formData.projectBrief, model: selectedModel, provider: 'openrouter' }. All 3 no longer have server_id conditional spread. Build: vite build 0 errors.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

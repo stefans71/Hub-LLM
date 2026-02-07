@@ -93,8 +93,8 @@ frontend_pages:
 
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
-    lines: 2392
-    purpose: "5-step project creation wizard with AI-assisted brief expansion, dynamic model selector, SSH routing for Pro models"
+    lines: 2386
+    purpose: "5-step project creation wizard with AI-assisted brief expansion, dynamic model selector, OpenRouter-only for AI definition"
     props: "{onCancel, onCreateProject}"
     imports: [ModelSelector]
     key_state:
@@ -110,8 +110,8 @@ frontend_pages:
     api_calls:
       - {endpoint: "/api/projects/", method: POST, purpose: "create project"}
       - {endpoint: "/api/ssh/test", method: POST, purpose: "test VPS connection"}
-      - {endpoint: "/api/ai/expand-brief", method: POST, purpose: "AI brief expansion (routes via claude_code_ssh or openrouter based on tier)"}
-      - {endpoint: "/api/ai/chat", method: POST, purpose: "AI planning chat (routes via claude_code_ssh or openrouter based on tier)"}
+      - {endpoint: "/api/ai/expand-brief", method: POST, purpose: "AI brief expansion (OpenRouter only — subscription models use terminal enhance flow)"}
+      - {endpoint: "/api/ai/chat", method: POST, purpose: "AI planning chat (OpenRouter only — subscription models use terminal enhance flow)"}
     localStorage_keys:
       - {key: vps_servers, direction: both}
       - {key: global_agents, direction: read}
