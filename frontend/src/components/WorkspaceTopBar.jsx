@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import { Package, Search, Key, ExternalLink } from 'lucide-react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { Package, Search, Key, ExternalLink, RefreshCw } from 'lucide-react'
 import ModelNotification from './ModelNotification'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
@@ -7,9 +7,10 @@ const API_URL = import.meta.env.VITE_API_URL || ''
 /**
  * WorkspaceTopBar Component (W-03)
  *
- * UI-01 Simplified: VPS badge and connection status removed
- * - Status now shown via sidebar project dot
- * - VPS info accessible via Settings
+ * MODEL-04: Dynamic model list from OpenRouter API
+ * - Anthropic subscription models hardcoded at top (route through Claude Code on VPS)
+ * - OpenRouter models fetched from public API, cached 24h in localStorage
+ * - Shows ~20 popular models by default, full list when searching
  *
  * Contains:
  * - W-05: Project Name (left)
@@ -19,73 +20,124 @@ const API_URL = import.meta.env.VITE_API_URL || ''
  * - FEAT-01: Smart filtering based on API keys
  */
 
-// Provider color constants
+// Provider color constants — extended dynamically for new providers
 const PROVIDER_COLORS = {
-  anthropic: '#ef4444',   // Red/Orange for Anthropic
-  openai: '#22c55e',      // Green for OpenAI
-  google: '#4285f4',      // Blue for Google
-  meta: '#0668E1',        // Blue for Meta
-  mistral: '#ff7000'      // Orange for Mistral
+  anthropic: '#ef4444',
+  openai: '#22c55e',
+  google: '#4285f4',
+  'meta-llama': '#0668E1',
+  mistralai: '#ff7000',
+  deepseek: '#4a9eff',
+  cohere: '#39594d',
+  'x-ai': '#1d9bf0',
+  perplexity: '#20b8cd',
+  qwen: '#6c5ce7',
 }
 
-// Complete model list with provider info
-const MODEL_LIST = [
-  // Anthropic Models (Free with subscription)
+// Anthropic models that route through Claude Code on VPS (subscription tier)
+const SUBSCRIPTION_MODELS = [
   { id: 'claude-opus-4.5', name: 'Claude Opus 4.5', provider: 'anthropic', tier: 'subscription', recommended: true },
   { id: 'claude-sonnet-4.5', name: 'Claude Sonnet 4.5', provider: 'anthropic', tier: 'subscription' },
   { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'anthropic', tier: 'subscription' },
   { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'anthropic', tier: 'subscription' },
   { id: 'claude-3-haiku', name: 'Claude 3 Haiku', provider: 'anthropic', tier: 'subscription' },
-
-  // OpenAI Models (OpenRouter)
-  { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai', tier: 'openrouter' },
-  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai', tier: 'openrouter' },
-  { id: 'gpt-5-codex', name: 'GPT-5.2 Codex', provider: 'openai', tier: 'openrouter', new: true },
-  { id: 'o1-preview', name: 'o1 Preview', provider: 'openai', tier: 'openrouter' },
-
-  // Google Models (Coming Soon)
-  { id: 'gemini-2.0-pro', name: 'Gemini 2.0 Pro', provider: 'google', tier: 'coming_soon' },
-  { id: 'gemini-pro', name: 'Gemini Pro', provider: 'google', tier: 'coming_soon' },
-
-  // Meta Models (OpenRouter)
-  { id: 'llama-3.1-405b', name: 'Llama 3.1 405B', provider: 'meta', tier: 'openrouter' },
-  { id: 'llama-3.1-70b', name: 'Llama 3.1 70B', provider: 'meta', tier: 'openrouter' },
-
-  // Mistral Models (OpenRouter)
-  { id: 'mistral-large', name: 'Mistral Large', provider: 'mistral', tier: 'openrouter' },
-  { id: 'mixtral-8x22b', name: 'Mixtral 8x22B', provider: 'mistral', tier: 'openrouter' }
 ]
 
-// Provider display names
+// Popular model IDs shown by default (no search). Curated top ~20.
+const POPULAR_MODEL_IDS = new Set([
+  'anthropic/claude-opus-4.6',
+  'anthropic/claude-sonnet-4.5',
+  'anthropic/claude-3.5-sonnet',
+  'openai/gpt-4o',
+  'openai/gpt-4o-mini',
+  'openai/o1',
+  'openai/o1-mini',
+  'openai/o3-mini',
+  'openai/gpt-5.2',
+  'google/gemini-2.5-pro-preview',
+  'google/gemini-2.0-flash-001',
+  'meta-llama/llama-4-maverick',
+  'meta-llama/llama-3.3-70b-instruct',
+  'deepseek/deepseek-chat-v3-0324',
+  'deepseek/deepseek-r1',
+  'mistralai/mistral-large',
+  'x-ai/grok-3-beta',
+  'qwen/qwen-2.5-coder-32b-instruct',
+  'cohere/command-r-plus',
+  'perplexity/sonar-pro',
+])
+
+// Provider display names — capitalize fallback for unknown providers
 const PROVIDER_NAMES = {
   anthropic: 'Anthropic',
   openai: 'OpenAI',
   google: 'Google',
-  meta: 'Meta',
-  mistral: 'Mistral'
+  'meta-llama': 'Meta',
+  mistralai: 'Mistral',
+  deepseek: 'DeepSeek',
+  cohere: 'Cohere',
+  'x-ai': 'xAI',
+  perplexity: 'Perplexity',
+  qwen: 'Qwen',
 }
 
-// Helper to convert model ID to display info
-const modelDisplayMap = {
-  'anthropic/claude-opus-4': { name: 'Claude Opus 4.5', color: '#ef4444' },
-  'anthropic/claude-sonnet-4': { name: 'Claude Sonnet 4.5', color: '#ef4444' },
-  'anthropic/claude-3.5-sonnet': { name: 'Claude 3.5 Sonnet', color: '#ef4444' },
-  'anthropic/claude-3-opus': { name: 'Claude 3 Opus', color: '#ef4444' },
-  'anthropic/claude-3-haiku': { name: 'Claude 3 Haiku', color: '#ef4444' },
-  'openai/gpt-4o': { name: 'GPT-4o', color: '#22c55e' },
-  'openai/gpt-4-turbo': { name: 'GPT-4 Turbo', color: '#22c55e' },
-  'openai/gpt-5-codex': { name: 'GPT-5.2 Codex', color: '#22c55e' },
-  'google/gemini-pro': { name: 'Gemini Pro', color: '#4285f4' }
+const getProviderName = (slug) => PROVIDER_NAMES[slug] || slug.charAt(0).toUpperCase() + slug.slice(1)
+const getProviderColor = (slug) => PROVIDER_COLORS[slug] || '#8b8b8b'
+
+// Parse OpenRouter API response into our model format
+const parseOpenRouterModels = (data) => {
+  if (!data?.data) return []
+  return data.data
+    .filter(m => m.id && m.name)
+    .map(m => {
+      const slashIdx = m.id.indexOf('/')
+      const provider = slashIdx > 0 ? m.id.substring(0, slashIdx) : 'unknown'
+      return {
+        id: m.id,
+        name: m.name,
+        provider,
+        tier: 'openrouter',
+        context_length: m.context_length,
+        isPopular: POPULAR_MODEL_IDS.has(m.id),
+      }
+    })
 }
 
-const getModelDisplay = (modelId) => {
+// localStorage cache keys
+const CACHE_KEY = 'openrouter_models'
+const CACHE_TS_KEY = 'openrouter_models_fetched'
+const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+
+const getCachedModels = () => {
+  try {
+    const ts = localStorage.getItem(CACHE_TS_KEY)
+    if (ts && Date.now() - Number(ts) < CACHE_TTL) {
+      const cached = localStorage.getItem(CACHE_KEY)
+      if (cached) return JSON.parse(cached)
+    }
+  } catch { /* ignore corrupt cache */ }
+  return null
+}
+
+const setCachedModels = (models) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(models))
+    localStorage.setItem(CACHE_TS_KEY, String(Date.now()))
+  } catch { /* localStorage full — silently fail */ }
+}
+
+// Build the full model list: subscription models first, then OpenRouter
+const buildModelList = (openRouterModels) => {
+  return [...SUBSCRIPTION_MODELS, ...openRouterModels]
+}
+
+const getModelDisplay = (modelId, modelList) => {
   if (typeof modelId === 'object' && modelId?.name) return modelId
-  // Try to find in MODEL_LIST first
-  const model = MODEL_LIST.find(m => m.id === modelId || m.name === modelId)
+  const model = modelList.find(m => m.id === modelId || m.name === modelId)
   if (model) {
-    return { name: model.name, color: PROVIDER_COLORS[model.provider] || '#ef4444' }
+    return { name: model.name, color: getProviderColor(model.provider), id: model.id, provider: model.provider }
   }
-  return modelDisplayMap[modelId] || { name: 'Claude Opus 4.5', color: '#ef4444' }
+  return { name: modelId || 'Claude Opus 4.5', color: '#ef4444' }
 }
 
 export default function WorkspaceTopBar({
@@ -99,15 +151,20 @@ export default function WorkspaceTopBar({
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [selectedModel, setSelectedModel] = useState(() => getModelDisplay(model))
   const [showNotification, setShowNotification] = useState(false)
   const [showBillingWarning, setShowBillingWarning] = useState(false)
   const [pendingModel, setPendingModel] = useState(null)
   const [searchFilter, setSearchFilter] = useState('')
   const [apiKeys, setApiKeys] = useState({ openrouter: false, anthropic: false })
   const [claudeCodeStatus, setClaudeCodeStatus] = useState({ installed: false, version: null, checking: false, error: null })
+  const [openRouterModels, setOpenRouterModels] = useState(() => getCachedModels() || [])
+  const [modelsLoading, setModelsLoading] = useState(false)
   const dropdownRef = useRef(null)
   const searchInputRef = useRef(null)
+
+  // MODEL-04: Merged model list — subscription + OpenRouter
+  const modelList = useMemo(() => buildModelList(openRouterModels), [openRouterModels])
+  const [selectedModel, setSelectedModel] = useState(() => getModelDisplay(model, SUBSCRIPTION_MODELS))
 
   // Check for API keys on mount and when dropdown opens
   useEffect(() => {
@@ -124,6 +181,45 @@ export default function WorkspaceTopBar({
       checkApiKeys()
     }
   }, [dropdownOpen])
+
+  // MODEL-04: Fetch OpenRouter models on mount (or use cache)
+  useEffect(() => {
+    const cached = getCachedModels()
+    if (cached) {
+      setOpenRouterModels(cached)
+      return
+    }
+    fetchOpenRouterModels()
+  }, [])
+
+  const fetchOpenRouterModels = async (force = false) => {
+    if (!force) {
+      const cached = getCachedModels()
+      if (cached) {
+        setOpenRouterModels(cached)
+        return
+      }
+    }
+    setModelsLoading(true)
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 10000)
+      const res = await fetch('https://openrouter.ai/api/v1/models', { signal: controller.signal })
+      clearTimeout(timeout)
+      if (res.ok) {
+        const data = await res.json()
+        const parsed = parseOpenRouterModels(data)
+        setOpenRouterModels(parsed)
+        setCachedModels(parsed)
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Failed to fetch OpenRouter models:', err)
+      }
+    } finally {
+      setModelsLoading(false)
+    }
+  }
 
   // Check Claude Code status when VPS is connected
   useEffect(() => {
@@ -205,7 +301,7 @@ export default function WorkspaceTopBar({
 
   // MODEL-03: Check if current model is using Pro subscription
   const isCurrentModelPro = () => {
-    const currentModelData = MODEL_LIST.find(m => m.name === selectedModel.name || m.id === selectedModel.id)
+    const currentModelData = modelList.find(m => m.name === selectedModel.name || m.id === selectedModel.id)
     return currentModelData?.tier === 'subscription' && apiKeys.anthropic
   }
 
@@ -224,7 +320,7 @@ export default function WorkspaceTopBar({
   }
 
   const handleModelSelect = (modelItem) => {
-    const color = PROVIDER_COLORS[modelItem.provider] || '#ef4444'
+    const color = getProviderColor(modelItem.provider)
     const newModel = { name: modelItem.name, color, id: modelItem.id, provider: modelItem.provider }
     setDropdownOpen(false)
     setSearchFilter('')
@@ -249,31 +345,39 @@ export default function WorkspaceTopBar({
     onModelChange?.(newModel)
   }
 
-  // Filter and group models based on search and API key availability
+  // MODEL-04: Filter and group models — popular by default, full list when searching
   const getFilteredModels = () => {
-    const filtered = MODEL_LIST.filter(model => {
-      // Search filter
-      if (searchFilter) {
-        const search = searchFilter.toLowerCase()
-        return (
-          model.name.toLowerCase().includes(search) ||
-          model.provider.toLowerCase().includes(search) ||
-          model.id.toLowerCase().includes(search)
-        )
-      }
-      return true
-    })
+    let filtered
+    if (searchFilter) {
+      const search = searchFilter.toLowerCase()
+      filtered = modelList.filter(m =>
+        m.name.toLowerCase().includes(search) ||
+        m.provider.toLowerCase().includes(search) ||
+        m.id.toLowerCase().includes(search)
+      )
+    } else {
+      // No search: subscription models + popular OpenRouter models
+      filtered = modelList.filter(m => m.tier === 'subscription' || m.isPopular)
+    }
 
-    // Group by provider
+    // Group by provider, subscription (anthropic) first
     const grouped = {}
     filtered.forEach(model => {
-      if (!grouped[model.provider]) {
-        grouped[model.provider] = []
-      }
-      grouped[model.provider].push(model)
+      const key = model.tier === 'subscription' ? '_subscription' : model.provider
+      if (!grouped[key]) grouped[key] = []
+      grouped[key].push(model)
     })
 
-    return grouped
+    // Ensure subscription group comes first
+    const ordered = {}
+    if (grouped._subscription) {
+      ordered._subscription = grouped._subscription
+    }
+    Object.keys(grouped).sort().forEach(key => {
+      if (key !== '_subscription') ordered[key] = grouped[key]
+    })
+
+    return ordered
   }
 
   // Check if a model is available based on tier and API keys
@@ -447,7 +551,7 @@ export default function WorkspaceTopBar({
 
           {/* MODEL-02: Billing source badge */}
           {(() => {
-            const currentModelData = MODEL_LIST.find(m => m.name === selectedModel.name || m.id === selectedModel.id)
+            const currentModelData = modelList.find(m => m.name === selectedModel.name || m.id === selectedModel.id)
             if (!currentModelData) return null
             const isProSub = currentModelData.tier === 'subscription' && apiKeys.anthropic
             return (
@@ -508,7 +612,7 @@ export default function WorkspaceTopBar({
                   <input
                     ref={searchInputRef}
                     type="text"
-                    placeholder="Search models... (e.g., claude, gpt)"
+                    placeholder={`Search ${openRouterModels.length + SUBSCRIPTION_MODELS.length} models...`}
                     value={searchFilter}
                     onChange={(e) => setSearchFilter(e.target.value)}
                     style={{
@@ -538,6 +642,30 @@ export default function WorkspaceTopBar({
                 </div>
               </div>
 
+              {/* Popular hint or loading */}
+              {!searchFilter && openRouterModels.length > 0 && (
+                <div style={{
+                  padding: '4px 12px',
+                  fontSize: '10px',
+                  color: 'var(--text-muted)',
+                  background: 'var(--bg-secondary)',
+                  borderBottom: '1px solid var(--border)'
+                }}>
+                  Showing popular models. Type to search all {openRouterModels.length}.
+                </div>
+              )}
+              {modelsLoading && (
+                <div style={{
+                  padding: '4px 12px',
+                  fontSize: '10px',
+                  color: 'var(--primary)',
+                  background: 'var(--bg-secondary)',
+                  borderBottom: '1px solid var(--border)'
+                }}>
+                  Loading models from OpenRouter...
+                </div>
+              )}
+
               {/* Model List */}
               <div style={{ overflowY: 'auto', flex: 1 }}>
                 {Object.keys(groupedModels).length === 0 ? (
@@ -550,8 +678,11 @@ export default function WorkspaceTopBar({
                     No models found for "{searchFilter}"
                   </div>
                 ) : (
-                  Object.entries(groupedModels).map(([provider, models]) => (
-                    <div key={provider}>
+                  Object.entries(groupedModels).map(([groupKey, models]) => {
+                    const isSubscription = groupKey === '_subscription'
+                    const providerSlug = isSubscription ? 'anthropic' : groupKey
+                    return (
+                    <div key={groupKey}>
                       {/* Provider Header */}
                       <div style={{
                         padding: '8px 12px',
@@ -570,35 +701,34 @@ export default function WorkspaceTopBar({
                             width: '8px',
                             height: '8px',
                             borderRadius: '2px',
-                            background: PROVIDER_COLORS[provider]
+                            background: getProviderColor(providerSlug)
                           }} />
-                          {PROVIDER_NAMES[provider]}
+                          {isSubscription ? 'Anthropic (Pro)' : getProviderName(providerSlug)}
                         </span>
                         <span style={{
                           fontSize: '10px',
                           fontWeight: 400,
-                          color: provider === 'anthropic' ? (
+                          color: isSubscription ? (
                             claudeCodeStatus.checking ? 'var(--text-muted)' :
                             apiKeys.anthropic ? 'var(--success)' : 'var(--text-muted)'
                           ) : (
-                            models[0]?.tier === 'openrouter' && apiKeys.openrouter ? 'var(--success)' : 'var(--text-muted)'
+                            apiKeys.openrouter ? 'var(--success)' : 'var(--text-muted)'
                           )
                         }}>
-                          {provider === 'anthropic' ? (
+                          {isSubscription ? (
                             claudeCodeStatus.checking ? '⏳ Checking...' :
                             !isConnected ? '○ Connect VPS' :
                             claudeCodeStatus.installed && claudeCodeStatus.authenticated ? '✓ Claude Code Ready' :
                             claudeCodeStatus.installed ? '⚠ Not Authenticated' :
                             '⚠ Install Claude Code'
                           ) : (
-                            models[0]?.tier === 'openrouter' ? (apiKeys.openrouter ? '✓ API Key Added' : '🔑 Requires API Key') :
-                            models[0]?.tier === 'coming_soon' ? '🔜 Coming Soon' : ''
+                            apiKeys.openrouter ? '✓ API Key Added' : '🔑 Requires API Key'
                           )}
                         </span>
                       </div>
 
                       {/* Install Claude Code link for Anthropic when not installed */}
-                      {provider === 'anthropic' && isConnected && !claudeCodeStatus.installed && !claudeCodeStatus.checking && (
+                      {isSubscription && isConnected && !claudeCodeStatus.installed && !claudeCodeStatus.checking && (
                         <div
                           style={{
                             padding: '8px 12px',
@@ -650,7 +780,7 @@ export default function WorkspaceTopBar({
                                 width: '6px',
                                 height: '6px',
                                 borderRadius: '50%',
-                                background: PROVIDER_COLORS[model.provider]
+                                background: getProviderColor(model.provider)
                               }} />
                               {model.name}
                               {model.recommended && (
@@ -696,7 +826,7 @@ export default function WorkspaceTopBar({
                       })}
 
                       {/* Add API Key Link for OpenRouter section */}
-                      {provider !== 'anthropic' && models[0]?.tier === 'openrouter' && !apiKeys.openrouter && (
+                      {!isSubscription && !apiKeys.openrouter && (
                         <div
                           style={{
                             padding: '8px 12px',
@@ -717,11 +847,12 @@ export default function WorkspaceTopBar({
                         </div>
                       )}
                     </div>
-                  ))
+                    )
+                  })
                 )}
               </div>
 
-              {/* Footer with API Key Status */}
+              {/* Footer with model count, refresh, and API key status */}
               <div style={{
                 padding: '8px 12px',
                 borderTop: '1px solid var(--border)',
@@ -730,17 +861,36 @@ export default function WorkspaceTopBar({
                 color: 'var(--text-muted)',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: 'center',
+                gap: '8px'
               }}>
-                <span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   {apiKeys.openrouter ? (
-                    <span style={{ color: 'var(--success)' }}>✓ OpenRouter connected</span>
+                    <span style={{ color: 'var(--success)' }}>✓ OpenRouter</span>
                   ) : (
-                    <span>🔑 OpenRouter API key not set</span>
+                    <span>🔑 No API key</span>
                   )}
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    · {openRouterModels.length} models
+                  </span>
+                  <button
+                    onClick={() => fetchOpenRouterModels(true)}
+                    title="Refresh model list"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <RefreshCw size={11} style={modelsLoading ? { animation: 'spin 1s linear infinite' } : {}} />
+                  </button>
                 </span>
                 <span
-                  style={{ color: 'var(--primary)', cursor: 'pointer' }}
+                  style={{ color: 'var(--primary)', cursor: 'pointer', whiteSpace: 'nowrap' }}
                   onClick={() => window.location.href = '/settings?tab=apikeys'}
                 >
                   Manage Keys →

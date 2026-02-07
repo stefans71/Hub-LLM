@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 95 - 2026-02-07 EST
+**Task**: MODEL-04
+**What**: Replaced hardcoded MODEL_LIST (16 models) with dynamic fetch from OpenRouter API (~90 models). Anthropic subscription models stay hardcoded at top. OpenRouter models cached in localStorage with 24h TTL. Shows ~20 curated popular models by default, full list when searching. Added refresh button in dropdown footer. Deleted unused ModelSelector.jsx. Provider colors/names extended dynamically. Used `_subscription` group key to ensure Anthropic Pro models always sort first.
+**Pattern**: OpenRouter API is public (no auth needed), returns `{data: [{id, name, context_length, ...}]}`. Provider slug parsed from `model.id.split('/')[0]`.
+
 ### Session 94 - 2026-02-07 12:00 EST
 **Tasks**: UI-09, SETTINGS-01
 **What**:

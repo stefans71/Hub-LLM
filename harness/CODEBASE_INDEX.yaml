@@ -272,23 +272,31 @@ frontend_components:
 
   WorkspaceTopBar.jsx:
     path: frontend/src/components/WorkspaceTopBar.jsx
-    lines: 803
-    purpose: "Top bar — model selector with provider grouping, Claude Code detection, billing labels"
-    props: "{project, selectedModel, onModelChange, isConnected, isConnecting, claudeCodeStatus, onClaudeCodeStatusChange, linkedServerId}"
+    lines: 954
+    purpose: "Top bar — dynamic model selector (OpenRouter API + subscription), Claude Code detection, billing labels"
+    props: "{project, model, onModelChange, onExport, linkedServerId, isConnected, onClaudeCodeStatusChange}"
     key_state:
-      - {name: showModelDropdown, type: useState, drives: "model selector open/close"}
+      - {name: dropdownOpen, type: useState, drives: "model selector open/close"}
       - {name: showBillingWarning, type: useState, drives: "billing switch modal"}
+      - {name: openRouterModels, type: useState, drives: "dynamic model list from OpenRouter API"}
+      - {name: modelsLoading, type: useState, drives: "loading indicator during fetch"}
+      - {name: modelList, type: useMemo, drives: "merged subscription + OpenRouter models"}
     constants:
-      - "MODEL_LIST — hardcoded model list with providers"
-      - "PROVIDER_COLORS — color map for model providers"
+      - "SUBSCRIPTION_MODELS — hardcoded Anthropic models (tier: subscription, route via Claude Code)"
+      - "POPULAR_MODEL_IDS — Set of ~20 curated popular OpenRouter model IDs"
+      - "PROVIDER_COLORS/PROVIDER_NAMES — color and display name maps for providers"
     api_calls:
       - {endpoint: "/api/ssh/servers/{id}/claude-code", method: GET, purpose: "detect Claude Code on VPS"}
+      - {endpoint: "https://openrouter.ai/api/v1/models", method: GET, purpose: "fetch dynamic model list, cached 24h in localStorage"}
     localStorage_keys:
       - {key: openrouter_api_key, direction: read}
       - {key: openrouter_key, direction: read}
       - {key: hide_billing_switch_warning, direction: both}
+      - {key: openrouter_models, direction: both, purpose: "cached OpenRouter model list (JSON)"}
+      - {key: openrouter_models_fetched, direction: both, purpose: "cache timestamp for 24h TTL"}
     children: [ModelNotification]
-    last_verified_session: 86
+    notes: "MODEL-04: Replaced hardcoded MODEL_LIST with dynamic fetch. Shows popular ~20 by default, full list on search. Manual refresh button in footer."
+    last_verified_session: 92
 
   LLMDevPanel.jsx:
     path: frontend/src/components/LLMDevPanel.jsx
@@ -438,13 +446,7 @@ frontend_components:
       - {endpoint: "/api/ssh/connect", method: POST, purpose: "test SSH connection"}
     last_verified_session: 86
 
-  ModelSelector.jsx:
-    path: frontend/src/components/ModelSelector.jsx
-    lines: 101
-    purpose: "Dropdown model selector with provider grouping and custom model input"
-    props: "{selectedModel, onSelectModel}"
-    constants: "POPULAR_MODELS — 11 popular models"
-    last_verified_session: 86
+  # ModelSelector.jsx — DELETED in MODEL-04 (was unused, not imported anywhere)
 
   ModelNotification.jsx:
     path: frontend/src/components/ModelNotification.jsx
@@ -1162,6 +1164,19 @@ data_flow:
       set_by: [WorkspaceTopBar.jsx]
       read_by: [WorkspaceTopBar.jsx]
       sync_direction: "frontend-only"
+
+    openrouter_models:
+      type: "JSON Array (cached OpenRouter model list)"
+      set_by: [WorkspaceTopBar.jsx]
+      read_by: [WorkspaceTopBar.jsx]
+      sync_direction: "frontend-only — cached from https://openrouter.ai/api/v1/models"
+      notes: "MODEL-04: 24h TTL cache. Manual refresh via footer button."
+
+    openrouter_models_fetched:
+      type: "String (Unix timestamp ms)"
+      set_by: [WorkspaceTopBar.jsx]
+      read_by: [WorkspaceTopBar.jsx]
+      sync_direction: "frontend-only — cache timestamp for 24h TTL"
 
     ai_assistant_alias:
       type: String
