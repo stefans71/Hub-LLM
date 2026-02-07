@@ -5,7 +5,8 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 100 - 2026-02-07 EST
-**Task**: UI-12, UI-13
+**Task**: UI-12, UI-13, UI-14
+**What (UI-14)**: Four landing page polish tweaks: (1) Model icon 26→13px, font 0.7→0.35rem, Anthropic color #d97706→transparent. (2) Sign Up nav color #f97316→#fff (hover, ::after too). (3) Send button orange→cyan (#0ea5e9/#0284c7). (4) Footer split to 3 lines with extra <br/>.
 **What (UI-13)**: Footer text reordered to two centered lines ('Code with any LLM.' / 'Deploy anywhere. HubLLM.dev © 2026') and font-size reduced from 1.4rem to 0.98rem. XS change — one JSX line, one CSS property.
 **What (UI-12)**: Auth panel spotlight illumination. Added `panel-open` class to hub-box when any panel is active — traveling light fades out via CSS opacity transition (0.3s). Added `::before` pseudo-element to `.info-panel` with cyan gradient glow (rgba(56,189,248)) shining downward from top, plus border-top glow and box-shadow on `.info-panel.open`. Auth panel gets stronger glow (height 100px, 4-stop gradient at 0.2 opacity). Replaced orange auth submit button with cyan gradient (#0ea5e9→#0284c7). All glow colors match traveling light hue #38bdf8. LandingPage.css 1602→1636 lines (+34 lines of spotlight/glow rules).
 
