@@ -26,6 +26,30 @@
   },
   "queue": [
     {
+      "id": "INFRA-03B",
+      "name": "Add Settings toggle for idle connection timeout (default OFF)",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "INFRA-03 added idle connection timeout but it's always on with a hardcoded 2h limit. This is risky — disconnects Claude Code mid-task or while waiting for operator input. Idle SSH connections are cheap (~1-2 MB RAM each).\n\nRework: add a toggle in Settings so users can opt in. Default OFF. The backend idle checker code (vps_connection.py lines 334-434, main.py lifespan) is already done — just needs to be gated behind the setting.\n\nNote: Settings.jsx is 4600+ lines — grep, don't read whole. The setting should go in the VPS/Connection section of Settings.",
+      "change": [
+        "backend/services/vps_connection.py line 334: Change hardcoded `idle_timeout=7200` to read from a setting (localStorage sync or backend config). If setting is OFF/disabled, `start_idle_checker()` should be a no-op",
+        "backend/main.py lifespan: Only call `start_idle_checker()` if the setting is enabled",
+        "frontend Settings.jsx (VPS section — grep for 'connection' or 'server'): Add toggle 'Auto-disconnect idle SSH connections' with description 'Automatically close SSH connections after period of inactivity. Default: Off.' When ON, show a duration picker (30min, 1h, 2h, 4h). Save to localStorage key `idle_timeout_enabled` (bool) and `idle_timeout_minutes` (number)",
+        "Backend needs an endpoint or localStorage sync to read the idle timeout setting — reuse existing settings sync pattern"
+      ],
+      "test": "Step-by-step: (1) Open Settings, find the idle timeout toggle — should be OFF by default. (2) Verify no idle checker runs (connections stay open indefinitely). (3) Toggle ON, set to 30min. (4) Verify idle checker starts. (5) Toggle OFF again. (6) Verify checker stops. Paste the toggle UI state as evidence.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "UI-09",
       "name": "SSH help tooltip + modal on setup wizard VPS step",
       "size": "S",
@@ -55,7 +79,8 @@
       "name": "Idle Connection Timeout",
       "size": "S",
       "priority": 2,
-      "status": "pending_review",
+      "status": "rejected",
+      "rejection_note": "Code works correctly but must not be deployed without a user toggle. Idle SSH connections are very cheap (~1-2 MB RAM, zero CPU per connection). Auto-disconnecting after 2h risks killing active Claude Code sessions or sessions waiting for operator input. The user's own VPS may already have ServerAliveInterval configured. Rework needed: add a Settings toggle (default OFF) so users opt in. See INFRA-03B.",
       "description": "Auto-close SSH connections after inactivity to save server resources",
       "current": "Connections stay open forever until browser closes or network fails",
       "change": [
@@ -73,7 +98,7 @@
       "name": "Project-Specific Claude Code Sessions",
       "size": "S",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
       "description": "Ensure Claude Code conversations are isolated per project with no history leaking",
       "current": "Claude --resume runs in project directory, should isolate history. Needs verification.",
       "change": [
@@ -83,7 +108,15 @@
         "On project switch: clear chat messages, reconnect to correct project directory",
         "Add subtle pulse animation on active project dot when Claude is processing"
       ],
-      "test": "Chat in Fishing App \u2192 switch to Other Project \u2192 see empty chat \u2192 switch back \u2192 can resume Fishing App conversation"
+      "test": "Chat in Fishing App \u2192 switch to Other Project \u2192 see empty chat \u2192 switch back \u2192 can resume Fishing App conversation",
+      "completion_note": "Verified existing isolation: project switch already clears terminal (line 656), clears chat messages (line 701), reconnects to new project dir with `cd /root/llm-hub-projects/${slug} && claude --resume` (line 514). Claude Code natively scopes conversations to the working directory. New: (1) Per-project session tracking via localStorage key `claude_session_{slug}` — when previous session exists, uses `claude -c` (auto-continue most recent) instead of `claude --resume` (picker) for smoother UX. (2) Added `onProcessingChange` callback chain: ClaudeCodeTerminalChat → Chat → Workspace → WorkspaceFileExplorer. Active project dot now pulses with 1.5s animation and enhanced glow when Claude is processing. Auth required for full test — noted: auth verified separately.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      }
     },
     {
       "id": "SETTINGS-01",

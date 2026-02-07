@@ -173,8 +173,8 @@ frontend_pages:
 frontend_components:
   Workspace.jsx:
     path: frontend/src/components/Workspace.jsx
-    lines: 523
-    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout"
+    lines: 528
+    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout, Claude processing state"
     props: "{project, model, apiKeys, onProjectChange}"
     key_state:
       - {name: isConnected, type: useState, drives: "SSH connection status"}
@@ -200,9 +200,9 @@ frontend_components:
 
   Chat.jsx:
     path: frontend/src/components/Chat.jsx
-    lines: 564
+    lines: 565
     purpose: "Chat panel — routes to OpenRouter chat or ClaudeCodeTerminalChat based on model+VPS"
-    props: "{project, model, apiKeys, serverId, claudeCodeStatus}"
+    props: "{project, model, apiKeys, serverId, claudeCodeStatus, onProcessingChange}"
     key_state:
       - {name: messages, type: "useState([])", drives: "chat history"}
       - {name: input, type: useState, drives: "user input"}
@@ -218,9 +218,9 @@ frontend_components:
 
   ClaudeCodeTerminalChat.jsx:
     path: frontend/src/components/ClaudeCodeTerminalChat.jsx
-    lines: 990
-    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle"
-    props: "{project, serverId, projectSlug}"
+    lines: 1004
+    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking"
+    props: "{project, serverId, projectSlug, onProcessingChange}"
     key_state:
       - {name: messages, type: "useState([])", drives: "parsed chat bubbles"}
       - {name: viewMode, type: useState, drives: "'terminal' or 'bubbles'"}
@@ -240,9 +240,9 @@ frontend_components:
 
   WorkspaceFileExplorer.jsx:
     path: frontend/src/components/WorkspaceFileExplorer.jsx
-    lines: 1076
-    purpose: "Left sidebar — project tree with VPS file browsing, status dots, reconnect"
-    props: "{isOpen, onToggle, currentProject, onSelectProject, onFileSelect}"
+    lines: 1079
+    purpose: "Left sidebar — project tree with VPS file browsing, status dots, reconnect, processing pulse"
+    props: "{isOpen, onToggle, currentProject, onSelectProject, onFileSelect, isClaudeProcessing}"
     key_state:
       - {name: projects, type: "useState([])", drives: "project list"}
       - {name: expandedProjects, type: useState, drives: "project expansion state"}

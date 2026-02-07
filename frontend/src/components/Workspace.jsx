@@ -63,6 +63,9 @@ export default function Workspace({ project, model, apiKeys, onProjectChange }) 
   // Track the currently linked server ID (may differ from project.vps_server_id if just linked)
   const [linkedServerId, setLinkedServerId] = useState(project?.vps_server_id || null)
 
+  // FEAT-10: Track Claude processing state for project dot pulse animation
+  const [isClaudeProcessing, setIsClaudeProcessing] = useState(false)
+
   // FEAT-06: Reference to LLMDevPanel editor API
   const editorApiRef = useRef(null)
 
@@ -395,6 +398,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange }) 
           currentProject={project}
           onSelectProject={handleSelectProject}
           onFileSelect={handleFileSelect}
+          isClaudeProcessing={isClaudeProcessing}
         />
 
         {/* Left side - Main content (UI-02: Chat only, no tabs) */}
@@ -409,6 +413,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange }) 
                 apiKeys={apiKeys}
                 serverId={linkedServerId}
                 claudeCodeStatus={claudeCodeStatus}
+                onProcessingChange={setIsClaudeProcessing}
               />
             </div>
 

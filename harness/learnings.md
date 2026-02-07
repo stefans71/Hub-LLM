@@ -5,10 +5,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 93 - 2026-02-06 19:54 EST
-**Tasks**: BUG-34, INFRA-03
+**Tasks**: BUG-34, INFRA-03, FEAT-10
 **What**:
 - BUG-34: Setup wizard hardcoded `setClaudeCodeDetected(false)` instead of using test connection response. Fix: added `claude_code_detected` field to `TestConnectionResponse` model, added `which claude` check in `test_connection` endpoint (ssh.py), and wired frontend to read `data.claude_code_detected` from the response.
 - INFRA-03: Added idle connection timeout. `VPSConnection` now tracks `last_activity` via `touch()` (called on connect, create_channel, run_command, and terminal input). `VPSConnectionManager` has background task checking every 5 min, closes connections idle > 2 hours. Started/stopped in main.py lifespan. Both ssh.py and terminal.py WebSocket handlers call `vps_conn.touch()` on input.
+- FEAT-10: Project-specific Claude Code sessions. Verified existing isolation (project switch clears terminal/messages, reconnects to new dir with `claude --resume`). Added per-project session tracking in localStorage (`claude_session_{slug}`): if previous session exists, uses `claude -c` (auto-continue) instead of `claude --resume` (picker). Added `onProcessingChange` callback chain from ClaudeCodeTerminalChat → Chat → Workspace → WorkspaceFileExplorer for pulse animation on active project dot when Claude is processing.
 
 ### Session 92 - 2026-02-07 EST
 **Tasks**: BUG-33, UI-07 (re-fix)

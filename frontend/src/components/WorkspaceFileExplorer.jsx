@@ -18,7 +18,8 @@ export default function WorkspaceFileExplorer({
   onToggle,
   currentProject,
   onSelectProject,
-  onFileSelect  // New: callback when a file is clicked
+  onFileSelect,  // callback when a file is clicked
+  isClaudeProcessing = false  // FEAT-10: true when Claude is processing (for dot pulse)
 }) {
   const navigate = useNavigate()
   const { getAuthHeader } = useAuth()
@@ -689,10 +690,12 @@ export default function WorkspaceFileExplorer({
                           )}
 
                           {/* INFRA-02/BUG-26: Clickable status dot for reconnection */}
+                          {/* FEAT-10: Pulse animation when Claude is processing on active project */}
                           {(() => {
                             const statusDot = getStatusDot(project)
                             const isReconnecting = reconnectingServers.has(project.vps_server_id)
                             const canReconnect = project.vps_server_id && statusDot.color !== '#22c55e' && !isReconnecting
+                            const isActiveProcessing = project.id === currentProject?.id && isClaudeProcessing && statusDot.color === '#22c55e'
                             return (
                               <button
                                 type="button"
@@ -714,7 +717,7 @@ export default function WorkspaceFileExplorer({
                                   flexShrink: 0,
                                   cursor: canReconnect ? 'pointer' : 'default'
                                 }}
-                                title={isReconnecting ? 'Reconnecting...' : (canReconnect ? 'Click to reconnect VPS' : statusDot.title)}
+                                title={isReconnecting ? 'Reconnecting...' : (isActiveProcessing ? 'Claude is thinking...' : (canReconnect ? 'Click to reconnect VPS' : statusDot.title))}
                               >
                                 <span
                                   style={{
@@ -722,8 +725,8 @@ export default function WorkspaceFileExplorer({
                                     height: '8px',
                                     borderRadius: '50%',
                                     backgroundColor: isReconnecting ? '#f59e0b' : statusDot.color,
-                                    boxShadow: statusDot.color === '#22c55e' ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none',
-                                    animation: isReconnecting ? 'pulse 1s ease-in-out infinite' : 'none',
+                                    boxShadow: isActiveProcessing ? '0 0 6px rgba(34, 197, 94, 0.7)' : (statusDot.color === '#22c55e' ? '0 0 4px rgba(34, 197, 94, 0.5)' : 'none'),
+                                    animation: isReconnecting ? 'pulse 1s ease-in-out infinite' : (isActiveProcessing ? 'pulse 1.5s ease-in-out infinite' : 'none'),
                                     transition: 'background-color 0.2s, transform 0.15s'
                                   }}
                                   className={canReconnect ? 'hover-scale' : ''}

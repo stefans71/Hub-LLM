@@ -170,7 +170,7 @@ function ChatBubble({ message, isUser }) {
     </div>
   )
 }
-export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug }) {
+export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug, onProcessingChange }) {
   const terminalRef = useRef(null)
   const xtermRef = useRef(null)
   const wsRef = useRef(null)
@@ -202,6 +202,11 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
   const [isProcessing, setIsProcessing] = useState(false) // True when waiting for Claude's response
   const [processingText, setProcessingText] = useState('') // Current spinner text (e.g., "Channeling...")
   const [terminalReady, setTerminalReady] = useState(false) // True when xterm is mounted and ready
+
+  // FEAT-10: Propagate processing state to parent (for project dot pulse animation)
+  useEffect(() => {
+    onProcessingChange?.(isProcessing)
+  }, [isProcessing, onProcessingChange])
 
   // Connect to WebSocket
   const connect = useCallback(async () => {
@@ -501,17 +506,26 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug 
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       setStatus('claude_starting')
 
-      // First cd to project directory if slug provided, then start claude --resume
-      // Using --resume allows continuing previous conversations on reconnect
-      // If no previous conversation exists, Claude Code will prompt to start a new one
+      // FEAT-10: Check if this project had a previous Claude session
+      // If yes, use `claude -c` to auto-continue most recent conversation (no picker)
+      // If no, use `claude --resume` to show picker or start new
+      const sessionKey = projectSlug ? `claude_session_${projectSlug}` : null
+      const hasPreviousSession = sessionKey && localStorage.getItem(sessionKey)
+      const claudeFlag = hasPreviousSession ? '-c' : '--resume'
+
       let command = ''
       if (projectSlug) {
-        command = `cd /root/llm-hub-projects/${projectSlug} && claude --resume\n`
+        command = `cd /root/llm-hub-projects/${projectSlug} && claude ${claudeFlag}\n`
       } else {
         command = 'claude --resume\n'
       }
 
       wsRef.current.send(JSON.stringify({ type: 'input', data: command }))
+
+      // FEAT-10: Mark that this project has had a Claude session
+      if (sessionKey) {
+        localStorage.setItem(sessionKey, Date.now().toString())
+      }
 
       // Fallback: enable input after 3 seconds if prompt detection didn't trigger
       // This handles cases where Claude Code's prompt pattern isn't detected
