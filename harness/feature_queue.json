@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-08T08:00",
+  "updated": "2026-02-08T12:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,104 @@
     }
   },
   "queue": [
+    {
+      "id": "BUG-40",
+      "name": "CreateProject ModelSelector missing isConnected + claudeCodeStatus props",
+      "size": "XS",
+      "priority": 1,
+      "status": "pending",
+      "description": "CreateProject's ModelSelector shows '○ CONNECT VPS' and 'PAID' badge even when user has Claude Code installed on VPS. Root cause: CreateProject.jsx line 1291-1300 passes apiKeys.anthropic=hasClaudeCode (which makes the billing toggle green dot work) but does NOT pass isConnected or claudeCodeStatus props. ModelSelector.jsx defaults: isConnected=false (line 169), claudeCodeStatus.installed=false (line 168). Status flow at lines 620-625: !isConnected → '○ Connect VPS'. Even if isConnected were true, claudeCodeStatus.installed defaults to false → '⚠ Install Claude Code'. Both props must be passed. hasClaudeCode is already derived at line 444 from savedVpsServers.find(s => s.claudeCodeDetected && s.lastTestSuccess).",
+      "change": [
+        "frontend/src/pages/CreateProject.jsx line 1298 (after showSubscriptionModels={true}): Add isConnected={hasClaudeCode}",
+        "frontend/src/pages/CreateProject.jsx line 1298: Add claudeCodeStatus={{ installed: hasClaudeCode, authenticated: hasClaudeCode, checking: false }}"
+      ],
+      "test": "Step-by-step: (1) Have a VPS with Claude Code in localStorage (vps_servers with claudeCodeDetected:true and lastTestSuccess:true). (2) Go to Create Project. (3) Open model selector dropdown. (4) Pro Subscription tab should show green dot AND Anthropic section header should say '✓ Claude Code Ready' (NOT '○ Connect VPS'). (5) Select a subscription model (e.g. Claude Opus 4.5) — trigger button should show 'PRO' badge in green (not 'PAID' in amber). (6) npm run build — 0 errors. Paste the ModelSelector JSX props block from CreateProject.jsx in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-24",
+      "name": "CreateProject conditional UI: checkbox vs Define-with-AI button based on billing mode",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "depends_on": "BUG-40",
+      "description": "When user selects a subscription-tier model (Claude Code via VPS), replace the 'Define Project with AI' button with a checkbox: 'Enhance project with AI after creation'. When OpenRouter model is selected, keep the existing inline AI chat flow unchanged. This is the frontend pivot point for the dual-path rearchitecture — Claude Code is interactive (terminal), so the current stateless API chat approach can't work for it. Instead, user checks the box → creates project → gets redirected to workspace where Claude Code launches in terminal.\n\nKey lines:\n- CreateProject.jsx line 430: Add `enhanceWithAI` state near other UI state\n- CreateProject.jsx line 1290-1305: Conditional render — if selectedModelMeta?.tier === 'subscription' → checkbox, else → existing button\n- CreateProject.jsx line 1293 onChange: Reset enhanceWithAI when switching away from subscription model\n- CreateProject.jsx line 1146: Pass enhance flag through onCreateProject callback: onCreateProject?.(project, { enhance: enhanceWithAI && selectedModelMeta?.tier === 'subscription' })\n- App.jsx line 93-98: handleProjectCreated accepts options param, appends &enhance=true to URL\n\nDependency: BUG-40 must land first so the billing toggle correctly identifies subscription models.",
+      "change": [
+        "frontend/src/pages/CreateProject.jsx line 430: Add state: const [enhanceWithAI, setEnhanceWithAI] = useState(false)",
+        "frontend/src/pages/CreateProject.jsx line 1290-1305: Wrap in conditional — if selectedModelMeta?.tier === 'subscription' render a <label> with checkbox 'Enhance project with AI after creation' (styled to match existing UI: 14px, cssVars.textSecondary, pointer cursor, orange accent on checked). Else render the existing Sparkles + 'Define Project with AI' Button unchanged.",
+        "frontend/src/pages/CreateProject.jsx line 1293 onChange handler: Add — if (model.tier !== 'subscription') setEnhanceWithAI(false)",
+        "frontend/src/pages/CreateProject.jsx line 1146: Change onCreateProject?.(project) to onCreateProject?.(project, { enhance: enhanceWithAI && selectedModelMeta?.tier === 'subscription' })",
+        "frontend/src/App.jsx line 93: Change handleProjectCreated = (project) to (project, options = {}). Line 97: Change navigate URL to include: const enhanceParam = options.enhance ? '&enhance=true' : ''; navigate(`/workspace?projectId=${project.id}${enhanceParam}`)"
+      ],
+      "test": "Step-by-step: (1) Select a subscription model (e.g. Claude Opus 4.5) in CreateProject → 'Define Project with AI' button should be hidden, checkbox 'Enhance project with AI after creation' visible. (2) Check the box, fill in project name + brief, click Create Project → URL should contain '&enhance=true'. (3) Switch model to an OpenRouter model → checkbox disappears, 'Define Project with AI' button reappears, enhanceWithAI resets to false. (4) With OpenRouter model, click 'Define Project with AI' → existing inline AI chat flow still works. (5) npm run build — 0 errors. Paste the conditional rendering JSX block and the handleProjectCreated function from App.jsx in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-25",
+      "name": "Workspace enhance banner: copy project brief for Claude Code",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "depends_on": "FEAT-24",
+      "description": "When workspace opens with ?enhance=true in the URL, ClaudeCodeTerminalChat shows a banner with the project brief and a 'Copy to Clipboard' button. User copies the prompt, then pastes it into Claude Code's input when ready. No programmatic terminal injection — terminal WebSocket input is fragile (same reason BUBBLE-01 is shelved). Banner dismissed via 'Dismiss' or after copy. One-shot — URL param cleared after first render.\n\nWhy copy-paste over terminal injection: Programmatic terminal input via WebSocket is fragile — echo detection, timing, and collision issues are exactly why BUBBLE-01 is shelved. Copy-paste is zero risk of terminal corruption, no dependency on status === 'claude_ready' timing, user has full control over when to send, works regardless of Claude Code's loading state.\n\nProp threading chain:\n- App.jsx line 219-230: Read searchParams.get('enhance'), pass enhanceWithAI={true} to Workspace. useEffect to clear 'enhance' param from URL (replace: true) after first render.\n- Workspace.jsx line 33: Accept enhanceWithAI prop. Pass through to Chat at line 410-417.\n- Chat.jsx line 22: Accept enhanceWithAI prop. Line 317-322: Pass enhanceWithAI to ClaudeCodeTerminalChat.\n- ClaudeCodeTerminalChat.jsx line 173: Accept enhanceWithAI prop. New state + copy handler + banner UI.",
+      "change": [
+        "frontend/src/App.jsx line 219-230: Add enhanceWithAI={searchParams.get('enhance') === 'true'} prop to Workspace. Add useEffect after line 22: if searchParams.get('enhance') === 'true', create new URLSearchParams, delete 'enhance', navigate with replace:true. Empty deps array — one-shot.",
+        "frontend/src/components/Workspace.jsx line 33: Add enhanceWithAI to destructured props. Line 410-417: Add enhanceWithAI={enhanceWithAI} prop to Chat.",
+        "frontend/src/components/Chat.jsx line 22: Add enhanceWithAI to destructured props. Line 317-322: Add enhanceWithAI={enhanceWithAI} prop to ClaudeCodeTerminalChat.",
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx line 173: Add enhanceWithAI to destructured props. After line 194: Add const [showEnhanceBanner, setShowEnhanceBanner] = useState(!!enhanceWithAI) and const [copied, setCopied] = useState(false). Add copyBriefToClipboard handler using useCallback — guard on project?.brief, clean brief (trim + replace newlines with space + substring 500), build prompt string ('I just created this project. Here\\'s my brief: {cleanBrief}. Help me set up the project structure, dependencies, and initial files.'), navigator.clipboard.writeText(prompt), setCopied(true), setTimeout(() => setCopied(false), 2000). Deps: [project?.brief].",
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx after line 876 (after status header closing div, before bubbles/terminal area at line 878): Add banner JSX — conditional on showEnhanceBanner. Container div with padding 12px 16px, background rgba(249,115,22,0.08), border-bottom 1px solid rgba(249,115,22,0.2). Brief preview text (first 100 chars + '...' if longer) in 13px font. Helper text 'Paste this into Claude Code when ready' in 12px secondary color. Button row with gap 8px: 'Dismiss' button (grey background, onClick setShowEnhanceBanner(false)) and 'Copy to Clipboard' button (orange gradient #f97316→#ea580c, onClick copyBriefToClipboard, text shows 'Copied!' for 2s after click via copied state, then reverts to 'Copy to Clipboard')."
+      ],
+      "test": "Step-by-step: (1) Create project with subscription model + 'Enhance' checked → workspace opens with banner visible showing brief preview. (2) Banner shows truncated brief + 'Copy to Clipboard' button + 'Dismiss' button. (3) Click 'Copy to Clipboard' → button text changes to 'Copied!' for 2s, clipboard contains the formatted prompt. (4) Click 'Dismiss' → banner disappears. (5) Refresh page → no banner (URL param cleared). (6) Create project WITHOUT enhance → no banner in workspace. (7) npm run build — 0 errors. Paste the banner JSX block and copyBriefToClipboard handler from ClaudeCodeTerminalChat.jsx in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-26",
+      "name": "Clean up dead subscription path in CreateProject AI definition handlers",
+      "size": "XS",
+      "priority": 4,
+      "status": "pending",
+      "depends_on": "FEAT-24",
+      "description": "After FEAT-24, the 'Define Project with AI' button is hidden for subscription models. The claude_code_ssh branches in handleStartAIDefinition (line 699: isSubscription provider check), handleSendChatMessage (line 777: isSub provider check), and handleGenerateContext (line 890: isSub2 provider check) are now dead code — subscription models will never trigger these handlers because the button is replaced with a checkbox. Simplify all three functions to OpenRouter-only: remove the isSubscription/isSub/isSub2 ternary, hardcode provider:'openrouter', remove server_id spread. This is cosmetic cleanup — the dead code is harmless. Low priority, defer to next cleanup pass.",
+      "change": [
+        "frontend/src/pages/CreateProject.jsx line 699-708: Remove const isSubscription, hardcode provider:'openrouter', remove server_id conditional spread",
+        "frontend/src/pages/CreateProject.jsx line 777-792: Remove const isSub, hardcode provider:'openrouter', remove server_id conditional spread",
+        "frontend/src/pages/CreateProject.jsx line 890-899: Remove const isSub2, hardcode provider:'openrouter', remove server_id conditional spread"
+      ],
+      "test": "Step-by-step: (1) Select an OpenRouter model in CreateProject. (2) Click 'Define Project with AI' — verify expand-brief call uses provider:'openrouter' (check Network tab). (3) Send a chat message — verify ai/chat call uses provider:'openrouter'. (4) Click 'Generate Context' — verify expand-brief call uses provider:'openrouter'. (5) npm run build — 0 errors. Paste the simplified fetch body from handleStartAIDefinition in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
     {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
