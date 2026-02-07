@@ -13,7 +13,8 @@
 5. Implement following CLAUDE.md patterns
 6. Test with `agent-browser` for UI
 7. Add patterns to CLAUDE.md, notes to learnings.md, update code map if needed
-8. `git commit -m "feat(TASK-ID): description"` then `git push`
+8. **Verify branch** `git branch --show-current` → MUST be `feature/harness-v2` (NEVER main)
+9. `git commit -m "feat(TASK-ID): description"` then `git push origin feature/harness-v2`
 9. Update task in `harness/feature_queue.json`:
    - Set ALL `completion_checklist` items to true (or note why not)
    - Add `"completion_note": "What was done, any caveats"`

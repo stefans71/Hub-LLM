@@ -227,7 +227,26 @@ docker-compose.yml → Coolify → Traefik → hubllm.dev
 ```
 - `FRONTEND_URL` env var controls CORS origins
 - `APP_URL=https://hubllm.dev` for absolute URLs
-- Coolify deploys from `main` branch automatically
+- Coolify deploys from `main` branch automatically — pushed commits go live in ~2 min
+
+## Branch Safety — CRITICAL
+
+**NEVER commit directly to `main`.** Coolify auto-deploys from main — any push goes straight to production with zero review.
+
+**Always work on `feature/harness-v2`:**
+```bash
+# Before ANY work, verify your branch:
+git branch --show-current   # MUST show feature/harness-v2
+
+# If you're on main, switch immediately:
+git checkout feature/harness-v2
+
+# Always push to the feature branch:
+git push origin feature/harness-v2
+```
+
+**Merging to main is the Director's job** — only after review and approval.
+If you find yourself on `main`, do NOT commit. Switch to `feature/harness-v2` first.
 
 <!-- ADD NEW CRITICAL PATTERNS ABOVE THIS LINE -->
 
@@ -295,7 +314,8 @@ Every `completion_note` MUST include concrete test evidence — not just a summa
 **GOOD**: "Fixed race condition. Verified: sqlite3 .tables shows 5 tables, curl /api/auth/signup returns 201, no console errors in agent-browser"
 
 ## After Cleanup Commit
-ALWAYS push:
+ALWAYS verify branch and push:
 ```bash
-git push
+git branch --show-current   # MUST be feature/harness-v2, NEVER main
+git push origin feature/harness-v2
 ```

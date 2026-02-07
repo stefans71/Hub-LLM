@@ -26,6 +26,28 @@
   },
   "queue": [
     {
+      "id": "BUG-33",
+      "name": "Production Postgres projects table missing 10 columns — site down",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "PRODUCTION BLOCKER. The projects table in production Postgres is missing 10 columns that the ORM model expects. Every GET /api/projects/ returns 500: 'column projects.slug does not exist'. Root cause: recurring bug pattern #8 — ORM model was updated with new columns over many sessions but create_all() never adds columns to existing Postgres tables.\n\nProduction has: id, user_id, name, description, color, context, created_at, updated_at (8 cols)\nORM expects: id, name, slug, description, brief, workspace, color, connection_type, github_repo, vps_server_id, context, agent_ids, mcp_server_ids, status, selected_model, created_at, updated_at (17 cols)\n\nMissing columns (10): slug (VARCHAR 255 NOT NULL), brief (TEXT nullable), workspace (VARCHAR 255 default 'default'), connection_type (VARCHAR 50 default 'github'), github_repo (VARCHAR 255 nullable), vps_server_id (VARCHAR 64 nullable FK→vps_servers.id), agent_ids (TEXT nullable), mcp_server_ids (TEXT nullable), status (VARCHAR 50 default 'active'), selected_model (TEXT nullable)\n\nNote: production also has user_id column the ORM dropped — that's harmless (extra DB columns don't cause errors). Only missing columns cause errors.\n\nVerified via: docker exec db-gkk8kw0w4wowck80kk0k4osg-155120947812 psql -U hubllm -d hubllm -c '\\d projects'\nOther tables (users, chat_messages, vps_servers) are fine.",
+      "change": [
+        "NEW FILE backend/migrations/003_add_projects_columns.py: Idempotent migration using SQLAlchemy inspect. For each of the 10 missing columns: check if column exists via inspector.get_columns('projects'), if not → ALTER TABLE projects ADD COLUMN. Use these exact types and defaults: slug VARCHAR(255) NOT NULL DEFAULT '' (then UPDATE projects SET slug = LOWER(REGEXP_REPLACE(name, '[^a-zA-Z0-9]+', '-', 'g')) to populate from name), brief TEXT, workspace VARCHAR(255) DEFAULT 'default', connection_type VARCHAR(50) DEFAULT 'github', github_repo VARCHAR(255), vps_server_id VARCHAR(64) REFERENCES vps_servers(id), agent_ids TEXT, mcp_server_ids TEXT, status VARCHAR(50) DEFAULT 'active', selected_model TEXT. Must skip on SQLite (these columns already exist from create_all). Log each column added.",
+        "After migration script is written and committed: redeploy via git push origin main. Coolify auto-deploys, backend starts, run_migrations() picks up 003, adds columns, production recovers."
+      ],
+      "test": "Step-by-step: (1) Run backend locally — migration 003 should log 'skipping' for each column (SQLite already has them via create_all). (2) Push to main. (3) Wait for Coolify auto-deploy (~2 min). (4) curl https://www.hubllm.dev/api/projects/ — should return 200 (empty array or project list), NOT 500. (5) Check docker logs for the backend container — should show 003 migration running and adding 10 columns. Paste the curl response and docker logs migration output as evidence.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "BUG-32",
       "name": "Production Postgres needs UUID-to-VARCHAR migration script in codebase",
       "size": "XS",
@@ -51,7 +73,8 @@
       "name": "Replace setup wizard path card icons with brand SVG logos",
       "size": "XS",
       "priority": 1,
-      "status": "pending_review",
+      "status": "pending",
+      "rejection_note": "REJECTED: Logos not rendering on either PathCard after hard refresh (Ctrl+Shift+R). Code structure looks correct (typeof check, img tag, SVG imports). Debug steps: (1) Open browser devtools → Elements tab → find the PathCard img tags. Are they present in DOM? (2) Check img src attribute — is it a valid URL? (3) Network tab — are the SVG files loading (200) or 404? (4) Console — any import/loading errors? (5) Try opening the img src URL directly in browser. The SVGs use XML declaration + DOCTYPE which is valid but verify browser accepts them via <img>. If the SVGs won't load as <img>, consider inlining them as React components instead (import as ?react or use dangerouslySetInnerHTML). Paste devtools evidence in completion_note.",
       "description": "Setup wizard Step 1 (ChoosePathStep) uses lucide-react icons for the two PathCards. Replace with actual brand logos:\n\n- Anthropic card (line 170): Replace `icon={Sparkles}` with the Claude Code logo SVG at repo root `Claude_Code_Logo_White_tp.svg` (1831 bytes)\n- OpenRouter card (line 163): Replace `icon={Key}` with the OpenRouter logo SVG at repo root `openrouter-logo-v2.svg` (6861 bytes)\n\nThe PathCard component (Setup.jsx line 77) renders icons as `<Icon size={24} style={{ color: ... }} />` — this only works for lucide-react components. It needs to also support SVG image sources.\n\nNOTE: `Sparkles` import must remain — it's still used at line 809 for Claude Code detection indicator. `Key` import is only used at line 163 so can be removed after replacement.",
       "change": [
         "Move SVGs to assets: `mv /root/dev/Hub-LLM/Claude_Code_Logo_White_tp.svg frontend/src/assets/claude-code-logo.svg` and `mv /root/dev/Hub-LLM/openrouter-logo-v2.svg frontend/src/assets/openrouter-logo.svg`",
