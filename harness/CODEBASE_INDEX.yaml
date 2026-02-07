@@ -1321,15 +1321,15 @@ data_flow:
 
     openrouter_models:
       type: "JSON Array (cached OpenRouter model list)"
-      set_by: [WorkspaceTopBar.jsx]
-      read_by: [WorkspaceTopBar.jsx]
+      set_by: [ModelSelector.jsx]
+      read_by: [ModelSelector.jsx]
       sync_direction: "frontend-only — cached from https://openrouter.ai/api/v1/models"
-      notes: "MODEL-04: 24h TTL cache. Manual refresh via footer button."
+      notes: "MODEL-04: 24h TTL cache. Manual refresh via footer button. Extracted from WorkspaceTopBar in FEAT-21."
 
     openrouter_models_fetched:
       type: "String (Unix timestamp ms)"
-      set_by: [WorkspaceTopBar.jsx]
-      read_by: [WorkspaceTopBar.jsx]
+      set_by: [ModelSelector.jsx]
+      read_by: [ModelSelector.jsx]
       sync_direction: "frontend-only — cache timestamp for 24h TTL"
 
     ai_assistant_alias:
@@ -1393,6 +1393,146 @@ data_flow:
       sync_direction: "frontend-only"
 
   note: "No sessionStorage is used anywhere in the codebase"
+
+# ============================================================================
+# CROSS-CUTTING — Billing & Model Routing Architecture
+# ============================================================================
+#
+# This section documents how models are selected, how billing modes work,
+# and how API calls are routed. MUST be updated when adding new subscription
+# providers (e.g. OpenAI) or new API services (e.g. local LLM).
+#
+billing_and_routing:
+  overview: |
+    Two billing modes exist: "Pro Subscription" (Claude Code on VPS, free with Anthropic Pro)
+    and "OpenRouter" (pay-per-call via API key). Models have a `tier` field that determines
+    which billing mode they belong to. The frontend decides the provider based on the selected
+    model's tier, then the backend routes to the correct service.
+
+    OpenRouter models are STATELESS — every API call is independent. The frontend sends the
+    full message history with each request. Switching models mid-conversation works but the
+    new model re-reads all history from scratch. Context window limits vary by model.
+
+    Claude Code SSH is SESSION-BASED — maintains context through the SSH channel.
+
+  tiers:
+    subscription:
+      description: "Anthropic models routed through Claude Code CLI on user's VPS"
+      defined_in: "ModelSelector.jsx SUBSCRIPTION_MODELS constant (5 models)"
+      requires: "VPS with Claude Code installed + authenticated (claudeCodeDetected in localStorage vps_servers)"
+      provider_value: "claude_code_ssh"
+      billing: "Free — uses user's Anthropic Pro subscription"
+      service: "backend/services/claude_code_ssh.py → ClaudeCodeSSHService"
+      streaming_only: true
+      note: "ClaudeCodeSSHService.chat() returns AsyncGenerator. Non-streaming callers (expand-brief) must collect chunks."
+
+    openrouter:
+      description: "Any model from OpenRouter's catalog (500+ models, all providers)"
+      defined_in: "ModelSelector.jsx POPULAR_MODEL_IDS (curated ~16) + full list from API"
+      requires: "OpenRouter API key in localStorage (openrouter_key or openrouter_api_key)"
+      provider_value: "openrouter"
+      billing: "Pay-per-call — charged to user's OpenRouter account"
+      service: "backend/services/openrouter.py → OpenRouterService"
+
+    claude_direct:
+      description: "Direct Anthropic API (legacy, rarely used)"
+      requires: "Claude API key (claude_key in localStorage)"
+      provider_value: "claude_direct"
+      service: "backend/services/openrouter.py → ClaudeDirectService"
+
+  routing_flow:
+    frontend_decision: |
+      1. User selects model in ModelSelector → onChange returns {id, name, tier, provider, billingMode}
+      2. Consumer checks model.tier:
+         - tier === 'subscription' → provider = 'claude_code_ssh', server_id = first VPS with claudeCodeDetected
+         - tier === 'openrouter'   → provider = 'openrouter', X-OpenRouter-Key header
+         - tier === 'claude_direct'→ provider = 'claude_direct', X-Claude-Key header
+      3. POST request includes: { model, provider, server_id? }
+
+    backend_dispatch: |
+      get_service(provider, api_keys, server_id) in ai.py and chat.py:
+        - "claude_code_ssh" → ClaudeCodeSSHService(server_id) — 400 if no server_id
+        - "claude_direct"   → ClaudeDirectService(api_keys["claude"]) — 401 if no key
+        - else (openrouter) → OpenRouterService(api_keys["openrouter"]) — 401 if no key
+
+  # FILES TO MODIFY when adding a new subscription provider or API service:
+  extension_checklist:
+    new_subscription_provider:
+      description: "e.g. adding OpenAI subscription models routed through a local CLI"
+      files:
+        - file: "frontend/src/components/ModelSelector.jsx"
+          what: "Add models to SUBSCRIPTION_MODELS array with new tier value. Update billing toggle to show new provider tab. Update isModelAvailable() and getBillingLabel()."
+        - file: "frontend/src/pages/CreateProject.jsx"
+          what: "Update routing logic in handleStartAIDefinition, handleSendChatMessage — add new provider branch."
+        - file: "frontend/src/components/Chat.jsx"
+          what: "Update provider detection logic (lines 200-219) — add new provider branch."
+        - file: "frontend/src/components/WorkspaceTopBar.jsx"
+          what: "Update billing warning logic if switching to/from new provider."
+        - file: "backend/routers/ai.py"
+          what: "Add new provider to get_service(). Import new service class."
+        - file: "backend/routers/chat.py"
+          what: "Add new provider branch (lines 74-95)."
+        - file: "backend/services/"
+          what: "Create new service class implementing chat() method (must match AsyncGenerator or dict return patterns)."
+
+    new_api_service:
+      description: "e.g. adding a local LLM API or another cloud provider like Groq"
+      files:
+        - file: "frontend/src/components/ModelSelector.jsx"
+          what: "Add new tier constant. Add models or fetch logic. Update billing toggle."
+        - file: "backend/routers/ai.py + chat.py"
+          what: "Add provider to get_service()."
+        - file: "backend/services/"
+          what: "New service class with chat() method."
+        - file: "CODEBASE_INDEX.yaml"
+          what: "Update this billing_and_routing section with new tier."
+
+  # KEY DEPENDENCIES — what breaks if you change these
+  dependencies:
+    model_tier_field:
+      description: "The 'tier' string on model objects ('subscription' | 'openrouter' | 'coming_soon')"
+      set_in: "ModelSelector.jsx — SUBSCRIPTION_MODELS has tier:'subscription', parseOpenRouterModels sets tier:'openrouter'"
+      read_in: [ModelSelector.jsx, CreateProject.jsx, WorkspaceTopBar.jsx]
+      routing_impact: "tier determines which provider string is sent to backend and which service handles the request"
+
+    provider_string:
+      description: "The 'provider' field in POST request body ('claude_code_ssh' | 'openrouter' | 'claude_direct')"
+      set_in: "Frontend routing logic (CreateProject.jsx, Chat.jsx)"
+      read_in: "Backend get_service() in ai.py and chat.py"
+      must_match: "Exact string match — typo = falls through to openrouter default"
+
+    server_id:
+      description: "VPS server ID required for claude_code_ssh provider"
+      set_in: "CreateProject.jsx (from claudeCodeServer.id), Chat.jsx (from serverId prop)"
+      read_in: "Backend get_service() → ClaudeCodeSSHService(server_id)"
+      failure_mode: "Missing server_id + claude_code_ssh → 400 error"
+
+    api_keys_object:
+      description: "{ openrouter: bool, anthropic: bool } passed to ModelSelector"
+      set_in: "WorkspaceTopBar.jsx (from SSH endpoint + localStorage), CreateProject.jsx (from localStorage vps_servers)"
+      controls: "Which models show as available/greyed, which billing toggle tab has green dot"
+
+  # CROSS-REFERENCES to other index sections
+  see_also:
+    - section: "frontend_components > ModelSelector.jsx"
+      for: "Full component API, props, state, constants"
+    - section: "frontend_components > WorkspaceTopBar.jsx"
+      for: "Claude Code status detection, billing warning modal"
+    - section: "frontend_pages > CreateProject.jsx"
+      for: "claudeCodeServer detection, routing in fetch calls"
+    - section: "backend_routers > ai.py"
+      for: "get_service() dispatch, expand-brief streaming collection"
+    - section: "backend_routers > chat.py"
+      for: "Chat completions routing, SSE streaming"
+    - section: "backend_services"
+      for: "ClaudeCodeSSHService, OpenRouterService, ClaudeDirectService"
+    - section: "data_flow > localStorage_keys > vps_servers"
+      for: "claudeCodeDetected flag per server"
+    - section: "data_flow > localStorage_keys > openrouter_key"
+      for: "API key availability check"
+
+  last_verified_session: 101
+  added_by: "Director (FEAT-22/FEAT-23 review)"
 
 # ============================================================================
 # CROSS-CUTTING — Recurring Bug Patterns
