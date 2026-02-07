@@ -240,7 +240,7 @@ frontend_pages:
   LandingPage.css:
     path: frontend/src/pages/LandingPage.css
     lines: 1636
-    purpose: "Scoped CSS for LandingPage component — all selectors prefixed with .landing-page to avoid global conflicts. Spotlight glow (UI-12), cyan auth+send buttons, white Sign Up nav, 13px model icon, 0.98rem footer (UI-13/14)"
+    purpose: "Scoped CSS for LandingPage component — all selectors prefixed with .landing-page to avoid global conflicts. Spotlight glow (UI-12), cyan auth+send buttons, white Sign Up nav, 26px model icon, AI=orange/user=cyan bubbles (UI-15), 0.98rem footer"
     animations:
       - {name: lp-float, purpose: "particle floating from bottom to top"}
       - {name: lp-pulse, purpose: "status dot pulsing"}

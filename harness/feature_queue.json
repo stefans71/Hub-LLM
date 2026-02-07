@@ -26,6 +26,32 @@
   },
   "queue": [
     {
+      "id": "UI-15",
+      "name": "Fix model icon size, swap AI/user chat bubble colors",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending_review",
+      "description": "Three fixes from UI-14 feedback:\n\n1. Model icon 'C' is too small at 13px — revert to original 26px. Keep it orange with white 'C'.\n   - LandingPage.jsx line 19-20: DEMO_MODELS Anthropic color 'transparent' → '#d97706' (revert)\n   - LandingPage.css line 269-280: .model-icon width/height 13px → 26px, font-size 0.35rem → 0.7rem, border-radius 3px → 6px (revert to original)\n\n2. AI chat avatar + bubble (left side) — currently cyan, should be orange (Anthropic brand).\n   - LandingPage.css line 950-953: .message.assistant .message-avatar background: from cyan gradient → rgba(249, 115, 22, 0.8)\n   - LandingPage.css line 968-972: .message.assistant .message-bubble background/border: keep as-is OR change to orange tint — use background: rgba(249, 115, 22, 0.1), border: 1px solid rgba(249, 115, 22, 0.2), color stays rgba(220, 235, 250, 0.9)\n\n3. User chat avatar + bubble (right side) — currently orange, should be cyan (match Send button).\n   - LandingPage.css line 955-958: .message.user .message-avatar background: rgba(249, 115, 22, 0.8) → linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)\n   - LandingPage.css line 974-978: .message.user .message-bubble background: rgba(249,115,22,0.15) → rgba(14, 165, 233, 0.15), border: rgba(249,115,22,0.3) → rgba(14, 165, 233, 0.3), color: rgba(255,245,235,0.9) → rgba(220, 235, 250, 0.9)",
+      "change": [
+        "frontend/src/pages/LandingPage.jsx line 19-20: Revert Anthropic DEMO_MODELS color from 'transparent' to '#d97706'",
+        "frontend/src/pages/LandingPage.css line 269-280: Revert .model-icon to 26px, 0.7rem, border-radius 6px",
+        "frontend/src/pages/LandingPage.css line 950-953: Change .message.assistant .message-avatar from cyan gradient to rgba(249, 115, 22, 0.8)",
+        "frontend/src/pages/LandingPage.css line 968-972: Change .message.assistant .message-bubble to orange tint: background rgba(249,115,22,0.1), border rgba(249,115,22,0.2)",
+        "frontend/src/pages/LandingPage.css line 955-958: Change .message.user .message-avatar from orange to cyan gradient linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+        "frontend/src/pages/LandingPage.css line 974-978: Change .message.user .message-bubble to cyan tint: background rgba(14,165,233,0.15), border rgba(14,165,233,0.3), color rgba(220,235,250,0.9)"
+      ],
+      "test": "Step-by-step: (1) Load localhost:5173. (2) Model icon — verify 'C' is 26px orange square with white text (same size as before UI-14). (3) AI messages (left) — verify orange 'AI' avatar badge and orange-tinted bubble. (4) User messages (right) — verify cyan 'You' avatar badge and cyan-tinted bubble matching the Send button. (5) Describe result in completion_note.",
+      "investigation_id": null,
+      "completion_note": "Changed LandingPage.jsx lines 19-20: Anthropic DEMO_MODELS color reverted 'transparent'→'#d97706'. Changed LandingPage.css: .model-icon reverted to 26px/0.7rem/6px (lines 269-280). .message.assistant .message-avatar cyan gradient→rgba(249,115,22,0.8) orange. .message.assistant .message-bubble cyan→orange tint (rgba 249,115,22). .message.user .message-avatar orange→cyan gradient (#0ea5e9/#0284c7). .message.user .message-bubble orange→cyan tint (rgba 14,165,233), color normalized to rgba(220,235,250,0.9). Build: vite build 0 errors. Auth required for visual test — noted: auth verified separately.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",

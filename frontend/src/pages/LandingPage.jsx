@@ -16,8 +16,8 @@ const validatePassword = (password) => passwordRules.every(rule => rule.test(pas
 
 // Demo models data
 const DEMO_MODELS = [
-  { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', icon: 'C', color: 'transparent', hasKey: true },
-  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', icon: 'C', color: 'transparent', hasKey: true },
+  { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', icon: 'C', color: '#d97706', hasKey: true },
+  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', icon: 'C', color: '#d97706', hasKey: true },
   { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', icon: 'G', color: '#10a37f', hasKey: true },
   { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'OpenAI', icon: 'G', color: '#10a37f', hasKey: true },
   { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', icon: 'G', color: '#10a37f', hasKey: true },
