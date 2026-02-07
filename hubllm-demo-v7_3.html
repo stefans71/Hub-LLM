@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HubLLM.dev - Pro Vibe-Coding</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0a0f1a 0%, #0d1520 50%, #080c14 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #e0e0e0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Grid Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(30, 144, 180, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 144, 180, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(80, 200, 255, 0.4);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(10, 15, 26, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 30px 12px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+        }
+
+        .tagline {
+            font-size: 0.6rem;
+            color: rgba(249, 115, 22, 0.9);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: #38bdf8;
+        }
+
+        .pipeline span {
+            color: rgba(249, 115, 22, 0.6);
+            font-size: 0.65rem;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 700;
+            padding-left: 20px;
+            padding-right: 20px;
+            border-left: 1px solid rgba(56, 189, 248, 0.2);
+            border-right: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .logo .hub { color: #fff; }
+        .logo .llm { color: #38bdf8; }
+        .logo .dev { color: rgba(150, 180, 200, 0.5); }
+
+        .header-features {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-feature {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.65rem;
+            color: rgba(150, 180, 200, 0.5);
+        }
+
+        .header-feature svg {
+            width: 12px;
+            height: 12px;
+            fill: #38bdf8;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-item {
+            font-size: 0.75rem;
+            color: rgba(150, 180, 200, 0.6);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: #38bdf8;
+            transition: width 0.3s ease;
+        }
+
+        .nav-item:hover::after {
+            width: 100%;
+        }
+
+        .nav-item:hover {
+            color: #38bdf8;
+        }
+
+        .nav-item.cta {
+            color: #f97316;
+            font-weight: 600;
+        }
+
+        .nav-item.cta:hover {
+            color: #fb923c;
+        }
+
+        .nav-item.cta::after {
+            background: #f97316;
+        }
+
+        /* Main Container */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 0 20px 0;
+        }
+
+        /* Hub Box */
+        .hub-box {
+            position: relative;
+            background: linear-gradient(135deg, #1a2535 0%, #0f1620 100%);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 16px 16px 0 0;
+            overflow: visible;
+            box-shadow: 
+                0 0 40px rgba(56, 189, 248, 0.08),
+                inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+
+        /* Traveling Light - Top Border Only */
+        .traveling-light {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #38bdf8 0%, #0ea5e9 40%, transparent 70%);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 20px 8px rgba(56, 189, 248, 0.6),
+                0 0 40px 16px rgba(56, 189, 248, 0.3),
+                0 0 60px 24px rgba(56, 189, 248, 0.1);
+            pointer-events: none;
+            z-index: 100;
+            top: -6px;
+            left: 16px;
+        }
+
+        /* Chat Header */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+        }
+
+        /* Model Selector - LEFT */
+        .model-selector {
+            position: relative;
+        }
+
+        .model-selector-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 220px;
+        }
+
+        .model-selector-btn:hover {
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        .model-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .model-selector-btn .model-name {
+            flex: 1;
+            font-size: 0.85rem;
+            color: rgba(220, 235, 250, 0.95);
+            text-align: left;
+        }
+
+        .model-selector-btn .chevron {
+            font-size: 0.6rem;
+            color: rgba(150, 180, 200, 0.5);
+            transition: transform 0.2s ease;
+        }
+
+        .model-selector.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Model Dropdown */
+        .model-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 5px;
+            background: #1a2535;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 100;
+            width: 320px;
+            max-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .model-selector.open .model-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .model-search-container {
+            padding: 12px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .model-search {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .model-search:focus {
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .model-search::placeholder {
+            color: rgba(150, 180, 200, 0.4);
+        }
+
+        .model-list {
+            overflow-y: auto;
+            max-height: 320px;
+            padding: 8px 0;
+        }
+
+        .model-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .model-option:hover {
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .model-option.selected {
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .model-option.hidden {
+            display: none;
+        }
+
+        .model-option .model-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .model-option .model-name {
+            font-size: 0.85rem;
+            color: rgba(220, 235, 250, 0.9);
+            margin-bottom: 2px;
+        }
+
+        .model-option .model-provider {
+            font-size: 0.7rem;
+            color: rgba(150, 180, 200, 0.5);
+        }
+
+        .model-status {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .model-status.live {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .model-status.connect {
+            background: rgba(249, 115, 22, 0.15);
+            color: #f97316;
+            cursor: pointer;
+        }
+
+        .model-status.connect:hover {
+            background: rgba(249, 115, 22, 0.25);
+        }
+
+        /* Chat Title - RIGHT */
+        .chat-header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .chat-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: rgba(150, 180, 200, 0.6);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Info Panels */
+        .info-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            background: rgba(0, 0, 0, 0.25);
+            border-bottom: 1px solid transparent;
+        }
+
+        .info-panel.open {
+            max-height: 200px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+        }
+
+        #pricingPanel.open {
+            max-height: 350px;
+        }
+
+        .info-panel-content {
+            padding: 0 20px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease, padding 0.3s ease;
+        }
+
+        .info-panel.open .info-panel-content {
+            padding: 16px 20px;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .info-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .info-panel-header h3 {
+            font-size: 0.9rem;
+            color: #38bdf8;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .info-close {
+            background: none;
+            border: none;
+            color: rgba(150, 180, 200, 0.5);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            transition: color 0.2s ease;
+        }
+
+        .info-close:hover {
+            color: #fff;
+        }
+
+        .info-panel p {
+            font-size: 0.85rem;
+            color: rgba(200, 215, 230, 0.8);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .nav-item.active {
+            color: #38bdf8;
+        }
+
+        .nav-item.active::after {
+            width: 100%;
+        }
+
+        /* Pricing Panel */
+        .pricing-content {
+            padding: 16px 20px 20px !important;
+        }
+
+        .pricing-cards {
+            display: flex;
+            gap: 15px;
+            margin-top: 12px;
+        }
+
+        .pricing-card {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 10px;
+            padding: 16px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .pricing-card.featured {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0.05) 100%);
+            border-color: rgba(249, 115, 22, 0.4);
+            box-shadow: 0 0 30px rgba(249, 115, 22, 0.15);
+        }
+
+        .pricing-card.featured:hover {
+            border-color: rgba(249, 115, 22, 0.6);
+            box-shadow: 0 0 40px rgba(249, 115, 22, 0.2);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: #fff;
+            font-size: 0.6rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .pricing-tier {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(220, 235, 250, 0.9);
+            margin-bottom: 8px;
+        }
+
+        .pricing-card.featured .pricing-tier {
+            color: #f97316;
+        }
+
+        .pricing-price {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .price-old {
+            font-size: 0.75rem;
+            color: rgba(150, 180, 200, 0.5);
+            text-decoration: line-through;
+        }
+
+        .price-main {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #38bdf8;
+        }
+
+        .price-free {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #22c55e;
+        }
+
+        .price-label {
+            font-size: 0.7rem;
+            color: rgba(150, 180, 200, 0.6);
+        }
+
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 12px 0;
+        }
+
+        .pricing-features li {
+            font-size: 0.7rem;
+            color: rgba(200, 215, 230, 0.7);
+            padding: 3px 0;
+            padding-left: 14px;
+            position: relative;
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #38bdf8;
+            font-size: 0.65rem;
+        }
+
+        .pricing-card.featured .pricing-features li::before {
+            color: #f97316;
+        }
+
+        .pricing-btn {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 6px;
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pricing-btn:hover {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        .pricing-btn.featured-btn {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            border: none;
+            color: #fff;
+        }
+
+        .pricing-btn.featured-btn:hover {
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .pricing-note {
+            font-size: 0.6rem;
+            color: rgba(150, 180, 200, 0.4);
+            text-align: center;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        /* Chat Messages */
+        .chat-messages {
+            padding: 16px;
+            min-height: 140px;
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+            color: #fff;
+        }
+
+        .message.user .message-avatar {
+            background: rgba(249, 115, 22, 0.8);
+            color: #fff;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .message.assistant .message-bubble {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            color: rgba(220, 235, 250, 0.9);
+        }
+
+        .message.user .message-bubble {
+            background: rgba(249, 115, 22, 0.15);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            color: rgba(255, 245, 235, 0.9);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 10px 14px;
+            align-items: center;
+        }
+
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background: #38bdf8;
+            border-radius: 50%;
+            animation: typingBounce 1.4s ease-in-out infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* Chat Input */
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            border-top: 1px solid rgba(56, 189, 248, 0.1);
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .chat-input:focus {
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        .chat-input::placeholder {
+            color: rgba(150, 180, 200, 0.4);
+        }
+
+        .chat-send-btn {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chat-send-btn:hover {
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* File Explorer */
+        .file-explorer {
+            border-top: 1px solid rgba(56, 189, 248, 0.15);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .file-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            color: #38bdf8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-top: 1px solid rgba(56, 189, 248, 0.1);
+        }
+
+        .file-header:hover {
+            background: rgba(56, 189, 248, 0.05);
+            color: #5ccffc;
+        }
+
+        .folder-icon {
+            width: 18px;
+            height: 18px;
+            fill: #38bdf8;
+        }
+
+        .file-header .chevron {
+            width: 12px;
+            height: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .file-header.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        .file-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .file-content.open {
+            max-height: 400px;
+        }
+
+        /* Project Selector */
+        .project-selector {
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .project-selector label {
+            font-size: 0.7rem;
+            color: rgba(150, 180, 200, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .project-dropdown {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.8rem;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%2338bdf8'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }
+
+        .project-dropdown:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        .project-dropdown option {
+            background: #1a2535;
+            color: #fff;
+        }
+
+        /* VS Code Style File Tree */
+        .file-tree {
+            padding: 8px 0;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.8rem;
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 16px;
+            cursor: pointer;
+            transition: background 0.1s ease;
+            user-select: none;
+        }
+
+        .tree-item:hover {
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .tree-item.selected {
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        .tree-item .indent {
+            width: 16px;
+            flex-shrink: 0;
+        }
+
+        .tree-item .expand-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(150, 180, 200, 0.5);
+            font-size: 0.6rem;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+
+        .tree-item.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .tree-item .file-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+
+        .tree-item .file-icon.folder { fill: #f97316; }
+        .tree-item .file-icon.html { fill: #e44d26; }
+        .tree-item .file-icon.css { fill: #264de4; }
+        .tree-item .file-icon.js { fill: #f7df1e; }
+        .tree-item .file-icon.json { fill: #cbcb41; }
+        .tree-item .file-icon.ts { fill: #3178c6; }
+        .tree-item .file-icon.default { fill: #38bdf8; }
+
+        .tree-item .file-name {
+            color: rgba(220, 235, 250, 0.85);
+        }
+
+        .tree-children {
+            display: none;
+        }
+
+        .tree-children.open {
+            display: block;
+        }
+
+        /* Terminal Toggle */
+        .terminal-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-top: 1px solid rgba(56, 189, 248, 0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            color: #38bdf8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .terminal-toggle:hover {
+            background: rgba(56, 189, 248, 0.05);
+            color: #5ccffc;
+        }
+
+        .terminal-toggle svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        .terminal-toggle .chevron {
+            width: 10px;
+            height: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .terminal-toggle.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Terminal */
+        .terminal {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: #0d0d0d;
+            border-top: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .terminal.open {
+            max-height: 200px;
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 5px;
+        }
+
+        .terminal-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .terminal-dots .red { background: #ff5f56; }
+        .terminal-dots .yellow { background: #ffbd2e; }
+        .terminal-dots .green { background: #27ca40; }
+
+        .terminal-title {
+            font-size: 0.7rem;
+            color: rgba(150, 180, 200, 0.5);
+            font-family: 'SF Mono', monospace;
+        }
+
+        .terminal-body {
+            padding: 14px 18px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            min-height: 90px;
+        }
+
+        .terminal-output {
+            color: rgba(56, 189, 248, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .terminal-output .comment { color: rgba(100, 120, 140, 0.6); }
+        .terminal-output .success { color: #22c55e; }
+        .terminal-output .info { color: #38bdf8; }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .terminal-prompt {
+            color: #22c55e;
+            white-space: nowrap;
+        }
+
+        .terminal-path {
+            color: #a78bfa;
+            margin-right: 8px;
+        }
+
+        .terminal-input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.85rem;
+            flex: 1;
+            outline: none;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: #22c55e;
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* VPS Section */
+        .vps-section {
+            margin-top: 0;
+        }
+
+        .vps-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            color: #38bdf8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: linear-gradient(135deg, #1a2535 0%, #0f1620 100%);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-top: none;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .vps-toggle:hover {
+            background: rgba(56, 189, 248, 0.05);
+            color: #5ccffc;
+        }
+
+        .vps-toggle svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        .vps-toggle .chevron {
+            transition: transform 0.3s ease;
+        }
+
+        .vps-toggle.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        .vps-content {
+            position: relative;
+            z-index: 1;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            padding: 0 20px;
+        }
+
+        .vps-content.open {
+            max-height: 300px;
+            padding-top: 20px;
+        }
+
+        .vps-content-inner {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        /* Cables */
+        .cables-container {
+            height: 50px;
+            position: relative;
+        }
+
+        .cables-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .cable {
+            stroke: rgba(56, 189, 248, 0.15);
+            stroke-width: 2.5;
+            fill: none;
+            transition: all 0.4s ease;
+        }
+
+        .cable.active {
+            stroke: rgba(249, 115, 22, 0.8);
+            filter: drop-shadow(0 0 6px rgba(249, 115, 22, 0.5));
+        }
+
+        .cable-flow {
+            stroke: rgba(249, 115, 22, 1);
+            stroke-width: 2.5;
+            fill: none;
+            stroke-dasharray: 8 12;
+            animation: flow 0.8s linear infinite;
+            opacity: 0;
+        }
+
+        .cable-flow.active {
+            opacity: 1;
+        }
+
+        @keyframes flow {
+            0% { stroke-dashoffset: 20; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        /* VPS Cards */
+        .vps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .vps-card {
+            position: relative;
+            padding-top: 25px;
+        }
+
+        .vps-label {
+            position: absolute;
+            top: 0;
+            left: 12px;
+            font-size: 0.6rem;
+            color: rgba(150, 180, 200, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .vps-provider {
+            position: absolute;
+            top: 0;
+            right: 12px;
+            font-size: 0.6rem;
+            color: rgba(56, 189, 248, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .vps-card-inner {
+            background: linear-gradient(135deg, #1a2535 0%, #0f1620 100%);
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            border-radius: 10px;
+            padding: 14px;
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+
+        .vps-card-inner::before {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(56, 189, 248, 0.15);
+            border-radius: 10px 10px 0 0;
+            transition: all 0.4s ease;
+        }
+
+        .vps-card.active .vps-card-inner {
+            border-color: rgba(249, 115, 22, 0.5);
+            box-shadow: 0 0 30px rgba(249, 115, 22, 0.15);
+        }
+
+        .vps-card.active .vps-card-inner::before {
+            background: linear-gradient(90deg, #f97316, #fb923c);
+        }
+
+        .vps-card.active .vps-provider {
+            color: #f97316;
+        }
+
+        .card-port {
+            width: 12px;
+            height: 12px;
+            background: rgba(56, 189, 248, 0.2);
+            border: 2px solid rgba(56, 189, 248, 0.3);
+            border-radius: 50%;
+            position: absolute;
+            top: 19px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .vps-card.active .card-port {
+            background: #f97316;
+            border-color: #fb923c;
+            box-shadow: 0 0 10px rgba(249, 115, 22, 0.8);
+        }
+
+        .vps-name {
+            font-size: 0.85rem;
+            color: rgba(220, 235, 250, 0.9);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .vps-ip {
+            font-size: 0.7rem;
+            color: rgba(150, 180, 200, 0.5);
+            font-family: 'SF Mono', monospace;
+            margin-bottom: 8px;
+        }
+
+        .vps-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.65rem;
+            color: rgba(100, 120, 140, 0.6);
+        }
+
+        .vps-card.active .vps-status {
+            color: #22c55e;
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(100, 120, 140, 0.4);
+        }
+
+        .vps-card.active .status-indicator {
+            background: #22c55e;
+            box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+        }
+
+        /* Footer */
+        .footer {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 0.7rem;
+            color: rgba(150, 180, 200, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Particles Background -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="tagline">Pro Vibe-Coding</div>
+        <div class="header-content">
+            <div class="pipeline">
+                Code <span>›</span> Connect <span>›</span> Deploy
+            </div>
+            <div class="logo">
+                <span class="hub">Hub</span><span class="llm">LLM</span><span class="dev">.dev</span>
+            </div>
+            <div class="header-features">
+                <div class="header-feature">
+                    <svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/></svg>
+                    SSH
+                </div>
+                <div class="header-feature">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.89 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+                    VPS
+                </div>
+                <div class="header-feature">
+                    <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.59-2.59L7.5 9l4 4-4 4z"/></svg>
+                    Terminal
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Hub Box -->
+        <div class="hub-box" id="hubBox">
+            <!-- Traveling Light - Top Border Only -->
+            <div class="traveling-light" id="travelingLight"></div>
+            
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <!-- Model Selector - LEFT -->
+                <div class="model-selector" id="modelSelector">
+                    <div class="model-selector-btn" onclick="toggleModelDropdown()">
+                        <div class="model-icon" id="selectedModelIcon" style="background: #d97706;">C</div>
+                        <span class="model-name" id="selectedModelName">Claude 3.5 Sonnet</span>
+                        <span class="chevron">▼</span>
+                    </div>
+                    <div class="model-dropdown">
+                        <div class="model-search-container">
+                            <input type="text" class="model-search" id="modelSearch" placeholder="Search models..." oninput="filterModels()" onclick="event.stopPropagation()">
+                        </div>
+                        <div class="model-list" id="modelList"></div>
+                    </div>
+                </div>
+
+                <!-- Status and Menu - RIGHT -->
+                <div class="chat-header-right">
+                    <div class="nav-menu">
+                        <a class="nav-item" href="#about" onclick="togglePanel('aboutPanel', this); return false;">About</a>
+                        <a class="nav-item" href="#pricing" onclick="togglePanel('pricingPanel', this); return false;">Pricing</a>
+                        <a class="nav-item" href="#contact">Contact</a>
+                        <a class="nav-item cta" href="#signup">Sign Up</a>
+                    </div>
+                    <div class="chat-title">
+                        <span class="status-dot"></span>
+                        AI Ready
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panels (About, Pricing, Contact) -->
+            <div class="info-panel" id="aboutPanel">
+                <div class="info-panel-content">
+                    <div class="info-panel-header">
+                        <h3>About HubLLM</h3>
+                        <button class="info-close" onclick="closePanel('aboutPanel')">&times;</button>
+                    </div>
+                    <p>HubLLM is your centralized hub for vibe-coding and development. Connect all your services—VPS, LLM models, and subscriptions—to access hundreds of AI models from one place. Code faster, deploy anywhere, stay in flow.</p>
+                </div>
+            </div>
+
+            <div class="info-panel" id="pricingPanel">
+                <div class="info-panel-content pricing-content">
+                    <div class="info-panel-header">
+                        <h3>Pricing</h3>
+                        <button class="info-close" onclick="closePanel('pricingPanel')">&times;</button>
+                    </div>
+                    <div class="pricing-cards">
+                        <!-- Pro Tier - Featured -->
+                        <div class="pricing-card featured">
+                            <div class="pricing-badge">First 500 Signups</div>
+                            <div class="pricing-tier">Pro</div>
+                            <div class="pricing-price">
+                                <span class="price-old">$9.99/mo</span>
+                                <span class="price-free">FREE</span>
+                                <span class="price-label">Lifetime</span>
+                            </div>
+                            <ul class="pricing-features">
+                                <li>Unlimited VPS connections</li>
+                                <li>Unlimited projects</li>
+                                <li>Advanced features included</li>
+                                <li>All future upgrades free</li>
+                            </ul>
+                            <button class="pricing-btn featured-btn">Claim Lifetime Access</button>
+                        </div>
+
+                        <!-- Free Tier -->
+                        <div class="pricing-card">
+                            <div class="pricing-tier">Free</div>
+                            <div class="pricing-price">
+                                <span class="price-main">$0</span>
+                                <span class="price-label">/month</span>
+                            </div>
+                            <ul class="pricing-features">
+                                <li>1 VPS connection</li>
+                                <li>Unlimited projects</li>
+                                <li>Community support</li>
+                            </ul>
+                            <button class="pricing-btn">Get Started</button>
+                            <div class="pricing-note">Available after initial launch</div>
+                        </div>
+
+                        <!-- Paid Tier -->
+                        <div class="pricing-card">
+                            <div class="pricing-tier">Plus</div>
+                            <div class="pricing-price">
+                                <span class="price-main">$3.99</span>
+                                <span class="price-label">/month</span>
+                            </div>
+                            <ul class="pricing-features">
+                                <li>Unlimited VPS connections</li>
+                                <li>Unlimited projects</li>
+                                <li>Priority support</li>
+                            </ul>
+                            <button class="pricing-btn">Subscribe</button>
+                            <div class="pricing-note">Available after initial launch</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <div class="message-avatar">AI</div>
+                    <div class="message-bubble">Hi! I'm ready to help you build. What would you like to create?</div>
+                </div>
+                <div class="message user">
+                    <div class="message-avatar">You</div>
+                    <div class="message-bubble">Create a landing page for my Skill Building app</div>
+                </div>
+                <div class="message assistant">
+                    <div class="message-avatar">AI</div>
+                    <div class="message-bubble">Done! I've created index.html, styles.css, and app.js. Check your project files below.</div>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Ask AI to build something..." onkeypress="handleChatInput(event)">
+                <button class="chat-send-btn" onclick="sendMessage()">Send</button>
+            </div>
+
+            <!-- File Explorer -->
+            <div class="file-explorer">
+                <div class="file-header" id="fileHeader" onclick="toggleFiles()">
+                    <svg class="folder-icon" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                    Project Files
+                    <svg class="chevron" viewBox="0 0 24 24" width="12" height="12"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+                </div>
+                
+                <div class="file-content" id="fileContent">
+                    <div class="project-selector">
+                        <label>Project:</label>
+                        <select class="project-dropdown" id="projectDropdown" onchange="selectProject(this.value)">
+                            <option value="1">Landing Page</option>
+                            <option value="2">API Server</option>
+                            <option value="3">Mobile App</option>
+                        </select>
+                    </div>
+                    
+                    <div class="file-tree" id="fileTree"></div>
+                </div>
+            </div>
+
+            <!-- Terminal Toggle -->
+            <div class="terminal-toggle" id="terminalToggle" onclick="toggleTerminal()">
+                <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10zm-2-1h-6v-2h6v2zM7.5 17l-1.41-1.41L8.67 13l-2.59-2.59L7.5 9l4 4-4 4z"/></svg>
+                Terminal
+                <svg class="chevron" viewBox="0 0 24 24" width="10" height="10"><path d="M7 10l5 5 5-5z"/></svg>
+            </div>
+
+            <!-- Terminal -->
+            <div class="terminal" id="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <span class="red"></span>
+                        <span class="yellow"></span>
+                        <span class="green"></span>
+                    </div>
+                    <div class="terminal-title" id="terminalTitle">root@nyc-do-prod — bash</div>
+                </div>
+                <div class="terminal-body">
+                    <div class="terminal-output" id="terminalOutput">
+                        <span class="comment"># Connected to VPS</span><br>
+                        <span class="success">$ ssh root@nyc-do-prod</span><br>
+                        <span class="info">Welcome to Ubuntu 22.04 LTS</span><br>
+                    </div>
+                    <div class="terminal-input-line">
+                        <span class="terminal-prompt">root@<span id="terminalServer">nyc-do-prod</span>:</span>
+                        <span class="terminal-path" id="terminalPath">~/landing-page</span>
+                        <span class="terminal-prompt">$</span>
+                        <input type="text" class="terminal-input" id="terminalInput" onkeypress="handleTerminal(event)" onfocus="hideCursor()" onblur="showCursor()">
+                        <span class="cursor" id="terminalCursor"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VPS Section -->
+        <div class="vps-section">
+            <div class="vps-toggle open" id="vpsToggle" onclick="toggleVPS()">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+                VPS Servers
+                <svg class="chevron" viewBox="0 0 24 24" width="12" height="12"><path d="M7 10l5 5 5-5z"/></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- VPS Content - outside main container -->
+    <div class="vps-content open" id="vpsContent">
+        <div class="vps-content-inner">
+            <!-- Cables -->
+            <div class="cables-container">
+                <svg class="cables-svg" viewBox="0 0 600 50" preserveAspectRatio="none">
+                    <path class="cable active" id="cable1" d="M 100 0 L 100 50"/>
+                    <path class="cable-flow active" id="cableFlow1" d="M 100 0 L 100 50"/>
+                    
+                    <path class="cable" id="cable2" d="M 300 0 L 300 50"/>
+                    <path class="cable-flow" id="cableFlow2" d="M 300 0 L 300 50"/>
+                    
+                    <path class="cable" id="cable3" d="M 500 0 L 500 50"/>
+                    <path class="cable-flow" id="cableFlow3" d="M 500 0 L 500 50"/>
+                </svg>
+            </div>
+
+            <!-- VPS Cards -->
+            <div class="vps-grid">
+                <div class="vps-card active" id="vps1">
+                    <span class="vps-label">VPS</span>
+                    <span class="vps-provider">DigitalOcean</span>
+                    <div class="card-port"></div>
+                    <div class="vps-card-inner">
+                        <div class="vps-name">nyc-do-prod</div>
+                        <div class="vps-ip">167.99.123.45</div>
+                        <div class="vps-status">
+                            <span class="status-indicator"></span>
+                            <span>Connected</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="vps-card" id="vps2">
+                    <span class="vps-label">VPS</span>
+                    <span class="vps-provider">Vultr</span>
+                    <div class="card-port"></div>
+                    <div class="vps-card-inner">
+                        <div class="vps-name">chi-vultr-api</div>
+                        <div class="vps-ip">45.76.89.123</div>
+                        <div class="vps-status">
+                            <span class="status-indicator"></span>
+                            <span>Standby</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="vps-card" id="vps3">
+                    <span class="vps-label">VPS</span>
+                    <span class="vps-provider">Vercel</span>
+                    <div class="card-port"></div>
+                    <div class="vps-card-inner">
+                        <div class="vps-name">vercel-mobile</div>
+                        <div class="vps-ip">76.76.21.98</div>
+                        <div class="vps-status">
+                            <span class="status-indicator"></span>
+                            <span>Standby</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        HubLLM.dev — Code with any LLM. Deploy anywhere.
+    </div>
+
+    <script>
+        // Generate floating particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = (Math.random() * 20) + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+        
+        createParticles();
+
+        // Traveling Light Animation - TOP BORDER ONLY, back and forth
+        function initTravelingLight() {
+            const hubBox = document.getElementById('hubBox');
+            const light = document.getElementById('travelingLight');
+            const borderRadius = 16;
+            
+            let startTime = null;
+            const duration = 3000; // 3 seconds for one direction
+            
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                
+                // Calculate progress (0 to 1 to 0, ping-pong)
+                const totalCycle = duration * 2;
+                const cycleProgress = (elapsed % totalCycle) / totalCycle;
+                let progress;
+                
+                if (cycleProgress < 0.5) {
+                    // Going right (0 to 1)
+                    progress = cycleProgress * 2;
+                } else {
+                    // Going left (1 to 0)
+                    progress = 1 - ((cycleProgress - 0.5) * 2);
+                }
+                
+                // Ease in-out for smoother motion
+                progress = progress < 0.5 
+                    ? 2 * progress * progress 
+                    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                
+                const width = hubBox.offsetWidth;
+                const padding = borderRadius + 10; // Stay away from corners
+                const travelDistance = width - (padding * 2);
+                
+                const x = padding + (progress * travelDistance);
+                
+                light.style.left = (x - 6) + 'px';
+                light.style.top = '-6px';
+                
+                requestAnimationFrame(animate);
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Models data
+        const models = [
+            { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', icon: 'C', color: '#d97706', hasKey: true },
+            { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', icon: 'C', color: '#d97706', hasKey: true },
+            { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', icon: 'G', color: '#10a37f', hasKey: true },
+            { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'OpenAI', icon: 'G', color: '#10a37f', hasKey: true },
+            { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', icon: 'G', color: '#10a37f', hasKey: true },
+            { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'Google', icon: 'G', color: '#4285f4', hasKey: false },
+            { id: 'llama-3.1-70b', name: 'Llama 3.1 70B', provider: 'Meta', icon: 'L', color: '#0668E1', hasKey: true },
+            { id: 'deepseek-coder', name: 'DeepSeek Coder', provider: 'DeepSeek', icon: 'D', color: '#0ea5e9', hasKey: true },
+            { id: 'mistral-large', name: 'Mistral Large', provider: 'Mistral', icon: 'M', color: '#ff7000', hasKey: false },
+        ];
+
+        let currentModel = models[0];
+
+        // Projects data
+        const projects = {
+            1: {
+                name: 'Landing Page',
+                vps: 'nyc-do-prod',
+                path: '~/landing-page',
+                files: [
+                    { name: 'src', type: 'folder', children: [
+                        { name: 'index.html', ext: 'html' },
+                        { name: 'styles.css', ext: 'css' },
+                        { name: 'app.js', ext: 'js' }
+                    ]},
+                    { name: 'package.json', ext: 'json' }
+                ]
+            },
+            2: {
+                name: 'API Server',
+                vps: 'chi-vultr-api',
+                path: '~/api-server',
+                files: [
+                    { name: 'src', type: 'folder', children: [
+                        { name: 'server.js', ext: 'js' },
+                        { name: 'routes.js', ext: 'js' }
+                    ]},
+                    { name: 'package.json', ext: 'json' }
+                ]
+            },
+            3: {
+                name: 'Mobile App',
+                vps: 'vercel-mobile',
+                path: '~/mobile-app',
+                files: [
+                    { name: 'lib', type: 'folder', children: [
+                        { name: 'main.dart', ext: 'default' }
+                    ]},
+                    { name: 'pubspec.yaml', ext: 'default' }
+                ]
+            }
+        };
+
+        let currentProject = 1;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderModelList();
+            renderFileTree(1);
+            initTravelingLight();
+        });
+
+        // Model functions
+        function renderModelList() {
+            const list = document.getElementById('modelList');
+            list.innerHTML = models.map(m => `
+                <div class="model-option ${m.id === currentModel.id ? 'selected' : ''}" 
+                     data-model="${m.id}" 
+                     data-name="${m.name.toLowerCase()}" 
+                     data-provider="${m.provider.toLowerCase()}"
+                     onclick="selectModel('${m.id}')">
+                    <div class="model-icon" style="background: ${m.color}">${m.icon}</div>
+                    <div class="model-info">
+                        <div class="model-name">${m.name}</div>
+                        <div class="model-provider">${m.provider}</div>
+                    </div>
+                    ${m.hasKey 
+                        ? '<span class="model-status live">● Live</span>' 
+                        : '<span class="model-status connect" onclick="event.stopPropagation(); connectKey(\''+m.id+'\')">Connect API Key</span>'}
+                </div>
+            `).join('');
+        }
+
+        function toggleModelDropdown() {
+            const selector = document.getElementById('modelSelector');
+            selector.classList.toggle('open');
+            if (selector.classList.contains('open')) {
+                setTimeout(() => document.getElementById('modelSearch').focus(), 100);
+            }
+        }
+
+        function filterModels() {
+            const search = document.getElementById('modelSearch').value.toLowerCase();
+            const options = document.querySelectorAll('.model-option');
+            
+            options.forEach(opt => {
+                const name = opt.dataset.name;
+                const provider = opt.dataset.provider;
+                const matches = name.includes(search) || provider.includes(search);
+                opt.classList.toggle('hidden', !matches);
+            });
+        }
+
+        function selectModel(id) {
+            const model = models.find(m => m.id === id);
+            if (!model) return;
+            
+            currentModel = model;
+            document.getElementById('selectedModelName').textContent = model.name;
+            document.getElementById('selectedModelIcon').textContent = model.icon;
+            document.getElementById('selectedModelIcon').style.background = model.color;
+            
+            document.querySelectorAll('.model-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.model === id);
+            });
+            
+            document.getElementById('modelSearch').value = '';
+            filterModels();
+            document.getElementById('modelSelector').classList.remove('open');
+            
+            addMessage('assistant', `Switched to ${model.name}. How can I help?`);
+        }
+
+        function connectKey(modelId) {
+            alert(`Connect API key for ${models.find(m => m.id === modelId).name}\n\nThis would open a settings modal.`);
+        }
+
+        // File Explorer
+        function toggleFiles() {
+            document.getElementById('fileHeader').classList.toggle('open');
+            document.getElementById('fileContent').classList.toggle('open');
+        }
+
+        function selectProject(projectId) {
+            currentProject = parseInt(projectId);
+            const project = projects[projectId];
+            
+            renderFileTree(projectId);
+            updateVPSConnection(projectId);
+            
+            document.getElementById('terminalServer').textContent = project.vps;
+            document.getElementById('terminalPath').textContent = project.path;
+            document.getElementById('terminalTitle').textContent = `root@${project.vps} — bash`;
+            
+            logTerminal(`<span class="info">Switched to ${project.name}</span>`);
+            logTerminal(`<span class="success">$ cd ${project.path}</span>`);
+        }
+
+        function renderFileTree(projectId) {
+            const tree = document.getElementById('fileTree');
+            const project = projects[projectId];
+            tree.innerHTML = renderTreeItems(project.files, 0);
+        }
+
+        function renderTreeItems(items, depth) {
+            return items.map(item => {
+                const indent = '<span class="indent"></span>'.repeat(depth);
+                
+                if (item.type === 'folder') {
+                    const childrenHtml = item.children ? renderTreeItems(item.children, depth + 1) : '';
+                    return `
+                        <div class="tree-item" onclick="toggleFolder(this)">
+                            ${indent}
+                            <span class="expand-icon">▶</span>
+                            <svg class="file-icon folder" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                            <span class="file-name">${item.name}</span>
+                        </div>
+                        <div class="tree-children">${childrenHtml}</div>
+                    `;
+                } else {
+                    return `
+                        <div class="tree-item" onclick="selectFile(this)">
+                            ${indent}
+                            <span class="expand-icon" style="visibility:hidden">▶</span>
+                            <svg class="file-icon ${item.ext || 'default'}" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
+                            <span class="file-name">${item.name}</span>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function toggleFolder(el) {
+            el.classList.toggle('expanded');
+            const children = el.nextElementSibling;
+            if (children && children.classList.contains('tree-children')) {
+                children.classList.toggle('open');
+            }
+        }
+
+        function selectFile(el) {
+            document.querySelectorAll('.tree-item').forEach(item => item.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        // VPS Functions
+        function updateVPSConnection(projectId) {
+            // Update cards
+            for (let i = 1; i <= 3; i++) {
+                const card = document.getElementById(`vps${i}`);
+                const cable = document.getElementById(`cable${i}`);
+                const cableFlow = document.getElementById(`cableFlow${i}`);
+                const isActive = i === parseInt(projectId);
+                
+                card.classList.toggle('active', isActive);
+                cable.classList.toggle('active', isActive);
+                cableFlow.classList.toggle('active', isActive);
+                
+                card.querySelector('.vps-status span:last-child').textContent = isActive ? 'Connected' : 'Standby';
+            }
+        }
+
+        function toggleTerminal() {
+            document.getElementById('terminal').classList.toggle('open');
+            document.getElementById('terminalToggle').classList.toggle('open');
+            if (document.getElementById('terminal').classList.contains('open')) {
+                document.getElementById('terminalInput').focus();
+            }
+        }
+
+        function toggleVPS() {
+            document.getElementById('vpsToggle').classList.toggle('open');
+            document.getElementById('vpsContent').classList.toggle('open');
+        }
+
+        function logTerminal(message) {
+            const output = document.getElementById('terminalOutput');
+            output.innerHTML += message + '<br>';
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function handleTerminal(event) {
+            if (event.key === 'Enter') {
+                const input = document.getElementById('terminalInput');
+                const cmd = input.value.trim();
+                input.value = '';
+                
+                const project = projects[currentProject];
+                logTerminal(`<span class="success">root@${project.vps}:${project.path}$ ${cmd}</span>`);
+                
+                if (cmd === 'ls' || cmd === 'ls -la') {
+                    const files = project.files.map(f => f.name).join('  ');
+                    logTerminal(files);
+                } else if (cmd === 'pwd') {
+                    logTerminal(`/root/${project.path.replace('~/', '')}`);
+                } else if (cmd.startsWith('cd ')) {
+                    logTerminal(`<span class="info">Changed directory</span>`);
+                } else if (cmd === 'clear') {
+                    document.getElementById('terminalOutput').innerHTML = '';
+                }
+            }
+        }
+
+        function hideCursor() {
+            document.getElementById('terminalCursor').style.display = 'none';
+        }
+
+        function showCursor() {
+            document.getElementById('terminalCursor').style.display = 'inline-block';
+        }
+
+        // Chat Functions
+        function addMessage(type, text) {
+            const container = document.getElementById('chatMessages');
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.innerHTML = `
+                <div class="message-avatar">${type === 'user' ? 'You' : 'AI'}</div>
+                <div class="message-bubble">${text}</div>
+            `;
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const container = document.getElementById('chatMessages');
+            const indicator = document.createElement('div');
+            indicator.className = 'message assistant';
+            indicator.id = 'typingIndicator';
+            indicator.innerHTML = `
+                <div class="message-avatar">AI</div>
+                <div class="message-bubble">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(indicator);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        function handleChatInput(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            addMessage('user', text);
+            input.value = '';
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                removeTypingIndicator();
+                addMessage('assistant', 'I can help with that! Check your project files for the updates.');
+            }, 1000);
+        }
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.model-selector')) {
+                document.getElementById('modelSelector').classList.remove('open');
+            }
+        });
+
+        // Info Panel Functions
+        function togglePanel(panelId, navItem) {
+            const panel = document.getElementById(panelId);
+            const isOpen = panel.classList.contains('open');
+            
+            // Close all panels first
+            document.querySelectorAll('.info-panel').forEach(p => p.classList.remove('open'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // Toggle the clicked panel
+            if (!isOpen) {
+                panel.classList.add('open');
+                if (navItem) navItem.classList.add('active');
+            }
+        }
+
+        function closePanel(panelId) {
+            document.getElementById(panelId).classList.remove('open');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        }
+    </script>
+</body>
+</html>
