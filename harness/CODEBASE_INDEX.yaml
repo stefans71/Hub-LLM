@@ -1464,11 +1464,30 @@ recurring_bugs:
     note: "Root cause: production DB was created by older code version using UUID types. ORM uses String(64). Migration now handles this automatically for any future DB recreations."
 
   - id: 17
-    desc: "docker restart breaks Coolify Traefik routing — must use Coolify redeploy"
-    sessions: [90]
+    desc: "Coolify Traefik label poisoning — Host('') errors block all Docker-based routes"
+    sessions: [90, 98]
     affected_files: []
     status: known_pattern
-    note: "Coolify applies Traefik routing labels during deploy. Plain 'docker restart' doesn't reapply labels, causing Host(``) empty matcher errors and 504s. Always use Coolify dashboard or git push to main for restarts."
+    note: |
+      Coolify generates BROKEN HTTP router labels on every deploy:
+        traefik.http.routers.http-0-....rule=Host(``) && PathPrefix(`hubllm.dev`)
+      The empty Host('') causes Traefik to spam errors every few seconds. The HTTPS router
+      label looks correct (Host(`hubllm.dev`) || Host(`www.hubllm.dev`)) but appears to be
+      rejected because it's on the same container as the broken HTTP labels.
+
+      Evidence (Session 98): TLS handshake succeeds, HTTP/2 request sent, but Traefik never
+      responds (hangs → 504). Meanwhile, file-based routes (Coolify dashboard at hq.vibeship.cloud)
+      work instantly. Container is healthy, responds to direct Docker-network requests with
+      correct Host header. Issue is specifically Traefik's Docker label provider.
+
+      Root cause: likely a Coolify "Custom Domains" or "Proxy" setting that's misconfigured
+      for the HTTP→HTTPS redirect. The HTTP router labels use PathPrefix(domain) instead of
+      Host(domain), and Host is empty.
+
+      Workaround: Redeploy from Coolify dashboard (sometimes takes 5-15min after deploy).
+      NEVER use 'docker restart' — makes it worse.
+
+      Permanent fix needed: INFRA-04 — investigate Coolify proxy settings.
 
   - id: 18
     desc: "setupComplete check uses !== false — undefined/null bypasses setup wizard"
