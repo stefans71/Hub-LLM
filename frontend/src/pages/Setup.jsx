@@ -688,6 +688,7 @@ function AnthropicStep({ onBack, onComplete }) {
         password: authMode === 'password' ? password : '',
         privateKey: authMode === 'key' ? privateKey : '',
         lastTestSuccess: true,
+        claudeCodeDetected: data.claude_code_detected || false,
         serverInfo: data.server_info || null,
         createdAt: new Date().toISOString()
       }

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { RefreshCw, Download, Info } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { RefreshCw, Download, Info, Server } from 'lucide-react'
 
 // CSS Variables matching mockup
 const cssVars = {
@@ -21,15 +21,25 @@ const cssVars = {
 // S-43 to S-74: Anthropic Subscription Section
 export default function AnthropicSubscription({ user }) {
   const [crossLLMEnabled, setCrossLLMEnabled] = useState(false)
-  const [isConnected, setIsConnected] = useState(true)
   const [bridgeInstalled, setBridgeInstalled] = useState(false)
+  const [vpsServers, setVpsServers] = useState([])
+
+  // Read VPS servers from localStorage to determine real connection status
+  useEffect(() => {
+    const saved = localStorage.getItem('vps_servers')
+    if (saved) {
+      try { setVpsServers(JSON.parse(saved)) } catch { setVpsServers([]) }
+    }
+  }, [])
+
+  // Derive connection status from VPS servers
+  const connectedVps = useMemo(() => vpsServers.filter(s => s.lastTestSuccess), [vpsServers])
+  const claudeCodeVps = useMemo(() => vpsServers.filter(s => s.claudeCodeDetected), [vpsServers])
+  const isConnected = claudeCodeVps.length > 0
+  const hasVps = connectedVps.length > 0
 
   const handleToggleCrossLLM = () => {
     setCrossLLMEnabled(!crossLLMEnabled)
-  }
-
-  const handleDisconnect = () => {
-    setIsConnected(false)
   }
 
   const handleReauthenticate = () => {
@@ -132,45 +142,28 @@ export default function AnthropicSubscription({ user }) {
             <div style={{
               width: '12px',
               height: '12px',
-              background: isConnected ? cssVars.success : cssVars.error,
+              background: isConnected ? cssVars.success : hasVps ? cssVars.warning : cssVars.error,
               borderRadius: '50%'
             }} />
 
-            <div>
+            <div style={{ flex: 1 }}>
               {/* S-54: Connection Status Text */}
               <div style={{ fontWeight: '500' }}>
-                {isConnected ? 'Connected' : 'Disconnected'}
+                {isConnected ? 'Claude Code Detected' : hasVps ? 'VPS Connected — Claude Code Not Detected' : 'No VPS Connected'}
               </div>
-              {/* S-55: Authenticated Email */}
+              {/* S-55: Status Detail */}
               <div style={{
                 fontSize: '12px',
                 color: cssVars.textSecondary
               }}>
                 {isConnected
-                  ? `Authenticated as ${user?.email || 'alex@example.com'}`
-                  : 'Not authenticated'
+                  ? `Claude Code found on ${claudeCodeVps.length} VPS${claudeCodeVps.length > 1 ? 'es' : ''}: ${claudeCodeVps.map(s => s.name || s.host).join(', ')}`
+                  : hasVps
+                    ? `${connectedVps.length} VPS connected, but Claude Code not detected. Install Claude Code on your VPS and re-test.`
+                    : 'Add a VPS in VPS Connections settings to use your Anthropic Pro subscription.'
                 }
               </div>
             </div>
-
-            {/* S-56: Disconnect Button */}
-            {isConnected && (
-              <button
-                onClick={handleDisconnect}
-                style={{
-                  marginLeft: 'auto',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  background: cssVars.bgTertiary,
-                  color: cssVars.textPrimary,
-                  border: `1px solid ${cssVars.border}`,
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Disconnect
-              </button>
-            )}
           </div>
         </div>
 
@@ -180,7 +173,7 @@ export default function AnthropicSubscription({ user }) {
           color: cssVars.textSecondary,
           marginBottom: '16px'
         }}>
-          <strong>CLI Status:</strong> Installed (v1.2.3) &nbsp;|&nbsp; <strong>Default Model:</strong> Claude Opus 4.5
+          <strong>CLI Status:</strong> {isConnected ? 'Detected on VPS' : 'Not detected'} &nbsp;|&nbsp; <strong>VPS Servers:</strong> {vpsServers.length}
         </div>
 
         {/* S-58: CLI Action Buttons Container */}

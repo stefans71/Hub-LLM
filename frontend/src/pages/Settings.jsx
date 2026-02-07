@@ -3696,6 +3696,7 @@ function VPSModal({ show, onClose, onSave, editServer }) {
       customTimeout: idleTimeout === 'custom' ? customTimeout : '',
       lastTestSuccess: testResult?.success || false,
       lastTestTime: testResult?.success ? new Date().toISOString() : editServer?.lastTestTime,
+      claudeCodeDetected: testResult?.claude_code_detected ?? editServer?.claudeCodeDetected ?? false,
       serverInfo: testResult?.server_info || editServer?.serverInfo
     }
 
@@ -4447,12 +4448,19 @@ function VPSConnectionsSettings() {
               {/* Status */}
               <div style={{
                 fontSize: '12px',
-                color: server.lastTestSuccess ? cssVars.success : cssVars.textMuted,
                 display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                gap: '2px'
               }}>
-                {server.lastTestSuccess ? '● Connected' : '○ Not tested'}
+                <span style={{ color: server.lastTestSuccess ? cssVars.success : cssVars.textMuted }}>
+                  {server.lastTestSuccess ? '● Connected' : '○ Not tested'}
+                </span>
+                {server.lastTestSuccess && (
+                  <span style={{ color: server.claudeCodeDetected ? cssVars.success : cssVars.textMuted, fontSize: '11px' }}>
+                    {server.claudeCodeDetected ? '✓ Claude Code' : '✗ No Claude Code'}
+                  </span>
+                )}
               </div>
 
               {/* Actions */}

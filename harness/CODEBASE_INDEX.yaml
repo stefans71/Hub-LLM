@@ -140,7 +140,7 @@ frontend_pages:
 
   Settings.jsx:
     path: frontend/src/pages/Settings.jsx
-    lines: 4782
+    lines: 4791
     purpose: "Comprehensive settings — profile, API keys, models, VPS (with idle timeout toggle), agents, skills, MCP, appearance"
     props: "{onBack, onLogout}"
     sub_components:
@@ -481,10 +481,17 @@ frontend_components:
 
   AnthropicSubscription.jsx:
     path: frontend/src/components/AnthropicSubscription.jsx
-    lines: 425
-    purpose: "Anthropic Pro subscription status and benefits display"
+    lines: 419
+    purpose: "Anthropic Pro subscription status — reads VPS servers from localStorage to show real Claude Code detection status"
     props: "{user}"
-    last_verified_session: 86
+    key_state:
+      - {name: vpsServers, type: "useState([])", drives: "VPS list from localStorage"}
+    derived_state:
+      - {name: isConnected, source: "claudeCodeVps.length > 0", desc: "true if any VPS has claudeCodeDetected"}
+      - {name: hasVps, source: "connectedVps.length > 0", desc: "true if any VPS passed test connection"}
+    localStorage_keys:
+      - {key: vps_servers, direction: read}
+    last_verified_session: 94
 
   SettingsModal.jsx:
     path: frontend/src/components/SettingsModal.jsx
