@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-08T07:00",
+  "updated": "2026-02-08T08:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,60 @@
     }
   },
   "queue": [
+    {
+      "id": "FEAT-22",
+      "name": "Backend: Add Claude Code SSH routing to expand-brief endpoint",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "The /api/ai/expand-brief endpoint (backend/routers/ai.py) only supports 'openrouter' and 'claude_direct' providers. Users with Claude Code on their VPS cannot use their Pro subscription for 'Define Project with AI'. Add 'claude_code_ssh' provider support, matching the pattern already used in chat.py lines 74-81.\n\nKey challenge: ClaudeCodeSSHService.chat() (backend/services/claude_code_ssh.py) returns an AsyncGenerator (streaming-only). The expand-brief endpoint currently calls service.chat(stream=False) and reads response dict. For SSH, collect all streamed chunks into a single string, then parse JSON as normal.\n\nPattern reference: backend/routers/chat.py lines 74-81 — existing claude_code_ssh handling with server_id validation and ClaudeCodeSSHService instantiation.\n\nReferences:\n- backend/routers/ai.py lines 10 (imports), 15-18 (ExpandBriefRequest), 36-41 (AIChatRequest), 55-70 (get_service), 114-186 (expand_brief), 189-226 (ai_chat)\n- backend/routers/chat.py lines 26-34 (ChatRequest with server_id), 74-95 (provider routing)\n- backend/services/claude_code_ssh.py lines 14-67 (ClaudeCodeSSHService)\n\nPlan file: /root/.claude/plans/lucky-stargazing-conway.md — Task 1 section",
+      "change": [
+        "backend/routers/ai.py line 10: Add import — from services.claude_code_ssh import ClaudeCodeSSHService",
+        "backend/routers/ai.py lines 15-18: Add server_id: Optional[str] = None to ExpandBriefRequest",
+        "backend/routers/ai.py lines 36-41: Add server_id: Optional[str] = None to AIChatRequest",
+        "backend/routers/ai.py lines 55-70: Update get_service() — add server_id param, add claude_code_ssh branch before claude_direct (raise 400 if no server_id)",
+        "backend/routers/ai.py line 129: Pass server_id=request.server_id to get_service()",
+        "backend/routers/ai.py lines 136-149: For claude_code_ssh provider, collect async generator chunks into string instead of calling service.chat(stream=False). For other providers, keep existing non-streaming logic. JSON parse from line 152 stays the same.",
+        "backend/routers/ai.py line ~199: Pass server_id=request.server_id to get_service() in ai_chat endpoint too"
+      ],
+      "test": "Start backend: cd backend && python -m uvicorn main:app --port 8000. Test OpenRouter still works: curl -X POST http://localhost:8000/api/ai/expand-brief -H 'Content-Type: application/json' -H 'X-OpenRouter-Key: <key>' -d '{\"brief\":\"Build a todo app\",\"provider\":\"openrouter\"}' — should return JSON. Test SSH routing (requires connected VPS): curl -X POST http://localhost:8000/api/ai/expand-brief -H 'Content-Type: application/json' -d '{\"brief\":\"Build a todo app\",\"model\":\"claude-sonnet-4\",\"provider\":\"claude_code_ssh\",\"server_id\":\"<id>\"}' — should return JSON. Test missing server_id: curl with provider=claude_code_ssh but no server_id — should return 400.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-23",
+      "name": "ModelSelector billing mode toggle + CreateProject SSH routing",
+      "size": "M",
+      "priority": 2,
+      "status": "pending",
+      "blocked_by": "FEAT-22",
+      "description": "Two-part frontend change: (A) Add a billing mode toggle to the ModelSelector dropdown — two pill buttons at the top: 'Pro Subscription' and 'OpenRouter', each with a green/grey availability dot. Clicking one filters the model list to that tier only. (B) Wire CreateProject to detect Claude Code availability from localStorage and route through claude_code_ssh when subscription models are selected.\n\nPart A — ModelSelector.jsx:\n- Add activeBillingMode state ('auto'|'subscription'|'openrouter'). 'auto' = show both (default, backward compat for WorkspaceTopBar).\n- Insert toggle UI between search bar (~line 451) and popular hint (~line 455). Only render when showSubscriptionModels={true}.\n- Update getFilteredModels() (line 253) to filter by activeBillingMode.\n- Update onChange callback (~line 317) to include tier and billingMode in the model object.\n- Show 'not set up' banners when a tab is selected but the required key/VPS isn't configured.\n- WorkspaceTopBar gets the toggle automatically (showSubscriptionModels defaults true). No WorkspaceTopBar changes needed.\n\nPart B — CreateProject.jsx:\n- Derive claudeCodeServer from savedVpsServers (find first with claudeCodeDetected && lastTestSuccess). Derive hasClaudeCode boolean.\n- Add selectedModelMeta state to store full model object from onChange (including tier).\n- Change showSubscriptionModels from false to true. Pass apiKeys.anthropic: hasClaudeCode. Pass claudeCodeStatus.\n- Update handleStartAIDefinition (line 691-698): if selectedModelMeta.tier === 'subscription' → provider='claude_code_ssh', server_id=claudeCodeServer.id. Else → provider='openrouter'.\n- Apply same routing to handleSendChatMessage (~line 778) and follow-up calls (~line 883).\n\nEdge cases: No VPS → hasClaudeCode=false, Subscription tab grey, OpenRouter selected by default. No OpenRouter key AND no Claude Code → both tabs grey with setup links. Multiple VPS → first with Claude Code used.\n\nReferences:\n- frontend/src/components/ModelSelector.jsx lines 164-174 (props), 175-180 (state), 253-291 (getFilteredModels), 317-323 (handleModelSelect), 451-455 (search/hint area)\n- frontend/src/pages/CreateProject.jsx lines 417 (selectedModel state), 435 (savedVpsServers), 691-698 (handleStartAIDefinition), 778 (handleSendChatMessage), 883 (follow-up), 1277-1283 (ModelSelector JSX)\n\nPlan file: /root/.claude/plans/lucky-stargazing-conway.md — Task 2 section",
+      "change": [
+        "frontend/src/components/ModelSelector.jsx: Add activeBillingMode useState ('auto' default)",
+        "frontend/src/components/ModelSelector.jsx: Add billing toggle pill UI between search and popular hint — two buttons with green/grey dots for Pro Subscription and OpenRouter. Only render when showSubscriptionModels={true}",
+        "frontend/src/components/ModelSelector.jsx: Update getFilteredModels() — filter by activeBillingMode ('subscription' shows tier=subscription only, 'openrouter' shows tier=openrouter only, 'auto' shows both)",
+        "frontend/src/components/ModelSelector.jsx: Update handleModelSelect onChange callback — include tier and billingMode in model object",
+        "frontend/src/components/ModelSelector.jsx: Add 'not set up' banners for each tab when required credentials missing",
+        "frontend/src/pages/CreateProject.jsx: Add claudeCodeServer useMemo (first VPS with claudeCodeDetected from savedVpsServers) and hasClaudeCode boolean",
+        "frontend/src/pages/CreateProject.jsx: Add selectedModelMeta useState to store full model object from onChange",
+        "frontend/src/pages/CreateProject.jsx: Update ModelSelector props — showSubscriptionModels={true}, apiKeys.anthropic=hasClaudeCode, pass claudeCodeStatus",
+        "frontend/src/pages/CreateProject.jsx: Update handleStartAIDefinition — route via claude_code_ssh+server_id when tier=subscription, else openrouter",
+        "frontend/src/pages/CreateProject.jsx: Apply same routing pattern to handleSendChatMessage and follow-up fetch calls"
+      ],
+      "test": "Run dev server (cd frontend && npm run dev). (1) Create Project — billing toggle appears at top of model dropdown with Pro Subscription and OpenRouter pills. (2) If VPS with Claude Code exists in localStorage: Pro tab shows green dot, click it, subscription models appear. Select one, fill brief, click Define Project with AI — Network tab shows provider:claude_code_ssh and server_id in request body. (3) Click OpenRouter tab — shows OpenRouter models, if key exists models are available, if not shows setup link. Select one, click Define Project with AI — Network tab shows provider:openrouter. (4) Clear vps_servers from localStorage, reload — Pro tab shows grey dot. (5) Open Workspace — model selector in top bar also has billing toggle, still works correctly. (6) npm run build — 0 errors.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
     {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
