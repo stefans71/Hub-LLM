@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import claudeCodeLogo from '../assets/claude-code-logo.svg'
 import './LandingPage.css'
 
 const API_URL = import.meta.env.VITE_API_URL || ''
@@ -16,8 +17,8 @@ const validatePassword = (password) => passwordRules.every(rule => rule.test(pas
 
 // Demo models data
 const DEMO_MODELS = [
-  { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', icon: 'C', color: '#d97706', hasKey: true },
-  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', icon: 'C', color: '#d97706', hasKey: true },
+  { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', icon: claudeCodeLogo, color: '#d97706', hasKey: true },
+  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', icon: claudeCodeLogo, color: '#d97706', hasKey: true },
   { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', icon: 'G', color: '#10a37f', hasKey: true },
   { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'OpenAI', icon: 'G', color: '#10a37f', hasKey: true },
   { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', icon: 'G', color: '#10a37f', hasKey: true },
@@ -472,7 +473,9 @@ export default function LandingPage({ onSignUp }) {
             >
               <button className="model-selector-btn" onClick={toggleModelDropdown}>
                 <div className="model-icon" style={{ background: selectedModel.color }}>
-                  {selectedModel.icon}
+                  {selectedModel.icon.length > 1
+                    ? <img src={selectedModel.icon} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+                    : selectedModel.icon}
                 </div>
                 <span className="model-name">{selectedModel.name}</span>
                 <span className="chevron">{'\u25BC'}</span>
@@ -496,7 +499,11 @@ export default function LandingPage({ onSignUp }) {
                       className={`model-option${m.id === selectedModel.id ? ' selected' : ''}`}
                       onClick={() => selectModel(m.id)}
                     >
-                      <div className="model-icon" style={{ background: m.color }}>{m.icon}</div>
+                      <div className="model-icon" style={{ background: m.color }}>
+                        {m.icon.length > 1
+                          ? <img src={m.icon} alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+                          : m.icon}
+                      </div>
                       <div className="model-info">
                         <div className="model-name">{m.name}</div>
                         <div className="model-provider">{m.provider}</div>

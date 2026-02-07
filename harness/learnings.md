@@ -5,7 +5,8 @@ Track discoveries, patterns, and friction points for harness improvement.
 ---
 
 ### Session 100 - 2026-02-07 EST
-**Task**: UI-12, UI-13, UI-14, UI-15
+**Task**: UI-12, UI-13, UI-14, UI-15, UI-16
+**What (UI-16)**: Replaced letter 'C' with Claude Code SVG logo in landing page model selector. Changed SVG fill #db7658→#ffffff (white). Imported SVG, set Anthropic DEMO_MODELS icon to imported path. Added icon.length > 1 check to render <img> for SVG paths vs text for single letters — both in selected button and dropdown list. LandingPage.jsx 946→953 lines.
 **What (UI-15)**: Reverted model icon back to 26px/#d97706 (UI-14 made it too small). Swapped chat bubble colors: AI avatar+bubble now orange (Anthropic brand), user avatar+bubble now cyan (matches Send button). Color swap is avatar bg + bubble bg/border — 4 CSS rules changed.
 **What (UI-14)**: Four landing page polish tweaks: (1) Model icon 26→13px, font 0.7→0.35rem, Anthropic color #d97706→transparent. (2) Sign Up nav color #f97316→#fff (hover, ::after too). (3) Send button orange→cyan (#0ea5e9/#0284c7). (4) Footer split to 3 lines with extra <br/>.
 **What (UI-13)**: Footer text reordered to two centered lines ('Code with any LLM.' / 'Deploy anywhere. HubLLM.dev © 2026') and font-size reduced from 1.4rem to 0.98rem. XS change — one JSX line, one CSS property.

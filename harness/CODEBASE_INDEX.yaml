@@ -179,8 +179,8 @@ frontend_pages:
 
   LandingPage.jsx:
     path: frontend/src/pages/LandingPage.jsx
-    lines: 946
-    purpose: "Interactive HTML prototype landing page converted to React — full demo with model selector, chat, file explorer, terminal, VPS cards, and inline auth panel (FEAT-14)"
+    lines: 953
+    purpose: "Interactive HTML prototype landing page converted to React — full demo with model selector (Claude Code SVG logo), chat, file explorer, terminal, VPS cards, and inline auth panel"
     props: "{onSignUp} — DEPRECATED callback, now uses inline auth panel instead"
     key_state:
       - {name: selectedModel, type: "useState(DEMO_MODELS[0])", drives: "currently selected model from 9-model dropdown"}
