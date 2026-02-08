@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-08T14:00",
+  "updated": "2026-02-08T15:30",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -26,54 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-31",
-      "name": "Update generate-prp command with adaptive intake flow + technical overview output",
-      "size": "S",
-      "priority": 1,
-      "status": "pending_review",
-      "description": "The /generate-prp command in the harness template is one-shot — it skips intake questions and jumps straight to PRP generation. Needs a 3-phase flow: (1) User calibration (experience level 1-10, terminal comfort, OS, tech stack preference) — then WRITE user profile to CLAUDE.md so it persists across sessions and adapts communication style, (2) Adaptive project discovery (platform, auth, database, integrations — with 'you decide' tracking that stops technical questions after 2-3 'you decide' answers), (3) PRP generation + technical overview. Must also add docs/ directory to scaffold. Full updated command text is in harness/knowledge/harness-template-design.md section 3. Two outputs: PRPs/[name]-prp.md (for agent) and docs/technical-overview.md (plain-English for user to paste into NotebookLM). Communication style adapts: beginners get 'click the Terminal tab at the bottom', experts get 'run npm install'.",
-      "change": [
-        "backend/routers/projects.py TEMPLATE_GENERATE_PRP constant (~line 90): Replace entire string with the updated command from harness/knowledge/harness-template-design.md section 3 (`.claude/commands/generate-prp.md`). Copy the full markdown content between the ``` fences.",
-        "backend/routers/projects.py create_vps_project_folder (~line 395): Add 'docs' to the subdirs list so docs/ directory gets created during scaffold.",
-        "backend/routers/projects.py template_files dict (~line 415): Add 'docs/.gitkeep': '' entry."
-      ],
-      "test": "Step-by-step: (1) Read the updated TEMPLATE_GENERATE_PRP constant — verify it contains 'Phase 1: User Calibration', 'Phase 2: Project Discovery', 'Phase 3: Generate PRP', and 'docs/technical-overview.md'. (2) Check subdirs list includes 'docs'. (3) Check template_files includes 'docs/.gitkeep'. (4) py_compile check. Paste first 5 lines of TEMPLATE_GENERATE_PRP in completion_note.",
-      "investigation_id": null,
-      "completion_note": "Changed backend/routers/projects.py (748→870 lines). Replaced TEMPLATE_GENERATE_PRP with full adaptive 3-phase intake flow from harness-template-design.md section 3. Added 'docs' to subdirs list (line 521). Added 'docs/.gitkeep': '' to template_files (line 541). Test evidence: (1) grep confirms 'Phase 1: User Calibration' at line 115, 'Phase 2: Project Discovery' at line 168, 'Phase 3: Generate PRP' at line 211, 'docs/technical-overview.md' at lines 166 and 266. (2) subdirs includes 'docs'. (3) template_files includes 'docs/.gitkeep'. (4) py_compile OK. First 5 lines: TEMPLATE_GENERATE_PRP = \"\"\"# Generate PRP / / You are generating a PRP (Product Requirements Prompt) — a comprehensive implementation blueprint that an AI coding agent can use to build this project. / / ## Brief. CODEBASE_INDEX updated (projects.py 748→870 lines, purpose updated).",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
-      "id": "FEAT-32",
-      "name": "OpenRouter PRP generation in CreateProject — intake questionnaire + download .md",
-      "size": "M",
-      "priority": 3,
-      "status": "pending_review",
-      "description": "Enhance CreateProject AI flow to generate a proper PRP (not just an enhanced brief). The existing flow already has: text box for brief, 'Enhance with AI' checkbox, model selector, chat back-and-forth (handleSendChatMessage at line 761 sends full conversation history to /api/ai/chat, CHAT_SYSTEM_PROMPT at ai.py line 99). What needs to change: (1) Swap system prompt — instead of 'help refine project requirements', use the generate-prp intake flow from harness/knowledge/harness-template-design.md section 3 (calibration → adaptive discovery → PRP generation). (2) After PRP is generated in the chat, detect it and offer a 'Download PRP (.md)' button. (3) The downloaded file should be the full PRP content as markdown. This is the OpenRouter Track PRP pipeline — user doesn't need a VPS. The funnel: user gets a great PRP → 'now you need somewhere to build this' → VibShip.cloud / VPS hosting. Existing chat infrastructure handles the stateless back-and-forth (frontend keeps message history, sends full array each call). ai.py CHAT_SYSTEM_PROMPT needs a PRP-mode variant. Frontend needs download button detection + handler.",
-      "change": [
-        "backend/routers/ai.py: Add PRP_SYSTEM_PROMPT constant with the intake questionnaire from harness/knowledge/harness-template-design.md section 3. Adapt for chat context (no file writing — output the PRP content in chat instead of writing to files).",
-        "backend/routers/ai.py /api/ai/chat endpoint (~line 220): Accept a mode param ('refine' or 'prp'). If mode='prp', use PRP_SYSTEM_PROMPT instead of CHAT_SYSTEM_PROMPT.",
-        "frontend/src/pages/CreateProject.jsx handleSendChatMessage (~line 761): When 'Enhance with AI' is checked, pass mode='prp' to the chat endpoint.",
-        "frontend/src/pages/CreateProject.jsx: Add PRP detection in chat responses — when the assistant's message contains '## FEATURE' and '## PHASES' (PRP markers), show a 'Download PRP (.md)' button below the message.",
-        "frontend/src/pages/CreateProject.jsx: Download handler — creates a Blob from the PRP content, triggers browser download as [project-name]-prp.md."
-      ],
-      "test": "Step-by-step: (1) Go to CreateProject, type a brief, check 'Enhance with AI', select an OpenRouter model. (2) AI should ask calibration questions (experience level, terminal, etc). (3) Answer questions, AI generates PRP in chat. (4) 'Download PRP (.md)' button appears below the PRP message. (5) Click download — verify .md file contains structured PRP with FEATURE, PHASES, TECH STACK sections. Paste the download button JSX and first 3 lines of PRP_SYSTEM_PROMPT in completion_note.",
-      "investigation_id": null,
-      "completion_note": "Changed backend/routers/ai.py (266→345 lines): Added PRP_SYSTEM_PROMPT constant with 3-phase intake flow (calibration → discovery → PRP generation) adapted for chat context (outputs PRP in chat, no file writing). Added mode field to AIChatRequest (default 'refine'). ai_chat endpoint selects PRP_SYSTEM_PROMPT when mode='prp'. Changed frontend/src/pages/CreateProject.jsx (2418→2476 lines): Import Download from lucide-react. handleStartAIDefinition now uses streaming /api/ai/chat with mode='prp' instead of expand-brief — AI starts with calibration questions. handleSendChatMessage passes mode='prp'. PRP detection: checks msg.content for '## FEATURE' && '## PHASES'. Download button JSX: <button onClick={() => { const blob = new Blob([msg.content], { type: 'text/markdown' }); ... a.download = `${name}-prp.md` }}><Download size={14} /> Download PRP (.md)</button>. First 3 lines of PRP_SYSTEM_PROMPT: 'You are a PRP (Product Requirements Prompt) generation assistant. You create comprehensive implementation blueprints that an AI coding agent can use to build projects.' py_compile OK. Build: 0 errors. CODEBASE_INDEX updated (ai.py 266→345, CreateProject.jsx 2418→2476).",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -85,6 +37,28 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-32",
+      "name": "OpenRouter PRP generation in CreateProject — intake questionnaire + download .md",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit ed5f24b. ai.py 266→345 lines: PRP_SYSTEM_PROMPT constant with 3-phase intake (calibration → discovery → generation) adapted for chat (outputs PRP in chat, no file writing). AIChatRequest has mode field (default 'refine'). ai_chat branches on mode=='prp' to use PRP_SYSTEM_PROMPT. CreateProject.jsx 2418→2476 lines: Import Download from lucide-react. handleStartAIDefinition uses streaming /api/ai/chat with mode='prp'. handleSendChatMessage passes mode='prp'. PRP detection: msg.content includes '## FEATURE' && '## PHASES'. Download button creates Blob, triggers browser download as [name]-prp.md. py_compile OK, build 0 errors. Index updated. Runtime test pending deploy.",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "Changed backend/routers/ai.py (266→345 lines): Added PRP_SYSTEM_PROMPT constant with 3-phase intake flow (calibration → discovery → PRP generation) adapted for chat context (outputs PRP in chat, no file writing). Added mode field to AIChatRequest (default 'refine'). ai_chat endpoint selects PRP_SYSTEM_PROMPT when mode='prp'. Changed frontend/src/pages/CreateProject.jsx (2418→2476 lines): Import Download from lucide-react. handleStartAIDefinition now uses streaming /api/ai/chat with mode='prp' instead of expand-brief — AI starts with calibration questions. handleSendChatMessage passes mode='prp'. PRP detection: checks msg.content for '## FEATURE' && '## PHASES'. Download button JSX: <button onClick={() => { const blob = new Blob([msg.content], { type: 'text/markdown' }); ... a.download = `${name}-prp.md` }}><Download size={14} /> Download PRP (.md)</button>. First 3 lines of PRP_SYSTEM_PROMPT: 'You are a PRP (Product Requirements Prompt) generation assistant. You create comprehensive implementation blueprints that an AI coding agent can use to build projects.' py_compile OK. Build: 0 errors. CODEBASE_INDEX updated (ai.py 266→345, CreateProject.jsx 2418→2476)."
+    },
+    {
+      "id": "FEAT-31",
+      "name": "Update generate-prp command with adaptive intake flow + technical overview output",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit 99cefbf. projects.py 748→870 lines. TEMPLATE_GENERATE_PRP replaced with full 3-phase adaptive intake: Phase 1 User Calibration (line 115), Phase 2 Project Discovery (line 168), Phase 3 Generate PRP (line 211). docs/technical-overview.md referenced (lines 166, 266). 'docs' in subdirs (line 521). 'docs/.gitkeep' in template_files (line 541). Communication style rules (lines 161-164), cost transparency (lines 186-198), hosting recs with VibShip.cloud first and never-Vultr deflection (lines 200-209). py_compile OK, build 0 errors. Index updated. Runtime test pending deploy.",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "Changed backend/routers/projects.py (748→870 lines). Replaced TEMPLATE_GENERATE_PRP with full adaptive 3-phase intake flow from harness-template-design.md section 3. Added 'docs' to subdirs list (line 521). Added 'docs/.gitkeep': '' to template_files (line 541). Test evidence: (1) grep confirms 'Phase 1: User Calibration' at line 115, 'Phase 2: Project Discovery' at line 168, 'Phase 3: Generate PRP' at line 211, 'docs/technical-overview.md' at lines 166 and 266. (2) subdirs includes 'docs'. (3) template_files includes 'docs/.gitkeep'. (4) py_compile OK. First 5 lines: TEMPLATE_GENERATE_PRP = \"\"\"# Generate PRP / / You are generating a PRP (Product Requirements Prompt) — a comprehensive implementation blueprint that an AI coding agent can use to build this project. / / ## Brief. CODEBASE_INDEX updated (projects.py 748→870 lines, purpose updated)."
+    },
     {
       "id": "FEAT-30",
       "name": "Scaffold harness template on VPS when creating Terminal Track projects",
