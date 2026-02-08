@@ -39,11 +39,11 @@
         "frontend/src/pages/CreateProject.jsx: When OpenRouter Track selected, auto-start the PRP chat flow after brief is entered (no checkbox needed)."
       ],
       "test": "Step-by-step: (1) With VPS connected: open CreateProject — should default to Terminal Track. Brief input visible, no enhance checkbox. Create project → workspace opens with terminal. (2) Without VPS (clear localStorage): open CreateProject — should default to OpenRouter Track. Brief input visible, model selector appears, PRP chat auto-starts when brief entered. (3) Switching tracks mid-form should show/hide relevant UI.",
-      "completion_note": "",
+      "completion_note": "Changed CreateProject.jsx (2507→2562 lines). Replaced enhanceWithAI useState with selectedTrack useState(null). Added useEffect to default track based on hasClaudeCode ('terminal' if VPS detected, 'openrouter' otherwise). Added two-card track selector UI between project name/workspace row and project brief: Card 1 'Use Your VPS + LLM CLI' (Server icon, green highlights when selected, 'DETECTED' badge when hasClaudeCode), Card 2 'OpenRouter API Key' (Cloud icon, blue highlights when selected). Below brief: Terminal track shows hint with Zap icon + '/generate-prp in the terminal' styled code tag. OpenRouter track shows ModelSelector + 'Define Project with AI' button (same as before). Removed enhance checkbox entirely. handleCreateProject passes enhance:false (terminal users use /generate-prp instead). Build: vite build 0 errors. CODEBASE_INDEX updated (lines 2507→2562, purpose, key_state, dual-path architecture, cross-refs).",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
         "status_set_to_pending_review": false
       }

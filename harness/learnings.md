@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 122 - 2026-02-08 EST
+**Task**: BUG-48
+**What**: Replaced confusing 'Enhance with AI' checkbox in CreateProject with explicit track selection. Added two-card selector ("Use Your VPS + LLM CLI" vs "OpenRouter API Key") between project name and brief. Terminal track shows /generate-prp hint below brief; OpenRouter track shows ModelSelector + "Define Project with AI" button. Default based on hasClaudeCode via useEffect. Removed enhanceWithAI state, added selectedTrack state. CreateProject.jsx 2507→2562 lines. Build: 0 errors.
+**Key Learning**: Track selection is a better UX pattern than a checkbox when two modes have fundamentally different workflows. The two-card pattern (from BUG-46 welcome screen in App.jsx) works well for binary choices — clickable cards with conditional border/background highlights.
+
+---
+
 ### Session 121 - 2026-02-08 EST
 **Task**: BUG-47
 **What**: Fixed FK violation when creating project with VPS. Root cause: localStorage has VPS server data but Postgres vps_servers table is empty — the project INSERT references a non-existent FK. Fix: (1) Frontend syncs VPS server to backend via POST /api/servers/ (upsert) before calling POST /api/projects/. Maps localStorage field names (privateKey → private_key, lastTestSuccess → last_test_success). (2) Backend safety net: create_project now checks vps_server_id exists in DB before INSERT, returns clear 400 error if missing. (3) Fixed res.json() on error path — wrapped in try/catch to handle non-JSON 500 responses. projects.py 870→882, CreateProject.jsx 2476→2507.

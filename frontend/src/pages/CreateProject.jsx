@@ -429,7 +429,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [contextGenerated, setContextGenerated] = useState(false)
   const [uploadedFileName, setUploadedFileName] = useState(null)
-  const [enhanceWithAI, setEnhanceWithAI] = useState(false)
+  const [selectedTrack, setSelectedTrack] = useState(null) // 'terminal' | 'openrouter', set after hasClaudeCode resolves
 
   // VPS test connection state
   const [testingVps, setTestingVps] = useState(false)
@@ -443,6 +443,11 @@ export default function CreateProject({ onCancel, onCreateProject }) {
     [savedVpsServers]
   )
   const hasClaudeCode = !!claudeCodeServer
+
+  // Default track based on Claude Code availability (BUG-48)
+  useEffect(() => {
+    setSelectedTrack(hasClaudeCode ? 'terminal' : 'openrouter')
+  }, [hasClaudeCode])
 
   // Auto-link VPS when Claude Code is detected (BUG-45)
   useEffect(() => {
@@ -1193,7 +1198,7 @@ In the meantime, I can help you think through your project. What would you like 
           }
         }
 
-        onCreateProject?.(project, { enhance: enhanceWithAI && hasClaudeCode })
+        onCreateProject?.(project, { enhance: false })
       } else {
         try {
           const error = await res.json()
@@ -1270,6 +1275,73 @@ In the meantime, I can help you think through your project. What would you like 
               />
             </div>
 
+            {/* Track Selection (BUG-48) */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: cssVars.textSecondary,
+                textTransform: 'uppercase',
+                marginBottom: '8px'
+              }}>How will you build?</label>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                {/* Terminal Track Card */}
+                <div
+                  onClick={() => setSelectedTrack('terminal')}
+                  style={{
+                    flex: 1,
+                    padding: '14px 16px',
+                    background: selectedTrack === 'terminal' ? 'rgba(16,185,129,0.08)' : cssVars.bgSecondary,
+                    border: `1.5px solid ${selectedTrack === 'terminal' ? 'rgba(16,185,129,0.5)' : cssVars.border}`,
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <Server size={15} style={{ color: selectedTrack === 'terminal' ? '#10b981' : cssVars.textMuted }} />
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: cssVars.textPrimary }}>Use Your VPS + LLM CLI</span>
+                    {hasClaudeCode && (
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        color: '#10b981',
+                        background: 'rgba(16,185,129,0.15)',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        letterSpacing: '0.5px'
+                      }}>DETECTED</span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '12px', color: cssVars.textSecondary, margin: 0, lineHeight: 1.4 }}>
+                    Use your VPS with Claude Code, Codex, or any CLI agent.
+                  </p>
+                </div>
+                {/* OpenRouter Track Card */}
+                <div
+                  onClick={() => setSelectedTrack('openrouter')}
+                  style={{
+                    flex: 1,
+                    padding: '14px 16px',
+                    background: selectedTrack === 'openrouter' ? 'rgba(59,130,246,0.08)' : cssVars.bgSecondary,
+                    border: `1.5px solid ${selectedTrack === 'openrouter' ? 'rgba(59,130,246,0.5)' : cssVars.border}`,
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <Cloud size={15} style={{ color: selectedTrack === 'openrouter' ? cssVars.primary : cssVars.textMuted }} />
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: cssVars.textPrimary }}>OpenRouter API Key</span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: cssVars.textSecondary, margin: 0, lineHeight: 1.4 }}>
+                    Use your OpenRouter API key with 90+ models.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Project Brief */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -1341,61 +1413,44 @@ Examples:
                 }}
               />
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                {hasClaudeCode ? (
-                  <>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '8px 14px',
-                      background: 'rgba(16,185,129,0.1)',
-                      border: '1px solid rgba(16,185,129,0.2)',
-                      borderRadius: '8px'
-                    }}>
-                      <span style={{ color: '#10b981', fontSize: '10px' }}>●</span>
-                      <span style={{ color: cssVars.textPrimary, fontSize: '14px', fontWeight: 500 }}>Claude Code</span>
-                      <span style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#10b981',
-                        background: 'rgba(16,185,129,0.15)',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        letterSpacing: '0.5px'
-                      }}>PRO</span>
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                      <input
-                        type="checkbox"
-                        checked={enhanceWithAI}
-                        onChange={(e) => setEnhanceWithAI(e.target.checked)}
-                        style={{ accentColor: '#f97316', width: '16px', height: '16px', cursor: 'pointer' }}
-                      />
-                      Enhance project with AI after creation
-                    </label>
-                  </>
-                ) : (
-                  <>
-                    <ModelSelector
-                      value={selectedModel}
-                      onChange={(model) => { setSelectedModel(model.id); setSelectedModelMeta(model) }}
-                      apiKeys={{
-                        openrouter: !!(localStorage.getItem('openrouter_key') || localStorage.getItem('openrouter_api_key')),
-                        anthropic: false
-                      }}
-                      isConnected={false}
-                      claudeCodeStatus={{ installed: false, authenticated: false, checking: false }}
-                      showSubscriptionModels={false}
-                      compact={true}
-                    />
-                    <Button variant="accent" onClick={handleStartAIDefinition}>
-                      <Sparkles size={16} />
-                      Define Project with AI
-                    </Button>
-                  </>
-                )}
-              </div>
+              {/* Track-aware controls below brief (BUG-48) */}
+              {selectedTrack === 'terminal' ? (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '12px',
+                  padding: '10px 14px',
+                  background: 'rgba(16,185,129,0.06)',
+                  border: '1px solid rgba(16,185,129,0.15)',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  color: cssVars.textSecondary,
+                  lineHeight: 1.4
+                }}>
+                  <Zap size={14} style={{ color: '#10b981', flexShrink: 0 }} />
+                  After creating, run <code style={{ color: '#10b981', background: 'rgba(16,185,129,0.12)', padding: '1px 5px', borderRadius: '4px', fontSize: '12px' }}>/generate-prp</code> in the terminal for AI-guided project setup.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                  <ModelSelector
+                    value={selectedModel}
+                    onChange={(model) => { setSelectedModel(model.id); setSelectedModelMeta(model) }}
+                    apiKeys={{
+                      openrouter: !!(localStorage.getItem('openrouter_key') || localStorage.getItem('openrouter_api_key')),
+                      anthropic: false
+                    }}
+                    isConnected={false}
+                    claudeCodeStatus={{ installed: false, authenticated: false, checking: false }}
+                    showSubscriptionModels={false}
+                    compact={true}
+                  />
+                  <Button variant="accent" onClick={handleStartAIDefinition}>
+                    <Sparkles size={16} />
+                    Define Project with AI
+                  </Button>
+                </div>
+              )}
 
               {/* AI Chat Panel */}
               {showAIChat && (

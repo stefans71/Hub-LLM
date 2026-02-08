@@ -95,8 +95,8 @@ frontend_pages:
 
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
-    lines: 2507
-    purpose: "5-step project creation wizard with PRP generation via OpenRouter chat (FEAT-32). Syncs VPS server to backend before project creation to prevent FK violation (BUG-47). Error handling wraps res.json() in try/catch."
+    lines: 2562
+    purpose: "5-step project creation wizard with explicit track selection (BUG-48): Terminal Track (VPS + CLI) vs OpenRouter Track. PRP generation via OpenRouter chat (FEAT-32). Syncs VPS server to backend before project creation to prevent FK violation (BUG-47)."
     props: "{onCancel, onCreateProject}"
     imports: [ModelSelector]
     key_state:
@@ -108,7 +108,7 @@ frontend_pages:
       - {name: hasClaudeCode, type: derived, drives: "boolean — whether any VPS has Claude Code"}
       - {name: selectedAgents, type: "useState([])", drives: "agent selection"}
       - {name: selectedMCPServers, type: "useState([])", drives: "MCP server selection"}
-      - {name: enhanceWithAI, type: "useState(false)", drives: "checkbox for AI enhancement after creation (Claude Code users only)"}
+      - {name: selectedTrack, type: "useState(null)", drives: "track selection: 'terminal' | 'openrouter', defaulted by hasClaudeCode useEffect (BUG-48)"}
     api_calls:
       - {endpoint: "/api/projects/", method: POST, purpose: "create project"}
       - {endpoint: "/api/ssh/test", method: POST, purpose: "test VPS connection"}
@@ -1463,13 +1463,15 @@ billing_and_routing:
   routing_flow:
     create_project: |
       DUAL-PATH (FEAT-24/25/26/28):
-      1. hasClaudeCode (VPS with Claude Code detected):
-         - Static 'Claude Code PRO' badge (green dot + text + PRO pill) — NO model dropdown
-         - Checkbox "Enhance project with AI after creation"
-         - On Create: onCreateProject(project, { enhance: true }) → App.jsx navigates with &enhance=true
-         - No backend API calls for AI definition — uses terminal interaction
-      2. No Claude Code (OpenRouter path):
-         - ModelSelector with showSubscriptionModels={false} — OpenRouter models only
+      Track selector (BUG-48) — two clickable cards above brief:
+      1. Terminal Track (selectedTrack='terminal'):
+         - Card: Server icon + 'Use Your VPS + LLM CLI' + 'DETECTED' badge if hasClaudeCode
+         - Below brief: hint '/generate-prp in the terminal for AI-guided project setup'
+         - On Create: onCreateProject(project, { enhance: false }) — no browser-side enhancement
+      2. OpenRouter Track (selectedTrack='openrouter'):
+         - Card: Cloud icon + 'OpenRouter API Key'
+         - Below brief: ModelSelector + 'Define Project with AI' button → PRP chat
+         - No enhance checkbox needed — PRP flow happens inline before creation
          - "Define Project with AI" button shown (inline AI chat flow)
          - All 3 fetch calls hardcode provider:'openrouter'
          - POST /api/ai/expand-brief + /api/ai/chat with provider:'openrouter'
@@ -1541,7 +1543,7 @@ billing_and_routing:
       description: "The 'tier' string on model objects ('subscription' | 'openrouter' | 'coming_soon')"
       set_in: "ModelSelector.jsx — SUBSCRIPTION_MODELS has tier:'subscription', parseOpenRouterModels sets tier:'openrouter'"
       read_in: [ModelSelector.jsx, WorkspaceTopBar.jsx]
-      routing_impact: "In CreateProject: hasClaudeCode determines badge vs ModelSelector (FEAT-28, replaces tier check). In Workspace: tier determines terminal vs API chat routing."
+      routing_impact: "In CreateProject: selectedTrack determines terminal hint vs ModelSelector (BUG-48). In Workspace: tier determines terminal vs API chat routing."
 
     provider_string:
       description: "The 'provider' field in POST request body ('claude_code_ssh' | 'openrouter' | 'claude_direct')"
@@ -1576,7 +1578,7 @@ billing_and_routing:
     - section: "frontend_components > WorkspaceTopBar.jsx"
       for: "Claude Code status detection, billing warning modal"
     - section: "frontend_pages > CreateProject.jsx"
-      for: "Conditional UI (checkbox vs button), enhanceWithAI state, OpenRouter-only fetch calls"
+      for: "Track selection UI (BUG-48), selectedTrack state, OpenRouter-only fetch calls"
     - section: "frontend_components > ClaudeCodeTerminalChat.jsx"
       for: "Enhance banner, copyBriefToClipboard handler, showEnhanceBanner state"
     - section: "frontend_pages > App.jsx"
