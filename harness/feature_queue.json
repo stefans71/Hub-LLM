@@ -30,7 +30,7 @@
       "name": "CreateProject UX — 'Enhance with AI' checkbox is confusing, needs explicit track selection",
       "size": "M",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
       "description": "The 'Enhance with AI' checkbox (CreateProject.jsx line 1340-1344) is the wrong UX pattern. Problems: (1) VPS users don't know to skip it — they'll check it and get the OpenRouter flow when they should be using /generate-prp in the terminal. (2) OpenRouter users might not check it and miss the PRP generation entirely. (3) Users without an OpenRouter key who check it get an error. (4) There's no guidance about WHICH track you're on. The fix: replace the checkbox with an explicit track selection early in the form. Two options: 'I have a VPS with Claude Code' (Terminal Track — skip enhance, create project, use terminal for /generate-prp) vs 'I'll use an API key' (OpenRouter Track — enhance checkbox auto-enabled, PRP intake runs in browser chat). This could be a radio button group or a two-card selector similar to the BUG-46 welcome screen pattern (App.jsx lines 250-319). The selection should appear BEFORE the brief input or right after the project name, so users know their path upfront. If user has a VPS detected (hasClaudeCode=true), default to Terminal Track. If not, default to OpenRouter Track.",
       "change": [
         "frontend/src/pages/CreateProject.jsx: Add track selection UI early in the form (after project name, before brief). Two cards or radio: 'Use Your VPS + LLM CLI' vs 'OpenRouter API Key'. Default based on hasClaudeCode. VPS card subtitle: 'Use your VPS with Claude Code, Codex, or any CLI agent.' OpenRouter card subtitle: 'Use your OpenRouter API key with 90+ models.'",
@@ -44,8 +44,8 @@
         "code_works": true,
         "index_updated": true,
         "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
       }
     },
     {
