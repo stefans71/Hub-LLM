@@ -209,6 +209,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
 
   // FEAT-27: Floating hint overlay state
   const [showCommandHint, setShowCommandHint] = useState(false)
+  // FEAT-35: Collapsible hint bubble
+  const [hintCollapsed, setHintCollapsed] = useState(false)
 
   const copyBriefToClipboard = useCallback(() => {
     if (!project?.brief) return
@@ -665,8 +667,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ type: 'input', data }))
         }
-        // FEAT-27: Dismiss hint overlay on first keystroke
-        setShowCommandHint(false)
+        // FEAT-27/35: Collapse hint overlay on first keystroke (X to fully dismiss)
+        setHintCollapsed(true)
       })
 
       // Focus terminal for keyboard input
@@ -1024,7 +1026,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
             onClick={handleTerminalClick}
             style={{ display: viewMode === 'terminal' && terminalReady ? 'block' : 'none', height: '100%' }}
           />
-          {/* FEAT-27: Floating hint overlay */}
+          {/* FEAT-27/35: Floating hint overlay with collapse/dismiss */}
           {showCommandHint && viewMode === 'terminal' && (
             <div style={{
               position: 'absolute',
@@ -1034,20 +1036,56 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
               background: 'rgba(15, 20, 25, 0.85)',
               backdropFilter: 'blur(8px)',
               borderRadius: '8px',
-              padding: '12px 16px',
               border: '1px solid rgba(56, 189, 248, 0.2)',
-              maxWidth: '400px',
-              textAlign: 'center',
-              zIndex: 10
-            }}>
-              <div style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '6px' }}>
-                {showEnhanceBanner
-                  ? 'Copy your project brief above, then type claude to start'
-                  : 'Type claude to start a new session'}
-              </div>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>
-                or claude --resume to continue a previous one
-              </div>
+              maxWidth: '420px',
+              zIndex: 10,
+              ...(!hintCollapsed ? { padding: '12px 16px' } : { padding: '6px 12px', cursor: 'pointer' })
+            }}
+              {...(hintCollapsed ? { onClick: () => setHintCollapsed(false) } : {})}
+            >
+              {hintCollapsed ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '12px' }}>
+                  <span style={{ transform: 'rotate(-90deg)', display: 'inline-block' }}>&#9662;</span>
+                  <span>Hint</span>
+                </div>
+              ) : (
+                <>
+                  {/* Controls row */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', marginBottom: '8px' }}>
+                    <button
+                      onClick={() => setHintCollapsed(true)}
+                      title="Collapse hint"
+                      style={{
+                        background: 'none', border: 'none', color: '#64748b', cursor: 'pointer',
+                        padding: '2px 4px', fontSize: '14px', lineHeight: 1, borderRadius: '4px'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = '#e2e8f0'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
+                    >&#9662;</button>
+                    <button
+                      onClick={() => setShowCommandHint(false)}
+                      title="Dismiss hint"
+                      style={{
+                        background: 'none', border: 'none', color: '#64748b', cursor: 'pointer',
+                        padding: '2px 4px', fontSize: '14px', lineHeight: 1, borderRadius: '4px'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = '#e2e8f0'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
+                    >&times;</button>
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '6px', textAlign: 'center' }}>
+                    {showEnhanceBanner
+                      ? 'Copy your project brief above, then type claude to start'
+                      : 'Type claude to start a new session'}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#64748b', textAlign: 'center', marginBottom: '8px' }}>
+                    or claude --resume to continue a previous one
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'center', borderTop: '1px solid rgba(56, 189, 248, 0.1)', paddingTop: '8px' }}>
+                    Open the README.md file in the file explorer for more useful information.
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

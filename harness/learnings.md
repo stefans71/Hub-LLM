@@ -2137,6 +2137,11 @@ Three callbacks from Workspace to ServerManager:
 ---
 
 ### Session 40 - 2026-01-24
+**Task**: FEAT-35 (Hint bubble polish)
+**What**: Replaced simple floating hint overlay with collapsible card. Added chevron toggle (collapse/expand), X button (dismiss for session), and README.md tip text. Auto-dismiss on keystroke changed to auto-collapse (hint stays accessible via collapsed indicator). `hintCollapsed` state controls collapse, `showCommandHint` controls full dismiss.
+
+---
+
 **Task**: FEAT-34 (Independent LLM-Dev terminals)
 **What**: Removed auto-cd to project directory from MultiTerminal's TerminalInstance. LLM-Dev terminals now start at /root (default SSH login dir) instead of mirroring the chat terminal's project dir. Removed unused `projectSlug` prop from TerminalInstance. Chat terminal (ClaudeCodeTerminalChat.jsx:282) still auto-cds to project dir — that's correct.
 **Key Insight**: Each terminal gets its own SSH channel (not shared PTY), so they were technically independent already. The "mirroring" was just the auto-cd.

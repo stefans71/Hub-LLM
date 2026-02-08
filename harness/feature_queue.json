@@ -30,20 +30,20 @@
       "name": "Hint bubble: add README tip, collapsible toggle, and X dismiss",
       "size": "S",
       "priority": 4,
-      "status": "pending",
+      "status": "pending_review",
       "description": "The hint bubble in the chat terminal ('Type claude to start a new session, or claude --resume to continue a previous one') should keep its current text AND add a new line: 'Open the README.md file in the file explorer for more useful information.' The bubble must be a proper overlay/card (not terminal writeln output) with two controls: (1) A caret/chevron toggle that collapses the bubble — when collapsed, only the caret remains visible at the top of the LLM-Dev container, and clicking it re-expands the bubble. (2) An X button that fully removes the bubble for the session. Screenshot reference: WorkSpace_LLM-Dev-01.png shows current bubble as a tooltip-style overlay. Check ClaudeCodeTerminalChat.jsx for the current implementation.",
       "change": [
         "frontend/src/components/ClaudeCodeTerminalChat.jsx: Replace the writeln-based hint with a positioned overlay div/card. Content: existing hint text + 'Open the README.md file in the file explorer for more useful information.' Two buttons: caret (collapse/expand toggle) and X (dismiss entirely).",
         "The collapsed state should show just the caret/chevron at the top of the container. Clicking it re-expands the full hint card. Dismissing with X removes it for the session (state can live in component state, no persistence needed)."
       ],
       "test": "(1) Open workspace. (2) Hint card appears with full text including README tip. (3) Click caret — bubble collapses to just a caret at top. (4) Click caret again — bubble re-expands. (5) Click X — bubble gone for the session. (6) Navigating away and back: bubble reappears (session = page load, not navigation).",
-      "completion_note": "",
+      "completion_note": "Replaced simple hint overlay with collapsible card in ClaudeCodeTerminalChat.jsx (1113→1151 lines). Added hintCollapsed state. Expanded card shows: existing hint text + README.md tip (separated by subtle border), chevron button (collapse), X button (dismiss for session). Collapsed card shows small 'Hint' label with rotated chevron — click to re-expand. Auto-dismiss on keystroke changed to auto-collapse (hint remains accessible). X fully removes for session. Build: vite build 0 errors. CODEBASE_INDEX updated.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {
