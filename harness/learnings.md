@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 113 - 2026-02-08 EST
+**Task**: FEAT-28
+**What**: Replaced subscription model dropdown with static 'Claude Code PRO' badge on CreateProject. Removed SUBSCRIPTION_MODELS import and isSubscriptionModel derived const — the conditional now checks hasClaudeCode directly (VPS detection, not model tier). When hasClaudeCode: green badge (● Claude Code PRO) + enhance checkbox. When no Claude Code: ModelSelector with showSubscriptionModels={false} + 'Define Project with AI' button. Default model reverted to OpenRouter format ('anthropic/claude-sonnet-4'). Build: 0 errors (2411 lines).
+**Key Learning**: When a model selector is purely decorative (selected value never sent to backend), replace it with a static indicator. The subscription model dropdown gave users false control — Claude Code uses its own CLI-configured model regardless of what's selected.
+
+---
+
 ### Session 112 - 2026-02-07 EST
 **Task**: FEAT-27
 **What**: Added floating hint overlay inside terminal container. Semi-transparent card with backdrop blur positioned at bottom center of terminal area. Shows 'Type claude to start a new session' or context-aware text when enhance banner is visible ('Copy your project brief above, then type claude to start'). Auto-dismisses on first xterm onData event (keystroke). Build: 0 errors (1109 lines).

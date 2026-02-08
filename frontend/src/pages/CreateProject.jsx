@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useVoice } from '../components/VoiceInput'
 import StatusLinePreview from '../components/StatusLinePreview'
-import ModelSelector, { SUBSCRIPTION_MODELS } from '../components/ModelSelector'
+import ModelSelector from '../components/ModelSelector'
 import {
   ChevronRight, ChevronDown, Upload, Mic, MicOff, Send, X, Plus,
   Cloud, Server, Check, Sparkles, Zap, ExternalLink, Loader,
@@ -414,7 +414,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   const [createRepoError, setCreateRepoError] = useState('')
 
   // AI model selector state
-  const [selectedModel, setSelectedModel] = useState('claude-sonnet-4.5')
+  const [selectedModel, setSelectedModel] = useState('anthropic/claude-sonnet-4')
   const [selectedModelMeta, setSelectedModelMeta] = useState(null) // full model object from ModelSelector onChange
 
   // UI state
@@ -443,7 +443,6 @@ export default function CreateProject({ onCancel, onCreateProject }) {
     [savedVpsServers]
   )
   const hasClaudeCode = !!claudeCodeServer
-  const isSubscriptionModel = SUBSCRIPTION_MODELS.some(m => m.id === selectedModel) || selectedModelMeta?.tier === 'subscription'
 
   // Load saved VPS servers from localStorage (Settings > VPS Connections)
   useEffect(() => {
@@ -1139,7 +1138,7 @@ In the meantime, I can help you think through your project. What would you like 
           }
         }
 
-        onCreateProject?.(project, { enhance: enhanceWithAI && isSubscriptionModel })
+        onCreateProject?.(project, { enhance: enhanceWithAI && hasClaudeCode })
       } else {
         const error = await res.json()
         setCreateProjectError(error.detail || 'Failed to create project')
@@ -1284,33 +1283,58 @@ Examples:
               />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                <ModelSelector
-                  value={selectedModel}
-                  onChange={(model) => { setSelectedModel(model.id); setSelectedModelMeta(model); if (model.tier !== 'subscription') setEnhanceWithAI(false) }}
-                  apiKeys={{
-                    openrouter: !!(localStorage.getItem('openrouter_key') || localStorage.getItem('openrouter_api_key')),
-                    anthropic: hasClaudeCode
-                  }}
-                  isConnected={hasClaudeCode}
-                  claudeCodeStatus={{ installed: hasClaudeCode, authenticated: hasClaudeCode, checking: false }}
-                  showSubscriptionModels={true}
-                  compact={true}
-                />
-                {isSubscriptionModel ? (
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                    <input
-                      type="checkbox"
-                      checked={enhanceWithAI}
-                      onChange={(e) => setEnhanceWithAI(e.target.checked)}
-                      style={{ accentColor: '#f97316', width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                    Enhance project with AI after creation
-                  </label>
+                {hasClaudeCode ? (
+                  <>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 14px',
+                      background: 'rgba(16,185,129,0.1)',
+                      border: '1px solid rgba(16,185,129,0.2)',
+                      borderRadius: '8px'
+                    }}>
+                      <span style={{ color: '#10b981', fontSize: '10px' }}>●</span>
+                      <span style={{ color: cssVars.textPrimary, fontSize: '14px', fontWeight: 500 }}>Claude Code</span>
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#10b981',
+                        background: 'rgba(16,185,129,0.15)',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        letterSpacing: '0.5px'
+                      }}>PRO</span>
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                      <input
+                        type="checkbox"
+                        checked={enhanceWithAI}
+                        onChange={(e) => setEnhanceWithAI(e.target.checked)}
+                        style={{ accentColor: '#f97316', width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      Enhance project with AI after creation
+                    </label>
+                  </>
                 ) : (
-                  <Button variant="accent" onClick={handleStartAIDefinition}>
-                    <Sparkles size={16} />
-                    Define Project with AI
-                  </Button>
+                  <>
+                    <ModelSelector
+                      value={selectedModel}
+                      onChange={(model) => { setSelectedModel(model.id); setSelectedModelMeta(model) }}
+                      apiKeys={{
+                        openrouter: !!(localStorage.getItem('openrouter_key') || localStorage.getItem('openrouter_api_key')),
+                        anthropic: false
+                      }}
+                      isConnected={false}
+                      claudeCodeStatus={{ installed: false, authenticated: false, checking: false }}
+                      showSubscriptionModels={false}
+                      compact={true}
+                    />
+                    <Button variant="accent" onClick={handleStartAIDefinition}>
+                      <Sparkles size={16} />
+                      Define Project with AI
+                    </Button>
+                  </>
                 )}
               </div>
 

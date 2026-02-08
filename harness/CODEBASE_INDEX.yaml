@@ -94,33 +94,32 @@ frontend_pages:
 
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
-    lines: 2387
-    purpose: "5-step project creation wizard with AI-assisted brief expansion, dynamic model selector, OpenRouter-only for AI definition. isSubscriptionModel derived from SUBSCRIPTION_MODELS array."
+    lines: 2411
+    purpose: "5-step project creation wizard with AI-assisted brief expansion. hasClaudeCode → static 'Claude Code PRO' badge + enhance checkbox. No Claude Code → ModelSelector (OpenRouter only) + 'Define Project with AI' button."
     props: "{onCancel, onCreateProject}"
     imports: [ModelSelector]
     key_state:
       - {name: step, type: useState, drives: "wizard step (0-4)"}
       - {name: formData, type: useState, drives: "project metadata"}
-      - {name: selectedModel, type: "useState('anthropic/claude-sonnet-4')", drives: "AI model ID for brief expansion and chat"}
-      - {name: selectedModelMeta, type: "useState(null)", drives: "full model object from ModelSelector (includes tier for routing)"}
+      - {name: selectedModel, type: "useState('anthropic/claude-sonnet-4')", drives: "AI model ID for brief expansion (OpenRouter format, only used when no Claude Code)"}
+      - {name: selectedModelMeta, type: "useState(null)", drives: "full model object from ModelSelector onChange"}
       - {name: claudeCodeServer, type: useMemo, drives: "first VPS with Claude Code detected from savedVpsServers"}
       - {name: hasClaudeCode, type: derived, drives: "boolean — whether any VPS has Claude Code"}
-      - {name: isSubscriptionModel, type: derived, drives: "boolean — true if selectedModel is in SUBSCRIPTION_MODELS or selectedModelMeta.tier is subscription"}
       - {name: selectedAgents, type: "useState([])", drives: "agent selection"}
       - {name: selectedMCPServers, type: "useState([])", drives: "MCP server selection"}
-      - {name: enhanceWithAI, type: "useState(false)", drives: "checkbox for AI enhancement after creation (subscription models only)"}
+      - {name: enhanceWithAI, type: "useState(false)", drives: "checkbox for AI enhancement after creation (Claude Code users only)"}
     api_calls:
       - {endpoint: "/api/projects/", method: POST, purpose: "create project"}
       - {endpoint: "/api/ssh/test", method: POST, purpose: "test VPS connection"}
-      - {endpoint: "/api/ai/expand-brief", method: POST, purpose: "AI brief expansion (OpenRouter only — subscription models use terminal enhance flow)"}
-      - {endpoint: "/api/ai/chat", method: POST, purpose: "AI planning chat (OpenRouter only — subscription models use terminal enhance flow)"}
+      - {endpoint: "/api/ai/expand-brief", method: POST, purpose: "AI brief expansion (OpenRouter only)"}
+      - {endpoint: "/api/ai/chat", method: POST, purpose: "AI planning chat (OpenRouter only)"}
     localStorage_keys:
       - {key: vps_servers, direction: both}
       - {key: global_agents, direction: read}
       - {key: mcp_servers, direction: read}
       - {key: openrouter_key, direction: read}
       - {key: openrouter_api_key, direction: read}
-    last_verified_session: 105
+    last_verified_session: 113
 
   Setup.jsx:
     path: frontend/src/pages/Setup.jsx
@@ -1461,16 +1460,18 @@ billing_and_routing:
 
   routing_flow:
     create_project: |
-      DUAL-PATH (FEAT-24/25/26):
-      1. User selects model in ModelSelector → onChange returns {id, name, tier, ...}
-      2. If tier === 'subscription':
-         - "Define Project with AI" button HIDDEN, checkbox "Enhance project with AI" shown
+      DUAL-PATH (FEAT-24/25/26/28):
+      1. hasClaudeCode (VPS with Claude Code detected):
+         - Static 'Claude Code PRO' badge (green dot + text + PRO pill) — NO model dropdown
+         - Checkbox "Enhance project with AI after creation"
          - On Create: onCreateProject(project, { enhance: true }) → App.jsx navigates with &enhance=true
-         - No backend API calls for AI definition — subscription models use terminal interaction
-      3. If tier !== 'subscription' (openrouter):
-         - "Define Project with AI" button shown (existing inline AI chat flow)
-         - All 3 fetch calls hardcode provider:'openrouter' (FEAT-26 removed subscription branches)
+         - No backend API calls for AI definition — uses terminal interaction
+      2. No Claude Code (OpenRouter path):
+         - ModelSelector with showSubscriptionModels={false} — OpenRouter models only
+         - "Define Project with AI" button shown (inline AI chat flow)
+         - All 3 fetch calls hardcode provider:'openrouter'
          - POST /api/ai/expand-brief + /api/ai/chat with provider:'openrouter'
+      Note: isSubscriptionModel and SUBSCRIPTION_MODELS import removed in FEAT-28.
 
     workspace_enhance: |
       ENHANCE BANNER (FEAT-25):
@@ -1504,7 +1505,7 @@ billing_and_routing:
         - file: "frontend/src/components/ModelSelector.jsx"
           what: "Add models to SUBSCRIPTION_MODELS array with new tier value. Update billing toggle to show new provider tab. Update isModelAvailable() and getBillingLabel()."
         - file: "frontend/src/pages/CreateProject.jsx"
-          what: "Update tier check in conditional UI (line ~1304) to show checkbox for new tier. The 3 fetch calls are OpenRouter-only now — no routing branches to add."
+          what: "CreateProject no longer uses model tier — it checks hasClaudeCode (VPS detection). No changes needed for new subscription providers unless they require a different badge."
         - file: "frontend/src/components/Chat.jsx"
           what: "Update useClaudeCodeTerminal check (line ~24) to detect new provider's models."
         - file: "frontend/src/components/ClaudeCodeTerminalChat.jsx"
@@ -1537,8 +1538,8 @@ billing_and_routing:
     model_tier_field:
       description: "The 'tier' string on model objects ('subscription' | 'openrouter' | 'coming_soon')"
       set_in: "ModelSelector.jsx — SUBSCRIPTION_MODELS has tier:'subscription', parseOpenRouterModels sets tier:'openrouter'"
-      read_in: [ModelSelector.jsx, CreateProject.jsx, WorkspaceTopBar.jsx]
-      routing_impact: "In CreateProject: tier determines checkbox vs button UI (FEAT-24). In Workspace: tier determines terminal vs API chat routing."
+      read_in: [ModelSelector.jsx, WorkspaceTopBar.jsx]
+      routing_impact: "In CreateProject: hasClaudeCode determines badge vs ModelSelector (FEAT-28, replaces tier check). In Workspace: tier determines terminal vs API chat routing."
 
     provider_string:
       description: "The 'provider' field in POST request body ('claude_code_ssh' | 'openrouter' | 'claude_direct')"
