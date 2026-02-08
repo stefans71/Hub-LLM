@@ -13,6 +13,50 @@ All files are templates with `{{placeholders}}` that get filled from the CreateP
 
 ---
 
+## Template Feature Manifest
+
+**Check this list whenever a new Hub-LLM feature ships.** If it should be part of the scaffold, make sure it's here. If it's not yet implemented, it stays as "planned" so nothing gets forgotten.
+
+### Scaffolded Files (what users get on project creation)
+
+| Feature | Template Constant | Scaffolded To | Status | Task |
+|---------|------------------|---------------|--------|------|
+| Project rules | `TEMPLATE_CLAUDE_MD` | `CLAUDE.md` | ✅ Shipped | FEAT-30 |
+| Agent settings | `TEMPLATE_CLAUDE_SETTINGS` | `.claude/settings.json` | ✅ Shipped | FEAT-30 |
+| PRP generation | `TEMPLATE_GENERATE_PRP` | `.claude/commands/generate-prp.md` | ✅ Shipped | FEAT-31 |
+| PRP execution | `TEMPLATE_EXECUTE_PRP` | `.claude/commands/execute-prp.md` | ✅ Shipped | FEAT-30 |
+| Task queue | `TEMPLATE_FEATURE_QUEUE` | `harness/feature_queue.json` | ✅ Shipped | FEAT-30 |
+| Codebase index | `TEMPLATE_CODEBASE_INDEX` | `harness/CODEBASE_INDEX.yaml` | ✅ Shipped | FEAT-30 |
+| Session memory | `TEMPLATE_LEARNINGS` | `harness/learnings.md` | ✅ Shipped | FEAT-30 |
+| Project README | `TEMPLATE_README` | `README.md` | ✅ Shipped | FEAT-30 |
+| Smart pre-commit hook | `TEMPLATE_PRE_COMMIT_HOOK` | `.git/hooks/pre-commit` | ⏳ Pending | FEAT-36 |
+| Index audit command | `TEMPLATE_AUDIT_INDEX` | `.claude/commands/audit-index.md` | ⏳ Pending | FEAT-36 |
+| Git onboarding HTML | `TEMPLATE_GIT_ONBOARDING_HTML` | `docs/getting-started-with-git.html` | ⏳ Pending | FEAT-37 |
+| Git workflow in CLAUDE.md | (part of TEMPLATE_CLAUDE_MD) | `CLAUDE.md` | ⏳ Pending | FEAT-37 |
+| Git section in README | (part of TEMPLATE_README) | `README.md` | ⏳ Pending | FEAT-37 |
+
+### Automation Features (workflow enhancements)
+
+| Feature | Description | Status | Task |
+|---------|-------------|--------|------|
+| Ralph Loop | Agent auto-continues after task completion | ❌ Not started | — |
+| MCP Server | File-based task automation (no Supabase) | ❌ Not started | — |
+| Browser Testing | Puppeteer/Playwright for visual verification | ❌ Not started | — |
+| Director auto-scaffold | Create Director directory alongside project | ❌ Not started | — |
+| Task queue archiving | Move old completed tasks to archive file | ❌ Not started | — |
+
+### Process to Update This Manifest
+
+1. A Hub-LLM feature ships that affects the template
+2. Director (or user) checks: "Is this in the manifest?"
+3. If missing → add it with status and task ID
+4. If status changed → update (⏳ Pending → ✅ Shipped)
+5. New planned features → add as ❌ Not started
+
+**This manifest is the single source of truth for what the template includes.**
+
+---
+
 ## File Tree
 
 ```
@@ -22,7 +66,11 @@ All files are templates with `{{placeholders}}` that get filled from the CreateP
 │   ├── settings.json                   # Claude Code settings (allowlist, etc.)
 │   └── commands/
 │       ├── generate-prp.md             # /generate-prp slash command
-│       └── execute-prp.md              # /execute-prp slash command
+│       ├── execute-prp.md              # /execute-prp slash command
+│       └── audit-index.md              # /audit-index slash command (FEAT-36)
+├── .git/
+│   └── hooks/
+│       └── pre-commit                  # Smart index enforcement hook (FEAT-36)
 ├── harness/
 │   ├── feature_queue.json              # Task queue
 │   ├── CODEBASE_INDEX.yaml             # File map (starts minimal, grows)
@@ -30,6 +78,7 @@ All files are templates with `{{placeholders}}` that get filled from the CreateP
 ├── PRPs/                               # Generated implementation blueprints
 │   └── .gitkeep
 ├── docs/                               # Technical overview + user-facing docs
+│   ├── getting-started-with-git.html   # Git/GitHub onboarding page (FEAT-37)
 │   └── .gitkeep
 ├── src/                                # User's application code
 │   └── .gitkeep
