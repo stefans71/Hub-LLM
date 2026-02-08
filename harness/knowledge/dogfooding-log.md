@@ -73,6 +73,23 @@ Tracking real-world usage of the harness template scaffolding through TheFishSto
 | Director | Separate directory (manual) | `/root/dev/Claude-Project_Director/` |
 | Review process | Described in execute-prp (pending_review) | Full Director review workflow with merge gates |
 
+## Gaps Found — Session 1 (end of session)
+
+### Gap 1: No pre-commit hook scaffolded (FEAT-36)
+Hub-LLM has a pre-commit hook that blocks commits when code changes but CODEBASE_INDEX.yaml isn't updated. TheFishStocker's `.git/hooks/` only has default `.sample` files — no enforcement. The engineer could commit freely without touching the index, defeating the whole purpose.
+
+**Fix**: Scaffold a `pre-commit` hook in `create_vps_project_folder()` that checks `src/` changes against `harness/CODEBASE_INDEX.yaml` staging.
+
+### Gap 2: No git/GitHub onboarding (FEAT-37)
+The template does `git init` and creates an initial commit, but the README and CLAUDE.md never explain git. New users (experience 1-3) will see a `.git/` folder and have no idea what it is. Users without GitHub accounts won't know how to connect a remote. The AI engineer's commit/push workflow assumes git knowledge that beginners don't have.
+
+**Fix**: Add "Version Control" section to README (beginner-friendly, optional GitHub setup) and "Git Workflow" section to CLAUDE.md (commit rules, push-if-remote logic).
+
+### Gap 3: CODEBASE_INDEX.yaml built by DOCS-01 but no enforcement until hook exists
+The index is seeded empty by the scaffold, populated by DOCS-01 (first task in queue), and maintained by the engineer after each task (per execute-prp step 6 and CLAUDE.md "Always update the codebase index"). But without the pre-commit hook, this is entirely honor-system. The completion_checklist has `index_updated: false` but nothing prevents setting it to true without actually updating.
+
+---
+
 ## Automation Roadmap (from plan Phase 5)
 1. **Ralph Loop** — auto-continue after task completion (engineer doesn't stop after 1 task)
 2. **MCP server** — file-based task automation (not Supabase)

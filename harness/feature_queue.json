@@ -109,6 +109,48 @@
       }
     },
     {
+      "id": "FEAT-36",
+      "name": "Scaffold pre-commit hook that enforces CODEBASE_INDEX.yaml updates",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "The Hub-LLM repo has a pre-commit hook (.git/hooks/pre-commit) that blocks commits when code files change but CODEBASE_INDEX.yaml isn't staged. This hook is NOT scaffolded into new projects — TheFishStocker has only default .sample hooks. The template must scaffold a real pre-commit hook so the engineer can never commit code changes without updating the index.\n\nHub-LLM's hook (reference):\n- Checks for staged files matching frontend/src/ or backend/ (minus __pycache__)\n- Checks if harness/CODEBASE_INDEX.yaml is also staged\n- If code changed but index didn't → prints warning, exits 1\n- Bypass: git commit --no-verify (for non-code commits like docs)\n\nThe scaffolded version should be generic — check for staged files in src/ (not frontend/src/ or backend/ which are Hub-LLM-specific). The path patterns should adapt based on the project structure. For MVP, just check src/ since that's what the template creates.\n\nSource: dogfooding TheFishStocker — discovered the gap when comparing .git/hooks/ directories.",
+      "change": [
+        "backend/routers/projects.py: Add a TEMPLATE_PRE_COMMIT_HOOK constant with the hook script. In create_vps_project_folder(), after git init, write the hook to .git/hooks/pre-commit and chmod +x it via SSH.",
+        "The hook should check: git diff --cached --name-only | grep -E '^src/' and then verify harness/CODEBASE_INDEX.yaml is also staged. Block commit with clear message if not."
+      ],
+      "test": "(1) Create a new project via CreateProject. (2) SSH in, create a file in src/. (3) git add src/test.txt && git commit -m 'test' → should be BLOCKED with warning about CODEBASE_INDEX.yaml. (4) git add harness/CODEBASE_INDEX.yaml && git commit -m 'test' → should succeed. (5) git commit --no-verify → should bypass.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-37",
+      "name": "Add git/GitHub onboarding section to scaffolded README and CLAUDE.md",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "description": "The scaffolded template does 'git init' and creates an initial commit, but never explains git to the user. The README.md and CLAUDE.md have zero mention of git, remotes, push, GitHub, or version control. Many new users (especially experience 1-3 from the calibration) won't know what git is or have a GitHub account.\n\nTwo changes needed:\n\n1. **README.md** — Add a 'Version Control' section that covers:\n   - What git is (1 sentence for beginners)\n   - Your code is already version-controlled locally (git init was done)\n   - Optional: connect to GitHub for backup and collaboration\n   - Step-by-step for GitHub setup: create repo, git remote add, git push\n   - Step-by-step WITHOUT GitHub: explain that local git still tracks changes\n   - Explain what commits are (saving checkpoints of your work)\n   - Note: the AI engineer commits automatically after each task\n\n2. **CLAUDE.md** — Add a 'Git Workflow' section for the engineer:\n   - Commit after every task completion\n   - If a GitHub remote exists, push after commit\n   - If no remote, just commit locally (don't error on push failure)\n   - Branch strategy: work on main for now (simple projects)\n   - Never force push\n\nThe README section should adapt to experience level — the /generate-prp calibration sets the User Profile in CLAUDE.md, so the engineer knows the user's level. But the scaffolded README is static, so write it in a way that works for everyone (explain simply, with 'if you're familiar with git, skip ahead' markers).\n\nSource: dogfooding TheFishStocker — realized new users seeing .git/ folder would be confused.",
+      "change": [
+        "backend/routers/projects.py: Update TEMPLATE_README constant to include a 'Version Control' section with beginner-friendly git explanation, optional GitHub setup steps, and note about AI engineer auto-committing.",
+        "backend/routers/projects.py: Update TEMPLATE_CLAUDE_MD constant to include a 'Git Workflow' section with commit rules, push-if-remote logic, and branch strategy."
+      ],
+      "test": "(1) Create a new project. (2) Check README.md has Version Control section with GitHub setup steps. (3) Check CLAUDE.md has Git Workflow section. (4) Verify the text makes sense for a beginner (no assumed git knowledge). (5) Verify the engineer section handles both with-remote and without-remote cases.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
