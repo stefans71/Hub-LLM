@@ -444,6 +444,13 @@ export default function CreateProject({ onCancel, onCreateProject }) {
   )
   const hasClaudeCode = !!claudeCodeServer
 
+  // Auto-link VPS when Claude Code is detected (BUG-45)
+  useEffect(() => {
+    if (claudeCodeServer?.id) {
+      setFormData(prev => ({ ...prev, vpsServerId: claudeCodeServer.id }))
+    }
+  }, [claudeCodeServer])
+
   // Load saved VPS servers from localStorage (Settings > VPS Connections)
   useEffect(() => {
     const savedServers = localStorage.getItem('vps_servers')

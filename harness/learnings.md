@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 116 - 2026-02-08 EST
+**Task**: BUG-45
+**What**: CreateProject didn't auto-link VPS for subscription users. formData.vpsServerId started as '' and was never set from claudeCodeServer, so projects were created with vps_server_id:null. Added useEffect after line 445 that sets formData.vpsServerId when claudeCodeServer is detected. CreateProject.jsx 2411→2418 lines. Build: 0 errors.
+**Key Learning**: When a derived value (claudeCodeServer) implies a form field should be pre-filled, add a useEffect to sync it. useState initial values only run once — they can't depend on async-derived state like savedVpsServers which loads from localStorage in a separate useEffect.
+
+---
+
 ### Session 115 - 2026-02-08 EST
 **Task**: FEAT-29
 **What**: Replaced workspace model selector with static 'Claude Code PRO' badge for subscription users. WorkspaceTopBar.jsx lines 246-254: wrapped ModelSelector in conditional — when isConnected && claudeCodeStatus?.installed, renders badge (same style as FEAT-28: green dot + 'Claude Code' + PRO pill). Otherwise renders ModelSelector as before. WorkspaceTopBar.jsx 305→329 lines. Build: 0 errors.

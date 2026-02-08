@@ -95,8 +95,8 @@ frontend_pages:
 
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
-    lines: 2411
-    purpose: "5-step project creation wizard with AI-assisted brief expansion. hasClaudeCode → static 'Claude Code PRO' badge + enhance checkbox. No Claude Code → ModelSelector (OpenRouter only) + 'Define Project with AI' button."
+    lines: 2418
+    purpose: "5-step project creation wizard with AI-assisted brief expansion. hasClaudeCode → static 'Claude Code PRO' badge + enhance checkbox + auto-links VPS (BUG-45). No Claude Code → ModelSelector (OpenRouter only) + 'Define Project with AI' button."
     props: "{onCancel, onCreateProject}"
     imports: [ModelSelector]
     key_state:
