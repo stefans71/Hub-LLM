@@ -26,6 +26,29 @@
   },
   "queue": [
     {
+      "id": "FEAT-30",
+      "name": "Scaffold harness template on VPS when creating Terminal Track projects",
+      "size": "M",
+      "priority": 3,
+      "status": "pending",
+      "description": "When a Terminal Track user creates a project with a linked VPS, scaffold the harness template files into the project directory. Currently create_vps_project_folder (backend/routers/projects.py line 37) only creates an empty directory via SSH mkdir. It needs to also write the harness files: CLAUDE.md, .claude/settings.json, .claude/commands/generate-prp.md, .claude/commands/execute-prp.md, harness/feature_queue.json, harness/CODEBASE_INDEX.yaml, harness/learnings.md, README.md, PRPs/.gitkeep, src/.gitkeep. Template design is at harness/knowledge/harness-template-design.md with all file contents and {{placeholder}} variables. SSH file writing already works via conn.write_file() (used in ssh.py lines 576, 685, 703). The function create_vps_project_folder is called at projects.py line ~120 during POST /api/projects/. Learnings: BUG-45 (Session 116) — vpsServerId now auto-links from claudeCodeServer, so project.vps_server_id will be set for subscription users.",
+      "change": [
+        "backend/routers/projects.py: Extend create_vps_project_folder (line 37) to write template files after mkdir. Use conn.write_file() for each file. Fill {{projectName}} from project name, {{slug}} from project slug, {{techStack}} from project tech_stack field (or 'Not specified'), {{createdDate}} from datetime.now, {{projectBrief}} from project brief field. Create subdirectories: .claude/, .claude/commands/, harness/, PRPs/, src/. Write all 8 template files per harness-template-design.md.",
+        "backend/routers/projects.py: After writing files, run 'cd {project_path} && git init && git add -A && git commit -m \"Initial commit — HubLLM harness scaffolded\"' via conn.run_command(). Wrap in try/except — git init failure should not fail project creation.",
+        "backend/routers/projects.py: Add template strings as module-level constants or a templates dict. Keep them in the same file for now — extract to a templates module later if they grow."
+      ],
+      "test": "Step-by-step: (1) Create a new project in HubLLM with VPS linked. (2) SSH into VPS and ls /root/llm-hub-projects/{slug}/. (3) Verify all files exist: CLAUDE.md, .claude/settings.json, .claude/commands/generate-prp.md, .claude/commands/execute-prp.md, harness/feature_queue.json, harness/CODEBASE_INDEX.yaml, harness/learnings.md, README.md. (4) cat CLAUDE.md — verify project name is filled in, not {{projectName}}. (5) Verify git log shows initial commit. Paste ls output and cat CLAUDE.md header in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
