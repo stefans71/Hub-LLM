@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 123 - 2026-02-08 EST
+**Task**: BUG-49
+**What**: Fixed write_file in backend/services/ssh.py writing 0-byte files. Root cause: SFTP open in "w" mode + `.encode('utf-8')` on content that was already bytes → AttributeError. Fix: open in "wb" mode, write bytes directly if isinstance(content, bytes) else encode str. 341 lines (unchanged count). py_compile OK.
+**Key Learning**: asyncssh SFTP write_file should always use binary mode ("wb") and handle type explicitly. Text mode behavior differs from Python's built-in open().
+
+---
+
 ### Session 122 - 2026-02-08 EST
 **Task**: BUG-48
 **What**: Replaced confusing 'Enhance with AI' checkbox in CreateProject with explicit track selection. Added two-card selector ("Use Your VPS + LLM CLI" vs "OpenRouter API Key") between project name and brief. Terminal track shows /generate-prp hint below brief; OpenRouter track shows ModelSelector + "Define Project with AI" button. Default based on hasClaudeCode via useEffect. Removed enhanceWithAI state, added selectedTrack state. CreateProject.jsx 2507→2562 lines. Build: 0 errors.

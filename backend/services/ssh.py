@@ -130,11 +130,11 @@ class SSHConnection:
             content = await f.read()
             return content.decode("utf-8", errors="replace")
     
-    async def write_file(self, path: str, content: str):
+    async def write_file(self, path: str, content):
         """Write file contents"""
         sftp = await self.get_sftp()
-        async with sftp.open(path, "w") as f:
-            await f.write(content.encode("utf-8"))
+        async with sftp.open(path, "wb") as f:
+            await f.write(content if isinstance(content, bytes) else content.encode("utf-8"))
     
     async def delete_file(self, path: str):
         """Delete a file"""

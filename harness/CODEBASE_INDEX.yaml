@@ -1002,7 +1002,7 @@ backend_services:
   ssh.py:
     path: backend/services/ssh.py
     lines: 341
-    purpose: "Legacy SSH service — SSHConnection class, servers_cache, SFTP operations"
+    purpose: "Legacy SSH service — SSHConnection class, servers_cache, SFTP operations. write_file uses 'wb' mode and handles both str and bytes (BUG-49)."
     key_exports:
       - "servers_cache: dict[str, dict] — in-memory server cache"
       - "load_server_to_cache(server_model)"
