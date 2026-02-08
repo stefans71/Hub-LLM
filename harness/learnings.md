@@ -2137,6 +2137,12 @@ Three callbacks from Workspace to ServerManager:
 ---
 
 ### Session 40 - 2026-01-24
+**Task**: FEAT-36 (Smart pre-commit hook + /audit-index command)
+**What**: Three deliverables: (1) TEMPLATE_PRE_COMMIT_HOOK — smart hook that checks file existence in index, line count matching, duplicate detection, not just binary staged check. Blocks on missing entries, warns on mismatches. (2) TEMPLATE_AUDIT_INDEX — `/audit-index` slash command scaffolded to `.claude/commands/audit-index.md` for on-demand full audit. (3) Upgraded Hub-LLM's own `.git/hooks/pre-commit` to use the same smart logic (with `frontend/src/` and `backend/` paths).
+**Key Insight**: Had to split `git init && git add && git commit` into separate steps so the hook file can be written between init and commit. Initial commit needs `--no-verify` because the pre-commit hook would block it. Used `r"""` for the template string to avoid escaping backslashes in bash.
+
+---
+
 **Task**: FEAT-35 (Hint bubble polish)
 **What**: Replaced simple floating hint overlay with collapsible card. Added chevron toggle (collapse/expand), X button (dismiss for session), and README.md tip text. Auto-dismiss on keystroke changed to auto-collapse (hint stays accessible via collapsed indicator). `hintCollapsed` state controls collapse, `showCommandHint` controls full dismiss.
 

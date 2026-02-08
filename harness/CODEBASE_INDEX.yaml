@@ -762,9 +762,9 @@ backend_routers:
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 882
+    lines: 1042
     prefix: "/api/projects"
-    purpose: "Project CRUD with chat history and VPS folder auto-creation + harness template scaffolding (FEAT-30). TEMPLATE_GENERATE_PRP updated (FEAT-31). FK safety check on create_project — verifies vps_server_id exists before INSERT (BUG-47)"
+    purpose: "Project CRUD with chat history and VPS folder auto-creation + harness template scaffolding (FEAT-30). TEMPLATE_GENERATE_PRP updated (FEAT-31). FK safety check on create_project (BUG-47). Smart pre-commit hook + /audit-index command scaffolded (FEAT-36)"
     endpoints:
       - {method: GET, path: "/", purpose: "list all projects"}
       - {method: POST, path: "/", purpose: "create project (+ scaffold harness on VPS)"}
