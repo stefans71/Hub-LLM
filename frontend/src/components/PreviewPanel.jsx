@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   Smartphone,
   Tablet,
@@ -27,12 +27,33 @@ export default function PreviewPanel({
   const [collapsed, setCollapsed] = useState(defaultCollapsed)
   const [deviceMode, setDeviceMode] = useState('fit') // 'phone', 'tablet', 'desktop', 'fit'
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [activeUrl, setActiveUrl] = useState(previewUrl || '')
+  const [inputUrl, setInputUrl] = useState(previewUrl || '')
   const iframeRef = useRef(null)
+
+  // Sync from prop when parent sets a URL (e.g., Codespaces)
+  useEffect(() => {
+    if (previewUrl) {
+      setActiveUrl(previewUrl)
+      setInputUrl(previewUrl)
+    }
+  }, [previewUrl])
 
   const handleToggle = () => {
     const newCollapsed = !collapsed
     setCollapsed(newCollapsed)
     onCollapsedChange?.(newCollapsed)
+  }
+
+  const handleNavigate = (url) => {
+    let normalized = url.trim()
+    if (!normalized) return
+    // Add https:// if no protocol specified
+    if (!/^https?:\/\//i.test(normalized)) {
+      normalized = 'https://' + normalized
+    }
+    setActiveUrl(normalized)
+    setInputUrl(normalized)
   }
 
   const handleRefresh = () => {
@@ -45,8 +66,8 @@ export default function PreviewPanel({
   }
 
   const handleOpenInNewTab = () => {
-    if (previewUrl) {
-      window.open(previewUrl, '_blank')
+    if (activeUrl) {
+      window.open(activeUrl, '_blank')
     }
   }
 
@@ -71,9 +92,6 @@ export default function PreviewPanel({
       default: return 'Fit'
     }
   }
-
-  // Generate demo preview URL or use actual URL
-  const displayUrl = previewUrl || 'https://hubllm-live-preview.hubllm.dev/'
 
   return (
     <div
@@ -229,20 +247,28 @@ export default function PreviewPanel({
             </div>
 
             {/* URL bar */}
-            <div style={{
-              flex: 1,
-              padding: '4px 8px',
-              background: 'var(--bg-tertiary)',
-              border: '1px solid var(--border)',
-              borderRadius: '4px',
-              fontSize: '12px',
-              color: 'var(--text-secondary)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
-              {displayUrl}
-            </div>
+            <input
+              type="text"
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleNavigate(inputUrl)
+                }
+              }}
+              placeholder="Enter URL and press Enter..."
+              style={{
+                flex: 1,
+                padding: '4px 8px',
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--border)',
+                borderRadius: '4px',
+                fontSize: '12px',
+                color: 'var(--text-primary)',
+                outline: 'none',
+                fontFamily: 'inherit'
+              }}
+            />
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: '4px' }}>
@@ -250,7 +276,7 @@ export default function PreviewPanel({
                 icon={<ExternalLink size={14} />}
                 title="Open in new tab"
                 onClick={handleOpenInNewTab}
-                disabled={!previewUrl}
+                disabled={!activeUrl}
               />
               <ActionButton
                 icon={<RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />}
@@ -284,10 +310,10 @@ export default function PreviewPanel({
                 ...getFrameStyles()
               }}
             >
-              {previewUrl ? (
+              {activeUrl ? (
                 <iframe
                   ref={iframeRef}
-                  src={previewUrl}
+                  src={activeUrl}
                   style={{
                     width: '100%',
                     height: '100%',

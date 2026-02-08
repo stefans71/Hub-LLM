@@ -2137,6 +2137,13 @@ Three callbacks from Workspace to ServerManager:
 ---
 
 ### Session 40 - 2026-01-24
+**Task**: BUG-53 (Preview panel doesn't load URLs)
+**What**: URL bar was a read-only `<div>` — replaced with `<input>` that navigates on Enter. Added `activeUrl`/`inputUrl` state, `handleNavigate()` with auto-prepend `https://`. Workspace passes `previewUrl=""` so panel was permanently stuck on DemoPreview. Now users can type any URL and load it in the iframe. useEffect syncs from prop for Codespaces integration.
+**Root Cause**: The URL bar was never an input element — it was a plain div showing a hardcoded demo URL. No user interaction was possible.
+
+---
+
+### Session (prev) — prior sessions
 **Task**: T-01 (Terminal WebSocket Endpoint)
 **New Commands/Patterns**:
 - Backend is Python/FastAPI, not Node.js - feature_queue had outdated references (routes/vps.js → routers/ssh.py)

@@ -51,19 +51,19 @@
       "name": "Preview panel doesn't load URLs — web preview is non-functional",
       "size": "M",
       "priority": 3,
-      "status": "pending",
+      "status": "pending_review",
       "description": "The web preview panel to the right of the main chat terminal has a URL bar but doesn't actually load web pages. Changing the URL and pressing enter does nothing. This is a key feature for dogfooding — users need to see their live site (localhost or production) next to the chat terminal while developing. Check PreviewPanel.jsx for the iframe/webview implementation and URL handling.",
       "change": [
         "frontend/src/components/PreviewPanel.jsx: Debug why URL changes don't load. Likely an iframe src not being updated, or CSP/CORS blocking, or the component not wired up to state."
       ],
       "test": "(1) Open preview panel. (2) Enter a URL (e.g. https://example.com). (3) Page should load in the preview iframe. (4) Test with localhost URL if a dev server is running.",
-      "completion_note": "",
+      "completion_note": "Root cause: URL bar was a read-only <div>, not an <input>. Workspace.jsx passed previewUrl=\"\" so the iframe never rendered. Fix: (1) Added activeUrl/inputUrl state. (2) Replaced <div> URL bar with <input> — type URL, press Enter to navigate. (3) handleNavigate() auto-prepends https:// if no protocol. (4) iframe src bound to activeUrl. (5) useEffect syncs from previewUrl prop for Codespaces. (6) Open-in-new-tab and refresh use activeUrl. Build: vite build 0 errors. PreviewPanel.jsx 444→471 lines. Note: Many sites (Google, etc.) block iframe embedding via X-Frame-Options — this is expected browser security, not a bug. Sites like example.com or user's own localhost will load fine.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {
