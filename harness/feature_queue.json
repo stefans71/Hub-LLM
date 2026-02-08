@@ -26,6 +26,88 @@
   },
   "queue": [
     {
+      "id": "BUG-52",
+      "name": "LLM-Dev Reader tab label shows 'terminal' instead of 'Reader'; file close (X) doesn't work",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "description": "Two bugs in the LLM-Dev panel Editor/Reader tab: (1) When the reader/editor view is active (showing a file opened from the file explorer), the tab label in the LLM-Dev panel header still shows 'terminal' or the filename instead of 'Reader' or 'Editor'. The tab should reflect what's currently active. (2) Clicking the X button next to an open file (e.g. CODEBASE_INDEX.yaml) in the reader view doesn't close/remove the file. The file stays open. Expected: clicking X should close the file tab and return to empty reader state or previous file. Check CodeEditor.jsx / LLMDevPanel.jsx for the tab rendering and file close handler.",
+      "change": [
+        "frontend/src/components/LLMDevPanel.jsx: Check tab label rendering — when Editor tab is active and a file is open, the label should say 'Editor' or 'Reader', not the filename or 'terminal'.",
+        "frontend/src/components/CodeEditor.jsx: Check the file close (X) handler — onClose or similar callback should remove the file from the open files list and update state."
+      ],
+      "test": "(1) Open file explorer, click a file. (2) LLM-Dev panel should show 'Editor' tab as active with correct label. (3) Click X on the file tab — file should close. (4) Panel returns to empty state or previous view.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "BUG-53",
+      "name": "Preview panel doesn't load URLs — web preview is non-functional",
+      "size": "M",
+      "priority": 3,
+      "status": "pending",
+      "description": "The web preview panel to the right of the main chat terminal has a URL bar but doesn't actually load web pages. Changing the URL and pressing enter does nothing. This is a key feature for dogfooding — users need to see their live site (localhost or production) next to the chat terminal while developing. Check PreviewPanel.jsx for the iframe/webview implementation and URL handling.",
+      "change": [
+        "frontend/src/components/PreviewPanel.jsx: Debug why URL changes don't load. Likely an iframe src not being updated, or CSP/CORS blocking, or the component not wired up to state."
+      ],
+      "test": "(1) Open preview panel. (2) Enter a URL (e.g. https://example.com). (3) Page should load in the preview iframe. (4) Test with localhost URL if a dev server is running.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-34",
+      "name": "LLM-Dev first terminal should be independent, not mirror chat terminal",
+      "size": "M",
+      "priority": 3,
+      "status": "pending",
+      "description": "The first terminal in the LLM-Dev panel currently mirrors/emulates the main chat terminal (same SSH session). This means you have two views of the same terminal doing the same thing — not useful. The first LLM-Dev terminal should be an independent SSH session starting at /root so users can cd anywhere (e.g. to the Director directory, or run other commands). The chat terminal stays locked to the project directory — that's correct. The LLM-Dev terminals are for auxiliary work: Director sessions, watching logs, running tests, etc. Check MultiTerminal.jsx and how it initializes its first terminal vs the chat terminal.",
+      "change": [
+        "frontend/src/components/MultiTerminal.jsx: Ensure the first terminal is an independent SSH session, not a mirror of ClaudeCodeTerminalChat.",
+        "The first LLM-Dev terminal should start at /root (default SSH login dir), not auto-cd to the project directory."
+      ],
+      "test": "(1) Open workspace with chat terminal connected. (2) Open LLM-Dev panel. (3) First terminal should be a separate session (type pwd — should show /root, not the project dir). (4) Chat terminal and LLM-Dev terminal should be independent (typing in one doesn't appear in the other).",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-35",
+      "name": "Make chat terminal hint bubble dismissible",
+      "size": "XS",
+      "priority": 4,
+      "status": "pending",
+      "description": "The hint bubble in the chat terminal ('Type claude to start a new session, or claude --resume to resume') is useful on first launch but gets annoying and can't be dismissed. Two options: (1) Add an X button to dismiss it. (2) Auto-dismiss after the user starts typing or after a timeout. Could also add: 'See README.md for more commands' as a final line. Check ClaudeCodeTerminalChat.jsx for where the hint text is written (the writeln calls after SSH connect).",
+      "change": [
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx: The hint is written via xtermRef.current.writeln() — these are terminal output lines, not a dismissible overlay. Consider: (a) writing fewer lines, or (b) creating a small overlay div that can be closed with X, or (c) just clearing the terminal after user's first input."
+      ],
+      "test": "(1) Open workspace. (2) Hint appears. (3) Either X button dismisses it, or it auto-clears on first input.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
