@@ -26,29 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-29",
-      "name": "Replace workspace model selector with static Claude Code badge for subscription users",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "depends_on": "BUG-44",
-      "description": "Same issue as FEAT-28 but in the workspace. WorkspaceTopBar.jsx renders ModelSelector (line 247) unconditionally. For subscription users, this dropdown does nothing — Claude Code uses its own CLI-configured model, and the selected model is never passed to ClaudeCodeTerminalChat.\n\nWorkspaceTopBar also has dead code for subscription path: isCurrentModelPro (line 103), willUseOpenRouter (line 111), hardcoded subIds array (lines 105, 112), billing warning (line 117). All meaningless when subscription users don't pick models.\n\nFix: Same pattern as FEAT-28 on CreateProject — if the project is linked to a VPS with Claude Code (isConnected && claudeCodeStatus.installed), show a static 'Claude Code PRO' badge instead of ModelSelector. Only show ModelSelector for OpenRouter projects.\n\nRef: FEAT-28 (CreateProject badge), WorkspaceTopBar.jsx lines 247-253 (ModelSelector render), lines 103-115 (dead subscription checks).",
-      "change": [
-        "frontend/src/components/WorkspaceTopBar.jsx lines 246-254: Wrap ModelSelector in conditional. If isConnected && claudeCodeStatus.installed: render static 'Claude Code PRO' badge (same style as FEAT-28 — green dot, 'Claude Code' text, 'PRO' pill with rgba(16,185,129) colors). Else: render ModelSelector as today.",
-        "frontend/src/components/WorkspaceTopBar.jsx: Optionally clean up isCurrentModelPro (line 103) and willUseOpenRouter (line 111) — these reference hardcoded subIds and are not used when subscription users see the badge instead of ModelSelector. Low priority cleanup."
-      ],
-      "test": "Step-by-step: (1) Open workspace with a VPS-linked project (isConnected=true, Claude Code detected). Top bar should show static 'Claude Code PRO' badge, NOT the model selector dropdown. (2) Open workspace with a non-VPS project (OpenRouter). Top bar should show ModelSelector dropdown as before. (3) npm run build — 0 errors. Paste the conditional JSX from WorkspaceTopBar in completion_note.",
-      "investigation_id": null,
-      "completion_note": "Changed WorkspaceTopBar.jsx (305→329 lines). Lines 246-278: wrapped ModelSelector in conditional — `isConnected && claudeCodeStatus?.installed ?` renders static badge: <div style={{ display:'flex', alignItems:'center', gap:'10px', padding:'8px 14px', background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:'8px' }}><span style={{ color:'#10b981', fontSize:'10px' }}>●</span><span style={{ color:'var(--text-primary)', fontSize:'14px', fontWeight:500 }}>Claude Code</span><span style={{ fontSize:'11px', fontWeight:600, color:'#10b981', background:'rgba(16,185,129,0.15)', padding:'2px 8px', borderRadius:'4px', letterSpacing:'0.5px' }}>PRO</span></div>. Else: ModelSelector renders as before. Did NOT clean up isCurrentModelPro/willUseOpenRouter (low priority, still used in billing warning path for OpenRouter). Build: vite build 0 errors. CODEBASE_INDEX updated (lines 305→329, purpose, notes). Commit 74cb500 pushed to feature/harness-v2.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -60,6 +37,17 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-29",
+      "name": "Replace workspace model selector with static Claude Code badge for subscription users",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit 74cb500. Lines 246-278: isConnected && claudeCodeStatus?.installed gates static badge (same style as FEAT-28 — green dot, Claude Code text, PRO pill) vs ModelSelector. WorkspaceTopBar.jsx 305→329 lines (matches index). Dead code (isCurrentModelPro, willUseOpenRouter) left in — still used by OpenRouter billing warning, correct to keep. Build 0 errors.",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "Changed WorkspaceTopBar.jsx (305→329 lines). Lines 246-278: wrapped ModelSelector in conditional — isConnected && claudeCodeStatus?.installed renders static Claude Code PRO badge, else ModelSelector as before. Build: vite build 0 errors."
+    },
     {
       "id": "BUG-44",
       "name": "Workspace API key gate blocks subscription users — shows 'Add API Key' instead of terminal",
