@@ -95,8 +95,8 @@ frontend_pages:
 
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
-    lines: 2418
-    purpose: "5-step project creation wizard with AI-assisted brief expansion. hasClaudeCode → static 'Claude Code PRO' badge + enhance checkbox + auto-links VPS (BUG-45). No Claude Code → ModelSelector (OpenRouter only) + 'Define Project with AI' button."
+    lines: 2476
+    purpose: "5-step project creation wizard with PRP generation via OpenRouter chat (FEAT-32). 'Define Project with AI' starts PRP intake flow (calibration → discovery → PRP). Download PRP button appears when ## FEATURE + ## PHASES detected. hasClaudeCode → static badge + enhance checkbox."
     props: "{onCancel, onCreateProject}"
     imports: [ModelSelector]
     key_state:
@@ -884,9 +884,9 @@ backend_routers:
 
   ai.py:
     path: backend/routers/ai.py
-    lines: 266
+    lines: 345
     prefix: "/api/ai"
-    purpose: "AI-powered project brief expansion and interactive planning chat"
+    purpose: "AI-powered project brief expansion and interactive planning chat. PRP_SYSTEM_PROMPT for adaptive intake flow, mode param on /chat (FEAT-32)"
     endpoints:
       - {method: POST, path: "/expand-brief", purpose: "analyze brief, generate project config (openrouter, claude_direct, or claude_code_ssh)"}
       - {method: POST, path: "/chat", purpose: "continue planning conversation (SSE, all 3 providers)"}

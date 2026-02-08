@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 120 - 2026-02-08 EST
+**Task**: FEAT-32
+**What**: Wired OpenRouter PRP generation into CreateProject. Backend: added PRP_SYSTEM_PROMPT (3-phase intake adapted for chat — no file writing, outputs PRP in chat) and mode param to /api/ai/chat. Frontend: changed handleStartAIDefinition to use streaming /api/ai/chat with mode='prp' instead of /api/ai/expand-brief, so AI starts with calibration questions. handleSendChatMessage also passes mode='prp'. Added PRP detection (checks for '## FEATURE' + '## PHASES' markers) and 'Download PRP (.md)' button with Blob download. ai.py 266→345 lines, CreateProject.jsx 2418→2476 lines.
+**Key Learning**: PRP chat flow uses same streaming SSE infrastructure as refine chat — just different system prompt. PRP detection checks for section markers. Download uses Blob + createElement('a') pattern.
+
+---
+
 ### Session 119 - 2026-02-08 EST
 **Task**: FEAT-31
 **What**: Replaced TEMPLATE_GENERATE_PRP constant in projects.py with the full adaptive 3-phase intake flow from harness-template-design.md section 3. Phase 1: User Calibration (experience, terminal, OS, tech stack preference + write user profile to CLAUDE.md). Phase 2: Adaptive Project Discovery (platform, auth, DB, integrations + "you decide" tracking that stops technical questions after 2-3). Phase 3: PRP generation (two files — PRPs/[name]-prp.md for agent + docs/technical-overview.md for user). Also added 'docs' to subdirs list and 'docs/.gitkeep' to template_files. projects.py 748→870 lines.

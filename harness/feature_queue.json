@@ -53,7 +53,7 @@
       "name": "OpenRouter PRP generation in CreateProject — intake questionnaire + download .md",
       "size": "M",
       "priority": 3,
-      "status": "pending",
+      "status": "pending_review",
       "description": "Enhance CreateProject AI flow to generate a proper PRP (not just an enhanced brief). The existing flow already has: text box for brief, 'Enhance with AI' checkbox, model selector, chat back-and-forth (handleSendChatMessage at line 761 sends full conversation history to /api/ai/chat, CHAT_SYSTEM_PROMPT at ai.py line 99). What needs to change: (1) Swap system prompt — instead of 'help refine project requirements', use the generate-prp intake flow from harness/knowledge/harness-template-design.md section 3 (calibration → adaptive discovery → PRP generation). (2) After PRP is generated in the chat, detect it and offer a 'Download PRP (.md)' button. (3) The downloaded file should be the full PRP content as markdown. This is the OpenRouter Track PRP pipeline — user doesn't need a VPS. The funnel: user gets a great PRP → 'now you need somewhere to build this' → VibShip.cloud / VPS hosting. Existing chat infrastructure handles the stateless back-and-forth (frontend keeps message history, sends full array each call). ai.py CHAT_SYSTEM_PROMPT needs a PRP-mode variant. Frontend needs download button detection + handler.",
       "change": [
         "backend/routers/ai.py: Add PRP_SYSTEM_PROMPT constant with the intake questionnaire from harness/knowledge/harness-template-design.md section 3. Adapt for chat context (no file writing — output the PRP content in chat instead of writing to files).",
@@ -64,13 +64,13 @@
       ],
       "test": "Step-by-step: (1) Go to CreateProject, type a brief, check 'Enhance with AI', select an OpenRouter model. (2) AI should ask calibration questions (experience level, terminal, etc). (3) Answer questions, AI generates PRP in chat. (4) 'Download PRP (.md)' button appears below the PRP message. (5) Click download — verify .md file contains structured PRP with FEATURE, PHASES, TECH STACK sections. Paste the download button JSX and first 3 lines of PRP_SYSTEM_PROMPT in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed backend/routers/ai.py (266→345 lines): Added PRP_SYSTEM_PROMPT constant with 3-phase intake flow (calibration → discovery → PRP generation) adapted for chat context (outputs PRP in chat, no file writing). Added mode field to AIChatRequest (default 'refine'). ai_chat endpoint selects PRP_SYSTEM_PROMPT when mode='prp'. Changed frontend/src/pages/CreateProject.jsx (2418→2476 lines): Import Download from lucide-react. handleStartAIDefinition now uses streaming /api/ai/chat with mode='prp' instead of expand-brief — AI starts with calibration questions. handleSendChatMessage passes mode='prp'. PRP detection: checks msg.content for '## FEATURE' && '## PHASES'. Download button JSX: <button onClick={() => { const blob = new Blob([msg.content], { type: 'text/markdown' }); ... a.download = `${name}-prp.md` }}><Download size={14} /> Download PRP (.md)</button>. First 3 lines of PRP_SYSTEM_PROMPT: 'You are a PRP (Product Requirements Prompt) generation assistant. You create comprehensive implementation blueprints that an AI coding agent can use to build projects.' py_compile OK. Build: 0 errors. CODEBASE_INDEX updated (ai.py 266→345, CreateProject.jsx 2418→2476).",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {
