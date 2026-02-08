@@ -761,22 +761,23 @@ backend_routers:
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 364
+    lines: 748
     prefix: "/api/projects"
-    purpose: "Project CRUD with chat history and VPS folder auto-creation"
+    purpose: "Project CRUD with chat history and VPS folder auto-creation + harness template scaffolding (FEAT-30)"
     endpoints:
       - {method: GET, path: "/", purpose: "list all projects"}
-      - {method: POST, path: "/", purpose: "create project (+ mkdir on VPS)"}
+      - {method: POST, path: "/", purpose: "create project (+ scaffold harness on VPS)"}
       - {method: GET, path: "/{id}", purpose: "get specific project"}
       - {method: PATCH, path: "/{id}", purpose: "update project"}
       - {method: DELETE, path: "/{id}", purpose: "delete project"}
       - {method: GET, path: "/{id}/history", purpose: "get chat history"}
       - {method: POST, path: "/{id}/history", purpose: "add chat message"}
       - {method: DELETE, path: "/{id}/history", purpose: "clear chat history"}
-    helpers: "create_vps_project_folder(vps_server_id, slug) — SSH mkdir on VPS"
+    helpers: "create_vps_project_folder(vps_server_id, slug, name, tech_stack, brief) — SSH mkdir + scaffold 10 harness template files + git init (FEAT-30). _detect_commands(tech_stack) — returns install/start commands. _fill_template(template, vars) — replaces {{placeholders}}."
+    template_constants: "TEMPLATE_CLAUDE_MD, TEMPLATE_CLAUDE_SETTINGS, TEMPLATE_GENERATE_PRP, TEMPLATE_EXECUTE_PRP, TEMPLATE_FEATURE_QUEUE, TEMPLATE_CODEBASE_INDEX, TEMPLATE_LEARNINGS, TEMPLATE_README"
     called_by_frontend: [App.jsx, Dashboard.jsx, CreateProject.jsx, Workspace.jsx, WorkspaceFileExplorer.jsx]
     db_tables: [projects, chat_messages, vps_servers]
-    last_verified_session: 86
+    last_verified_session: 117
 
   ssh.py:
     path: backend/routers/ssh.py

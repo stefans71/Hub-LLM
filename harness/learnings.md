@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 118 - 2026-02-08 EST
+**Task**: FEAT-30
+**What**: Extended create_vps_project_folder to scaffold full harness template on VPS. Added 8 module-level template constants (CLAUDE.md, settings.json, generate-prp.md, execute-prp.md, feature_queue.json, CODEBASE_INDEX.yaml, learnings.md, README.md). Creates 5 subdirectories (.claude, .claude/commands, harness, PRPs, src), writes 10 files with {{placeholder}} substitution, then runs git init + initial commit. Added _detect_commands() for tech stack → install/start commands and _fill_template() for placeholder replacement. projects.py 364→748 lines. Python syntax: OK. Frontend build: 0 errors.
+**Key Learning**: SSH file writing via conn.write_file() is reliable for small text files. Wrap each write in its own try/except so one failure doesn't block the rest. git init is non-blocking — failure logged but doesn't fail project creation.
+
+---
+
 ### Session 117 - 2026-02-08 EST
 **Task**: BUG-46
 **What**: Replaced single 'Add API Key' welcome screen with two-card layout: API Key card (OpenRouter, blue primary button) + VPS Subscription card (Claude Code, green-tinted button). Both navigate to /settings. App.jsx 358→412 lines. Build: 0 errors.
