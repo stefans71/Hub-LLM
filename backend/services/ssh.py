@@ -142,9 +142,18 @@ class SSHConnection:
         await sftp.remove(path)
     
     async def delete_directory(self, path: str):
-        """Delete a directory"""
+        """Delete an empty directory"""
         sftp = await self.get_sftp()
         await sftp.rmdir(path)
+
+    async def delete_directory_recursive(self, path: str):
+        """Delete a directory and all contents via rm -rf. Safety: only under /root/llm-hub-projects/."""
+        SAFE_PREFIX = "/root/llm-hub-projects/"
+        if not path.startswith(SAFE_PREFIX) or path.rstrip("/") == SAFE_PREFIX.rstrip("/"):
+            raise ValueError(f"Recursive delete only allowed under {SAFE_PREFIX}")
+        stdout, stderr, exit_code = await self.run_command(f"rm -rf {path}")
+        if exit_code != 0:
+            raise RuntimeError(f"rm -rf failed: {stderr}")
     
     async def create_directory(self, path: str):
         """Create a directory"""
@@ -169,9 +178,13 @@ class SSHConnection:
         }
     
     async def delete(self, path: str, is_dir: bool = False):
-        """Delete a file or directory"""
+        """Delete a file or directory (recursive for non-empty dirs under safe prefix)"""
         if is_dir:
-            await self.delete_directory(path)
+            try:
+                await self.delete_directory(path)
+            except (OSError, Exception):
+                # rmdir failed (non-empty) — try recursive if path is under safe prefix
+                await self.delete_directory_recursive(path)
         else:
             await self.delete_file(path)
 

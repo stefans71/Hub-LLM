@@ -427,7 +427,7 @@ export default function WorkspaceFileExplorer({
       if (deleteVpsFolder && project.vps_server_id && project.slug) {
         try {
           const folderPath = `${VPS_PROJECT_BASE}/${project.slug}`
-          await fetch(`/api/files/delete?serverId=${encodeURIComponent(project.vps_server_id)}&path=${encodeURIComponent(folderPath)}`, {
+          await fetch(`/api/files/delete?serverId=${encodeURIComponent(project.vps_server_id)}&path=${encodeURIComponent(folderPath)}&is_dir=true`, {
             method: 'DELETE'
           })
         } catch (err) {

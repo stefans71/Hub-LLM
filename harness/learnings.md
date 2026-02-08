@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 126 - 2026-02-08 EST
+**Task**: BUG-50
+**What**: Fixed VPS folder delete for projects. Two bugs: (1) Frontend missing `&is_dir=true` in DELETE URL query params — backend treated folder as file. (2) `sftp.rmdir()` only works on empty dirs, fails on scaffolded projects with 10+ files. Fix: added `delete_directory_recursive` method using `rm -rf` via SSH with safety check (path must start with `/root/llm-hub-projects/` and not be the base itself). `delete()` now tries rmdir first, falls back to recursive if it fails. ssh.py 341→354, WorkspaceFileExplorer.jsx unchanged line count. py_compile OK, build 0 errors.
+**Key Learning**: SFTP `rmdir()` is like POSIX `rmdir` — only empty dirs. For non-empty project dirs, `rm -rf` via `run_command` is the simplest approach. Always add a path prefix safety check when using `rm -rf` programmatically.
+
+---
+
 ### Session 125 - 2026-02-08 EST
 **Task**: FEAT-33
 **What**: Auto-cd to project directory when terminal connects with autoStart=false. Added 3 lines in case 'connected' else branch: sends `cd /root/llm-hub-projects/${projectSlug}\n` via WebSocket before showing the hint. The autoStart=true path already had cd baked into the `claude` command (line 546). ClaudeCodeTerminalChat.jsx 1109→1113 lines. Build: 0 errors.
