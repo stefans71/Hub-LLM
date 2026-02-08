@@ -472,8 +472,8 @@ frontend_components:
 
   MultiTerminal.jsx:
     path: frontend/src/components/MultiTerminal.jsx
-    lines: 1011
-    purpose: "Split-pane terminal manager — up to 4 terminals with color coding and drag resize"
+    lines: 1004
+    purpose: "Split-pane terminal manager — up to 4 independent terminals (no auto-cd) with color coding and drag resize"
     props: "{projectId, serverId, projectSlug}"
     key_state:
       - {name: terminals, type: "useState([])", drives: "terminal instances array"}

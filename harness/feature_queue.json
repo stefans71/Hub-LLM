@@ -71,20 +71,20 @@
       "name": "LLM-Dev first terminal should be independent, not mirror chat terminal",
       "size": "M",
       "priority": 3,
-      "status": "pending",
+      "status": "pending_review",
       "description": "The first terminal in the LLM-Dev panel currently mirrors/emulates the main chat terminal (same SSH session). This means you have two views of the same terminal doing the same thing — not useful. The first LLM-Dev terminal should be an independent SSH session starting at /root so users can cd anywhere (e.g. to the Director directory, or run other commands). The chat terminal stays locked to the project directory — that's correct. The LLM-Dev terminals are for auxiliary work: Director sessions, watching logs, running tests, etc. Check MultiTerminal.jsx and how it initializes its first terminal vs the chat terminal.",
       "change": [
         "frontend/src/components/MultiTerminal.jsx: Ensure the first terminal is an independent SSH session, not a mirror of ClaudeCodeTerminalChat.",
         "The first LLM-Dev terminal should start at /root (default SSH login dir), not auto-cd to the project directory."
       ],
       "test": "(1) Open workspace with chat terminal connected. (2) Open LLM-Dev panel. (3) First terminal should be a separate session (type pwd — should show /root, not the project dir). (4) Chat terminal and LLM-Dev terminal should be independent (typing in one doesn't appear in the other).",
-      "completion_note": "",
+      "completion_note": "Removed auto-cd block from TerminalInstance in MultiTerminal.jsx (lines 92-95 deleted). Each terminal gets its own SSH channel already — the 'mirroring' was just the auto-cd to project dir. Removed unused projectSlug prop from TerminalInstance. Chat terminal (ClaudeCodeTerminalChat.jsx:282) still auto-cds to project dir. Build: vite build 0 errors. MultiTerminal.jsx 1011→1004 lines. CODEBASE_INDEX updated.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

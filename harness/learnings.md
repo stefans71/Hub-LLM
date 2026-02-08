@@ -2137,6 +2137,12 @@ Three callbacks from Workspace to ServerManager:
 ---
 
 ### Session 40 - 2026-01-24
+**Task**: FEAT-34 (Independent LLM-Dev terminals)
+**What**: Removed auto-cd to project directory from MultiTerminal's TerminalInstance. LLM-Dev terminals now start at /root (default SSH login dir) instead of mirroring the chat terminal's project dir. Removed unused `projectSlug` prop from TerminalInstance. Chat terminal (ClaudeCodeTerminalChat.jsx:282) still auto-cds to project dir — that's correct.
+**Key Insight**: Each terminal gets its own SSH channel (not shared PTY), so they were technically independent already. The "mirroring" was just the auto-cd.
+
+---
+
 **Task**: BUG-53 (Preview panel doesn't load URLs)
 **What**: URL bar was a read-only `<div>` — replaced with `<input>` that navigates on Enter. Added `activeUrl`/`inputUrl` state, `handleNavigate()` with auto-prepend `https://`. Workspace passes `previewUrl=""` so panel was permanently stuck on DemoPreview. Now users can type any URL and load it in the iframe. useEffect syncs from prop for Codespaces integration.
 **Root Cause**: The URL bar was never an input element — it was a plain div showing a hardcoded demo URL. No user interaction was possible.

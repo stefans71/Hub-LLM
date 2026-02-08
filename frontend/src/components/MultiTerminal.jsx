@@ -25,7 +25,7 @@ const TERMINAL_COLORS = [
 ]
 
 // Individual terminal instance component
-function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, isSplitPane, onStatusChange }) {
+function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onStatusChange }) {
   const terminalRef = useRef(null)
   const xtermRef = useRef(null)
   const wsRef = useRef(null)
@@ -87,11 +87,6 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, isSp
               xtermRef.current.writeln(`\x1b[32mConnected to ${message.server} (${message.host})${channelInfo}${connInfo}\x1b[0m`)
               xtermRef.current.writeln('')
               xtermRef.current.scrollToBottom()
-            }
-            // Auto-cd to project directory
-            if (projectSlug && ws.readyState === WebSocket.OPEN) {
-              const cdCommand = `cd /root/llm-hub-projects/${projectSlug}\n`
-              ws.send(JSON.stringify({ type: 'input', data: cdCommand }))
             }
             break
 
@@ -156,7 +151,7 @@ function TerminalInstance({ id, projectId, serverId, projectSlug, isActive, isSp
       setStatus('error')
       setError('WebSocket connection failed')
     }
-  }, [projectId, serverId, projectSlug, status])
+  }, [projectId, serverId, status])
 
   // Initialize xterm.js
   useEffect(() => {
@@ -684,7 +679,6 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
               id={terminal.id}
               projectId={projectId}
               serverId={serverId}
-              projectSlug={projectSlug}
               isActive={terminal.id === activeTerminalId}
               onStatusChange={handleStatusChange}
             />
@@ -801,7 +795,6 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
                   id={terminal.id}
                   projectId={projectId}
                   serverId={serverId}
-                  projectSlug={projectSlug}
                   isActive={terminal.id === activeTerminalId}
                   isSplitPane={true}
                   onStatusChange={handleStatusChange}
