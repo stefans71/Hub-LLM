@@ -39,8 +39,8 @@ frontend_entry:
 
   App.jsx:
     path: frontend/src/App.jsx
-    lines: 358
-    purpose: "Root app — routing, auth redirect, project state, setup flow control. Unauthenticated visitors see LandingPage at / with CTA to /auth. handleProjectCreated accepts options.enhance for AI enhancement redirect. enhanceMode state captured from URL, cleared after first render. Workspace gate allows VPS+Claude Code users without API keys (BUG-44)."
+    lines: 412
+    purpose: "Root app — routing, auth redirect, project state, setup flow control. Unauthenticated visitors see LandingPage at / with CTA to /auth. handleProjectCreated accepts options.enhance for AI enhancement redirect. enhanceMode state captured from URL, cleared after first render. Workspace gate allows VPS+Claude Code users without API keys (BUG-44). Dual-path welcome screen: API Key card + VPS Subscription card (BUG-46)."
     key_state:
       - {name: projects, type: "useState([])", drives: "project list across app"}
       - {name: activeProject, type: "useState(null)", drives: "currently selected project"}

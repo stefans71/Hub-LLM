@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 117 - 2026-02-08 EST
+**Task**: BUG-46
+**What**: Replaced single 'Add API Key' welcome screen with two-card layout: API Key card (OpenRouter, blue primary button) + VPS Subscription card (Claude Code, green-tinted button). Both navigate to /settings. App.jsx 358→412 lines. Build: 0 errors.
+**Key Learning**: Gate screens are the first impression for new users who haven't configured anything. When there are multiple paths to get started, the gate should present all options — not assume one.
+
+---
+
 ### Session 116 - 2026-02-08 EST
 **Task**: BUG-45
 **What**: CreateProject didn't auto-link VPS for subscription users. formData.vpsServerId started as '' and was never set from claudeCodeServer, so projects were created with vps_server_id:null. Added useEffect after line 445 that sets formData.vpsServerId when claudeCodeServer is detected. CreateProject.jsx 2411→2418 lines. Build: 0 errors.

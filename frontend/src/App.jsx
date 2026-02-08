@@ -248,19 +248,73 @@ function AppContent() {
                   />
                 ) : (
                   <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center max-w-md p-8">
-                      <h2 className="text-xl font-semibold mb-4">Welcome to HubLLM</h2>
-                      <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-                        Add your API key to get started. You can use OpenRouter for access
-                        to multiple models, or your direct Claude API key.
+                    <div style={{ textAlign: 'center', maxWidth: '640px', padding: '32px' }}>
+                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>Welcome to HubLLM</h2>
+                      <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '14px' }}>
+                        Choose how you want to use AI in your projects
                       </p>
-                      <button
-                        onClick={() => navigate('/settings')}
-                        className="px-6 py-2 rounded-lg transition"
-                        style={{ backgroundColor: 'var(--primary)' }}
-                      >
-                        Add API Key
-                      </button>
+                      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                        <div style={{
+                          flex: 1,
+                          maxWidth: '280px',
+                          padding: '24px',
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '12px',
+                          textAlign: 'left'
+                        }}>
+                          <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>API Key</div>
+                          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.5 }}>
+                            Use OpenRouter for access to multiple models. Pay per API call.
+                          </p>
+                          <button
+                            onClick={() => navigate('/settings')}
+                            style={{
+                              width: '100%',
+                              padding: '8px 16px',
+                              background: 'var(--primary)',
+                              border: 'none',
+                              borderRadius: '8px',
+                              color: '#fff',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Add API Key
+                          </button>
+                        </div>
+                        <div style={{
+                          flex: 1,
+                          maxWidth: '280px',
+                          padding: '24px',
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid rgba(16,185,129,0.2)',
+                          borderRadius: '12px',
+                          textAlign: 'left'
+                        }}>
+                          <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>VPS Subscription</div>
+                          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.5 }}>
+                            Connect your VPS with Claude Code. Use your Anthropic Pro subscription.
+                          </p>
+                          <button
+                            onClick={() => navigate('/settings')}
+                            style={{
+                              width: '100%',
+                              padding: '8px 16px',
+                              background: 'rgba(16,185,129,0.15)',
+                              border: '1px solid rgba(16,185,129,0.3)',
+                              borderRadius: '8px',
+                              color: '#10b981',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Set Up VPS
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )
