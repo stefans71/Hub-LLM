@@ -1,385 +1,284 @@
-# LLM-HUB.dev Vision & Architecture V2
+# HubLLM — Vision & Architecture V3
 
-## The Problem We're Solving
-
-**"On the go" development** - Developers and creators shouldn't be tied to their laptop. They need a web app where they can keep working on projects from any device, with AI assistance.
-
-**Accessibility** - Non-technical people and new developers should be able to use LLMs to build real software without deep technical knowledge, while pro devs get the power tools they need.
-
-**Bring Your Own Subscription** - Users shouldn't pay twice. If they have an Anthropic Pro subscription ($200/mo), they should be able to use it through LLM-HUB instead of paying per API call.
+*Updated: February 8, 2026*
 
 ---
 
-## Who Uses LLM-HUB?
+## What HubLLM Is
 
-| User Type | Technical Level | Likely Setup |
-|-----------|-----------------|--------------|
-| **Creator** | Non-technical | OpenRouter key + GitHub Codespaces |
-| **New Dev** | Learning | OpenRouter key + VPS (learning servers) |
-| **Pro Dev** | Experienced | Anthropic Pro + VPS (full control) |
+**HubLLM is a free, open, web-based developer workspace with a built-in context engineering harness.**
 
----
+It's not a Claude Code wrapper. It's not an IDE replacement. It's the **workspace layer** that sits on top of any CLI agent (claude, codex, etc.) or API (OpenRouter), keeping projects organized and agents on track.
 
-## Core Concept: Dual-Mode Chat
+### The Product in One Sentence
 
-LLM-HUB's chat window can route to **two different backends**:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     CHAT WINDOW                             │
-│                                                             │
-│  Model Selector: [Claude Opus 4.5 ▼]                        │
-│                                                             │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │ "Build me a todo app with authentication"             │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-              ┌───────────────────────────────┐
-              │   Which billing source?       │
-              └───────────────────────────────┘
-                     │                │
-         ┌───────────┘                └───────────┐
-         ▼                                        ▼
-┌─────────────────────┐              ┌─────────────────────┐
-│ OPENROUTER PATH     │              │ CLAUDE CODE PATH    │
-│                     │              │                     │
-│ Chat → Backend →    │              │ Chat → SSH → VPS →  │
-│ OpenRouter API      │              │ `claude` command    │
-│                     │              │                     │
-│ Billing: Per call   │              │ Billing: Pro sub    │
-│ Works immediately   │              │ Requires VPS setup  │
-│ Any model supported │              │ Anthropic models    │
-└─────────────────────┘              └─────────────────────┘
-```
-
-### Route Selection Logic
-
-```
-User selects a model:
-
-IF model is Anthropic (Claude Opus, Sonnet, Haiku):
-  IF Claude Code installed on connected VPS:
-    → Route to VPS (Pro subscription - flat rate)
-  ELSE:
-    → Route to OpenRouter (pay per call)
-    → Show warning if switching from Pro
-
-IF model is non-Anthropic (GPT-4, DeepSeek, etc.):
-  → Route to OpenRouter (requires API key)
-  → Show "needs API key" if not configured
-```
+> Free developer workspace + structured harness template + VPS hosting funnel.
 
 ---
 
-## Projects
+## Why HubLLM Exists
 
-A **Project** in LLM-HUB is:
+AI coding agents are powerful but undirected. They scatter files, lose context between sessions, and drift from the plan. The tools that fix this (Archon, Linear Harness, Task Master) add heavy dependencies — Docker, Supabase, external APIs.
 
-```
-Project
-├── Name & Settings (metadata)
-├── Selected Model (per-project, persisted)
-├── Billing Source (detected: Pro vs OpenRouter)
-├── Compute Environment (where code runs)
-│   ├── Option A: GitHub Codespace (free, managed)
-│   └── Option B: User's VPS (full control)
-├── Files (live on the compute environment)
-│   └── Located at: /root/llm-hub-projects/{project-slug}/
-├── Git Repository (optional but encouraged)
-└── Claude Conversations (if using Claude Code)
-    └── Can resume with `claude --resume`
-```
+HubLLM's harness is **zero-dependency and file-based**: a task queue, a codebase index, and a session learnings log. Just files on disk that any CLI agent can read. This keeps agents organized without requiring infrastructure.
+
+Meanwhile, the workspace gives users a browser-based interface to their VPS: terminal, file explorer, multi-pane layout, project management — accessible from any device.
 
 ---
 
-## Compute Options
+## Two Tracks (Tiered, Not Equal)
 
-### Option A: GitHub Codespaces (Recommended for beginners)
-- **Free tier available**
-- **Managed environment** - no server setup
-- **Sign up with GitHub** - one click to get started
-- **Limitation**: Cannot use Anthropic Pro (no persistent Linux system)
-- **Best for**: Non-tech users, learners, trying things out
+### Terminal Track — Full Development (Pro)
 
-### Option B: VPS (Digital Ocean, etc.)
-- **Full control** - install anything, configure everything
-- **Persistent** - always running, your own server
-- **Enables Anthropic Pro** - install Claude Code, use Pro subscription
-- **Production-ready** - can deploy directly on it
-- **Best for**: Pro devs, production apps, using Pro subscription
+The primary experience. User has a VPS with a CLI agent installed.
+
+```
+User creates project in HubLLM
+  → Harness template scaffolded on VPS (CLAUDE.md, queue, index, learnings)
+  → PRP/brief placed in project directory
+  → Terminal opens in workspace
+  → User types `claude` (or `codex`, or any CLI)
+  → Agent reads CLAUDE.md + feature_queue.json
+  → Agent executes tasks: implement → update index → write learnings
+  → Codebase index prevents drift — agent always knows the file structure
+```
+
+**What the user gets:**
+- Web-based terminal + file explorer + multi-pane layout
+- Structured harness that keeps agents organized
+- Project management across multiple projects
+- Works from any device (phone, tablet, laptop)
+- Model-agnostic — use any CLI agent
+
+### OpenRouter Track — Project Setup (Entry)
+
+The onramp. User has an API key, no VPS.
+
+```
+User describes their idea
+  → System asks clarifying questions
+  → Generates a PRP (Product Requirements Prompt)
+  → Output: a comprehensive implementation blueprint
+  → User downloads the PRP as .md
+  → Or: connects a VPS and feeds it to their CLI agent
+```
+
+**What the user gets:**
+- PRP/brief generation (describe idea → get actionable plan)
+- Model selector with 90+ models via OpenRouter
+- No file storage needed — output is a document stored in DB
+- User acquisition hook → leads to VPS for execution
+
+**Key insight:** OpenRouter is stateless. You can't sustain a development project through API calls alone — you need a persistent agent with context. The OpenRouter track generates the *plan*; the Terminal track *executes* it.
 
 ---
 
-## User Onboarding Flow
+## Monetization
 
-### New User Signup
-```
-┌─────────────────────────────────────────┐
-│ SIGNUP                                  │
-│ - Email/password                        │
-│ - Password: 8+ chars, 1 upper,          │
-│   1 number, 1 special                   │
-└─────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│ SETUP WIZARD                            │
-│                                         │
-│ "How do you want to access AI models?"  │
-│                                         │
-│ ┌─────────────────┐ ┌─────────────────┐ │
-│ │ OpenRouter      │ │ Anthropic Pro   │ │
-│ │ (Quick start)   │ │ (Requires VPS)  │ │
-│ └─────────────────┘ └─────────────────┘ │
-└─────────────────────────────────────────┘
-          │                     │
-          ▼                     ▼
-┌─────────────────┐   ┌─────────────────────────┐
-│ OPENROUTER PATH │   │ ANTHROPIC PRO PATH      │
-│                 │   │                         │
-│ 1. Paste key    │   │ 1. Connect VPS (SSH)    │
-│ 2. Done!        │   │ 2. Install Claude Code  │
-│                 │   │    npm i -g @anthropic  │
-│ VPS optional    │   │ 3. Run `claude login`   │
-│ (add later)     │   │    (OAuth in terminal)  │
-│                 │   │ 4. Done!                │
-└─────────────────┘   └─────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│ DASHBOARD → Create First Project        │
-└─────────────────────────────────────────┘
-```
+HubLLM itself is **free**.
+
+Revenue comes from **cloud hosting resale** — VPS services. The funnel:
+
+1. User discovers HubLLM (free tool)
+2. Generates a PRP/brief (free, uses their OpenRouter key)
+3. Realizes they need somewhere to RUN the PRP
+4. Buys VPS hosting through the integrated hosting marketplace
 
 ---
 
-## Model Selector UX
+## The Harness Template
 
-### Per-Project Model Selection
-Each project remembers its selected model:
-- Switch projects → model selector updates
-- Prevents confusion about which model you're using
-- Enables project-specific billing tracking
+The core differentiator. A scaffoldable repo structure that gets initialized on the user's VPS when they create a project.
 
-### Billing Awareness
+### Structure
+
 ```
-┌────────────────────────────────────────┐
-│ Model Selector                         │
-├────────────────────────────────────────┤
-│ ■ ANTHROPIC          ✓ PRO SUBSCRIPTION│  ← If Claude Code detected
-│   ● Claude Opus 4.5  [RECOMMENDED]     │
-│   ● Claude Sonnet 4.5                  │
-│   ● Claude 3.5 Sonnet                  │
-├────────────────────────────────────────┤
-│ ■ ANTHROPIC          VIA OPENROUTER    │  ← If no Claude Code
-│   ● Claude Opus 4.5  (paid per call)   │
-│   ● Claude Sonnet 4.5                  │
-├────────────────────────────────────────┤
-│ ■ OPENAI             ✓ API KEY ADDED   │
-│   ● GPT-4o                             │
-├────────────────────────────────────────┤
-│ ■ DEEPSEEK           ✗ NEEDS API KEY   │  ← Greyed out, click → Settings
-│   ○ DeepSeek V3                        │
-└────────────────────────────────────────┘
+project-root/
+├── CLAUDE.md                        # Project rules for CLI agent
+├── .claude/
+│   ├── settings.json                # Agent settings
+│   └── commands/
+│       ├── generate-prp.md          # /generate-prp command
+│       └── execute-prp.md           # /execute-prp command
+├── harness/
+│   ├── feature_queue.json           # Task queue (pending → in_progress → pending_review → completed)
+│   ├── CODEBASE_INDEX.yaml          # File map, component registry, bug patterns
+│   ├── learnings.md                 # Session-by-session debugging history
+│   └── knowledge/
+│       └── code-maps/               # Area-specific architecture docs
+├── PRPs/                            # Generated implementation blueprints
+├── src/                             # User's application code
+└── README.md                        # Auto-generated from PRP/brief
 ```
 
-### Billing Switch Warning
-When switching FROM Pro subscription TO OpenRouter:
+### What Makes This Different
+
+Compared to existing context engineering systems:
+
+| Feature | HubLLM Harness | Cole's Context Eng | Archon OS |
+|---------|---------------|-------------------|-----------|
+| Task tracking | feature_queue.json | N/A (single PRP) | Supabase DB |
+| Codebase awareness | CODEBASE_INDEX.yaml | examples/ folder | RAG + PGVector |
+| Session memory | learnings.md | None | Version-controlled docs |
+| Dependencies | **Zero** (files only) | Zero (files only) | Docker + Supabase |
+| Frontend | HubLLM workspace | None (CLI only) | React Todo/Doing/Done |
+
+**The killer feature is CODEBASE_INDEX.yaml.** It gives agents a deterministic map of the entire codebase — file paths, line counts, component relationships, recurring bug patterns. Without it, agents guess where things go and scatter files (observed firsthand with Archon putting components in wrong directories).
+
+### Workflow
+
+1. **PRP generated** (via OpenRouter or in CreateProject enhance flow)
+2. **Harness scaffolded** on VPS in project directory
+3. **CLAUDE.md configured** with project context, tech stack, rules
+4. **Agent reads CLAUDE.md + feature_queue.json** on startup
+5. **Agent executes tasks**: picks top pending → implements → updates index → writes learnings → sets pending_review
+6. **Codebase index prevents drift** — agent always knows the file structure
+
+### Future Automation (Incremental)
+
+- **Ralph Loop**: Auto-continue after task completion (verifyCompletion → next task)
+- **MCP server**: Task automation (mark done → start next) without Supabase — file-based
+- **Browser testing**: Puppeteer integration for automated verification
+- **Validation gates**: Explicit test requirements that must pass before task completion
+
+---
+
+## PRP (Product Requirements Prompt)
+
+Based on Rasmus Widing's framework. A PRP is:
+
+> PRD + curated codebase intelligence + agent/runbook — the minimum viable packet an AI needs to ship production-ready code on the first pass.
+
+### PRP vs PRD
+
+- **Traditional PRD**: What to build + why. Avoids how. For humans.
+- **PRP**: What + why + **how** (API endpoints, test runners, patterns, typehints, dependencies, architectural patterns). For AI agents.
+
+### PRP Template Sections
+
+1. **FEATURE** — What to build, specific functionality and requirements
+2. **EXAMPLES** — Code patterns to follow (most critical section)
+3. **DOCUMENTATION** — Relevant APIs, MCP servers, external resources
+4. **OTHER CONSIDERATIONS** — Gotchas, edge cases, things AI commonly misses
+
+### PRP Workflow in HubLLM
+
 ```
-┌─────────────────────────────────────────────┐
-│ ⚠️ Switching Billing Source                 │
-│                                             │
-│ You're switching from your Anthropic Pro    │
-│ subscription to OpenRouter, which bills     │
-│ per API call.                               │
-│                                             │
-│ [ ] Don't show this again                   │
-│                                             │
-│ [Cancel]                    [Continue]      │
-└─────────────────────────────────────────────┘
+User describes idea (CreateProject or workspace)
+  → /generate-prp: System analyzes brief, asks clarifying questions
+  → Generates PRP with phases, tasks, validation gates
+  → PRP saved to PRPs/ directory
+  → /execute-prp: Agent reads PRP, builds task plan, implements
+  → Each task validated against test requirements
+  → Iterate until all success criteria met
 ```
 
 ---
 
-## UI Architecture
+## Competitive Landscape (February 2026)
 
-### Workspace Layout
-```
-┌──────────────────────────────────────────────────────────────┐
-│  Fish Finder APP  │ Claude Sonnet 4.5 ▼ │      │Export Proj │
-├──────────┬───────────────────────────────────────────────────┤
-│WORKSPACES│                                                   │
-│          │  🤖 Hello! I'm Claude, your AI coding assistant.  │
-│▼ Personal│                                                   │
-│  ●● Fish │              CHAT AREA                            │
-│          │     (Routes to OpenRouter OR VPS)                 │
-│▶ Customer│                                                   │
-│▶ Default │  ┌─────────────────────────────────────────────┐  │
-│          │  │ + Ask Claude to build something...          │  │
-│          │  └─────────────────────────────────────────────┘  │
-│          ├───────────────────────────────────────────────────┤
-│          │ LLM-Dev │ Terminal │ Editor │ Docker │ Logs │Ctx │
-│          │ ┌─────────────────────────────────────┐ ┌───────┐ │
-│          │ │ root@droplet:~/fish-finder-app#    │ │ TERMS │ │
-│          │ │                                     │ │● bash │ │
-│          │ └─────────────────────────────────────┘ └───────┘ │
-└──────────┴───────────────────────────────────────────────────┘
-```
+| Tool | Type | Moat | HubLLM Difference |
+|------|------|------|-------------------|
+| **OpenAI Codex App** | Mac desktop | Multi-agent command center, git worktrees | Web-based (any browser), model-agnostic |
+| **Claude Code** | CLI | $1B ARR, deep Anthropic integration | Adds workspace layer + harness on top |
+| **Cursor** | Desktop IDE | AI-native editor, 360K+ paying users | Free, self-hosted, not locked to one provider |
+| **Databutton/Riff** | Hosted platform | "Describe it, we build it", $20-$700/mo | Self-hosted + free, user owns the code |
+| **Archon OS** | MCP server platform | RAG + vector search, task management | Zero dependencies, file-based, simpler |
 
-### Key UI Components
-1. **Model Selector** (top) - Per-project, shows billing source
-2. **Chat Area** (main) - Dual-mode routing based on model
-3. **LLM-Dev Panel** (bottom) - Terminal, Editor, Docker, Logs
-4. **Workspaces Sidebar** (left) - Project navigation, VPS status dots
+**Existential risk**: If Anthropic or OpenAI ship native desktop apps with built-in VM, file explorer, and project management, the *workspace* features become commodity. The *harness template* and *web-based model-agnostic access* are the lasting differentiators.
 
 ---
 
-## Technical Architecture
+## Architecture
+
+### Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React (Vite), port 5173 |
+| Backend | Python (FastAPI), port 8000 |
+| Database (dev) | SQLite (`backend/hubllm.db`) |
+| Database (prod) | Postgres 16 via Docker |
+| Cache | Redis 7 |
+| Deployment | Docker Compose → Coolify → Traefik → `https://www.hubllm.dev` |
 
 ### Data Flow
+
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ FRONTEND (React)                                            │
-│                                                             │
-│ localStorage:                                               │
-│ ├── vps_servers[] - VPS configs (PRIMARY SOURCE)            │
-│ ├── api_keys - OpenRouter key                               │
-│ └── user_settings                                           │
-│                                                             │
-│ State:                                                      │
-│ ├── selectedModel (per project)                             │
-│ ├── billingSource (detected: 'pro' | 'openrouter')          │
-│ └── claudeCodeStatus (detected on VPS connect)              │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│ BACKEND (FastAPI)                                           │
-│                                                             │
-│ SQLite (hubllm.db):                                         │
-│ ├── projects - metadata, selected_model, vps_server_id      │
-│ ├── vps_servers - synced from localStorage                  │
-│ ├── users - auth                                            │
-│ └── chat_messages - history (OpenRouter path only)          │
-│                                                             │
-│ In-memory:                                                  │
-│ ├── SSH connections - WebSocket to VPS                      │
-│ └── servers_cache - loaded from DB                          │
-└─────────────────────────────────────────────────────────────┘
-                              │
-          ┌───────────────────┴───────────────────┐
-          ▼                                       ▼
-┌─────────────────────┐              ┌─────────────────────────┐
-│ OPENROUTER API      │              │ USER'S VPS              │
-│                     │              │                         │
-│ - Any model         │              │ Claude Code installed   │
-│ - Pay per call      │              │ - `claude` command      │
-│ - Chat history      │              │ - Conversations stored  │
-│   stored in DB      │              │   on VPS                │
-│                     │              │ - `claude --resume`     │
-└─────────────────────┘              └─────────────────────────┘
+localStorage (persistent, source of truth)
+├── vps_servers[]              # VPS configs + Claude Code detection
+├── api_keys (openrouter)      # API key for OpenRouter
+└── user_settings              # Preferences
+
+Backend (synced from localStorage)
+├── hubllm.db / Postgres       # Users, projects, chat history
+├── SSH connections (WebSocket) # Live terminal sessions
+└── servers_cache (in-memory)   # Loaded from DB
 ```
 
-### Claude Code Detection
-On VPS connect, backend runs:
-```bash
-which claude         # Check if installed
-claude --version     # Verify working
-```
+### Component Map
 
-Results stored in connection state, updates model selector.
+```
+App.jsx
+├── HeaderNavigation.jsx
+├── LandingPage.jsx                # Unauthenticated users
+├── AuthPage.jsx / AuthCallback.jsx
+├── Setup.jsx                      # Onboarding wizard
+├── Dashboard + DashboardSidebar
+├── Workspace.jsx                  # Main orchestrator
+│   ├── WorkspaceTopBar.jsx        # Claude Code badge or model selector
+│   ├── WorkspaceIconSidebar.jsx
+│   ├── WorkspaceFileExplorer.jsx
+│   ├── Chat.jsx                   # Routes: OpenRouter OR ClaudeCodeTerminalChat
+│   │   └── ClaudeCodeTerminalChat.jsx  # xterm.js terminal for CLI agent
+│   ├── PreviewPanel.jsx
+│   └── LLMDevPanel.jsx            # Bottom panel
+│       ├── MultiTerminal.jsx      # Split-pane terminals
+│       ├── CodeEditor.jsx
+│       └── FileBrowser.jsx
+├── Settings.jsx                   # ~4600 lines
+└── CreateProject.jsx              # 5-step wizard with PRP/enhance
+```
 
 ---
 
-## Current State (January 2026)
+## Development System
 
-### Working ✅
-- Project creation and management
-- VPS connection (SSH via Settings)
-- Terminal (WebSocket to VPS, multi-pane)
-- File explorer (VPS files, project-scoped)
-- Chat interface with OpenRouter
-- Model selector with API key detection
-- Image drop/paste in chat
-- LLM-Dev panel (drag resize, tabs)
+### Director / Engineer Pattern
 
-### In Progress 🔧 (Queue v5.0)
-- Password validation (AUTH-01)
-- Claude Code detection (CLAUDE-01)
-- Per-project model persistence (MODEL-01)
-- Chat routing to Claude Code (CLAUDE-02)
+Two Claude instances coordinate via shared files:
 
-### Planned 📋
-- Billing source warnings (MODEL-02, MODEL-03)
-- Setup wizard for new users (ONBOARD-01)
-- Claude conversation resume (CLAUDE-03)
-- GitHub Codespaces integration
+- **Director** (Claude A, `/root/dev/Claude-Project_Director/`) — Architect, planner, queue manager. Reads code, writes tasks, reviews work. Never writes application code.
+- **Engineer** (Claude B, `/root/dev/Hub-LLM/`) — Implements tasks from `feature_queue.json`. Commits, pushes, updates index and learnings.
 
-### Not Started 📋
-- GitHub OAuth signup
-- Codespaces create/connect
-- One-click deploy to Vercel/Netlify
-- Bot protection (CAPTCHA)
+### Shared Files
 
----
-
-## Development Workflow
-
-### Two Claudes System
-- **Claude A** (claude.ai) - Architect, planner, queue manager
-- **Claude B** (Claude Code in terminal) - Developer, implements tasks
-
-### Key Files
 ```
-/workspaces/Hub-LLM/
-├── CLAUDE.md                    # Claude B auto-reads (rules, patterns)
-├── harness/
-│   ├── feature_queue.json       # Current tasks
-│   ├── learnings.md             # Session history
-│   ├── TERMINAL_WORKSPACE.md    # Terminal code patterns
-│   └── LLM-HUB-Vision-V2.md     # This file
-└── .claude/skills/              # Project-specific skills
+/root/dev/Hub-LLM/harness/
+├── feature_queue.json      # Task queue (Director writes, Engineer reads)
+├── CODEBASE_INDEX.yaml     # Full codebase map (Engineer maintains)
+├── learnings.md            # 90+ sessions of debugging history
+└── knowledge/code-maps/    # Area-specific architecture docs
 ```
 
-### Task Sizing
-| Size | Time | Scope | Per Session |
-|------|------|-------|-------------|
-| XS | <30 min | Single file | Multiple OK |
-| S | 30-60 min | Few files | Multiple OK |
-| M | 1-2 hours | Complex | ONE only |
-| L | 2+ hours | Major | ONE only, stop after |
+### Workflow
 
----
-
-## Future Roadmap
-
-### Phase 1: Pro Subscription Support (Current)
-- Route chat to Claude Code on VPS
-- Detect and display billing source
-- Per-project model selection
-
-### Phase 2: Onboarding
-- Setup wizard for new users
-- Guided Claude Code installation
-- OpenRouter quick-start path
-
-### Phase 3: Codespaces
-- GitHub OAuth integration
-- Create/list Codespaces
-- Connect to Codespace (SSH tunnel)
-
-### Phase 4: Deployment
-- One-click deploy to Vercel/Netlify
-- GitHub integration for version control
-- Deploy status in UI
+1. Director reads code, identifies need
+2. Director writes task to `feature_queue.json` with file paths, line numbers, learnings refs
+3. Engineer reads task, implements, updates index, writes learnings
+4. Engineer sets status to `pending_review`
+5. Director reviews commit diff, verifies index, moves to `completed[]`
+6. Director merges to `main` → Coolify auto-deploys
 
 ---
 
 ## Notes for Development
 
-1. **localStorage is source of truth** for VPS servers
+1. **localStorage is source of truth** for VPS servers (synced to backend)
 2. **Projects map to folders** at `/root/llm-hub-projects/{slug}/`
-3. **One terminal** in LLM-Dev panel (not duplicated elsewhere)
-4. **Model selection is per-project**, not global
-5. **Claude Code conversations live on VPS**, not in our DB
-6. **Test with page refresh** - persistence is critical
+3. **Model selection is per-project**, not global
+4. **Claude Code conversations live on VPS**, not in our DB
+5. **Subscription users see static "Claude Code PRO" badge**, not model dropdown
+6. **Test with page refresh** — persistence is critical
+7. **Never `docker restart` Coolify containers** — use Coolify dashboard or `git push`
+8. **Every Postgres schema change needs a migration** — `create_all()` doesn't add columns
