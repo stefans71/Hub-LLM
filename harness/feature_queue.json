@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-08T12:00",
+  "updated": "2026-02-08T14:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,48 @@
     }
   },
   "queue": [
+    {
+      "id": "BUG-45",
+      "name": "CreateProject doesn't auto-link VPS for subscription users — workspace routes to OpenRouter",
+      "size": "XS",
+      "priority": 1,
+      "status": "pending",
+      "description": "When hasClaudeCode is true (subscription user with Claude Code on VPS), CreateProject detects the server correctly (claudeCodeServer useMemo at line 441) and shows the PRO badge (FEAT-28). But formData.vpsServerId starts as '' (line 395) and is NEVER auto-populated from claudeCodeServer. The user doesn't manually select a VPS (the dropdown is in the connection section, below the fold). So the project POST sends vps_server_id: null (line 1110: formData.vpsServerId || null). Workspace receives project with no vps_server_id → linkedServerId=null → no auto-connect → claudeCodeStatus stays {authenticated:false} → Chat.jsx useClaudeCodeTerminal=false → OpenRouter chat renders instead of terminal. Full chain: CreateProject line 395 (vpsServerId:'') → line 1110 (null) → Workspace line 64 (linkedServerId=null) → line 102 (auto-connect skips) → line 51 (claudeCodeStatus stays false) → Chat.jsx line 27 (serverId falsy → useClaudeCodeTerminal=false).",
+      "change": [
+        "frontend/src/pages/CreateProject.jsx: Add useEffect after line 445 that auto-sets formData.vpsServerId when claudeCodeServer is detected: useEffect(() => { if (claudeCodeServer?.id) { setFormData(prev => ({ ...prev, vpsServerId: claudeCodeServer.id })) } }, [claudeCodeServer])"
+      ],
+      "test": "Step-by-step: (1) Have a VPS with Claude Code set up in Settings. (2) Go to Create Project. (3) Fill in name, do NOT manually select VPS from connection section. (4) Click Create Project. (5) Workspace should show Claude Code terminal, NOT OpenRouter chat. Paste the project object from the API response (check vps_server_id is not null) in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "BUG-46",
+      "name": "Workspace gate only shows 'Add API Key' — needs dual-path: API key OR VPS subscription",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "App.jsx lines 250-265: When a user has neither hasApiKey nor hasVpsAccess, the workspace gate shows 'Welcome to HubLLM — Add your API key to get started' with a single 'Add API Key' button to /settings. This ignores the subscription/VPS path entirely. Users who want to use Claude Code via VPS (subscription) have no guidance. Should show two options: (1) Set up API Key (OpenRouter — pay per call), (2) Set up VPS Connection (Claude Code subscription). Both should navigate to Settings but to the appropriate section.",
+      "change": [
+        "frontend/src/App.jsx lines 250-265: Replace single 'Add API Key' message with two-card layout. Card 1: 'API Key' — OpenRouter description, button → /settings. Card 2: 'VPS Subscription' — Claude Code description, button → /settings. Use same styling patterns as the rest of the app (var(--bg-secondary), var(--primary), etc). Keep it simple — two cards side by side or stacked."
+      ],
+      "test": "Step-by-step: (1) Clear localStorage (no API keys, no VPS servers). (2) Create a project. (3) After creation, workspace should show two options (API Key / VPS), not just 'Add API Key'. (4) Each button navigates to Settings. Paste screenshot or describe the rendered UI in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
     {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
