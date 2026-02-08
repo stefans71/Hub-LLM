@@ -26,6 +26,50 @@
   },
   "queue": [
     {
+      "id": "BUG-51",
+      "name": "Workspace file explorer shows 'No projects yet' despite projects existing in DB",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "WorkspaceFileExplorer.jsx shows 'No projects yet' in the left sidebar even though GET /api/projects/ returns 3 projects (confirmed via curl). The component fetches at line 77 with auth headers (getAuthHeader()). The endpoint at projects.py line 689 has NO auth dependency — it returns all projects without auth. Possible causes: (1) The auth header middleware rejects the request before it reaches the endpoint (401). (2) The 5-second AbortController timeout (line 74) fires before the response arrives. (3) The workspace loads the file explorer before the project is created (timing — fetches on mount, line 63). The file explorer does NOT re-fetch when a new project is created. Fix options: (a) Add a refresh trigger when workspace loads a project. (b) Re-fetch projects when the component becomes visible. (c) Check if getAuthHeader() is sending a malformed token that triggers middleware rejection. Test by opening browser DevTools Network tab and checking the /api/projects/ request status.",
+      "change": [
+        "frontend/src/components/WorkspaceFileExplorer.jsx: Debug the loadProjects fetch — add console.log for response status and data. Check if getAuthHeader() is causing a 401.",
+        "frontend/src/components/WorkspaceFileExplorer.jsx: Add a re-fetch when the active project changes or when the panel becomes visible (could use a projectId prop or visibility observer).",
+        "frontend/src/components/WorkspaceFileExplorer.jsx: If auth header is the issue, try fetching without auth headers (endpoint doesn't require them)."
+      ],
+      "test": "Step-by-step: (1) Open workspace for any project. (2) File explorer sidebar should list all projects grouped by workspace. (3) Projects with VPS linked should show expandable file tree. (4) Create a new project — file explorer should update to show it without page refresh.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-33",
+      "name": "Terminal auto-cd to project directory when workspace opens",
+      "size": "XS",
+      "priority": 3,
+      "status": "pending",
+      "description": "When the workspace opens a terminal for a project that has a VPS linked, the terminal starts in /root (the default SSH login dir). Users have to manually type 'cd /root/llm-hub-projects/{slug}' before they can run claude or /generate-prp. This is especially bad for non-technical users. Fix: when the terminal SSH session starts for a project with vps_server_id, auto-send 'cd /root/llm-hub-projects/{slug}' as the first command. The project slug is available from the project data. Could also show a visual hint with the cd command if auto-cd isn't possible.",
+      "change": [
+        "Identify where the terminal SSH session is initialized for a project workspace — likely in Workspace.jsx or ClaudeCodeTerminalChat.jsx or terminal.py.",
+        "After SSH connection established, auto-send: cd /root/llm-hub-projects/{project.slug}\\n",
+        "Alternative: show a copyable banner at the top of the terminal with the cd command."
+      ],
+      "test": "Step-by-step: (1) Create a project with VPS linked. (2) Open workspace. (3) Terminal should start in /root/llm-hub-projects/{slug}/ (verify with pwd). (4) User can immediately type 'claude' and /generate-prp is available.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "BUG-50",
       "name": "Delete project VPS folder fails — missing is_dir param + rmdir can't delete non-empty dirs",
       "size": "S",
