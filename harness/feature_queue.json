@@ -49,6 +49,31 @@
       }
     },
     {
+      "id": "FEAT-32",
+      "name": "OpenRouter PRP generation in CreateProject — intake questionnaire + download .md",
+      "size": "M",
+      "priority": 3,
+      "status": "pending",
+      "description": "Enhance CreateProject AI flow to generate a proper PRP (not just an enhanced brief). The existing flow already has: text box for brief, 'Enhance with AI' checkbox, model selector, chat back-and-forth (handleSendChatMessage at line 761 sends full conversation history to /api/ai/chat, CHAT_SYSTEM_PROMPT at ai.py line 99). What needs to change: (1) Swap system prompt — instead of 'help refine project requirements', use the generate-prp intake flow from harness/knowledge/harness-template-design.md section 3 (calibration → adaptive discovery → PRP generation). (2) After PRP is generated in the chat, detect it and offer a 'Download PRP (.md)' button. (3) The downloaded file should be the full PRP content as markdown. This is the OpenRouter Track PRP pipeline — user doesn't need a VPS. The funnel: user gets a great PRP → 'now you need somewhere to build this' → VibShip.cloud / VPS hosting. Existing chat infrastructure handles the stateless back-and-forth (frontend keeps message history, sends full array each call). ai.py CHAT_SYSTEM_PROMPT needs a PRP-mode variant. Frontend needs download button detection + handler.",
+      "change": [
+        "backend/routers/ai.py: Add PRP_SYSTEM_PROMPT constant with the intake questionnaire from harness/knowledge/harness-template-design.md section 3. Adapt for chat context (no file writing — output the PRP content in chat instead of writing to files).",
+        "backend/routers/ai.py /api/ai/chat endpoint (~line 220): Accept a mode param ('refine' or 'prp'). If mode='prp', use PRP_SYSTEM_PROMPT instead of CHAT_SYSTEM_PROMPT.",
+        "frontend/src/pages/CreateProject.jsx handleSendChatMessage (~line 761): When 'Enhance with AI' is checked, pass mode='prp' to the chat endpoint.",
+        "frontend/src/pages/CreateProject.jsx: Add PRP detection in chat responses — when the assistant's message contains '## FEATURE' and '## PHASES' (PRP markers), show a 'Download PRP (.md)' button below the message.",
+        "frontend/src/pages/CreateProject.jsx: Download handler — creates a Blob from the PRP content, triggers browser download as [project-name]-prp.md."
+      ],
+      "test": "Step-by-step: (1) Go to CreateProject, type a brief, check 'Enhance with AI', select an OpenRouter model. (2) AI should ask calibration questions (experience level, terminal, etc). (3) Answer questions, AI generates PRP in chat. (4) 'Download PRP (.md)' button appears below the PRP message. (5) Click download — verify .md file contains structured PRP with FEATURE, PHASES, TECH STACK sections. Paste the download button JSX and first 3 lines of PRP_SYSTEM_PROMPT in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
