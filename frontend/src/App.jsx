@@ -151,6 +151,12 @@ function AppContent() {
   }
 
   const hasApiKey = apiKeys.openrouter || apiKeys.claude
+  const hasVpsAccess = (() => {
+    try {
+      const servers = JSON.parse(localStorage.getItem('vps_servers') || '[]')
+      return servers.some(s => s.claudeCodeDetected && s.lastTestSuccess)
+    } catch { return false }
+  })()
 
   // Determine current view based on route
   const currentView = location.pathname.replace('/', '') || 'dashboard'
@@ -228,7 +234,7 @@ function AppContent() {
             <Route
               path="/workspace"
               element={
-                hasApiKey ? (
+                (hasApiKey || hasVpsAccess) ? (
                   <Workspace
                     project={activeProject}
                     model={selectedModel}

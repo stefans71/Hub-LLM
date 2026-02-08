@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 114 - 2026-02-08 EST
+**Task**: BUG-44
+**What**: Workspace route gate in App.jsx blocked subscription users who have no API keys. Added hasVpsAccess check (IIFE that reads localStorage vps_servers for any server with claudeCodeDetected+lastTestSuccess). Gate changed from `hasApiKey ?` to `(hasApiKey || hasVpsAccess) ?`. App.jsx 352→358 lines. Build: 0 errors.
+**Key Learning**: Route-level gates written early in a project's life often assume a single access path. When adding alternative access methods (VPS/subscription vs API key), audit all gates — not just the feature-level code.
+
+---
+
 ### Session 113 - 2026-02-08 EST
 **Task**: FEAT-28
 **What**: Replaced subscription model dropdown with static 'Claude Code PRO' badge on CreateProject. Removed SUBSCRIPTION_MODELS import and isSubscriptionModel derived const — the conditional now checks hasClaudeCode directly (VPS detection, not model tier). When hasClaudeCode: green badge (● Claude Code PRO) + enhance checkbox. When no Claude Code: ModelSelector with showSubscriptionModels={false} + 'Define Project with AI' button. Default model reverted to OpenRouter format ('anthropic/claude-sonnet-4'). Build: 0 errors (2411 lines).

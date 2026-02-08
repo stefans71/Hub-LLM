@@ -39,14 +39,15 @@ frontend_entry:
 
   App.jsx:
     path: frontend/src/App.jsx
-    lines: 352
-    purpose: "Root app — routing, auth redirect, project state, setup flow control. Unauthenticated visitors see LandingPage at / with CTA to /auth. handleProjectCreated accepts options.enhance for AI enhancement redirect. enhanceMode state captured from URL, cleared after first render."
+    lines: 358
+    purpose: "Root app — routing, auth redirect, project state, setup flow control. Unauthenticated visitors see LandingPage at / with CTA to /auth. handleProjectCreated accepts options.enhance for AI enhancement redirect. enhanceMode state captured from URL, cleared after first render. Workspace gate allows VPS+Claude Code users without API keys (BUG-44)."
     key_state:
       - {name: projects, type: "useState([])", drives: "project list across app"}
       - {name: activeProject, type: "useState(null)", drives: "currently selected project"}
       - {name: selectedModel, type: "useState('anthropic/claude-sonnet-4')", drives: "global model fallback"}
       - {name: setupComplete, type: "useState(null)", drives: "setup wizard redirect — null=loading, true=done, false=show wizard"}
       - {name: apiKeys, type: "useState({openrouter,claude,github})", drives: "API key availability"}
+      - {name: hasVpsAccess, type: "IIFE", drives: "boolean — any VPS with claudeCodeDetected+lastTestSuccess in localStorage (BUG-44)"}
       - {name: enhanceMode, type: "useState(() => searchParams.get('enhance') === 'true')", drives: "one-shot flag for AI enhance banner in workspace (FEAT-25)"}
     api_calls:
       - {endpoint: "/api/projects/", method: GET, purpose: "load all projects"}
