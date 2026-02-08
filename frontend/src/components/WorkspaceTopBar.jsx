@@ -242,15 +242,39 @@ export default function WorkspaceTopBar({
         </button>
       </div>
 
-      {/* W-11 to W-28: Model Selector */}
+      {/* W-11 to W-28: Model Selector or Claude Code badge */}
       {!collapsed && (
-        <ModelSelector
-          value={selectedModelValue}
-          onChange={handleModelChange}
-          apiKeys={apiKeys}
-          claudeCodeStatus={claudeCodeStatus}
-          isConnected={isConnected}
-        />
+        isConnected && claudeCodeStatus?.installed ? (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '8px 14px',
+            background: 'rgba(16,185,129,0.1)',
+            border: '1px solid rgba(16,185,129,0.2)',
+            borderRadius: '8px'
+          }}>
+            <span style={{ color: '#10b981', fontSize: '10px' }}>●</span>
+            <span style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: 500 }}>Claude Code</span>
+            <span style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#10b981',
+              background: 'rgba(16,185,129,0.15)',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              letterSpacing: '0.5px'
+            }}>PRO</span>
+          </div>
+        ) : (
+          <ModelSelector
+            value={selectedModelValue}
+            onChange={handleModelChange}
+            apiKeys={apiKeys}
+            claudeCodeStatus={claudeCodeStatus}
+            isConnected={isConnected}
+          />
+        )
       )}
 
       {/* W-29: Export Button */}

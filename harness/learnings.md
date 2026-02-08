@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 115 - 2026-02-08 EST
+**Task**: FEAT-29
+**What**: Replaced workspace model selector with static 'Claude Code PRO' badge for subscription users. WorkspaceTopBar.jsx lines 246-254: wrapped ModelSelector in conditional — when isConnected && claudeCodeStatus?.installed, renders badge (same style as FEAT-28: green dot + 'Claude Code' + PRO pill). Otherwise renders ModelSelector as before. WorkspaceTopBar.jsx 305→329 lines. Build: 0 errors.
+**Key Learning**: Same badge pattern used in both CreateProject (FEAT-28) and WorkspaceTopBar (FEAT-29). If a third location needs it, extract to a shared component. For now, inline duplication is fine — only 2 uses.
+
+---
+
 ### Session 114 - 2026-02-08 EST
 **Task**: BUG-44
 **What**: Workspace route gate in App.jsx blocked subscription users who have no API keys. Added hasVpsAccess check (IIFE that reads localStorage vps_servers for any server with claudeCodeDetected+lastTestSuccess). Gate changed from `hasApiKey ?` to `(hasApiKey || hasVpsAccess) ?`. App.jsx 352→358 lines. Build: 0 errors.

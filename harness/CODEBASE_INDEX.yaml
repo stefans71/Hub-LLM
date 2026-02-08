@@ -430,8 +430,8 @@ frontend_components:
 
   WorkspaceTopBar.jsx:
     path: frontend/src/components/WorkspaceTopBar.jsx
-    lines: 305
-    purpose: "Top bar — project name, collapse toggle, model selector (via ModelSelector), export button, billing warnings"
+    lines: 329
+    purpose: "Top bar — project name, collapse toggle, model selector OR Claude Code PRO badge (FEAT-29), export button, billing warnings. When isConnected && claudeCodeStatus.installed → static badge, else → ModelSelector dropdown."
     props: "{project, model, onModelChange, onExport, linkedServerId, isConnected, onClaudeCodeStatusChange}"
     key_state:
       - {name: showBillingWarning, type: useState, drives: "billing switch modal"}
@@ -445,8 +445,8 @@ frontend_components:
       - {key: openrouter_key, direction: read}
       - {key: hide_billing_switch_warning, direction: both}
     children: [ModelSelector, ModelNotification]
-    notes: "FEAT-21: Model selector extracted to ModelSelector.jsx. WorkspaceTopBar now handles billing warning intercepts and Claude Code detection, delegates dropdown UI to ModelSelector."
-    last_verified_session: 101
+    notes: "FEAT-29: When VPS connected with Claude Code, shows static 'Claude Code PRO' badge instead of ModelSelector. ModelSelector only renders for OpenRouter projects."
+    last_verified_session: 115
 
   LLMDevPanel.jsx:
     path: frontend/src/components/LLMDevPanel.jsx
