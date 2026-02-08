@@ -52,7 +52,7 @@
       "name": "Terminal auto-cd to project directory when workspace opens",
       "size": "XS",
       "priority": 3,
-      "status": "pending",
+      "status": "pending_review",
       "description": "When the workspace opens a terminal for a project that has a VPS linked, the terminal starts in /root (the default SSH login dir). Users have to manually type 'cd /root/llm-hub-projects/{slug}' before they can run claude or /generate-prp. This is especially bad for non-technical users. Fix: when the terminal SSH session starts for a project with vps_server_id, auto-send 'cd /root/llm-hub-projects/{slug}' as the first command. The project slug is available from the project data. Could also show a visual hint with the cd command if auto-cd isn't possible.",
       "change": [
         "Identify where the terminal SSH session is initialized for a project workspace — likely in Workspace.jsx or ClaudeCodeTerminalChat.jsx or terminal.py.",
@@ -60,13 +60,13 @@
         "Alternative: show a copyable banner at the top of the terminal with the cd command."
       ],
       "test": "Step-by-step: (1) Create a project with VPS linked. (2) Open workspace. (3) Terminal should start in /root/llm-hub-projects/{slug}/ (verify with pwd). (4) User can immediately type 'claude' and /generate-prp is available.",
-      "completion_note": "",
+      "completion_note": "Changed ClaudeCodeTerminalChat.jsx (1109→1113 lines). In case 'connected' handler, else branch (autoStart=false, line 279): added WebSocket send of `cd /root/llm-hub-projects/${projectSlug}\\n` before showing the hint text. Guards on projectSlug truthy and wsRef open. The autoStart=true path already had cd baked into the startClaudeCode command (line 546). Build: vite build 0 errors. CODEBASE_INDEX updated (lines 1109→1113, purpose).",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

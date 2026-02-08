@@ -277,6 +277,10 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
               }
               startClaudeCode()
             } else {
+              // FEAT-33: Auto-cd to project directory
+              if (projectSlug && wsRef.current?.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({ type: 'input', data: `cd /root/llm-hub-projects/${projectSlug}\n` }))
+              }
               if (xtermRef.current) {
                 xtermRef.current.writeln('\x1b[36mType "claude" to start a new session, or "claude --resume" to resume a previous one.\x1b[0m')
                 xtermRef.current.writeln('')

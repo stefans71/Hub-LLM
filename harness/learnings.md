@@ -4,6 +4,12 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 125 - 2026-02-08 EST
+**Task**: FEAT-33
+**What**: Auto-cd to project directory when terminal connects with autoStart=false. Added 3 lines in case 'connected' else branch: sends `cd /root/llm-hub-projects/${projectSlug}\n` via WebSocket before showing the hint. The autoStart=true path already had cd baked into the `claude` command (line 546). ClaudeCodeTerminalChat.jsx 1109→1113 lines. Build: 0 errors.
+
+---
+
 ### Session 124 - 2026-02-08 EST
 **Task**: BUG-51
 **What**: Fixed WorkspaceFileExplorer showing 'No projects yet' despite projects existing. Root cause: loadProjects only ran on mount (useEffect with []), never re-fetched when navigating to workspace or creating a new project. Fix: split useEffect into two — one for loadProjects with [currentProject?.id] dependency (re-fetches when active project changes), one for loadServerStatuses polling with []. WorkspaceFileExplorer.jsx 1079→1082 lines. Build: 0 errors.

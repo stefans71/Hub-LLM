@@ -341,8 +341,8 @@ frontend_components:
 
   ClaudeCodeTerminalChat.jsx:
     path: frontend/src/components/ClaudeCodeTerminalChat.jsx
-    lines: 1109
-    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, no auto-start (floating hint overlay)"
+    lines: 1113
+    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, no auto-start (floating hint overlay), auto-cd to project dir on connect (FEAT-33)"
     props: "{project, serverId, projectSlug, onProcessingChange, enhanceWithAI, autoStart}"
     key_state:
       - {name: messages, type: "useState([])", drives: "parsed chat bubbles"}
