@@ -30,20 +30,20 @@
       "name": "Workspace gate only shows 'Add API Key' — needs dual-path: API key OR VPS subscription",
       "size": "S",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
       "description": "App.jsx lines 250-265: When a user has neither hasApiKey nor hasVpsAccess, the workspace gate shows 'Welcome to HubLLM — Add your API key to get started' with a single 'Add API Key' button to /settings. This ignores the subscription/VPS path entirely. Users who want to use Claude Code via VPS (subscription) have no guidance. Should show two options: (1) Set up API Key (OpenRouter — pay per call), (2) Set up VPS Connection (Claude Code subscription). Both should navigate to Settings but to the appropriate section.",
       "change": [
         "frontend/src/App.jsx lines 250-265: Replace single 'Add API Key' message with two-card layout. Card 1: 'API Key' — OpenRouter description, button → /settings. Card 2: 'VPS Subscription' — Claude Code description, button → /settings. Use same styling patterns as the rest of the app (var(--bg-secondary), var(--primary), etc). Keep it simple — two cards side by side or stacked."
       ],
       "test": "Step-by-step: (1) Clear localStorage (no API keys, no VPS servers). (2) Create a project. (3) After creation, workspace should show two options (API Key / VPS), not just 'Add API Key'. (4) Each button navigates to Settings. Paste screenshot or describe the rendered UI in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed App.jsx (358→412 lines). Lines 250-319: replaced single 'Add API Key' message with two-card layout in a flex row. Card 1: 'API Key' — 'Use OpenRouter for access to multiple models. Pay per API call.' — blue primary button 'Add API Key' → /settings. Card 2: 'VPS Subscription' — 'Connect your VPS with Claude Code. Use your Anthropic Pro subscription.' — green-tinted button 'Set Up VPS' with rgba(16,185,129) border → /settings. Cards are flex:1 maxWidth:280px with var(--bg-secondary) background, 12px borderRadius. VPS card has green border (rgba(16,185,129,0.2)). Header: 'Welcome to HubLLM' + 'Choose how you want to use AI in your projects'. Build: vite build 0 errors. CODEBASE_INDEX updated (lines 358→412, purpose). Commit e44a3ce pushed to feature/harness-v2.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
-        "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
       }
     },
     {
