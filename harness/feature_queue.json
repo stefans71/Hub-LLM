@@ -26,6 +26,28 @@
   },
   "queue": [
     {
+      "id": "BUG-50",
+      "name": "Delete project VPS folder fails — missing is_dir param + rmdir can't delete non-empty dirs",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "When user deletes a project with 'Also delete VPS folder' checked, the folder stays on disk. Two bugs: (1) Frontend WorkspaceFileExplorer.jsx line 427 calls DELETE /api/files/delete without is_dir=true, so backend treats it as a file delete (fails silently). (2) Even with is_dir=true, ssh.py delete_directory (line 144) calls sftp.rmdir() which only works on EMPTY directories. A scaffolded project has 10+ files — rmdir will always fail. Fix: (1) Frontend: add is_dir=true to the query params. (2) Backend ssh.py: add a recursive delete method that runs 'rm -rf' via SSH command for non-empty directories, or use sftp to walk and delete recursively. The 'rm -rf' approach is simpler and reliable. Add a safety check: only allow recursive delete under /root/llm-hub-projects/ to prevent accidental damage.",
+      "change": [
+        "frontend/src/components/WorkspaceFileExplorer.jsx line 427: Add &is_dir=true to the DELETE URL query params.",
+        "backend/services/ssh.py: Add async def delete_directory_recursive(self, path) method that runs 'rm -rf {path}' via SSH command. Add safety check: path must start with '/root/llm-hub-projects/' to prevent accidental rm -rf of system dirs.",
+        "backend/services/ssh.py delete method (line 171): When is_dir=True, use delete_directory_recursive instead of delete_directory (rmdir)."
+      ],
+      "test": "Step-by-step: (1) Create a project with VPS linked. (2) Verify folder exists on VPS with files. (3) Delete project with 'Also delete VPS folder' checked. (4) Verify folder is gone from VPS: ls /root/llm-hub-projects/{slug} should return 'No such file or directory'. (5) Verify safety check: try to delete a path outside /root/llm-hub-projects/ — should be rejected.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
