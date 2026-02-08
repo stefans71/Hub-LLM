@@ -59,9 +59,12 @@ export default function WorkspaceFileExplorer({
     isDeleting: false
   })
 
-  // Fetch projects from API
+  // Fetch projects from API — re-fetch when active project changes (e.g. new project created)
   useEffect(() => {
     loadProjects()
+  }, [currentProject?.id])
+
+  useEffect(() => {
     loadServerStatuses()
     // Poll server statuses every 10 seconds
     const interval = setInterval(loadServerStatuses, 10000)

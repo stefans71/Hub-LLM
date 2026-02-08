@@ -366,8 +366,8 @@ frontend_components:
 
   WorkspaceFileExplorer.jsx:
     path: frontend/src/components/WorkspaceFileExplorer.jsx
-    lines: 1079
-    purpose: "Left sidebar — project tree with VPS file browsing, status dots, reconnect, processing pulse"
+    lines: 1082
+    purpose: "Left sidebar — project tree with VPS file browsing, status dots, reconnect, processing pulse. Re-fetches projects when currentProject changes (BUG-51)."
     props: "{isOpen, onToggle, currentProject, onSelectProject, onFileSelect, isClaudeProcessing}"
     key_state:
       - {name: projects, type: "useState([])", drives: "project list"}

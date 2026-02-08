@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 124 - 2026-02-08 EST
+**Task**: BUG-51
+**What**: Fixed WorkspaceFileExplorer showing 'No projects yet' despite projects existing. Root cause: loadProjects only ran on mount (useEffect with []), never re-fetched when navigating to workspace or creating a new project. Fix: split useEffect into two — one for loadProjects with [currentProject?.id] dependency (re-fetches when active project changes), one for loadServerStatuses polling with []. WorkspaceFileExplorer.jsx 1079→1082 lines. Build: 0 errors.
+**Key Learning**: Components that fetch data on mount but live inside routed views need to re-fetch when their key props change, not just on initial mount. The currentProject?.id dependency ensures the list refreshes after project creation.
+
+---
+
 ### Session 123 - 2026-02-08 EST
 **Task**: BUG-49
 **What**: Fixed write_file in backend/services/ssh.py writing 0-byte files. Root cause: SFTP open in "w" mode + `.encode('utf-8')` on content that was already bytes → AttributeError. Fix: open in "wb" mode, write bytes directly if isinstance(content, bytes) else encode str. 341 lines (unchanged count). py_compile OK.

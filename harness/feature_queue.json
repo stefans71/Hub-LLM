@@ -30,7 +30,7 @@
       "name": "Workspace file explorer shows 'No projects yet' despite projects existing in DB",
       "size": "S",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
       "description": "WorkspaceFileExplorer.jsx shows 'No projects yet' in the left sidebar even though GET /api/projects/ returns 3 projects (confirmed via curl). The component fetches at line 77 with auth headers (getAuthHeader()). The endpoint at projects.py line 689 has NO auth dependency — it returns all projects without auth. Possible causes: (1) The auth header middleware rejects the request before it reaches the endpoint (401). (2) The 5-second AbortController timeout (line 74) fires before the response arrives. (3) The workspace loads the file explorer before the project is created (timing — fetches on mount, line 63). The file explorer does NOT re-fetch when a new project is created. Fix options: (a) Add a refresh trigger when workspace loads a project. (b) Re-fetch projects when the component becomes visible. (c) Check if getAuthHeader() is sending a malformed token that triggers middleware rejection. Test by opening browser DevTools Network tab and checking the /api/projects/ request status.",
       "change": [
         "frontend/src/components/WorkspaceFileExplorer.jsx: Debug the loadProjects fetch — add console.log for response status and data. Check if getAuthHeader() is causing a 401.",
@@ -38,13 +38,13 @@
         "frontend/src/components/WorkspaceFileExplorer.jsx: If auth header is the issue, try fetching without auth headers (endpoint doesn't require them)."
       ],
       "test": "Step-by-step: (1) Open workspace for any project. (2) File explorer sidebar should list all projects grouped by workspace. (3) Projects with VPS linked should show expandable file tree. (4) Create a new project — file explorer should update to show it without page refresh.",
-      "completion_note": "",
+      "completion_note": "Changed WorkspaceFileExplorer.jsx (1079→1082 lines). Split useEffect at line 63 into two: (1) loadProjects with [currentProject?.id] dependency — re-fetches project list when active project changes (covers new project creation and workspace navigation). (2) loadServerStatuses + polling interval with [] dependency (unchanged). Backend endpoint /api/projects/ confirmed no-auth — getAuthHeader() doesn't cause 401 (no auth middleware). Build: vite build 0 errors. CODEBASE_INDEX updated (lines 1079→1082, purpose).",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {
