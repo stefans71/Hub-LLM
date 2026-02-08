@@ -90,6 +90,48 @@ The index is seeded empty by the scaffold, populated by DOCS-01 (first task in q
 
 ---
 
+---
+
+## Session 2 — February 8, 2026 (continued)
+
+### Key Decisions Made
+
+1. **Harness template is a Hub-LLM product feature** — Not a separate project. Template constants live in `projects.py`. Improving the template = FEAT task for B. Director CLAUDE.md updated to explain this.
+
+2. **Separation of concerns finalized**:
+   - Hub-LLM Director (here) = platform bugs + template improvements (both go in Hub-LLM queue)
+   - TheFishStocker = dogfooding ground to validate the template works in practice
+   - User prefixes feedback with context: "In FishStocker..." vs "In Hub-LLM..." vs "B forgot..."
+
+3. **Disambiguation rule added to Director CLAUDE.md** — Same terms mean different things in each project (e.g., "the index" = Hub-LLM's index OR the template that generates the index). Director asks if ambiguous.
+
+4. **Template translation cheat sheet** — Maps user language ("the PRP onboarding text") to template constants (`TEMPLATE_GENERATE_PRP`). User doesn't need to know constant names.
+
+5. **Smart pre-commit hook (FEAT-36 upgraded)** — Beyond binary "was index staged?" check. Now validates: file entry exists, line count matches `wc -l`, no duplicate entries, stale file detection. Plus `/audit-index` command for on-demand full audit.
+
+6. **Template feature manifest** — Added to `harness-template-design.md`. Living checklist of every scaffolded file and planned automation feature. Prevents forgetting to templatize new features.
+
+7. **Iterative dogfooding approach** — Test one template feature → find bugs → fix → delete project → recreate → test next feature. Cleaner than building TheFishStocker into a full app.
+
+8. **Index file insights** — 1,750 lines, 93KB, ~23K tokens. Built organically from actual code (not templatizable). Engineer reads full index + queue + CLAUDE.md on startup = ~51K tokens. Works well because tasks are well-defined with file paths, so engineer doesn't waste context exploring.
+
+9. **Feature queue is 101KB** — Completed tasks array provides valuable project history but adds token cost. Future optimization: archive old completed tasks to separate file.
+
+### Documents Updated This Session
+- `/root/dev/Claude-Project_Director/CLAUDE.md` — Two Concerns section, disambiguation rule, cheat sheet
+- `/root/dev/Hub-LLM/harness/knowledge/harness-template-design.md` — Feature manifest + updated file tree
+- `/root/dev/Hub-LLM/harness/knowledge/dogfooding-log.md` — This file
+- `/root/llm-hub-projects/fist-stocker-director/README.md` — Full context for TheFishStocker sessions
+
+### Handoff for Next Director Session
+1. Read CLAUDE.md — it now has the full mental model (two concerns, cheat sheet, disambiguation)
+2. Check `harness/feature_queue.json` — FEAT-35 (hint bubble), FEAT-36 (hook + audit), FEAT-37 (git onboarding HTML) pending
+3. Check `harness/knowledge/harness-template-design.md` — manifest shows what's shipped vs planned
+4. B may have completed FEAT-36 — review if `pending_review`
+5. TheFishStocker PRP intake was started but not completed — user can resume with `claude --resume` in chat terminal
+
+---
+
 ## Automation Roadmap (from plan Phase 5)
 1. **Ralph Loop** — auto-continue after task completion (engineer doesn't stop after 1 task)
 2. **MCP server** — file-based task automation (not Supabase)
