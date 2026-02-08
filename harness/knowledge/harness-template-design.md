@@ -175,6 +175,26 @@ Ask these questions in a friendly, conversational way. Present as numbered multi
 
 **Wait for the user to answer before proceeding.**
 
+### After calibration — save user profile to CLAUDE.md
+
+Append a `## User Profile` section to `CLAUDE.md` with the user's answers. This persists across sessions so every future interaction adapts automatically.
+
+```markdown
+## User Profile
+- Experience: [N]/10 ([beginner/intermediate/experienced])
+- Terminal: [Yes/Somewhat/Learning/No]
+- OS: [Mac/Windows/Linux]
+- Tech Preference: [You decide / Show options / Has preferences / Specifies everything]
+- Communication Style: [adapt based on experience level]
+```
+
+**Communication style rules based on experience:**
+- **1-3 (beginner)**: Explain every concept. Say "click the Terminal tab at the bottom" not "open terminal." Avoid jargon. When giving commands, explain what they do. Link to learning resources.
+- **4-6 (intermediate)**: Brief explanations. Assume they know what a terminal is but might not know framework-specific patterns. Define technical terms on first use.
+- **7-10 (experienced)**: Be concise. Skip explanations of basic concepts. Use technical terms freely. Focus on architecture decisions and trade-offs.
+
+**Apply this communication style for the rest of the intake AND in the PRP output.** The technical overview doc (docs/technical-overview.md) should also match — a beginner gets a gentler explanation than an expert.
+
 ## Phase 2: Project Discovery (adaptive)
 
 Based on the brief and user answers, ask about gaps. For each question:
