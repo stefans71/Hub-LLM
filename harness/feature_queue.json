@@ -26,31 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-28",
-      "name": "Replace subscription model dropdown with static Claude Code badge on CreateProject",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "The subscription model selector on CreateProject is completely decorative. selectedModel for subscription models is never sent to the backend, ClaudeCodeTerminalChat has no model prop, and Claude Code uses its own CLI-configured model. The 5 Anthropic model choices give users a false impression of control.\n\nTwo-track architecture: Subscription = terminal (user types claude, model selection inside CLI). OpenRouter = API chat (model selector matters).\n\nReplace the model selector for subscription users with a static 'Claude Code PRO' badge. Only show ModelSelector for OpenRouter path.\n\nRef: Session 110 (BUG-41 added isSubscriptionModel), FEAT-24 (added conditional checkbox/button). This simplification removes both.",
-      "change": [
-        "frontend/src/pages/CreateProject.jsx line 5: Change 'import ModelSelector, { SUBSCRIPTION_MODELS }' back to 'import ModelSelector' — remove named SUBSCRIPTION_MODELS import, no longer needed",
-        "frontend/src/pages/CreateProject.jsx line 417: Change default model from 'claude-sonnet-4.5' back to 'anthropic/claude-sonnet-4' — correct OpenRouter format for the only case where ModelSelector is rendered",
-        "frontend/src/pages/CreateProject.jsx line 446: Remove 'const isSubscriptionModel = ...' derived const — replaced by direct hasClaudeCode check",
-        "frontend/src/pages/CreateProject.jsx lines 1286-1315: Replace entire model selector area with hasClaudeCode branch. If hasClaudeCode: render static badge (green dot + 'Claude Code' text + 'PRO' pill, styled with rgba(16,185,129,0.1) bg, border rgba(16,185,129,0.2), borderRadius 8px) + enhance checkbox. Else: render ModelSelector with showSubscriptionModels={false} + 'Define Project with AI' button. Remove the isSubscriptionModel ternary entirely.",
-        "frontend/src/pages/CreateProject.jsx line 1142: Change 'enhanceWithAI && isSubscriptionModel' to 'enhanceWithAI && hasClaudeCode'"
-      ],
-      "test": "Step-by-step: (1) With VPS configured (vps_servers in localStorage with claudeCodeDetected:true and lastTestSuccess:true): load /create-project → see green 'Claude Code PRO' badge (NOT a dropdown), enhance checkbox visible, NO 'Define Project with AI' button. (2) Remove vps_servers from localStorage, reload → see ModelSelector dropdown with OpenRouter models only (no Anthropic subscription models), 'Define Project with AI' button visible, NO enhance checkbox. (3) npm run build — 0 errors. Paste the hasClaudeCode branch JSX from lines 1286-1315 in completion_note.",
-      "investigation_id": null,
-      "completion_note": "Changed CreateProject.jsx (2387→2411 lines). (1) Line 5: removed { SUBSCRIPTION_MODELS } named import — now just 'import ModelSelector'. (2) Line 417: default model 'claude-sonnet-4.5' → 'anthropic/claude-sonnet-4' (correct OpenRouter format). (3) Line 446: removed isSubscriptionModel derived const entirely. (4) Line 1142: changed 'enhanceWithAI && isSubscriptionModel' to 'enhanceWithAI && hasClaudeCode'. (5) Lines 1286-1338: hasClaudeCode branch JSX — badge: <div style={{ display:'flex', alignItems:'center', gap:'10px', padding:'8px 14px', background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:'8px' }}><span style={{ color:'#10b981', fontSize:'10px' }}>●</span><span style={{ color:cssVars.textPrimary, fontSize:'14px', fontWeight:500 }}>Claude Code</span><span style={{ fontSize:'11px', fontWeight:600, color:'#10b981', background:'rgba(16,185,129,0.15)', padding:'2px 8px', borderRadius:'4px', letterSpacing:'0.5px' }}>PRO</span></div> + enhance checkbox. Else: ModelSelector with showSubscriptionModels={false}, anthropic:false, isConnected:false + 'Define Project with AI' button. Build: vite build 0 errors. CODEBASE_INDEX updated (lines 2387→2411, purpose, key_state, routing_flow). Commit bada57a pushed to feature/harness-v2.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -62,6 +37,17 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-28",
+      "name": "Replace subscription model dropdown with static Claude Code badge on CreateProject",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit bada57a. All 5 changes correct: SUBSCRIPTION_MODELS import removed (line 5), default model restored to OpenRouter format (line 417), isSubscriptionModel removed (line 446), enhance flag uses hasClaudeCode (line 1142), model selector area replaced with hasClaudeCode branch — static green badge + checkbox vs ModelSelector with showSubscriptionModels={false} + Define button (lines 1286-1338). CreateProject.jsx 2387→2411 lines (matches index). Build 0 errors.",
+      "index_verified": true,
+      "test_evidence_verified": true,
+      "completion_note": "Changed CreateProject.jsx (2387→2411 lines). (1) Line 5: removed { SUBSCRIPTION_MODELS } named import — now just 'import ModelSelector'. (2) Line 417: default model 'claude-sonnet-4.5' → 'anthropic/claude-sonnet-4' (correct OpenRouter format). (3) Line 446: removed isSubscriptionModel derived const entirely. (4) Line 1142: changed 'enhanceWithAI && isSubscriptionModel' to 'enhanceWithAI && hasClaudeCode'. (5) Lines 1286-1338: hasClaudeCode branch JSX — static Claude Code PRO badge + enhance checkbox (subscription) vs ModelSelector with showSubscriptionModels={false} + Define button (OpenRouter). Build: vite build 0 errors."
+    },
     {
       "id": "FEAT-27",
       "name": "Terminal floating hint overlay for Claude Code commands",
