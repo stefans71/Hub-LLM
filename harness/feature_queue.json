@@ -30,7 +30,7 @@
       "name": "Workspace API key gate blocks subscription users — shows 'Add API Key' instead of terminal",
       "size": "XS",
       "priority": 1,
-      "status": "pending",
+      "status": "pending_review",
       "description": "App.jsx line 153 defines hasApiKey = apiKeys.openrouter || apiKeys.claude. Line 231 gates the /workspace route: hasApiKey ? <Workspace /> : 'Welcome to HubLLM — Add your API key'. Subscription users who use Claude Code on their VPS don't have either API key in localStorage — they don't need one. But this gate blocks them from reaching the workspace entirely.\n\nThe user creates a project with hasClaudeCode=true on CreateProject (FEAT-28's static Claude Code badge), gets redirected to /workspace, and hits this gate. They never reach Workspace, so auto-connect never fires, Claude Code terminal never renders.\n\nOnce past this gate, the existing flow works: Workspace.jsx auto-connects SSH (line 100-107), WorkspaceTopBar checks Claude Code status, Chat.jsx routes to ClaudeCodeTerminalChat (line 24-27), and the fallback model at Workspace.jsx line 61 is { provider: 'anthropic' } which satisfies Chat's isAnthropicModel check.\n\nRef: FEAT-28 (subscription path), BUG-41 (model routing). The gate was written before VPS/subscription path existed.",
       "change": [
         "frontend/src/App.jsx line 153: After 'const hasApiKey = apiKeys.openrouter || apiKeys.claude', add a new const that also checks VPS availability. Either: 'const hasVpsAccess = activeProject?.vps_server_id' or check localStorage vps_servers for any server with claudeCodeDetected",
@@ -38,13 +38,13 @@
       ],
       "test": "Step-by-step: (1) Clear openrouter_key and claude_key from localStorage (no API keys). (2) Ensure vps_servers in localStorage has a server with claudeCodeDetected:true. (3) Create a project on /create-project (should show Claude Code PRO badge). (4) After creation, workspace should load — NOT the 'Welcome to HubLLM' screen. (5) Terminal should show 'Connected to {server}' and the floating hint overlay. (6) Also test: no VPS + no API keys → should still show 'Welcome to HubLLM'. (7) npm run build — 0 errors. Paste the updated gate condition from App.jsx line 231 in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed App.jsx (352→358 lines). Line 154: added hasVpsAccess IIFE — reads localStorage vps_servers, returns true if any server has claudeCodeDetected && lastTestSuccess. Wrapped in try/catch for malformed JSON. Line 236: gate condition changed from `hasApiKey ?` to `(hasApiKey || hasVpsAccess) ?`. Subscription users with VPS+Claude Code now bypass the API key gate and reach Workspace. Users with no VPS and no API keys still see 'Welcome to HubLLM'. Build: vite build 0 errors. CODEBASE_INDEX updated (App.jsx lines 352→358, hasVpsAccess in key_state, purpose updated). Commit a5716a1 pushed to feature/harness-v2.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
-        "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
       }
     },
     {
