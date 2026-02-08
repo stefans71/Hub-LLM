@@ -26,29 +26,6 @@
   },
   "queue": [
     {
-      "id": "BUG-48",
-      "name": "CreateProject UX — 'Enhance with AI' checkbox is confusing, needs explicit track selection",
-      "size": "M",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "The 'Enhance with AI' checkbox (CreateProject.jsx line 1340-1344) is the wrong UX pattern. Problems: (1) VPS users don't know to skip it — they'll check it and get the OpenRouter flow when they should be using /generate-prp in the terminal. (2) OpenRouter users might not check it and miss the PRP generation entirely. (3) Users without an OpenRouter key who check it get an error. (4) There's no guidance about WHICH track you're on. The fix: replace the checkbox with an explicit track selection early in the form. Two options: 'I have a VPS with Claude Code' (Terminal Track — skip enhance, create project, use terminal for /generate-prp) vs 'I'll use an API key' (OpenRouter Track — enhance checkbox auto-enabled, PRP intake runs in browser chat). This could be a radio button group or a two-card selector similar to the BUG-46 welcome screen pattern (App.jsx lines 250-319). The selection should appear BEFORE the brief input or right after the project name, so users know their path upfront. If user has a VPS detected (hasClaudeCode=true), default to Terminal Track. If not, default to OpenRouter Track.",
-      "change": [
-        "frontend/src/pages/CreateProject.jsx: Add track selection UI early in the form (after project name, before brief). Two cards or radio: 'Use Your VPS + LLM CLI' vs 'OpenRouter API Key'. Default based on hasClaudeCode. VPS card subtitle: 'Use your VPS with Claude Code, Codex, or any CLI agent.' OpenRouter card subtitle: 'Use your OpenRouter API key with 90+ models.'",
-        "frontend/src/pages/CreateProject.jsx: Remove or hide the 'Enhance with AI' checkbox (line 1340-1344). Replace with track-aware behavior: OpenRouter track auto-enables PRP chat, Terminal track skips it.",
-        "frontend/src/pages/CreateProject.jsx: When Terminal Track selected, show a hint below the brief: 'After creating, run /generate-prp in the terminal for AI-guided project setup.'",
-        "frontend/src/pages/CreateProject.jsx: When OpenRouter Track selected, auto-start the PRP chat flow after brief is entered (no checkbox needed)."
-      ],
-      "test": "Step-by-step: (1) With VPS connected: open CreateProject — should default to Terminal Track. Brief input visible, no enhance checkbox. Create project → workspace opens with terminal. (2) Without VPS (clear localStorage): open CreateProject — should default to OpenRouter Track. Brief input visible, model selector appears, PRP chat auto-starts when brief entered. (3) Switching tracks mid-form should show/hide relevant UI.",
-      "completion_note": "Changed CreateProject.jsx (2507→2562 lines). Replaced enhanceWithAI useState with selectedTrack useState(null). Added useEffect to default track based on hasClaudeCode ('terminal' if VPS detected, 'openrouter' otherwise). Added two-card track selector UI between project name/workspace row and project brief: Card 1 'Use Your VPS + LLM CLI' (Server icon, green highlights when selected, 'DETECTED' badge when hasClaudeCode), Card 2 'OpenRouter API Key' (Cloud icon, blue highlights when selected). Below brief: Terminal track shows hint with Zap icon + '/generate-prp in the terminal' styled code tag. OpenRouter track shows ModelSelector + 'Define Project with AI' button (same as before). Removed enhance checkbox entirely. handleCreateProject passes enhance:false (terminal users use /generate-prp instead). Build: vite build 0 errors. CODEBASE_INDEX updated (lines 2507→2562, purpose, key_state, dual-path architecture, cross-refs).",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -60,6 +37,16 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-48",
+      "name": "CreateProject UX — replace Enhance checkbox with explicit track selection",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit 571a256. Two-card track selector: 'Use Your VPS + LLM CLI' (green, Server icon, DETECTED badge) vs 'OpenRouter API Key' (blue, Cloud icon). Default from hasClaudeCode. Terminal track shows /generate-prp hint. OpenRouter track keeps ModelSelector + Define button. enhanceWithAI state replaced with selectedTrack. CreateProject.jsx 2507→2562 lines. Build 0 errors. Index updated.",
+      "index_verified": true,
+      "test_evidence_verified": true
+    },
     {
       "id": "BUG-47",
       "name": "CreateProject FK violation — VPS not synced to Postgres before project INSERT",
