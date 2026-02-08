@@ -26,72 +26,6 @@
   },
   "queue": [
     {
-      "id": "BUG-51",
-      "name": "Workspace file explorer shows 'No projects yet' despite projects existing in DB",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "WorkspaceFileExplorer.jsx shows 'No projects yet' in the left sidebar even though GET /api/projects/ returns 3 projects (confirmed via curl). The component fetches at line 77 with auth headers (getAuthHeader()). The endpoint at projects.py line 689 has NO auth dependency — it returns all projects without auth. Possible causes: (1) The auth header middleware rejects the request before it reaches the endpoint (401). (2) The 5-second AbortController timeout (line 74) fires before the response arrives. (3) The workspace loads the file explorer before the project is created (timing — fetches on mount, line 63). The file explorer does NOT re-fetch when a new project is created. Fix options: (a) Add a refresh trigger when workspace loads a project. (b) Re-fetch projects when the component becomes visible. (c) Check if getAuthHeader() is sending a malformed token that triggers middleware rejection. Test by opening browser DevTools Network tab and checking the /api/projects/ request status.",
-      "change": [
-        "frontend/src/components/WorkspaceFileExplorer.jsx: Debug the loadProjects fetch — add console.log for response status and data. Check if getAuthHeader() is causing a 401.",
-        "frontend/src/components/WorkspaceFileExplorer.jsx: Add a re-fetch when the active project changes or when the panel becomes visible (could use a projectId prop or visibility observer).",
-        "frontend/src/components/WorkspaceFileExplorer.jsx: If auth header is the issue, try fetching without auth headers (endpoint doesn't require them)."
-      ],
-      "test": "Step-by-step: (1) Open workspace for any project. (2) File explorer sidebar should list all projects grouped by workspace. (3) Projects with VPS linked should show expandable file tree. (4) Create a new project — file explorer should update to show it without page refresh.",
-      "completion_note": "Changed WorkspaceFileExplorer.jsx (1079→1082 lines). Split useEffect at line 63 into two: (1) loadProjects with [currentProject?.id] dependency — re-fetches project list when active project changes (covers new project creation and workspace navigation). (2) loadServerStatuses + polling interval with [] dependency (unchanged). Backend endpoint /api/projects/ confirmed no-auth — getAuthHeader() doesn't cause 401 (no auth middleware). Build: vite build 0 errors. CODEBASE_INDEX updated (lines 1079→1082, purpose).",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
-      "id": "FEAT-33",
-      "name": "Terminal auto-cd to project directory when workspace opens",
-      "size": "XS",
-      "priority": 3,
-      "status": "pending_review",
-      "description": "When the workspace opens a terminal for a project that has a VPS linked, the terminal starts in /root (the default SSH login dir). Users have to manually type 'cd /root/llm-hub-projects/{slug}' before they can run claude or /generate-prp. This is especially bad for non-technical users. Fix: when the terminal SSH session starts for a project with vps_server_id, auto-send 'cd /root/llm-hub-projects/{slug}' as the first command. The project slug is available from the project data. Could also show a visual hint with the cd command if auto-cd isn't possible.",
-      "change": [
-        "Identify where the terminal SSH session is initialized for a project workspace — likely in Workspace.jsx or ClaudeCodeTerminalChat.jsx or terminal.py.",
-        "After SSH connection established, auto-send: cd /root/llm-hub-projects/{project.slug}\\n",
-        "Alternative: show a copyable banner at the top of the terminal with the cd command."
-      ],
-      "test": "Step-by-step: (1) Create a project with VPS linked. (2) Open workspace. (3) Terminal should start in /root/llm-hub-projects/{slug}/ (verify with pwd). (4) User can immediately type 'claude' and /generate-prp is available.",
-      "completion_note": "Changed ClaudeCodeTerminalChat.jsx (1109→1113 lines). In case 'connected' handler, else branch (autoStart=false, line 279): added WebSocket send of `cd /root/llm-hub-projects/${projectSlug}\\n` before showing the hint text. Guards on projectSlug truthy and wsRef open. The autoStart=true path already had cd baked into the startClaudeCode command (line 546). Build: vite build 0 errors. CODEBASE_INDEX updated (lines 1109→1113, purpose).",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
-      "id": "BUG-50",
-      "name": "Delete project VPS folder fails — missing is_dir param + rmdir can't delete non-empty dirs",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "When user deletes a project with 'Also delete VPS folder' checked, the folder stays on disk. Two bugs: (1) Frontend WorkspaceFileExplorer.jsx line 427 calls DELETE /api/files/delete without is_dir=true, so backend treats it as a file delete (fails silently). (2) Even with is_dir=true, ssh.py delete_directory (line 144) calls sftp.rmdir() which only works on EMPTY directories. A scaffolded project has 10+ files — rmdir will always fail. Fix: (1) Frontend: add is_dir=true to the query params. (2) Backend ssh.py: add a recursive delete method that runs 'rm -rf' via SSH command for non-empty directories, or use sftp to walk and delete recursively. The 'rm -rf' approach is simpler and reliable. Add a safety check: only allow recursive delete under /root/llm-hub-projects/ to prevent accidental damage.",
-      "change": [
-        "frontend/src/components/WorkspaceFileExplorer.jsx line 427: Add &is_dir=true to the DELETE URL query params.",
-        "backend/services/ssh.py: Add async def delete_directory_recursive(self, path) method that runs 'rm -rf {path}' via SSH command. Add safety check: path must start with '/root/llm-hub-projects/' to prevent accidental rm -rf of system dirs.",
-        "backend/services/ssh.py delete method (line 171): When is_dir=True, use delete_directory_recursive instead of delete_directory (rmdir)."
-      ],
-      "test": "Step-by-step: (1) Create a project with VPS linked. (2) Verify folder exists on VPS with files. (3) Delete project with 'Also delete VPS folder' checked. (4) Verify folder is gone from VPS: ls /root/llm-hub-projects/{slug} should return 'No such file or directory'. (5) Verify safety check: try to delete a path outside /root/llm-hub-projects/ — should be rejected.",
-      "completion_note": "Changed WorkspaceFileExplorer.jsx line 430: added &is_dir=true to DELETE /api/files/delete URL. Changed backend/services/ssh.py (341→354 lines): added delete_directory_recursive(path) — runs `rm -rf {path}` via run_command with safety check (path must start with /root/llm-hub-projects/ and not be the base dir itself, raises ValueError otherwise). Updated delete() method: tries rmdir first, catches failure, falls back to delete_directory_recursive for non-empty dirs. py_compile OK. Build: vite build 0 errors. CODEBASE_INDEX updated (ssh.py lines 341→354, purpose).",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -103,6 +37,30 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-50",
+      "name": "Delete project VPS folder fails — recursive delete with safety check",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit 9a83fe5. delete_directory_recursive with SAFE_PREFIX=/root/llm-hub-projects/. Frontend adds &is_dir=true. delete() falls back from rmdir to recursive. ssh.py 341→354 lines."
+    },
+    {
+      "id": "FEAT-33",
+      "name": "Terminal auto-cd to project directory on workspace open",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit 62e4295. Sends cd /root/llm-hub-projects/${projectSlug} via WebSocket on SSH connect (autoStart=false path). ClaudeCodeTerminalChat.jsx 1109→1113 lines."
+    },
+    {
+      "id": "BUG-51",
+      "name": "File explorer re-fetches when active project changes",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_notes": "Verified commit 1f81037. loadProjects useEffect depends on currentProject?.id. WorkspaceFileExplorer.jsx 1079→1082 lines."
+    },
     {
       "id": "BUG-49",
       "name": "Harness scaffold writes 0-byte files — write_file bytes/str mismatch",
