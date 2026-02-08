@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import MultiTerminal from './MultiTerminal'
+import CodeEditor from './CodeEditor'
 
 /**
  * LLM-Dev Bottom Panel (W-88 to W-124)
@@ -102,15 +103,17 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
         setCodeContent(data.content)
         const fileName = filePath.split('/').pop()
         setActiveFile(fileName)
-        // Add to open editors if not already there
-        if (!openEditors.find(e => e.name === fileName)) {
-          setOpenEditors([...openEditors, { name: fileName, path: filePath, active: true }].map(e => ({
-            ...e,
-            active: e.name === fileName
-          })))
-        } else {
-          setOpenEditors(openEditors.map(e => ({ ...e, active: e.name === fileName })))
-        }
+        // BUG-52: Use functional update to avoid stale closure
+        setOpenEditors(prev => {
+          const exists = prev.find(e => e.path === filePath)
+          if (!exists) {
+            return [...prev, { name: fileName, path: filePath, active: true }].map(e => ({
+              ...e,
+              active: e.path === filePath
+            }))
+          }
+          return prev.map(e => ({ ...e, active: e.path === filePath }))
+        })
       }
     } catch (err) {
       console.error('Failed to open file:', err)
@@ -420,7 +423,7 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
             }}
           >
             <EditorIcon />
-            {activeFile ? activeFile : 'Editor'}
+            Editor
           </button>
 
           {/* W-93: Docker Tab */}
@@ -617,18 +620,15 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
                 ))}
               </div>
 
-              {/* Editor Content with Syntax Highlighting */}
-              <div
-                style={{
-                  flex: 1,
-                  overflow: 'auto',
-                  fontFamily: "'Monaco', 'Menlo', 'Consolas', monospace",
-                  fontSize: '13px',
-                  lineHeight: 1.6,
-                  background: 'var(--bg-primary)'
-                }}
-              >
-                {!codeContent && (
+              {/* BUG-52: Monaco CodeEditor replaces DIY regex highlighter */}
+              <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                {codeContent ? (
+                  <CodeEditor
+                    path={openEditors.find(e => e.active)?.path || activeFile || 'file.txt'}
+                    content={codeContent}
+                    readOnly={true}
+                  />
+                ) : (
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -639,52 +639,6 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
                   }}>
                     <EditorIcon />
                     <div style={{ marginTop: '12px' }}>Select a file from the sidebar to view</div>
-                  </div>
-                )}
-                {codeContent && (
-                  <div style={{ padding: '12px 0' }}>
-                    {codeContent.split('\n').map((line, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          minHeight: '20px'
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: '50px',
-                            paddingRight: '12px',
-                            textAlign: 'right',
-                            color: 'var(--text-muted)',
-                            userSelect: 'none',
-                            flexShrink: 0,
-                            opacity: 0.5
-                          }}
-                        >
-                          {index + 1}
-                        </span>
-                        <pre
-                          style={{
-                            margin: 0,
-                            flex: 1,
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-all'
-                          }}
-                          dangerouslySetInnerHTML={{
-                            __html: line
-                              .replace(/&/g, '&amp;')
-                              .replace(/</g, '&lt;')
-                              .replace(/>/g, '&gt;')
-                              .replace(/(\/\/.*$|#.*$)/gm, '<span style="color: #6a737d;">$1</span>')
-                              .replace(/(["'`])(?:(?!\1)[^\\]|\\.)*\1/g, '<span style="color: #98c379;">$&</span>')
-                              .replace(/\b(const|let|var|function|return|if|else|for|while|class|import|export|from|default|async|await|try|catch|throw|new|this|typeof|instanceof)\b/g, '<span style="color: #c678dd;">$1</span>')
-                              .replace(/\b(true|false|null|undefined|NaN|Infinity)\b/g, '<span style="color: #d19a66;">$1</span>')
-                              .replace(/\b(\d+\.?\d*)\b/g, '<span style="color: #d19a66;">$1</span>')
-                          }}
-                        />
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>

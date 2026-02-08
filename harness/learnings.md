@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 127 - 2026-02-08 EST
+**Task**: BUG-52
+**What**: Fixed three bugs in LLM-Dev editor panel. (1) Tab label: Editor tab always shows "Editor" instead of changing to filename (which looked like a new top-level tab). (2) Close X: `openFile` used stale `openEditors` from closure — changed to functional update (`setOpenEditors(prev => ...)`) matching the pattern already used in `onEditorReady`. (3) Syntax highlighting: replaced entire DIY regex highlighter (dangerouslySetInnerHTML with .replace chains) with `<CodeEditor path={...} content={codeContent} readOnly={true} />` which uses Monaco Editor with proper language detection. LLMDevPanel.jsx 858→812 lines (net -46). Build: 0 errors.
+**Key Learning**: The stale closure pattern strikes again — `openFile` was the 3rd instance in this file. The `onEditorReady` callback at line 294 already used functional update (fixed in BUG-14) but the local `openFile` at line 96 was missed. Always search for ALL usages of a state variable when fixing stale closures.
+
+---
+
 ### Session 126 - 2026-02-08 EST
 **Task**: BUG-50
 **What**: Fixed VPS folder delete for projects. Two bugs: (1) Frontend missing `&is_dir=true` in DELETE URL query params — backend treated folder as file. (2) `sftp.rmdir()` only works on empty dirs, fails on scaffolded projects with 10+ files. Fix: added `delete_directory_recursive` method using `rm -rf` via SSH with safety check (path must start with `/root/llm-hub-projects/` and not be the base itself). `delete()` now tries rmdir first, falls back to recursive if it fails. ssh.py 341→354, WorkspaceFileExplorer.jsx unchanged line count. py_compile OK, build 0 errors.

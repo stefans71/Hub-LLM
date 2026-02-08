@@ -30,20 +30,20 @@
       "name": "LLM-Dev: file opens as wrong tab, close X broken, replace DIY highlighter with Monaco CodeEditor",
       "size": "M",
       "priority": 3,
-      "status": "pending",
+      "status": "pending_review",
       "description": "Three bugs in the LLM-Dev panel when opening files from file explorer:\n\n(1) TAB ROUTING: Clicking a file (e.g. CODEBASE_INDEX.yaml) creates a NEW top-level tab in the LLM-Dev tab bar as a peer to Terminal/Docker/Logs/Project Context. Expected: files should open under the existing Editor tab with file sub-tabs inside it.\n\n(2) FILE CLOSE X: The file sub-tabs (README.md ×, CODEBASE_INDEX.yaml ×) have X buttons but clicking X doesn't close the file. The close handler at LLMDevPanel.jsx:592-604 looks correct (filters openEditors, updates state), but something prevents it from working. Debug the click handler.\n\n(3) SYNTAX HIGHLIGHTING: LLMDevPanel.jsx lines 644-688 has a hand-rolled regex syntax highlighter using dangerouslySetInnerHTML instead of using the existing CodeEditor component (which already has Monaco Editor). The regex highlighter (lines 674-683) is JS-centric and breaks on YAML — the HTML-escaping at lines 676-678 runs BEFORE the regex colorization at 679-683, causing raw HTML color spans to appear in the output. ROOT CAUSE: The escape order is wrong AND the approach is wrong. FIX: Replace the entire hand-rolled renderer (lines 644-688) with the CodeEditor component that already exists and works correctly with Monaco. CodeEditor.jsx already has: Monaco CDN loading, language detection (YAML included), vs-dark theme, line numbers, word wrap. Just render <CodeEditor path={activeFilePath} content={codeContent} readOnly={true} onClose={...} /> instead of the DIY renderer.\n\nScreenshot reference: WorkSpace_LLM-Dev-01.png",
       "change": [
         "frontend/src/components/LLMDevPanel.jsx: (1) Fix tab routing so files open under the Editor tab, not as new top-level tabs. (2) Debug the file close X handler at lines 592-604. (3) Replace the hand-rolled regex syntax highlighter (lines 644-688, the dangerouslySetInnerHTML block) with <CodeEditor path={path} content={codeContent} readOnly={true} onClose={handleClose} />. Import CodeEditor at the top of the file.",
         "frontend/src/components/CodeEditor.jsx: No changes needed — it already works correctly with Monaco, language detection, and vs-dark theme. Just needs to be used by LLMDevPanel instead of the DIY renderer."
       ],
       "test": "(1) Open file explorer, click a YAML file. (2) File opens inside the Editor tab (not as new top-level tab). (3) Monaco editor renders with proper YAML syntax highlighting (comments in gray, keys in color, strings highlighted — VS Code style). No raw HTML color codes visible. (4) Click X on file sub-tab — file closes. (5) Open a .md file — Monaco renders with markdown highlighting. (6) Open a .json file — Monaco renders with JSON highlighting.",
-      "completion_note": "",
+      "completion_note": "Changed LLMDevPanel.jsx (858→812 lines). (1) Tab label: line 423 changed from `{activeFile ? activeFile : 'Editor'}` to just `Editor` — top-level tab always says 'Editor', filenames shown in sub-tabs only. (2) Close X: `openFile` function at line 96 changed `setOpenEditors(openEditors.map(...))` to `setOpenEditors(prev => { ... })` using functional update — fixes stale closure where close handler's state removal was overwritten by openFile re-reading old openEditors. (3) Syntax highlighting: replaced entire DIY regex renderer (dangerouslySetInnerHTML, ~45 lines) with `<CodeEditor path={...} content={codeContent} readOnly={true} />`. Imported CodeEditor at top. Monaco provides proper language detection (YAML, JSON, markdown, etc.), vs-dark theme, line numbers, word wrap. Build: vite build 0 errors. CODEBASE_INDEX updated (lines 858→812, purpose).",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

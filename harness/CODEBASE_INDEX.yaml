@@ -450,8 +450,8 @@ frontend_components:
 
   LLMDevPanel.jsx:
     path: frontend/src/components/LLMDevPanel.jsx
-    lines: 858
-    purpose: "Bottom collapsible panel — Terminal, Editor, Docker, Logs, Project Context tabs"
+    lines: 812
+    purpose: "Bottom collapsible panel — Terminal, Editor (Monaco via CodeEditor), Docker, Logs, Project Context tabs. BUG-52: fixed tab label, close X stale closure, replaced DIY highlighter with CodeEditor."
     props: "{project, linkedServerId, onEditorReady}"
     key_state:
       - {name: activeTab, type: "useState('terminal')", drives: "tab selection"}
