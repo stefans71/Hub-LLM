@@ -26,6 +26,29 @@
   },
   "queue": [
     {
+      "id": "FEAT-31",
+      "name": "Update generate-prp command with adaptive intake flow + technical overview output",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "The /generate-prp command in the harness template is one-shot — it skips intake questions and jumps straight to PRP generation. Needs a 3-phase flow: (1) User calibration (experience level 1-10, terminal comfort, OS, tech stack preference), (2) Adaptive project discovery (platform, auth, database, integrations — with 'you decide' tracking that stops technical questions after 2-3 'you decide' answers), (3) PRP generation + technical overview. Must also add docs/ directory to scaffold. Full updated command text is in harness/knowledge/harness-template-design.md section 3. Two outputs: PRPs/[name]-prp.md (for agent) and docs/technical-overview.md (plain-English for user to paste into NotebookLM).",
+      "change": [
+        "backend/routers/projects.py TEMPLATE_GENERATE_PRP constant (~line 90): Replace entire string with the updated command from harness/knowledge/harness-template-design.md section 3 (`.claude/commands/generate-prp.md`). Copy the full markdown content between the ``` fences.",
+        "backend/routers/projects.py create_vps_project_folder (~line 395): Add 'docs' to the subdirs list so docs/ directory gets created during scaffold.",
+        "backend/routers/projects.py template_files dict (~line 415): Add 'docs/.gitkeep': '' entry."
+      ],
+      "test": "Step-by-step: (1) Read the updated TEMPLATE_GENERATE_PRP constant — verify it contains 'Phase 1: User Calibration', 'Phase 2: Project Discovery', 'Phase 3: Generate PRP', and 'docs/technical-overview.md'. (2) Check subdirs list includes 'docs'. (3) Check template_files includes 'docs/.gitkeep'. (4) py_compile check. Paste first 5 lines of TEMPLATE_GENERATE_PRP in completion_note.",
+      "investigation_id": null,
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
