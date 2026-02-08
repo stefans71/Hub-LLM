@@ -1123,6 +1123,33 @@ In the meantime, I can help you think through your project. What would you like 
     setCreateProjectError('')
 
     try {
+      // Sync VPS server to backend DB before creating project (prevents FK violation)
+      if (formData.vpsServerId) {
+        try {
+          const savedServers = JSON.parse(localStorage.getItem('vps_servers') || '[]')
+          const serverData = savedServers.find(s => s.id === formData.vpsServerId)
+          if (serverData) {
+            await fetch('/api/servers/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+              body: JSON.stringify({
+                id: serverData.id,
+                name: serverData.name || serverData.host || 'VPS Server',
+                host: serverData.host,
+                port: serverData.port || 22,
+                username: serverData.username || 'root',
+                private_key: serverData.privateKey || serverData.private_key || null,
+                password: serverData.password || null,
+                passphrase: serverData.passphrase || null,
+                last_test_success: serverData.lastTestSuccess || false
+              })
+            })
+          }
+        } catch (syncErr) {
+          console.warn('VPS server sync failed (non-blocking):', syncErr.message)
+        }
+      }
+
       const res = await fetch('/api/projects/', {
         method: 'POST',
         headers: {
@@ -1168,8 +1195,12 @@ In the meantime, I can help you think through your project. What would you like 
 
         onCreateProject?.(project, { enhance: enhanceWithAI && hasClaudeCode })
       } else {
-        const error = await res.json()
-        setCreateProjectError(error.detail || 'Failed to create project')
+        try {
+          const error = await res.json()
+          setCreateProjectError(error.detail || 'Failed to create project')
+        } catch {
+          setCreateProjectError(`Server error (${res.status})`)
+        }
       }
     } catch (err) {
       console.error('Failed to create project:', err)

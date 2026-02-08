@@ -95,8 +95,8 @@ frontend_pages:
 
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
-    lines: 2476
-    purpose: "5-step project creation wizard with PRP generation via OpenRouter chat (FEAT-32). 'Define Project with AI' starts PRP intake flow (calibration → discovery → PRP). Download PRP button appears when ## FEATURE + ## PHASES detected. hasClaudeCode → static badge + enhance checkbox."
+    lines: 2507
+    purpose: "5-step project creation wizard with PRP generation via OpenRouter chat (FEAT-32). Syncs VPS server to backend before project creation to prevent FK violation (BUG-47). Error handling wraps res.json() in try/catch."
     props: "{onCancel, onCreateProject}"
     imports: [ModelSelector]
     key_state:
@@ -761,9 +761,9 @@ backend_routers:
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 870
+    lines: 882
     prefix: "/api/projects"
-    purpose: "Project CRUD with chat history and VPS folder auto-creation + harness template scaffolding (FEAT-30). TEMPLATE_GENERATE_PRP updated with adaptive 3-phase intake flow + docs/technical-overview.md output (FEAT-31)"
+    purpose: "Project CRUD with chat history and VPS folder auto-creation + harness template scaffolding (FEAT-30). TEMPLATE_GENERATE_PRP updated (FEAT-31). FK safety check on create_project — verifies vps_server_id exists before INSERT (BUG-47)"
     endpoints:
       - {method: GET, path: "/", purpose: "list all projects"}
       - {method: POST, path: "/", purpose: "create project (+ scaffold harness on VPS)"}

@@ -30,7 +30,7 @@
       "name": "CreateProject FK violation — VPS not synced to Postgres before project INSERT",
       "size": "S",
       "priority": 1,
-      "status": "pending",
+      "status": "pending_review",
       "description": "When a subscription user creates a project, BUG-45 fix auto-sets formData.vpsServerId from localStorage claudeCodeServer.id (CreateProject.jsx line 449-451). The form submits vps_server_id to POST /api/projects/ (line 1138). But the VPS only exists in localStorage — vps_servers table in Postgres is EMPTY. The INSERT fails with: sqlalchemy.exc.IntegrityError: ForeignKeyViolationError: Key (vps_server_id)=(vps_1770492258352) is not present in table 'vps_servers'. Secondary issue: line 1171 calls res.json() on the 500 text response ('Internal Server Error'), which throws and shows 'Network error: Unexpected token' instead of a useful message. Learnings: Session 43, 47 — localStorage is source of truth, backend is synced copy. Session 90 — Postgres FK constraints are strict.",
       "change": [
         "backend/routers/projects.py create_project endpoint (~line 700): Before the INSERT, if project.vps_server_id is provided, check if that server exists in vps_servers table. If not, read it from the request or call the servers sync mechanism to ensure it exists. Simplest fix: query for the server, if missing, create a minimal VPSServerModel record from the ID (host/credentials can be synced later from localStorage).",
@@ -38,13 +38,13 @@
         "frontend/src/pages/CreateProject.jsx line 1171: Wrap res.json() in try/catch — if JSON parse fails, fall back to res.text() or show 'Server error' instead of cryptic 'Unexpected token' message."
       ],
       "test": "Step-by-step: (1) Clear vps_servers table in Postgres (should already be empty). (2) Ensure a VPS is configured in localStorage. (3) Go to CreateProject, fill in name + brief. (4) Click Create Project. (5) Should succeed — project created, harness scaffolded on VPS. (6) Verify vps_servers table now has the server record. (7) Test error display: temporarily break the endpoint and verify a readable error message appears, not 'Unexpected token'.",
-      "completion_note": "",
+      "completion_note": "Changed backend/routers/projects.py (870→882 lines): Added FK safety check in create_project — if vps_server_id provided, queries vps_servers table first, returns 400 with clear message if not found. Changed frontend/src/pages/CreateProject.jsx (2476→2507 lines): (1) Before POST /api/projects/, syncs VPS server from localStorage to backend via POST /api/servers/ (upsert). Maps camelCase localStorage fields to snake_case (privateKey→private_key, lastTestSuccess→last_test_success). Wrapped in try/catch so sync failure doesn't block creation. (2) Wrapped error res.json() in try/catch — shows 'Server error (status)' when response isn't JSON. py_compile OK. Build: 0 errors. CODEBASE_INDEX updated (projects.py 870→882, CreateProject.jsx 2476→2507).",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

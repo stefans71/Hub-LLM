@@ -701,6 +701,18 @@ async def create_project(project: ProjectCreate):
     now = datetime.utcnow()
     slug = slugify(project.name)
 
+    # Verify VPS server exists in DB before INSERT (prevents FK violation)
+    if project.vps_server_id:
+        async with async_session() as session:
+            result = await session.execute(
+                select(VPSServerModel).where(VPSServerModel.id == project.vps_server_id)
+            )
+            if not result.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"VPS server '{project.vps_server_id}' not found. Please save the server in Settings first."
+                )
+
     new_project = ProjectModel(
         id=project_id,
         name=project.name,

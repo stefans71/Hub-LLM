@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 121 - 2026-02-08 EST
+**Task**: BUG-47
+**What**: Fixed FK violation when creating project with VPS. Root cause: localStorage has VPS server data but Postgres vps_servers table is empty — the project INSERT references a non-existent FK. Fix: (1) Frontend syncs VPS server to backend via POST /api/servers/ (upsert) before calling POST /api/projects/. Maps localStorage field names (privateKey → private_key, lastTestSuccess → last_test_success). (2) Backend safety net: create_project now checks vps_server_id exists in DB before INSERT, returns clear 400 error if missing. (3) Fixed res.json() on error path — wrapped in try/catch to handle non-JSON 500 responses. projects.py 870→882, CreateProject.jsx 2476→2507.
+**Key Learning**: localStorage stores VPS with camelCase fields (privateKey, lastTestSuccess) but the backend expects snake_case (private_key, last_test_success). Always map field names when syncing. Also: always wrap res.json() in try/catch when handling error responses — 500s may return text "Internal Server Error" not JSON.
+
+---
+
 ### Session 120 - 2026-02-08 EST
 **Task**: FEAT-32
 **What**: Wired OpenRouter PRP generation into CreateProject. Backend: added PRP_SYSTEM_PROMPT (3-phase intake adapted for chat — no file writing, outputs PRP in chat) and mode param to /api/ai/chat. Frontend: changed handleStartAIDefinition to use streaming /api/ai/chat with mode='prp' instead of /api/ai/expand-brief, so AI starts with calibration questions. handleSendChatMessage also passes mode='prp'. Added PRP detection (checks for '## FEATURE' + '## PHASES' markers) and 'Download PRP (.md)' button with Blob download. ai.py 266→345 lines, CreateProject.jsx 2418→2476 lines.
