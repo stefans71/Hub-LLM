@@ -27,16 +27,16 @@
   "queue": [
     {
       "id": "BUG-52",
-      "name": "LLM-Dev Reader tab label shows 'terminal' instead of 'Reader'; file close (X) doesn't work",
+      "name": "LLM-Dev file opens as separate tab instead of under Editor tab; file close X doesn't work; raw color codes in content",
       "size": "S",
       "priority": 3,
       "status": "pending",
-      "description": "Two bugs in the LLM-Dev panel Editor/Reader tab: (1) When the reader/editor view is active (showing a file opened from the file explorer), the tab label in the LLM-Dev panel header still shows 'terminal' or the filename instead of 'Reader' or 'Editor'. The tab should reflect what's currently active. (2) Clicking the X button next to an open file (e.g. CODEBASE_INDEX.yaml) in the reader view doesn't close/remove the file. The file stays open. Expected: clicking X should close the file tab and return to empty reader state or previous file. Check CodeEditor.jsx / LLMDevPanel.jsx for the tab rendering and file close handler.",
+      "description": "Three bugs in the LLM-Dev panel when opening files from file explorer: (1) Clicking a file (e.g. CODEBASE_INDEX.yaml) creates a NEW tab in the LLM-Dev tab bar as a peer to Terminal/Docker/Logs/Project Context — the filename becomes its own top-level tab. Expected: files should open UNDER the existing Editor tab, with file sub-tabs inside it. (2) The file sub-tabs (README.md ×, CODEBASE_INDEX.yaml ×) have X buttons but clicking X doesn't close/remove the file. (3) The file content viewer shows raw HTML color codes (e.g. 'color: #6a737d;'>') instead of rendering syntax highlighting. The YAML comments are wrapped in HTML spans that aren't being parsed. Screenshot reference: WorkSpace_LLM-Dev-01.png. Check CodeEditor.jsx / LLMDevPanel.jsx for tab management and content rendering.",
       "change": [
-        "frontend/src/components/LLMDevPanel.jsx: Check tab label rendering — when Editor tab is active and a file is open, the label should say 'Editor' or 'Reader', not the filename or 'terminal'.",
-        "frontend/src/components/CodeEditor.jsx: Check the file close (X) handler — onClose or similar callback should remove the file from the open files list and update state."
+        "frontend/src/components/LLMDevPanel.jsx: Files should open under the Editor tab, not create new top-level tabs in the tab bar. The Editor tab should be the container, with file sub-tabs inside.",
+        "frontend/src/components/CodeEditor.jsx: (1) Fix file close X handler — clicking X should remove the file from open files and update state. (2) Fix content rendering — strip or properly handle HTML color code spans, use proper syntax highlighting (Monaco or highlight.js) instead of raw HTML output."
       ],
-      "test": "(1) Open file explorer, click a file. (2) LLM-Dev panel should show 'Editor' tab as active with correct label. (3) Click X on the file tab — file should close. (4) Panel returns to empty state or previous view.",
+      "test": "(1) Open file explorer, click a file. (2) Editor tab activates in LLM-Dev panel — file opens inside it as a sub-tab, NOT as a new top-level tab. (3) Click X on file sub-tab — file closes. (4) File content shows proper syntax highlighting, no raw HTML color codes.",
       "completion_note": "",
       "completion_checklist": {
         "code_works": false,
@@ -89,15 +89,16 @@
     },
     {
       "id": "FEAT-35",
-      "name": "Make chat terminal hint bubble dismissible",
-      "size": "XS",
+      "name": "Hint bubble: add README tip, collapsible toggle, and X dismiss",
+      "size": "S",
       "priority": 4,
       "status": "pending",
-      "description": "The hint bubble in the chat terminal ('Type claude to start a new session, or claude --resume to resume') is useful on first launch but gets annoying and can't be dismissed. Two options: (1) Add an X button to dismiss it. (2) Auto-dismiss after the user starts typing or after a timeout. Could also add: 'See README.md for more commands' as a final line. Check ClaudeCodeTerminalChat.jsx for where the hint text is written (the writeln calls after SSH connect).",
+      "description": "The hint bubble in the chat terminal ('Type claude to start a new session, or claude --resume to continue a previous one') should keep its current text AND add a new line: 'Open the README.md file in the file explorer for more useful information.' The bubble must be a proper overlay/card (not terminal writeln output) with two controls: (1) A caret/chevron toggle that collapses the bubble — when collapsed, only the caret remains visible at the top of the LLM-Dev container, and clicking it re-expands the bubble. (2) An X button that fully removes the bubble for the session. Screenshot reference: WorkSpace_LLM-Dev-01.png shows current bubble as a tooltip-style overlay. Check ClaudeCodeTerminalChat.jsx for the current implementation.",
       "change": [
-        "frontend/src/components/ClaudeCodeTerminalChat.jsx: The hint is written via xtermRef.current.writeln() — these are terminal output lines, not a dismissible overlay. Consider: (a) writing fewer lines, or (b) creating a small overlay div that can be closed with X, or (c) just clearing the terminal after user's first input."
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx: Replace the writeln-based hint with a positioned overlay div/card. Content: existing hint text + 'Open the README.md file in the file explorer for more useful information.' Two buttons: caret (collapse/expand toggle) and X (dismiss entirely).",
+        "The collapsed state should show just the caret/chevron at the top of the container. Clicking it re-expands the full hint card. Dismissing with X removes it for the session (state can live in component state, no persistence needed)."
       ],
-      "test": "(1) Open workspace. (2) Hint appears. (3) Either X button dismisses it, or it auto-clears on first input.",
+      "test": "(1) Open workspace. (2) Hint card appears with full text including README tip. (3) Click caret — bubble collapses to just a caret at top. (4) Click caret again — bubble re-expands. (5) Click X — bubble gone for the session. (6) Navigating away and back: bubble reappears (session = page load, not navigation).",
       "completion_note": "",
       "completion_checklist": {
         "code_works": false,
