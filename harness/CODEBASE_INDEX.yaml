@@ -761,9 +761,9 @@ backend_routers:
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 748
+    lines: 870
     prefix: "/api/projects"
-    purpose: "Project CRUD with chat history and VPS folder auto-creation + harness template scaffolding (FEAT-30)"
+    purpose: "Project CRUD with chat history and VPS folder auto-creation + harness template scaffolding (FEAT-30). TEMPLATE_GENERATE_PRP updated with adaptive 3-phase intake flow + docs/technical-overview.md output (FEAT-31)"
     endpoints:
       - {method: GET, path: "/", purpose: "list all projects"}
       - {method: POST, path: "/", purpose: "create project (+ scaffold harness on VPS)"}

@@ -30,7 +30,7 @@
       "name": "Update generate-prp command with adaptive intake flow + technical overview output",
       "size": "S",
       "priority": 1,
-      "status": "pending",
+      "status": "pending_review",
       "description": "The /generate-prp command in the harness template is one-shot — it skips intake questions and jumps straight to PRP generation. Needs a 3-phase flow: (1) User calibration (experience level 1-10, terminal comfort, OS, tech stack preference) — then WRITE user profile to CLAUDE.md so it persists across sessions and adapts communication style, (2) Adaptive project discovery (platform, auth, database, integrations — with 'you decide' tracking that stops technical questions after 2-3 'you decide' answers), (3) PRP generation + technical overview. Must also add docs/ directory to scaffold. Full updated command text is in harness/knowledge/harness-template-design.md section 3. Two outputs: PRPs/[name]-prp.md (for agent) and docs/technical-overview.md (plain-English for user to paste into NotebookLM). Communication style adapts: beginners get 'click the Terminal tab at the bottom', experts get 'run npm install'.",
       "change": [
         "backend/routers/projects.py TEMPLATE_GENERATE_PRP constant (~line 90): Replace entire string with the updated command from harness/knowledge/harness-template-design.md section 3 (`.claude/commands/generate-prp.md`). Copy the full markdown content between the ``` fences.",
@@ -39,13 +39,13 @@
       ],
       "test": "Step-by-step: (1) Read the updated TEMPLATE_GENERATE_PRP constant — verify it contains 'Phase 1: User Calibration', 'Phase 2: Project Discovery', 'Phase 3: Generate PRP', and 'docs/technical-overview.md'. (2) Check subdirs list includes 'docs'. (3) Check template_files includes 'docs/.gitkeep'. (4) py_compile check. Paste first 5 lines of TEMPLATE_GENERATE_PRP in completion_note.",
       "investigation_id": null,
-      "completion_note": "",
+      "completion_note": "Changed backend/routers/projects.py (748→870 lines). Replaced TEMPLATE_GENERATE_PRP with full adaptive 3-phase intake flow from harness-template-design.md section 3. Added 'docs' to subdirs list (line 521). Added 'docs/.gitkeep': '' to template_files (line 541). Test evidence: (1) grep confirms 'Phase 1: User Calibration' at line 115, 'Phase 2: Project Discovery' at line 168, 'Phase 3: Generate PRP' at line 211, 'docs/technical-overview.md' at lines 166 and 266. (2) subdirs includes 'docs'. (3) template_files includes 'docs/.gitkeep'. (4) py_compile OK. First 5 lines: TEMPLATE_GENERATE_PRP = \"\"\"# Generate PRP / / You are generating a PRP (Product Requirements Prompt) — a comprehensive implementation blueprint that an AI coding agent can use to build this project. / / ## Brief. CODEBASE_INDEX updated (projects.py 748→870 lines, purpose updated).",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

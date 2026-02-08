@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 119 - 2026-02-08 EST
+**Task**: FEAT-31
+**What**: Replaced TEMPLATE_GENERATE_PRP constant in projects.py with the full adaptive 3-phase intake flow from harness-template-design.md section 3. Phase 1: User Calibration (experience, terminal, OS, tech stack preference + write user profile to CLAUDE.md). Phase 2: Adaptive Project Discovery (platform, auth, DB, integrations + "you decide" tracking that stops technical questions after 2-3). Phase 3: PRP generation (two files — PRPs/[name]-prp.md for agent + docs/technical-overview.md for user). Also added 'docs' to subdirs list and 'docs/.gitkeep' to template_files. projects.py 748→870 lines.
+**Key Learning**: The old TEMPLATE_GENERATE_PRP was a simple one-shot generator. The new version is conversational — it asks questions before generating, adapts communication style based on experience level, and outputs an additional technical overview doc for non-engineers.
+
+---
+
 ### Session 118 - 2026-02-08 EST
 **Task**: FEAT-30
 **What**: Extended create_vps_project_folder to scaffold full harness template on VPS. Added 8 module-level template constants (CLAUDE.md, settings.json, generate-prp.md, execute-prp.md, feature_queue.json, CODEBASE_INDEX.yaml, learnings.md, README.md). Creates 5 subdirectories (.claude, .claude/commands, harness, PRPs, src), writes 10 files with {{placeholder}} substitution, then runs git init + initial commit. Added _detect_commands() for tech stack → install/start commands and _fill_template() for placeholder replacement. projects.py 364→748 lines. Python syntax: OK. Frontend build: 0 errors.
