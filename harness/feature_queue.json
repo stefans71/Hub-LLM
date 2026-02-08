@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-08T16:00",
+  "updated": "2026-02-08T18:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,68 +25,6 @@
     }
   },
   "queue": [
-    {
-      "id": "BUG-52",
-      "name": "LLM-Dev: file opens as wrong tab, close X broken, replace DIY highlighter with Monaco CodeEditor",
-      "size": "M",
-      "priority": 3,
-      "status": "pending_review",
-      "description": "Three bugs in the LLM-Dev panel when opening files from file explorer:\n\n(1) TAB ROUTING: Clicking a file (e.g. CODEBASE_INDEX.yaml) creates a NEW top-level tab in the LLM-Dev tab bar as a peer to Terminal/Docker/Logs/Project Context. Expected: files should open under the existing Editor tab with file sub-tabs inside it.\n\n(2) FILE CLOSE X: The file sub-tabs (README.md ×, CODEBASE_INDEX.yaml ×) have X buttons but clicking X doesn't close the file. The close handler at LLMDevPanel.jsx:592-604 looks correct (filters openEditors, updates state), but something prevents it from working. Debug the click handler.\n\n(3) SYNTAX HIGHLIGHTING: LLMDevPanel.jsx lines 644-688 has a hand-rolled regex syntax highlighter using dangerouslySetInnerHTML instead of using the existing CodeEditor component (which already has Monaco Editor). The regex highlighter (lines 674-683) is JS-centric and breaks on YAML — the HTML-escaping at lines 676-678 runs BEFORE the regex colorization at 679-683, causing raw HTML color spans to appear in the output. ROOT CAUSE: The escape order is wrong AND the approach is wrong. FIX: Replace the entire hand-rolled renderer (lines 644-688) with the CodeEditor component that already exists and works correctly with Monaco. CodeEditor.jsx already has: Monaco CDN loading, language detection (YAML included), vs-dark theme, line numbers, word wrap. Just render <CodeEditor path={activeFilePath} content={codeContent} readOnly={true} onClose={...} /> instead of the DIY renderer.\n\nScreenshot reference: WorkSpace_LLM-Dev-01.png",
-      "change": [
-        "frontend/src/components/LLMDevPanel.jsx: (1) Fix tab routing so files open under the Editor tab, not as new top-level tabs. (2) Debug the file close X handler at lines 592-604. (3) Replace the hand-rolled regex syntax highlighter (lines 644-688, the dangerouslySetInnerHTML block) with <CodeEditor path={path} content={codeContent} readOnly={true} onClose={handleClose} />. Import CodeEditor at the top of the file.",
-        "frontend/src/components/CodeEditor.jsx: No changes needed — it already works correctly with Monaco, language detection, and vs-dark theme. Just needs to be used by LLMDevPanel instead of the DIY renderer."
-      ],
-      "test": "(1) Open file explorer, click a YAML file. (2) File opens inside the Editor tab (not as new top-level tab). (3) Monaco editor renders with proper YAML syntax highlighting (comments in gray, keys in color, strings highlighted — VS Code style). No raw HTML color codes visible. (4) Click X on file sub-tab — file closes. (5) Open a .md file — Monaco renders with markdown highlighting. (6) Open a .json file — Monaco renders with JSON highlighting.",
-      "completion_note": "Changed LLMDevPanel.jsx (858→812 lines). (1) Tab label: line 423 changed from `{activeFile ? activeFile : 'Editor'}` to just `Editor` — top-level tab always says 'Editor', filenames shown in sub-tabs only. (2) Close X: `openFile` function at line 96 changed `setOpenEditors(openEditors.map(...))` to `setOpenEditors(prev => { ... })` using functional update — fixes stale closure where close handler's state removal was overwritten by openFile re-reading old openEditors. (3) Syntax highlighting: replaced entire DIY regex renderer (dangerouslySetInnerHTML, ~45 lines) with `<CodeEditor path={...} content={codeContent} readOnly={true} />`. Imported CodeEditor at top. Monaco provides proper language detection (YAML, JSON, markdown, etc.), vs-dark theme, line numbers, word wrap. Build: vite build 0 errors. CODEBASE_INDEX updated (lines 858→812, purpose).",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
-      "id": "BUG-53",
-      "name": "Preview panel doesn't load URLs — web preview is non-functional",
-      "size": "M",
-      "priority": 3,
-      "status": "pending_review",
-      "description": "The web preview panel to the right of the main chat terminal has a URL bar but doesn't actually load web pages. Changing the URL and pressing enter does nothing. This is a key feature for dogfooding — users need to see their live site (localhost or production) next to the chat terminal while developing. Check PreviewPanel.jsx for the iframe/webview implementation and URL handling.",
-      "change": [
-        "frontend/src/components/PreviewPanel.jsx: Debug why URL changes don't load. Likely an iframe src not being updated, or CSP/CORS blocking, or the component not wired up to state."
-      ],
-      "test": "(1) Open preview panel. (2) Enter a URL (e.g. https://example.com). (3) Page should load in the preview iframe. (4) Test with localhost URL if a dev server is running.",
-      "completion_note": "Root cause: URL bar was a read-only <div>, not an <input>. Workspace.jsx passed previewUrl=\"\" so the iframe never rendered. Fix: (1) Added activeUrl/inputUrl state. (2) Replaced <div> URL bar with <input> — type URL, press Enter to navigate. (3) handleNavigate() auto-prepends https:// if no protocol. (4) iframe src bound to activeUrl. (5) useEffect syncs from previewUrl prop for Codespaces. (6) Open-in-new-tab and refresh use activeUrl. Build: vite build 0 errors. PreviewPanel.jsx 444→471 lines. Note: Many sites (Google, etc.) block iframe embedding via X-Frame-Options — this is expected browser security, not a bug. Sites like example.com or user's own localhost will load fine.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
-      "id": "FEAT-34",
-      "name": "LLM-Dev first terminal should be independent, not mirror chat terminal",
-      "size": "M",
-      "priority": 3,
-      "status": "pending_review",
-      "description": "The first terminal in the LLM-Dev panel currently mirrors/emulates the main chat terminal (same SSH session). This means you have two views of the same terminal doing the same thing — not useful. The first LLM-Dev terminal should be an independent SSH session starting at /root so users can cd anywhere (e.g. to the Director directory, or run other commands). The chat terminal stays locked to the project directory — that's correct. The LLM-Dev terminals are for auxiliary work: Director sessions, watching logs, running tests, etc. Check MultiTerminal.jsx and how it initializes its first terminal vs the chat terminal.",
-      "change": [
-        "frontend/src/components/MultiTerminal.jsx: Ensure the first terminal is an independent SSH session, not a mirror of ClaudeCodeTerminalChat.",
-        "The first LLM-Dev terminal should start at /root (default SSH login dir), not auto-cd to the project directory."
-      ],
-      "test": "(1) Open workspace with chat terminal connected. (2) Open LLM-Dev panel. (3) First terminal should be a separate session (type pwd — should show /root, not the project dir). (4) Chat terminal and LLM-Dev terminal should be independent (typing in one doesn't appear in the other).",
-      "completion_note": "Removed auto-cd block from TerminalInstance in MultiTerminal.jsx (lines 92-95 deleted). Each terminal gets its own SSH channel already — the 'mirroring' was just the auto-cd to project dir. Removed unused projectSlug prop from TerminalInstance. Chat terminal (ClaudeCodeTerminalChat.jsx:282) still auto-cds to project dir. Build: vite build 0 errors. MultiTerminal.jsx 1011→1004 lines. CODEBASE_INDEX updated.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
     {
       "id": "FEAT-35",
       "name": "Hint bubble: add README tip, collapsible toggle, and X dismiss",
@@ -162,6 +100,80 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-52",
+      "name": "LLM-Dev: file opens as wrong tab, close X broken, replace DIY highlighter with Monaco CodeEditor",
+      "size": "M",
+      "priority": 3,
+      "status": "completed",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_note": "Approved. Monaco replaces DIY regex highlighter. Stale closure fix for close X. Editor tab label correct.",
+      "description": "Three bugs in the LLM-Dev panel when opening files from file explorer:\n\n(1) TAB ROUTING: Clicking a file (e.g. CODEBASE_INDEX.yaml) creates a NEW top-level tab in the LLM-Dev tab bar as a peer to Terminal/Docker/Logs/Project Context. Expected: files should open under the existing Editor tab with file sub-tabs inside it.\n\n(2) FILE CLOSE X: The file sub-tabs (README.md \u00d7, CODEBASE_INDEX.yaml \u00d7) have X buttons but clicking X doesn't close the file. The close handler at LLMDevPanel.jsx:592-604 looks correct (filters openEditors, updates state), but something prevents it from working. Debug the click handler.\n\n(3) SYNTAX HIGHLIGHTING: LLMDevPanel.jsx lines 644-688 has a hand-rolled regex syntax highlighter using dangerouslySetInnerHTML instead of using the existing CodeEditor component (which already has Monaco Editor). The regex highlighter (lines 674-683) is JS-centric and breaks on YAML \u2014 the HTML-escaping at lines 676-678 runs BEFORE the regex colorization at 679-683, causing raw HTML color spans to appear in the output. ROOT CAUSE: The escape order is wrong AND the approach is wrong. FIX: Replace the entire hand-rolled renderer (lines 644-688) with the CodeEditor component that already exists and works correctly with Monaco. CodeEditor.jsx already has: Monaco CDN loading, language detection (YAML included), vs-dark theme, line numbers, word wrap. Just render <CodeEditor path={activeFilePath} content={codeContent} readOnly={true} onClose={...} /> instead of the DIY renderer.\n\nScreenshot reference: WorkSpace_LLM-Dev-01.png",
+      "change": [
+        "frontend/src/components/LLMDevPanel.jsx: (1) Fix tab routing so files open under the Editor tab, not as new top-level tabs. (2) Debug the file close X handler at lines 592-604. (3) Replace the hand-rolled regex syntax highlighter (lines 644-688, the dangerouslySetInnerHTML block) with <CodeEditor path={path} content={codeContent} readOnly={true} onClose={handleClose} />. Import CodeEditor at the top of the file.",
+        "frontend/src/components/CodeEditor.jsx: No changes needed \u2014 it already works correctly with Monaco, language detection, and vs-dark theme. Just needs to be used by LLMDevPanel instead of the DIY renderer."
+      ],
+      "test": "(1) Open file explorer, click a YAML file. (2) File opens inside the Editor tab (not as new top-level tab). (3) Monaco editor renders with proper YAML syntax highlighting (comments in gray, keys in color, strings highlighted \u2014 VS Code style). No raw HTML color codes visible. (4) Click X on file sub-tab \u2014 file closes. (5) Open a .md file \u2014 Monaco renders with markdown highlighting. (6) Open a .json file \u2014 Monaco renders with JSON highlighting.",
+      "completion_note": "Changed LLMDevPanel.jsx (858\u2192812 lines). (1) Tab label: line 423 changed from `{activeFile ? activeFile : 'Editor'}` to just `Editor` \u2014 top-level tab always says 'Editor', filenames shown in sub-tabs only. (2) Close X: `openFile` function at line 96 changed `setOpenEditors(openEditors.map(...))` to `setOpenEditors(prev => { ... })` using functional update \u2014 fixes stale closure where close handler's state removal was overwritten by openFile re-reading old openEditors. (3) Syntax highlighting: replaced entire DIY regex renderer (dangerouslySetInnerHTML, ~45 lines) with `<CodeEditor path={...} content={codeContent} readOnly={true} />`. Imported CodeEditor at top. Monaco provides proper language detection (YAML, JSON, markdown, etc.), vs-dark theme, line numbers, word wrap. Build: vite build 0 errors. CODEBASE_INDEX updated (lines 858\u2192812, purpose).",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
+      "id": "BUG-53",
+      "name": "Preview panel doesn't load URLs \u2014 web preview is non-functional",
+      "size": "M",
+      "priority": 3,
+      "status": "completed",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_note": "Approved. URL bar now editable input with Enter navigation. Auto-prepend https://.",
+      "description": "The web preview panel to the right of the main chat terminal has a URL bar but doesn't actually load web pages. Changing the URL and pressing enter does nothing. This is a key feature for dogfooding \u2014 users need to see their live site (localhost or production) next to the chat terminal while developing. Check PreviewPanel.jsx for the iframe/webview implementation and URL handling.",
+      "change": [
+        "frontend/src/components/PreviewPanel.jsx: Debug why URL changes don't load. Likely an iframe src not being updated, or CSP/CORS blocking, or the component not wired up to state."
+      ],
+      "test": "(1) Open preview panel. (2) Enter a URL (e.g. https://example.com). (3) Page should load in the preview iframe. (4) Test with localhost URL if a dev server is running.",
+      "completion_note": "Root cause: URL bar was a read-only <div>, not an <input>. Workspace.jsx passed previewUrl=\"\" so the iframe never rendered. Fix: (1) Added activeUrl/inputUrl state. (2) Replaced <div> URL bar with <input> \u2014 type URL, press Enter to navigate. (3) handleNavigate() auto-prepends https:// if no protocol. (4) iframe src bound to activeUrl. (5) useEffect syncs from previewUrl prop for Codespaces. (6) Open-in-new-tab and refresh use activeUrl. Build: vite build 0 errors. PreviewPanel.jsx 444\u2192471 lines. Note: Many sites (Google, etc.) block iframe embedding via X-Frame-Options \u2014 this is expected browser security, not a bug. Sites like example.com or user's own localhost will load fine.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
+      "id": "FEAT-34",
+      "name": "LLM-Dev first terminal should be independent, not mirror chat terminal",
+      "size": "M",
+      "priority": 3,
+      "status": "completed",
+      "completed": "2026-02-08",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-08",
+      "review_note": "Approved. Removed auto-cd from MultiTerminal. LLM-Dev terminals independent at /root.",
+      "description": "The first terminal in the LLM-Dev panel currently mirrors/emulates the main chat terminal (same SSH session). This means you have two views of the same terminal doing the same thing \u2014 not useful. The first LLM-Dev terminal should be an independent SSH session starting at /root so users can cd anywhere (e.g. to the Director directory, or run other commands). The chat terminal stays locked to the project directory \u2014 that's correct. The LLM-Dev terminals are for auxiliary work: Director sessions, watching logs, running tests, etc. Check MultiTerminal.jsx and how it initializes its first terminal vs the chat terminal.",
+      "change": [
+        "frontend/src/components/MultiTerminal.jsx: Ensure the first terminal is an independent SSH session, not a mirror of ClaudeCodeTerminalChat.",
+        "The first LLM-Dev terminal should start at /root (default SSH login dir), not auto-cd to the project directory."
+      ],
+      "test": "(1) Open workspace with chat terminal connected. (2) Open LLM-Dev panel. (3) First terminal should be a separate session (type pwd \u2014 should show /root, not the project dir). (4) Chat terminal and LLM-Dev terminal should be independent (typing in one doesn't appear in the other).",
+      "completion_note": "Removed auto-cd block from TerminalInstance in MultiTerminal.jsx (lines 92-95 deleted). Each terminal gets its own SSH channel already \u2014 the 'mirroring' was just the auto-cd to project dir. Removed unused projectSlug prop from TerminalInstance. Chat terminal (ClaudeCodeTerminalChat.jsx:282) still auto-cds to project dir. Build: vite build 0 errors. MultiTerminal.jsx 1011\u21921004 lines. CODEBASE_INDEX updated.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      }
+    },
     {
       "id": "BUG-50",
       "name": "Delete project VPS folder fails — recursive delete with safety check",
