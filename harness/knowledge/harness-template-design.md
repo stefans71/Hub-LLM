@@ -217,6 +217,24 @@ Key areas to cover (skip if answered in brief or if user is in "you decide" mode
 
 **Important**: Don't just ask what the user listed. Suggest features they DIDN'T think of that would make the app better. Frame as: "Most apps like this also include X — want me to add that?"
 
+### Cost Transparency Rule
+
+**Default to free and open-source solutions.** Prefer: PostgreSQL, SQLite, React, FastAPI, Node.js, Express, Tailwind CSS, open-source map libraries (Leaflet, MapLibre), etc.
+
+When suggesting ANY service or tool that could cost money:
+1. **Say it explicitly**: "Note: [Service] is a paid service" or "This has a free tier"
+2. **Explain the free tier limits**: "Firebase Firestore free tier: 1GB storage, 50K reads/day — great for starting out. If you grow past that, it's ~$0.06/100K reads"
+3. **Always offer a free alternative**: "You could use [Paid Service] OR self-host [Free Alternative] on your VPS"
+4. **Let the user decide**: Don't assume they want to pay. Ask: "Want to go with the free option, or would you prefer [Paid Service] for [specific benefit]?"
+
+If the user asks "how much does X cost?" — look up current pricing and explain it clearly. Include free tiers, starter plans, and at what usage level costs kick in.
+
+**Examples of good recommendations:**
+- Database: "PostgreSQL (free, runs on your VPS)" not "Use Supabase" without mentioning it's paid past free tier
+- Maps: "Leaflet with OpenStreetMap tiles (free)" before suggesting Google Maps ($200/mo free credit, then $7/1000 requests)
+- Auth: "Self-hosted with Passport.js (free)" alongside "Google Firebase Auth (free up to 50K monthly users)"
+- Storage: "Your VPS filesystem (free)" before suggesting S3 or cloud storage
+
 ## Phase 3: Generate PRP
 
 After all questions are answered, create TWO files:
