@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-08T15:30",
+  "updated": "2026-02-08T16:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,51 @@
     }
   },
   "queue": [
+    {
+      "id": "BUG-47",
+      "name": "CreateProject FK violation — VPS not synced to Postgres before project INSERT",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "When a subscription user creates a project, BUG-45 fix auto-sets formData.vpsServerId from localStorage claudeCodeServer.id (CreateProject.jsx line 449-451). The form submits vps_server_id to POST /api/projects/ (line 1138). But the VPS only exists in localStorage — vps_servers table in Postgres is EMPTY. The INSERT fails with: sqlalchemy.exc.IntegrityError: ForeignKeyViolationError: Key (vps_server_id)=(vps_1770492258352) is not present in table 'vps_servers'. Secondary issue: line 1171 calls res.json() on the 500 text response ('Internal Server Error'), which throws and shows 'Network error: Unexpected token' instead of a useful message. Learnings: Session 43, 47 — localStorage is source of truth, backend is synced copy. Session 90 — Postgres FK constraints are strict.",
+      "change": [
+        "backend/routers/projects.py create_project endpoint (~line 700): Before the INSERT, if project.vps_server_id is provided, check if that server exists in vps_servers table. If not, read it from the request or call the servers sync mechanism to ensure it exists. Simplest fix: query for the server, if missing, create a minimal VPSServerModel record from the ID (host/credentials can be synced later from localStorage).",
+        "frontend/src/pages/CreateProject.jsx (~line 1125): Before calling POST /api/projects/, if formData.vpsServerId is set, call POST /api/servers/ (or PUT) to ensure the VPS server exists in the backend DB. Use the full server data from localStorage vps_servers array.",
+        "frontend/src/pages/CreateProject.jsx line 1171: Wrap res.json() in try/catch — if JSON parse fails, fall back to res.text() or show 'Server error' instead of cryptic 'Unexpected token' message."
+      ],
+      "test": "Step-by-step: (1) Clear vps_servers table in Postgres (should already be empty). (2) Ensure a VPS is configured in localStorage. (3) Go to CreateProject, fill in name + brief. (4) Click Create Project. (5) Should succeed — project created, harness scaffolded on VPS. (6) Verify vps_servers table now has the server record. (7) Test error display: temporarily break the endpoint and verify a readable error message appears, not 'Unexpected token'.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "BUG-48",
+      "name": "CreateProject UX — 'Enhance with AI' checkbox is confusing, needs explicit track selection",
+      "size": "M",
+      "priority": 2,
+      "status": "pending",
+      "description": "The 'Enhance with AI' checkbox (CreateProject.jsx line 1340-1344) is the wrong UX pattern. Problems: (1) VPS users don't know to skip it — they'll check it and get the OpenRouter flow when they should be using /generate-prp in the terminal. (2) OpenRouter users might not check it and miss the PRP generation entirely. (3) Users without an OpenRouter key who check it get an error. (4) There's no guidance about WHICH track you're on. The fix: replace the checkbox with an explicit track selection early in the form. Two options: 'I have a VPS with Claude Code' (Terminal Track — skip enhance, create project, use terminal for /generate-prp) vs 'I'll use an API key' (OpenRouter Track — enhance checkbox auto-enabled, PRP intake runs in browser chat). This could be a radio button group or a two-card selector similar to the BUG-46 welcome screen pattern (App.jsx lines 250-319). The selection should appear BEFORE the brief input or right after the project name, so users know their path upfront. If user has a VPS detected (hasClaudeCode=true), default to Terminal Track. If not, default to OpenRouter Track.",
+      "change": [
+        "frontend/src/pages/CreateProject.jsx: Add track selection UI early in the form (after project name, before brief). Two cards or radio: 'Use Your VPS + LLM CLI' vs 'OpenRouter API Key'. Default based on hasClaudeCode. VPS card subtitle: 'Use your VPS with Claude Code, Codex, or any CLI agent.' OpenRouter card subtitle: 'Use your OpenRouter API key with 90+ models.'",
+        "frontend/src/pages/CreateProject.jsx: Remove or hide the 'Enhance with AI' checkbox (line 1340-1344). Replace with track-aware behavior: OpenRouter track auto-enables PRP chat, Terminal track skips it.",
+        "frontend/src/pages/CreateProject.jsx: When Terminal Track selected, show a hint below the brief: 'After creating, run /generate-prp in the terminal for AI-guided project setup.'",
+        "frontend/src/pages/CreateProject.jsx: When OpenRouter Track selected, auto-start the PRP chat flow after brief is entered (no checkbox needed)."
+      ],
+      "test": "Step-by-step: (1) With VPS connected: open CreateProject — should default to Terminal Track. Brief input visible, no enhance checkbox. Create project → workspace opens with terminal. (2) Without VPS (clear localStorage): open CreateProject — should default to OpenRouter Track. Brief input visible, model selector appears, PRP chat auto-starts when brief entered. (3) Switching tracks mid-form should show/hide relevant UI.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
     {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
