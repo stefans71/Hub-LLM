@@ -1663,26 +1663,263 @@ Examples:
           <SettingsPanel>
             <StepHeader number={2} title="Connection Source" />
 
-            {/* GitHub Card - Primary */}
+            {/* VPS Card - Primary */}
+            <div
+              id="vps-card"
+              style={{
+                background: cssVars.bgTertiary,
+                border: `1px solid ${showVPSFields ? cssVars.primary : cssVars.border}`,
+                borderRadius: '12px',
+                overflow: 'hidden',
+                transition: 'all 0.2s ease',
+                marginBottom: '16px',
+                boxShadow: showVPSFields ? '0 4px 16px rgba(0, 0, 0, 0.15)' : 'none'
+              }}
+            >
+              <div
+                onClick={() => setShowVPSFields(!showVPSFields)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '16px 20px',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (!showVPSFields) {
+                    e.currentTarget.parentElement.style.borderColor = cssVars.primary
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!showVPSFields) {
+                    e.currentTarget.parentElement.style.borderColor = cssVars.border
+                  }
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Server size={22} style={{ color: cssVars.primary }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '15px', fontWeight: 600 }}>Connect to VPS</div>
+                    <div style={{ fontSize: '12px', color: cssVars.textMuted }}>SSH into your own server</div>
+                  </div>
+                </div>
+                <div style={{ color: cssVars.textMuted, transition: 'transform 0.2s', transform: showVPSFields ? 'rotate(180deg)' : 'none' }}>
+                  <ChevronDown size={20} />
+                </div>
+              </div>
+
+              {showVPSFields && (
+                <div style={{
+                  padding: '0 20px 20px 20px',
+                  borderTop: `1px solid ${cssVars.border}`
+                }}>
+                  <div style={{ paddingTop: '16px' }}>
+                    <Select
+                      label="Select Server"
+                      value={formData.vpsServerId}
+                      onChange={handleVpsServerChange}
+                      options={[
+                        { value: '', label: '+ Add New VPS' },
+                        ...savedVpsServers.map(server => ({
+                          value: server.id,
+                          label: `${server.name} (${server.host})`
+                        }))
+                      ]}
+                      style={{ marginBottom: '12px' }}
+                    />
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                      <Input
+                        label="IP Address"
+                        placeholder="0.0.0.0"
+                        value={formData.vpsIp}
+                        onChange={handleInputChange('vpsIp')}
+                      />
+                      <Input
+                        label="Port"
+                        placeholder="22"
+                        value={formData.vpsPort}
+                        onChange={handleInputChange('vpsPort')}
+                      />
+                    </div>
+
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <label style={{
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: cssVars.textSecondary,
+                          textTransform: 'uppercase'
+                        }}>SSH Private Key</label>
+                        <a href="#" style={{ color: cssVars.primary, fontSize: '12px', textDecoration: 'none' }}>
+                          ℹ️ Help finding key
+                        </a>
+                      </div>
+                      <textarea
+                        value={formData.vpsKey}
+                        onChange={handleInputChange('vpsKey')}
+                        placeholder={`-----BEGIN RSA PRIVATE KEY-----
+...`}
+                        style={{
+                          width: '100%',
+                          minHeight: '80px',
+                          padding: '10px 12px',
+                          background: cssVars.bgSecondary,
+                          border: `1px solid ${cssVars.border}`,
+                          borderRadius: '8px',
+                          color: cssVars.textPrimary,
+                          fontSize: '11px',
+                          fontFamily: 'Monaco, Consolas, monospace',
+                          outline: 'none',
+                          resize: 'vertical',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                          variant="secondary"
+                          onClick={handleTestVps}
+                          disabled={testingVps || !formData.vpsIp.trim()}
+                        >
+                          {testingVps ? (
+                            <>
+                              <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                              Testing...
+                            </>
+                          ) : (
+                            <>
+                              <Zap size={14} />
+                              Test Connection
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {/* Test result display */}
+                      {vpsTestResult && (
+                        <div style={{
+                          padding: '12px',
+                          borderRadius: '8px',
+                          background: vpsTestResult.success
+                            ? 'rgba(34, 197, 94, 0.1)'
+                            : 'rgba(239, 68, 68, 0.1)',
+                          border: `1px solid ${vpsTestResult.success ? cssVars.success : cssVars.error}`
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            marginBottom: vpsTestResult.server_info ? '8px' : 0
+                          }}>
+                            {vpsTestResult.success ? (
+                              <Check size={16} style={{ color: cssVars.success }} />
+                            ) : (
+                              <X size={16} style={{ color: cssVars.error }} />
+                            )}
+                            <span style={{
+                              fontSize: '13px',
+                              color: vpsTestResult.success ? cssVars.success : cssVars.error,
+                              fontWeight: 500
+                            }}>
+                              {vpsTestResult.message}
+                            </span>
+                          </div>
+
+                          {/* Server info on success */}
+                          {vpsTestResult.success && vpsTestResult.server_info && (
+                            <div style={{
+                              fontSize: '11px',
+                              color: cssVars.textSecondary,
+                              marginTop: '8px',
+                              paddingTop: '8px',
+                              borderTop: `1px solid ${cssVars.border}`,
+                              fontFamily: 'Monaco, Consolas, monospace'
+                            }}>
+                              <div style={{ marginBottom: '4px' }}>
+                                <span style={{ color: cssVars.textMuted }}>Host:</span>{' '}
+                                {vpsTestResult.server_info.hostname || formData.vpsIp}
+                              </div>
+                              <div style={{ marginBottom: '4px' }}>
+                                <span style={{ color: cssVars.textMuted }}>User:</span>{' '}
+                                {vpsTestResult.server_info.user || 'root'}
+                              </div>
+                              {vpsTestResult.server_info.os && (
+                                <div>
+                                  <span style={{ color: cssVars.textMuted }}>OS:</span>{' '}
+                                  {vpsTestResult.server_info.os}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Status line install option */}
+                          {vpsTestResult.success && vpsTestResult.claude_code_detected && (
+                            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${cssVars.border}` }}>
+                              <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                color: cssVars.textPrimary,
+                                marginBottom: '8px'
+                              }}>
+                                <input
+                                  type="checkbox"
+                                  checked={installStatusLine}
+                                  onChange={(e) => setInstallStatusLine(e.target.checked)}
+                                  style={{ accentColor: cssVars.primary, width: '14px', height: '14px' }}
+                                />
+                                Install enhanced status line
+                              </label>
+                              {installStatusLine && (
+                                <StatusLinePreview
+                                  serverName={vpsTestResult.server_info?.hostname || formData.vpsIp || 'VPS'}
+                                />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* GitHub Card - Optional version control */}
             <div style={{
               background: cssVars.bgTertiary,
-              border: `2px solid ${cssVars.primary}`,
+              border: `1px solid ${cssVars.border}`,
               borderRadius: '12px',
               padding: '24px',
-              marginBottom: '16px',
               position: 'relative'
             }}>
               <div style={{
                 position: 'absolute',
                 top: '-10px',
                 right: '16px',
-                background: cssVars.success,
+                background: cssVars.textMuted,
                 color: 'white',
                 padding: '3px 10px',
                 borderRadius: '4px',
                 fontSize: '10px',
                 fontWeight: 600
-              }}>RECOMMENDED</div>
+              }}>OPTIONAL</div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
                 <div style={{
@@ -1697,17 +1934,17 @@ Examples:
                   <Cloud size={26} style={{ color: cssVars.success }} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '18px', fontWeight: 600 }}>Free Cloud Hosting</div>
-                  <div style={{ fontSize: '13px', color: cssVars.textSecondary }}>Powered by GitHub</div>
+                  <div style={{ fontSize: '18px', fontWeight: 600 }}>Connect GitHub</div>
+                  <div style={{ fontSize: '13px', color: cssVars.textSecondary }}>Version control & cloud backup</div>
                 </div>
               </div>
 
               <p style={{ fontSize: '14px', color: cssVars.textSecondary, marginBottom: '20px', lineHeight: 1.5 }}>
-                Get free cloud hosting, storage, and preview environments. Your code stays in your GitHub account.
+                Back up your code to GitHub. The AI engineer commits after every task — connect a repo to push automatically.
               </p>
 
               <div style={{ display: 'flex', gap: '24px', marginBottom: '24px', flexWrap: 'wrap' }}>
-                {['60 hrs/mo free compute', '15GB storage', 'You own your code'].map(benefit => (
+                {['Free unlimited repos', 'Version history', 'You own your code'].map(benefit => (
                   <div key={benefit} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
                     <Check size={16} style={{ color: cssVars.success }} />
                     {benefit}
@@ -1920,7 +2157,7 @@ Examples:
                       gap: '8px'
                     }}>
                       <Check size={16} />
-                      Ready! Code will be pushed to <strong>{formData.selectedRepo}</strong>. Preview via Codespaces.
+                      Ready! Code will be pushed to <strong>{formData.selectedRepo}</strong> after each task.
                     </div>
                   ) : (
                     <div style={{
@@ -1939,243 +2176,6 @@ Examples:
                       Select a repository above, or create a new one for this project.
                     </div>
                   )}
-                </div>
-              )}
-            </div>
-
-            {/* VPS Card - Collapsible */}
-            <div
-              id="vps-card"
-              style={{
-                background: cssVars.bgTertiary,
-                border: `1px solid ${showVPSFields ? cssVars.primary : cssVars.border}`,
-                borderRadius: '12px',
-                overflow: 'hidden',
-                transition: 'all 0.2s ease',
-                boxShadow: showVPSFields ? '0 4px 16px rgba(0, 0, 0, 0.15)' : 'none'
-              }}
-            >
-              <div
-                onClick={() => setShowVPSFields(!showVPSFields)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px 20px',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  if (!showVPSFields) {
-                    e.currentTarget.parentElement.style.borderColor = cssVars.primary
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!showVPSFields) {
-                    e.currentTarget.parentElement.style.borderColor = cssVars.border
-                  }
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Server size={22} style={{ color: cssVars.primary }} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '15px', fontWeight: 600 }}>Connect to VPS</div>
-                    <div style={{ fontSize: '12px', color: cssVars.textMuted }}>Advanced - For power users with their own servers</div>
-                  </div>
-                </div>
-                <div style={{ color: cssVars.textMuted, transition: 'transform 0.2s', transform: showVPSFields ? 'rotate(180deg)' : 'none' }}>
-                  <ChevronDown size={20} />
-                </div>
-              </div>
-
-              {showVPSFields && (
-                <div style={{
-                  padding: '0 20px 20px 20px',
-                  borderTop: `1px solid ${cssVars.border}`
-                }}>
-                  <div style={{ paddingTop: '16px' }}>
-                    <Select
-                      label="Select Server"
-                      value={formData.vpsServerId}
-                      onChange={handleVpsServerChange}
-                      options={[
-                        { value: '', label: '+ Add New VPS' },
-                        ...savedVpsServers.map(server => ({
-                          value: server.id,
-                          label: `${server.name} (${server.host})`
-                        }))
-                      ]}
-                      style={{ marginBottom: '12px' }}
-                    />
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                      <Input
-                        label="IP Address"
-                        placeholder="0.0.0.0"
-                        value={formData.vpsIp}
-                        onChange={handleInputChange('vpsIp')}
-                      />
-                      <Input
-                        label="Port"
-                        placeholder="22"
-                        value={formData.vpsPort}
-                        onChange={handleInputChange('vpsPort')}
-                      />
-                    </div>
-
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <label style={{
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          color: cssVars.textSecondary,
-                          textTransform: 'uppercase'
-                        }}>SSH Private Key</label>
-                        <a href="#" style={{ color: cssVars.primary, fontSize: '12px', textDecoration: 'none' }}>
-                          ℹ️ Help finding key
-                        </a>
-                      </div>
-                      <textarea
-                        value={formData.vpsKey}
-                        onChange={handleInputChange('vpsKey')}
-                        placeholder={`-----BEGIN RSA PRIVATE KEY-----
-...`}
-                        style={{
-                          width: '100%',
-                          minHeight: '80px',
-                          padding: '10px 12px',
-                          background: cssVars.bgSecondary,
-                          border: `1px solid ${cssVars.border}`,
-                          borderRadius: '8px',
-                          color: cssVars.textPrimary,
-                          fontSize: '11px',
-                          fontFamily: 'Monaco, Consolas, monospace',
-                          outline: 'none',
-                          resize: 'vertical',
-                          boxSizing: 'border-box'
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button
-                          variant="secondary"
-                          onClick={handleTestVps}
-                          disabled={testingVps || !formData.vpsIp.trim()}
-                        >
-                          {testingVps ? (
-                            <>
-                              <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} />
-                              Testing...
-                            </>
-                          ) : (
-                            <>
-                              <Zap size={14} />
-                              Test Connection
-                            </>
-                          )}
-                        </Button>
-                      </div>
-
-                      {/* Test result display */}
-                      {vpsTestResult && (
-                        <div style={{
-                          padding: '12px',
-                          borderRadius: '8px',
-                          background: vpsTestResult.success
-                            ? 'rgba(34, 197, 94, 0.1)'
-                            : 'rgba(239, 68, 68, 0.1)',
-                          border: `1px solid ${vpsTestResult.success ? cssVars.success : cssVars.error}`
-                        }}>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: vpsTestResult.server_info ? '8px' : 0
-                          }}>
-                            {vpsTestResult.success ? (
-                              <Check size={16} style={{ color: cssVars.success }} />
-                            ) : (
-                              <X size={16} style={{ color: cssVars.error }} />
-                            )}
-                            <span style={{
-                              fontSize: '13px',
-                              color: vpsTestResult.success ? cssVars.success : cssVars.error,
-                              fontWeight: 500
-                            }}>
-                              {vpsTestResult.message}
-                            </span>
-                          </div>
-
-                          {/* Server info on success */}
-                          {vpsTestResult.success && vpsTestResult.server_info && (
-                            <div style={{
-                              fontSize: '11px',
-                              color: cssVars.textSecondary,
-                              marginTop: '8px',
-                              paddingTop: '8px',
-                              borderTop: `1px solid ${cssVars.border}`,
-                              fontFamily: 'Monaco, Consolas, monospace'
-                            }}>
-                              <div style={{ marginBottom: '4px' }}>
-                                <span style={{ color: cssVars.textMuted }}>Host:</span>{' '}
-                                {vpsTestResult.server_info.hostname || formData.vpsIp}
-                              </div>
-                              <div style={{ marginBottom: '4px' }}>
-                                <span style={{ color: cssVars.textMuted }}>User:</span>{' '}
-                                {vpsTestResult.server_info.user || 'root'}
-                              </div>
-                              {vpsTestResult.server_info.os && (
-                                <div>
-                                  <span style={{ color: cssVars.textMuted }}>OS:</span>{' '}
-                                  {vpsTestResult.server_info.os}
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Status line install option */}
-                          {vpsTestResult.success && vpsTestResult.claude_code_detected && (
-                            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${cssVars.border}` }}>
-                              <label style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                color: cssVars.textPrimary,
-                                marginBottom: '8px'
-                              }}>
-                                <input
-                                  type="checkbox"
-                                  checked={installStatusLine}
-                                  onChange={(e) => setInstallStatusLine(e.target.checked)}
-                                  style={{ accentColor: cssVars.primary, width: '14px', height: '14px' }}
-                                />
-                                Install enhanced status line
-                              </label>
-                              {installStatusLine && (
-                                <StatusLinePreview
-                                  serverName={vpsTestResult.server_info?.hostname || formData.vpsIp || 'VPS'}
-                                />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
               )}
             </div>

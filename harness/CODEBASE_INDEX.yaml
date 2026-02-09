@@ -96,7 +96,7 @@ frontend_pages:
   CreateProject.jsx:
     path: frontend/src/pages/CreateProject.jsx
     lines: 2562
-    purpose: "5-step project creation wizard with explicit track selection (BUG-48): Terminal Track (VPS + CLI) vs OpenRouter Track. PRP generation via OpenRouter chat (FEAT-32). Syncs VPS server to backend before project creation to prevent FK violation (BUG-47)."
+    purpose: "5-step project creation wizard with explicit track selection (BUG-48): Terminal Track (VPS + CLI) vs OpenRouter Track. PRP generation via OpenRouter chat (FEAT-32). Syncs VPS server to backend before project creation to prevent FK violation (BUG-47). GitHub card reframed as optional version control (FEAT-39), VPS card shown first."
     props: "{onCancel, onCreateProject}"
     imports: [ModelSelector]
     key_state:

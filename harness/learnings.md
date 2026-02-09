@@ -2161,6 +2161,13 @@ Three callbacks from Workspace to ServerManager:
 ---
 
 ### Session — 2026-02-09 EST
+**Task**: FEAT-39 (Kill Codespaces messaging, reframe GitHub as version control)
+**What**: Rewrote GitHub card in CreateProject.jsx Step 2. Title: 'Free Cloud Hosting' → 'Connect GitHub'. Subtitle: 'Powered by GitHub' → 'Version control & cloud backup'. Benefits: removed '60 hrs/mo free compute' and '15GB storage', replaced with 'Free unlimited repos' and 'Version history'. Status text: removed 'Preview via Codespaces'. Swapped card order: VPS card now appears FIRST (primary), GitHub card below with 'OPTIONAL' badge. VPS subtitle changed from 'Advanced - For power users' to 'SSH into your own server'. Added marginBottom to VPS card for spacing.
+**Key Insight**: Card swap is a large edit — safest approach is to replace the entire section (both cards) in one Edit call rather than trying to cut/paste individual blocks.
+
+---
+
+### Session — 2026-02-09 EST
 **Task**: FEAT-37 (Welcome to HubLLM page — auto-loads in preview panel)
 **What**: Created `frontend/public/docs/welcome-to-hubllm.html` — self-contained HTML with inline CSS, HubLLM dark branding (cyan #38bdf8, orange #f97316), responsive layout. Four sections: Getting Started steps, Workspace diagram, Git & GitHub, Getting Help. Workspace.jsx: checks `localStorage.welcomed_{projectId}` on mount — if first visit, passes `/docs/welcome-to-hubllm.html` to PreviewPanel and expands panel. Uses `useState(() => ...)` initializer to compute once. Sets localStorage flag immediately so subsequent visits skip welcome. Updated ClaudeCodeTerminalChat hint bubble to point at preview panel. Updated backend templates: added Git Workflow to TEMPLATE_CLAUDE_MD, added welcome page mention to TEMPLATE_README.
 **Key Pattern**: For one-time first-visit behavior, compute `isFirstVisit` at top of component render, use it in `useState` initializers (not useEffect), and set the localStorage flag immediately. This avoids flash-of-wrong-state and re-renders.
