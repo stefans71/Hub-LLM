@@ -7,8 +7,8 @@ const cssVars = {
   bgSecondary: '#1a2028',
   bgTertiary: '#242b35',
   border: '#2d3748',
-  primary: '#3b82f6',
-  primaryHover: '#2563eb',
+  primary: '#38bdf8',
+  primaryHover: '#0ea5e9',
   accent: '#f97316',
   success: '#22c55e',
   error: '#ef4444',
@@ -401,7 +401,7 @@ export default function AnthropicSubscription({ user }) {
       <div style={{
         marginTop: '16px',
         padding: '12px',
-        background: 'rgba(59, 130, 246, 0.1)',
+        background: 'rgba(56, 189, 248, 0.1)',
         borderRadius: '8px',
         borderLeft: `3px solid ${cssVars.primary}`
       }}>

@@ -30,7 +30,7 @@ function StatCard({ icon: Icon, iconColor, badge, badgeType, label, value, descr
   }
 
   return (
-    <div className="bg-[#1a2028] border border-[#2d3748] rounded-xl p-6 hover:border-[#3b82f6] transition-colors">
+    <div className="bg-[#1a2028] border border-[#2d3748] rounded-xl p-6 hover:border-[#38bdf8] transition-colors">
       <div className="flex justify-between items-start mb-4">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBgColors[iconColor]}`}>
           <Icon size={20} />
@@ -94,7 +94,7 @@ function ProjectCard({ project, onClick }) {
 
   return (
     <div
-      className="bg-[#1a2028] border border-[#2d3748] rounded-xl p-5 cursor-pointer transition-all hover:border-[#3b82f6] hover:-translate-y-0.5"
+      className="bg-[#1a2028] border border-[#2d3748] rounded-xl p-5 cursor-pointer transition-all hover:border-[#38bdf8] hover:-translate-y-0.5"
       onClick={onClick}
     >
       {project.workspace && (
@@ -126,7 +126,7 @@ function ProjectCard({ project, onClick }) {
             <div
               key={i}
               className="w-7 h-7 rounded-full border-2 border-[#1a2028] flex items-center justify-center text-xs font-medium -ml-2 first:ml-0"
-              style={{ background: ['#22c55e', '#3b82f6', '#8b5cf6'][i % 3] }}
+              style={{ background: ['#22c55e', '#38bdf8', '#8b5cf6'][i % 3] }}
               title={agent}
             >
               {agent.charAt(0).toUpperCase()}
@@ -263,7 +263,7 @@ export default function Dashboard({ onNavigate, onCreateProject }) {
             </button>
             <button
               onClick={onCreateProject}
-              className="flex items-center gap-2 px-4 py-2 bg-[#3b82f6] hover:bg-[#2563eb] rounded-lg transition text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-[#38bdf8] hover:bg-[#0ea5e9] rounded-lg transition text-sm font-medium"
             >
               <Plus size={14} />
               Create Project
@@ -339,7 +339,7 @@ export default function Dashboard({ onNavigate, onCreateProject }) {
             <p className="text-gray-400 mb-6">Create your first project to get started</p>
             <button
               onClick={onCreateProject}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#3b82f6] hover:bg-[#2563eb] rounded-lg transition text-sm font-medium"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#38bdf8] hover:bg-[#0ea5e9] rounded-lg transition text-sm font-medium"
             >
               <Plus size={14} />
               Create Project

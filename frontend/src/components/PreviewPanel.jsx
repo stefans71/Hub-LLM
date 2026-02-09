@@ -394,7 +394,7 @@ function DemoPreview() {
         width: '60px',
         height: '60px',
         borderRadius: '16px',
-        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+        background: 'linear-gradient(135deg, #38bdf8, #8b5cf6)',
         marginBottom: '24px'
       }} />
 
@@ -405,7 +405,7 @@ function DemoPreview() {
       }}>
         Build faster with{' '}
         <span style={{
-          background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+          background: 'linear-gradient(135deg, #38bdf8, #8b5cf6)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent'
         }}>
@@ -426,7 +426,7 @@ function DemoPreview() {
       <div style={{ display: 'flex', gap: '12px' }}>
         <button style={{
           padding: '12px 24px',
-          background: '#3b82f6',
+          background: '#38bdf8',
           color: 'white',
           border: 'none',
           borderRadius: '8px',

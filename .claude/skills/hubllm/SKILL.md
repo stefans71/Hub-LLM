@@ -86,7 +86,7 @@ Key: `backend/services/vps_connection.py`
 - **localStorage is source of truth** for VPS servers
 - **Chat routing:** Anthropic+VPS → SSH | else → OpenRouter API
 - **SSH:** VPSConnectionManager singleton → PTY channels → shared fate
-- **CSS vars:** `--bg-primary: #0f1419` `--bg-secondary: #1a2028` `--bg-tertiary: #242b35` `--border: #2d3748` `--primary: #3b82f6` `--accent: #f97316` `--success: #22c55e` `--error: #ef4444`
+- **CSS vars:** `--bg-primary: #0f1419` `--bg-secondary: #1a2028` `--bg-tertiary: #242b35` `--border: #2d3748` `--primary: #38bdf8` `--accent: #f97316` `--success: #22c55e` `--error: #ef4444`
 
 ## Rules
 - XS/S = multiple OK | M/L = ONE only, stop after

@@ -530,7 +530,7 @@ export default function ModelSelector({
                 padding: '8px 12px',
                 fontSize: '12px',
                 color: 'var(--primary)',
-                background: 'rgba(59, 130, 246, 0.08)',
+                background: 'rgba(56, 189, 248, 0.08)',
                 borderBottom: '1px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',

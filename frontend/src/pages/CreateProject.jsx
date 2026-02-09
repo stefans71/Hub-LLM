@@ -15,8 +15,8 @@ const cssVars = {
   bgSecondary: '#1a2028',
   bgTertiary: '#242b35',
   border: '#2d3748',
-  primary: '#3b82f6',
-  primaryHover: '#2563eb',
+  primary: '#38bdf8',
+  primaryHover: '#0ea5e9',
   accent: '#f97316',
   success: '#22c55e',
   error: '#ef4444',
@@ -544,7 +544,7 @@ export default function CreateProject({ onCancel, onCreateProject }) {
           name: s.name,
           status: s.connected ? 'connected' : 'not-connected',
           icon: s.icon || '🔌',
-          color: s.type === 'database' ? 'rgba(59, 130, 246, 0.8)' :
+          color: s.type === 'database' ? 'rgba(56, 189, 248, 0.8)' :
                  s.type === 'api' ? 'rgba(168, 85, 247, 0.8)' :
                  'rgba(107, 114, 128, 0.8)',
           isCustom: true
@@ -1746,7 +1746,7 @@ Examples:
                   <div style={{
                     width: '40px',
                     height: '40px',
-                    background: 'rgba(59, 130, 246, 0.15)',
+                    background: 'rgba(56, 189, 248, 0.15)',
                     borderRadius: '10px',
                     display: 'flex',
                     alignItems: 'center',
@@ -2222,8 +2222,8 @@ Examples:
                     <div style={{
                       marginTop: '16px',
                       padding: '12px',
-                      background: 'rgba(59, 130, 246, 0.1)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      background: 'rgba(56, 189, 248, 0.1)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
                       borderRadius: '8px',
                       fontSize: '12px',
                       color: cssVars.primary,
@@ -2267,7 +2267,7 @@ Examples:
 
             <div style={{
               padding: '10px',
-              background: 'rgba(59, 130, 246, 0.1)',
+              background: 'rgba(56, 189, 248, 0.1)',
               borderRadius: '6px',
               marginBottom: '16px'
             }}>
@@ -2612,8 +2612,8 @@ Examples:
 
       <style>{`
         @keyframes pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-          50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
+          50% { box-shadow: 0 0 0 8px rgba(56, 189, 248, 0); }
         }
       `}</style>
     </div>

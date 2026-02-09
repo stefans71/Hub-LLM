@@ -82,7 +82,7 @@ function ChatBubble({ message, isUser }) {
     height: '36px',
     borderRadius: '50%',
     background: isUser
-      ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+      ? 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)'
       : 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
     display: 'flex',
     alignItems: 'center',
@@ -95,7 +95,7 @@ function ChatBubble({ message, isUser }) {
     maxWidth: '85%',
     padding: '14px 18px',
     borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-    background: isUser ? '#3b82f6' : '#1a1a2e',
+    background: isUser ? '#38bdf8' : '#1a1a2e',
     color: '#f0f0f5',
     fontSize: '14px',
     lineHeight: 1.7,

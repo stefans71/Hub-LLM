@@ -41,8 +41,8 @@ const cssVars = {
   bgSecondary: '#1a2028',
   bgTertiary: '#242b35',
   border: '#2d3748',
-  primary: '#3b82f6',
-  primaryHover: '#2563eb',
+  primary: '#38bdf8',
+  primaryHover: '#0ea5e9',
   accent: '#f97316',
   success: '#22c55e',
   error: '#ef4444',
@@ -952,7 +952,7 @@ function APIKeysSettings() {
       <div style={{
         marginTop: '16px',
         padding: '12px',
-        background: 'rgba(59, 130, 246, 0.1)',
+        background: 'rgba(56, 189, 248, 0.1)',
         borderRadius: '8px',
         borderLeft: `3px solid ${cssVars.primary}`
       }}>
@@ -2043,7 +2043,7 @@ function GlobalMCPSettings() {
               borderRadius: '8px',
               margin: '16px 0'
             }}>
-              <span style={{ background: 'rgba(59, 130, 246, 0.2)', border: `1px solid ${cssVars.primary}`, padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>🤖 AI</span>
+              <span style={{ background: 'rgba(56, 189, 248, 0.2)', border: `1px solid ${cssVars.primary}`, padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>🤖 AI</span>
               <span style={{ color: cssVars.textMuted }}>→</span>
               <span style={{ background: 'rgba(168, 85, 247, 0.2)', border: '1px solid #a855f7', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>🔌 MCP</span>
               <span style={{ color: cssVars.textMuted }}>→</span>
@@ -2196,7 +2196,7 @@ function GlobalMCPSettings() {
       <div style={{
         marginTop: '16px',
         padding: '12px',
-        background: 'rgba(59, 130, 246, 0.1)',
+        background: 'rgba(56, 189, 248, 0.1)',
         borderRadius: '8px',
         borderLeft: `3px solid ${cssVars.primary}`
       }}>
@@ -2234,7 +2234,7 @@ const defaultAgents = [
 const defaultSkills = [
   { id: 'doc-generator', name: 'doc-generator', icon: '📝', description: 'Generates documentation from code including README, API docs, and inline comments.', iconBg: 'rgba(168, 85, 247, 0.2)' },
   { id: 'data-analysis', name: 'data-analysis', icon: '📊', description: 'Analyzes data files, generates reports, and creates visualizations.', iconBg: 'rgba(249, 115, 22, 0.2)' },
-  { id: 'frontend-design', name: 'frontend-design', icon: '🎨', description: 'Creates UI components, layouts, and responsive designs following best practices.', iconBg: 'rgba(59, 130, 246, 0.2)' }
+  { id: 'frontend-design', name: 'frontend-design', icon: '🎨', description: 'Creates UI components, layouts, and responsive designs following best practices.', iconBg: 'rgba(56, 189, 248, 0.2)' }
 ]
 
 // Agent Modal for creating/editing agents
@@ -2592,7 +2592,7 @@ Example: You are an expert API designer. When asked to design endpoints, always 
           {/* Tip - M-41 */}
           <div style={{
             padding: '12px',
-            background: 'rgba(59, 130, 246, 0.1)',
+            background: 'rgba(56, 189, 248, 0.1)',
             borderRadius: '8px',
             marginBottom: '16px'
           }}>
@@ -2763,7 +2763,7 @@ function GlobalAgentsSettings() {
     if (agent.name.includes('test') || agent.name.includes('writer')) {
       return 'rgba(34, 197, 94, 0.2)'
     }
-    return 'rgba(59, 130, 246, 0.2)'
+    return 'rgba(56, 189, 248, 0.2)'
   }
 
   return (
@@ -2838,7 +2838,7 @@ function GlobalAgentsSettings() {
                   <div>→→→</div>
                 </div>
                 <div style={{
-                  background: 'rgba(59, 130, 246, 0.2)',
+                  background: 'rgba(56, 189, 248, 0.2)',
                   border: `2px solid ${cssVars.primary}`,
                   padding: '12px 16px',
                   borderRadius: '8px',
@@ -3064,7 +3064,7 @@ function GlobalAgentsSettings() {
       <div style={{
         marginTop: '16px',
         padding: '12px',
-        background: 'rgba(59, 130, 246, 0.1)',
+        background: 'rgba(56, 189, 248, 0.1)',
         borderRadius: '8px',
         borderLeft: `3px solid ${cssVars.primary}`
       }}>
@@ -3227,7 +3227,7 @@ function GlobalSkillsSettings() {
                   <div style={{
                     width: '40px',
                     height: '40px',
-                    background: skill.iconBg || 'rgba(59, 130, 246, 0.2)',
+                    background: skill.iconBg || 'rgba(56, 189, 248, 0.2)',
                     borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
@@ -3317,13 +3317,13 @@ function SkillModal({ show, onClose, onSave, editSkill }) {
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('📚')
   const [description, setDescription] = useState('')
-  const [iconBg, setIconBg] = useState('rgba(59, 130, 246, 0.2)')
+  const [iconBg, setIconBg] = useState('rgba(56, 189, 248, 0.2)')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
   // Icon background color options
   const iconBgOptions = [
-    { value: 'rgba(59, 130, 246, 0.2)', label: 'Blue', color: '#3b82f6' },
+    { value: 'rgba(56, 189, 248, 0.2)', label: 'Blue', color: '#38bdf8' },
     { value: 'rgba(168, 85, 247, 0.2)', label: 'Purple', color: '#a855f7' },
     { value: 'rgba(249, 115, 22, 0.2)', label: 'Orange', color: '#f97316' },
     { value: 'rgba(34, 197, 94, 0.2)', label: 'Green', color: '#22c55e' },
@@ -3336,13 +3336,13 @@ function SkillModal({ show, onClose, onSave, editSkill }) {
       setName(editSkill.name || '')
       setIcon(editSkill.icon || '📚')
       setDescription(editSkill.description || '')
-      setIconBg(editSkill.iconBg || 'rgba(59, 130, 246, 0.2)')
+      setIconBg(editSkill.iconBg || 'rgba(56, 189, 248, 0.2)')
     } else if (show) {
       // Reset to defaults for new skill
       setName('')
       setIcon('📚')
       setDescription('')
-      setIconBg('rgba(59, 130, 246, 0.2)')
+      setIconBg('rgba(56, 189, 248, 0.2)')
       setError(null)
     }
   }, [show, editSkill])
@@ -4420,7 +4420,7 @@ function VPSConnectionsSettings() {
               background: cssVars.bgSecondary,
               borderRadius: '8px'
             }}>
-              <span style={{ background: 'rgba(59, 130, 246, 0.2)', border: `1px solid ${cssVars.primary}`, padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>💻 HubLLM</span>
+              <span style={{ background: 'rgba(56, 189, 248, 0.2)', border: `1px solid ${cssVars.primary}`, padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>💻 HubLLM</span>
               <span style={{ color: cssVars.textMuted }}>→</span>
               <span style={{ background: 'rgba(168, 85, 247, 0.2)', border: '1px solid #a855f7', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>🔐 SSH</span>
               <span style={{ color: cssVars.textMuted }}>→</span>
@@ -4605,7 +4605,7 @@ function VPSConnectionsSettings() {
       <div style={{
         marginTop: '16px',
         padding: '12px',
-        background: 'rgba(59, 130, 246, 0.1)',
+        background: 'rgba(56, 189, 248, 0.1)',
         borderRadius: '8px',
         borderLeft: `3px solid ${cssVars.primary}`
       }}>

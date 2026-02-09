@@ -665,7 +665,7 @@ export default function WorkspaceFileExplorer({
                             alignItems: 'center',
                             gap: '4px',
                             ...(currentProject?.id === project.id ? {
-                              background: 'rgba(59, 130, 246, 0.2)',
+                              background: 'rgba(56, 189, 248, 0.2)',
                               color: 'var(--primary)'
                             } : {})
                           }}
@@ -966,7 +966,7 @@ export default function WorkspaceFileExplorer({
                     borderRadius: '8px',
                     border: `2px solid ${deleteModal.mode === 'archive' ? 'var(--primary)' : 'var(--border)'}`,
                     cursor: 'pointer',
-                    background: deleteModal.mode === 'archive' ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                    background: deleteModal.mode === 'archive' ? 'rgba(56, 189, 248, 0.1)' : 'transparent'
                   }}
                 >
                   <input

@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 130 - 2026-02-09 EST
+**Task**: FEAT-42
+**What**: Shifted --primary from blue #3b82f6 to cyan #38bdf8 and --primary-hover from #2563eb to #0ea5e9. Replaced all hardcoded occurrences across 10 files: index.css, ClaudeCodeTerminalChat.jsx, DashboardSidebar.jsx, AnthropicSubscription.jsx, PreviewPanel.jsx, ModelSelector.jsx, WorkspaceFileExplorer.jsx, Settings.jsx, Setup.jsx, Dashboard.jsx, CreateProject.jsx. Also replaced rgba(59, 130, 246, ...) with rgba(56, 189, 248, ...) across 6 files. Updated SKILL.md CSS vars reference.
+**Key Learning**: When changing a color token, search for BOTH hex (#3b82f6) AND rgba (rgba(59, 130, 246, ...)) variants — many inline styles use rgba for opacity variants of the same color. Also check Tailwind arbitrary values like `bg-[#3b82f6]`.
+
+---
+
 ### Session 129 - 2026-02-09 EST
 **Task**: BUG-55
 **What**: Fixed welcome page persistence — removed immediate localStorage flag on mount, added onUrlChange callback from PreviewPanel to Workspace that sets the flag only when user navigates away from the welcome URL. Made "Open in Browser" button prominent with text label + cyan styling + tooltip mentioning DevTools.

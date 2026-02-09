@@ -8,8 +8,8 @@
   --bg-secondary: #1a2028;
   --bg-tertiary: #242b35;
   --border: #2d3748;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
+  --primary: #38bdf8;
+  --primary-hover: #0ea5e9;
   --accent: #f97316;
   --success: #22c55e;
   --error: #ef4444;
@@ -108,7 +108,7 @@ html, body {
 .workspace-icon-btn.active {
   color: var(--primary);
   border-left-color: var(--primary);
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(56, 189, 248, 0.1);
 }
 
 /* W-38: File Explorer Panel */
@@ -184,7 +184,7 @@ html, body {
 }
 
 .file-tree-item.active {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(56, 189, 248, 0.2);
   color: var(--primary);
 }
 
@@ -456,7 +456,7 @@ button:hover .hover-scale {
 .chat-drop-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(56, 189, 248, 0.15);
   border: 3px dashed var(--primary);
   border-radius: 12px;
   display: flex;
@@ -734,7 +734,7 @@ button:hover .hover-scale {
 }
 
 .view-toggle-btn.active {
-  background: #3b82f6;
+  background: #38bdf8;
   color: #fff;
 }
 
@@ -781,7 +781,7 @@ button:hover .hover-scale {
   width: 40px;
   height: 40px;
   border: 3px solid #1a1a2e;
-  border-top-color: #3b82f6;
+  border-top-color: #38bdf8;
   border-radius: 50%;
   animation: terminal-spin 1s linear infinite;
 }
@@ -807,7 +807,7 @@ button:hover .hover-scale {
 .vps-connecting-dots .dot {
   width: 8px;
   height: 8px;
-  background: #3b82f6;
+  background: #38bdf8;
   border-radius: 50%;
   animation: vps-dot-pulse 1.4s ease-in-out infinite;
 }
@@ -1145,7 +1145,7 @@ button:hover .hover-scale {
   width: 60px;
   height: 60px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #38bdf8, #8b5cf6);
   margin-bottom: 24px;
 }
 
@@ -1156,7 +1156,7 @@ button:hover .hover-scale {
 }
 
 .preview-demo h1 span {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: linear-gradient(135deg, #38bdf8, #8b5cf6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -1176,7 +1176,7 @@ button:hover .hover-scale {
 
 .preview-demo-buttons button.primary {
   padding: 12px 24px;
-  background: #3b82f6;
+  background: #38bdf8;
   color: white;
   border: none;
   border-radius: 8px;

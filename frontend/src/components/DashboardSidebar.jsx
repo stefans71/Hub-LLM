@@ -63,7 +63,7 @@ function WorkspaceItem({ workspace, projects, isExpanded, onToggle, onSelectProj
                 key={project.id}
                 className={`project-item flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm transition ${
                   activeProjectId === project.id
-                    ? 'bg-[#3b82f6]/20 text-[#3b82f6]'
+                    ? 'bg-[#38bdf8]/20 text-[#38bdf8]'
                     : 'text-gray-400 hover:bg-[#242b35] hover:text-gray-200'
                 }`}
                 onClick={() => onSelectProject(project)}
@@ -208,7 +208,7 @@ export default function DashboardSidebar({
           <div
             className={`nav-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition ${
               currentView === 'dashboard'
-                ? 'bg-[#3b82f6]/20 text-[#3b82f6]'
+                ? 'bg-[#38bdf8]/20 text-[#38bdf8]'
                 : 'text-gray-300 hover:bg-[#242b35]'
             }`}
             onClick={() => onNavigate?.('dashboard')}
@@ -219,7 +219,7 @@ export default function DashboardSidebar({
           <div
             className={`nav-item flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition ${
               currentView === 'settings'
-                ? 'bg-[#3b82f6]/20 text-[#3b82f6]'
+                ? 'bg-[#38bdf8]/20 text-[#38bdf8]'
                 : 'text-gray-300 hover:bg-[#242b35]'
             }`}
             onClick={() => onNavigate?.('settings')}
@@ -238,7 +238,7 @@ export default function DashboardSidebar({
             <div className="flex items-center gap-1">
               <button
                 onClick={onCreateProject}
-                className="w-5 h-5 bg-[#3b82f6] hover:bg-[#2563eb] rounded flex items-center justify-center transition"
+                className="w-5 h-5 bg-[#38bdf8] hover:bg-[#0ea5e9] rounded flex items-center justify-center transition"
                 title="Create Project"
               >
                 <Plus size={12} className="text-white" strokeWidth={3} />
@@ -285,7 +285,7 @@ export default function DashboardSidebar({
         {/* New Project Button */}
         <button
           onClick={onCreateProject}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#3b82f6] hover:bg-[#2563eb] rounded-lg transition text-sm font-medium mb-3"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#38bdf8] hover:bg-[#0ea5e9] rounded-lg transition text-sm font-medium mb-3"
         >
           <Plus size={16} />
           New Project
@@ -304,7 +304,7 @@ export default function DashboardSidebar({
                 className="w-8 h-8 rounded-full"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-[#3b82f6] flex items-center justify-center text-xs font-medium">
+              <div className="w-8 h-8 rounded-full bg-[#38bdf8] flex items-center justify-center text-xs font-medium">
                 {getUserInitials()}
               </div>
             )}
