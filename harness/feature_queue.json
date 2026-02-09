@@ -26,27 +26,6 @@
   },
   "queue": [
     {
-      "id": "BUG-72",
-      "name": "Terminal tab close button missing in desktop tab header + color picker overflow",
-      "size": "XS",
-      "priority": 3,
-      "status": "pending_review",
-      "completion_note": "Part 1: Added X close button with hover opacity to desktop split-pane tab header (after terminal name span, guarded by terminals.length > 1). Part 2: Clamped color picker position with Math.min(pos, viewport - offset) to prevent right/bottom overflow.",
-      "description": "Two small fixes in MultiTerminal.jsx:\n\n## Part 1: Close button missing in desktop tab header\n\nThe desktop tab header (lines 788-817) shows colored dots and terminal names but has NO close button. The mobile tabbed mode (line 714) and the sidebar (line 1002) both have close buttons. The desktop tab header at ~line 816 after `<span>{terminal.name}</span>` needs one added.\n\nAfter line 816 (`<span>{terminal.name}</span>`), before the closing `</div>` at line 817, add:\n```jsx\n{terminals.length > 1 && (\n  <button\n    onClick={(e) => { e.stopPropagation(); closeTerminal(terminal.id); }}\n    style={{\n      background: 'none', border: 'none', color: 'var(--text-muted)',\n      cursor: 'pointer', padding: '2px', display: 'flex',\n      alignItems: 'center', fontSize: '10px', opacity: 0.5\n    }}\n    onMouseEnter={(e) => e.currentTarget.style.opacity = 1}\n    onMouseLeave={(e) => e.currentTarget.style.opacity = 0.5}\n  >\n    <X size={12} />\n  </button>\n)}\n```\n\n## Part 2: Color picker overflows right edge\n\nThe terminal color picker popup (~line 1030) uses `position: fixed` with `left: colorPickerPosition.x`. When triggered from the TERMS sidebar on the far right, it overflows off-screen.\n\nFix the positioning at ~line 1034. Calculate the position so it doesn't overflow:\n```jsx\nleft: Math.min(colorPickerPosition.x, window.innerWidth - 180),\ntop: Math.min(colorPickerPosition.y, window.innerHeight - 120),\n```\nThe popup is ~160px wide and ~100px tall, so subtracting with margin keeps it visible.",
-      "change": [
-        "frontend/src/components/MultiTerminal.jsx:~816 — Add X close button to desktop tab header (after terminal name span)",
-        "frontend/src/components/MultiTerminal.jsx:~1034 — Fix color picker position to not overflow right edge"
-      ],
-      "test": "(1) Open 2+ terminals in tabbed mode — X button shows, click closes tab. (2) Right-click terminal in TERMS sidebar on far right — color picker fully visible, not clipped. (3) With only 1 terminal, no X shown.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
       "size": "L",
@@ -67,6 +46,30 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-72",
+      "name": "Terminal tab close button missing in desktop tab header + color picker overflow",
+      "size": "XS",
+      "priority": 3,
+      "status": "completed",
+      "completed": "2026-02-09",
+      "description": "Two small fixes in MultiTerminal.jsx:\n\n## Part 1: Close button missing in desktop tab header\nThe desktop tab header showed colored dots and terminal names but had NO close button. Mobile tabbed mode and the sidebar both had close buttons already.\n\n## Part 2: Color picker overflows right edge\nThe color picker popup used position:fixed with raw clientX/clientY. When triggered from the TERMS sidebar on the far right, it overflowed off-screen.",
+      "change": [
+        "frontend/src/components/MultiTerminal.jsx:~816 — Add X close button to desktop tab header (after terminal name span)",
+        "frontend/src/components/MultiTerminal.jsx:~1034 — Fix color picker position to not overflow right edge"
+      ],
+      "test": "(1) Open 2+ terminals — X button shows, click closes tab. (2) Right-click terminal in TERMS sidebar on far right — color picker fully visible. (3) With only 1 terminal, no X shown.",
+      "completion_note": "Part 1: Added X close button with hover opacity to desktop split-pane tab header (after terminal name span, guarded by terminals.length > 1). Part 2: Clamped color picker position with Math.min(pos, viewport - offset) to prevent right/bottom overflow.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      },
+      "reviewed_by": "Director",
+      "review_note": "Verified commit f68aadb: Close button added at line 817 after terminal name span, stopPropagation + closeTerminal, guarded by terminals.length > 1, hover opacity pattern matches mobile/sidebar. Color picker Math.min clamp at line 1054 — 180px/120px offsets appropriate for ~160x100 popup. Index purpose updated. Learnings Session 142 written."
+    },
     {
       "id": "BUG-73",
       "name": "Terminal tabs should persist across project switches",
