@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 141 - 2026-02-09 07:14 EST
+**Task**: BUG-71
+**What**: Threaded onTerminalConnected callback from MultiTerminal → LLMDevPanel → Workspace. When WebSocket receives 'connected', TerminalInstance calls the callback (once-guarded via ref) so Workspace sets isConnected=true and chat area unblocks without manual SSH refresh.
+**Key Learning**: When two subsystems connect independently (terminal via WebSocket, chat via backend state check), they need a bridge callback. The terminal connects first but chat didn't know. Threading a callback through the component tree solves this without adding global state.
+
 ### Session 140 - 2026-02-09 06:33 EST
 **Task**: BUG-69, BUG-70
 **What**: BUG-69 — Moved useEffect + derived variables above early return in Chat.jsx to fix hooks violation on Claude Code mode switch. BUG-70 — Moved IP tooltip from cwd span to server name span in MultiTerminal.jsx status bar.

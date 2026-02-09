@@ -499,7 +499,7 @@ frontend_components:
     path: frontend/src/components/LLMDevPanel.jsx
     lines: 601
     purpose: "Bottom collapsible panel — Terminal, Editor (Monaco via CodeEditor), Docker, Logs, Project Context tabs. FEAT-50: Docker/Logs/Context tabs show Coming Soon placeholders (Docker has swimming whale animation). Tab buttons refactored to .map() loop with angled cyan-border styling."
-    props: "{project, linkedServerId, onEditorReady}"
+    props: "{project, linkedServerId, onEditorReady, onTerminalConnected}"
     key_state:
       - {name: activeTab, type: "useState('terminal')", drives: "tab selection"}
       - {name: isExpanded, type: useState, drives: "panel collapse/expand"}
@@ -522,7 +522,7 @@ frontend_components:
     path: frontend/src/components/MultiTerminal.jsx
     lines: 1022
     purpose: "Split-pane terminal manager — up to 6 independent terminals (no auto-cd) with 7 bold color palette (FEAT-48) and drag resize. FEAT-49: per-terminal cwd display in status bar."
-    props: "{projectId, serverId, projectSlug}"
+    props: "{projectId, serverId, projectSlug, onTerminalConnected}"
     key_state:
       - {name: terminals, type: "useState([])", drives: "terminal instances array"}
       - {name: activeTerminalId, type: useState, drives: "focused terminal"}

@@ -24,11 +24,12 @@ const TERMINAL_COLORS = [
 ]
 
 // Individual terminal instance component
-function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onStatusChange }) {
+function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onStatusChange, onTerminalConnected }) {
   const terminalRef = useRef(null)
   const xtermRef = useRef(null)
   const wsRef = useRef(null)
   const fitAddonRef = useRef(null)
+  const hasNotifiedConnected = useRef(false) // BUG-71: once-guard for onTerminalConnected
   const [status, setStatus] = useState('disconnected')
   const [serverInfo, setServerInfo] = useState(null)
   const [cwd, setCwd] = useState(null)
@@ -82,6 +83,11 @@ function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onSt
             setStatus('connected')
             setServerInfo({ server: message.server, host: message.host })
             if (message.cwd) setCwd(message.cwd)
+            // BUG-71: Notify Workspace that terminal connected (once per instance)
+            if (!hasNotifiedConnected.current) {
+              hasNotifiedConnected.current = true
+              onTerminalConnected?.()
+            }
             if (xtermRef.current) {
               const channelInfo = message.channel_id ? ` [channel ${message.channel_id.slice(0,8)}]` : ''
               const connInfo = message.connection_channels ? ` (${message.connection_channels} active)` : ''
@@ -425,7 +431,7 @@ function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onSt
 }
 
 // Main MultiTerminal component
-export default function MultiTerminal({ projectId, serverId, projectSlug }) {
+export default function MultiTerminal({ projectId, serverId, projectSlug, onTerminalConnected }) {
   // FEAT-09: Terminal state now includes color and width for split panes
   const [terminals, setTerminals] = useState([
     { id: 1, name: 'bash', status: 'disconnected', color: TERMINAL_COLORS[0].value, width: 300 }
@@ -702,6 +708,7 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
               serverId={serverId}
               isActive={terminal.id === activeTerminalId}
               onStatusChange={handleStatusChange}
+              onTerminalConnected={onTerminalConnected}
             />
           ))}
         </div>
@@ -819,6 +826,7 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
                   isActive={terminal.id === activeTerminalId}
                   isSplitPane={true}
                   onStatusChange={handleStatusChange}
+                  onTerminalConnected={onTerminalConnected}
                 />
               </div>
               {/* Draggable divider between terminals */}

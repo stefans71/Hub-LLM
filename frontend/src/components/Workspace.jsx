@@ -101,6 +101,11 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
     setRetryTrigger(prev => prev + 1)
   }, [])
 
+  // BUG-71: Terminal connected → notify Workspace so chat area unblocks
+  const handleTerminalConnected = useCallback(() => {
+    setIsConnected(true)
+  }, [])
+
   // FEAT-06: Handler for when a file is selected in the sidebar
   const handleFileSelect = (file, serverId) => {
     if (editorApiRef.current?.openFile) {
@@ -632,7 +637,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
       </div>
 
       {/* W-88: LLM-Dev Bottom Panel */}
-      <LLMDevPanel project={project} linkedServerId={linkedServerId} onEditorReady={handleEditorReady} />
+      <LLMDevPanel project={project} linkedServerId={linkedServerId} onEditorReady={handleEditorReady} onTerminalConnected={handleTerminalConnected} />
 
       {/* FEAT-51: Export Project Modal */}
       <ExportModal

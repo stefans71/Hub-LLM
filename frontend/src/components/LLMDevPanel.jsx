@@ -18,7 +18,7 @@ import CodeEditor from './CodeEditor'
  * - W-110: Logs tab content
  * - W-111: Project Context tab content
  */
-export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) {
+export default function LLMDevPanel({ project, linkedServerId, onEditorReady, onTerminalConnected }) {
   // Use linkedServerId if provided (freshly linked), otherwise fall back to project's vps_server_id
   const serverId = linkedServerId || project?.vps_server_id
   const [isExpanded, setIsExpanded] = useState(false)
@@ -456,6 +456,7 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
                 projectId={project?.id}
                 serverId={serverId}
                 projectSlug={project?.slug}
+                onTerminalConnected={onTerminalConnected}
               />
             </div>
           )}
