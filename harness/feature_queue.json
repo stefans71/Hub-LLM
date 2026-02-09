@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T10:00",
+  "updated": "2026-02-09T11:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -26,46 +26,6 @@
   },
   "queue": [
     {
-      "id": "BUG-64",
-      "name": "Terminal text too close to left edge — add left padding to both terminals",
-      "size": "XS",
-      "priority": 1,
-      "status": "pending",
-      "description": "Terminal text in both the LLM-Dev terminal and the Claude Code chat terminal sits too close to the left edge of the screen. Need more left padding.\n\n## MultiTerminal (LLM-Dev panel)\n\nMultiTerminal.jsx:382 has `padding: '8px'` on the `.xterm-container` div. Change to `padding: '8px 8px 8px 16px'` to give more breathing room on the left.\n\n## ClaudeCodeTerminalChat (main chat area)\n\nindex.css:642 `.claude-code-terminal-area` has no left padding. Add `padding-left: 16px` to match.\n\nBoth should use 16px left padding for consistency. Keep top/right/bottom at 8px.",
-      "change": [
-        "frontend/src/components/MultiTerminal.jsx:382 — Change padding from '8px' to '8px 8px 8px 16px'.",
-        "frontend/src/index.css:642 — Add padding-left: 16px to .claude-code-terminal-area."
-      ],
-      "test": "(1) LLM-Dev terminal text has visible gap from left edge. (2) Claude Code chat terminal has same left gap. (3) Terminal still fills width correctly, no overflow issues.",
-      "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
-        "committed_pushed": false,
-        "status_set_to_pending_review": false
-      }
-    },
-    {
-      "id": "FEAT-48",
-      "name": "Terminal color swatch update + increase max terminals from 4 to 6",
-      "size": "XS",
-      "priority": 2,
-      "status": "pending",
-      "description": "Two changes to the MultiTerminal component.\n\n## 1. Replace terminal color palette\n\nMultiTerminal.jsx:16-25 — replace the current `TERMINAL_COLORS` array with these 7 bold, high-contrast colors:\n\n```jsx\nconst TERMINAL_COLORS = [\n  { name: 'Jasmine', value: '#FFD078' },\n  { name: 'Green', value: '#04E434' },\n  { name: 'Mint', value: '#05F7CB' },\n  { name: 'Purple', value: '#A313EB' },\n  { name: 'Blue', value: '#2718FD' },\n  { name: 'Red', value: '#F50A0A' },\n  { name: 'Orange', value: '#FA8816' },\n]\n```\n\nThe first terminal should default to the first color (Jasmine). New terminals cycle through in order via `colorIndex = terminals.length % TERMINAL_COLORS.length` (this logic already exists at line 500).\n\n## 2. Increase max terminals from 4 to 6\n\nMultiTerminal.jsx:755,856 — the 'New terminal' button shows 'Maximum 4 terminals' tooltip. Change both instances from 4 to 6:\n- Line 755: `terminals.length >= 4` → `terminals.length >= 6`\n- Line 856: `terminals.length >= 4` → `terminals.length >= 6`\n\nAlso check if there's a guard in `createTerminal()` (~line 498) that limits creation — if so, update that too.",
-      "change": [
-        "frontend/src/components/MultiTerminal.jsx:16-25 — Replace TERMINAL_COLORS array with 7 new colors: Jasmine #FFD078, Green #04E434, Mint #05F7CB, Purple #A313EB, Blue #2718FD, Red #F50A0A, Orange #FA8816.",
-        "frontend/src/components/MultiTerminal.jsx:755,856 — Change max terminal limit from 4 to 6 in both tooltip checks and any creation guard."
-      ],
-      "test": "(1) Open LLM-Dev terminal — default color is Jasmine (#FFD078). (2) Click gray dot on terminal — color swatch shows 7 new colors. (3) Select each color — terminal dot and header stripe update. (4) Open 6 terminals — all allowed. (5) Try to open a 7th — button disabled with 'Maximum 6 terminals' tooltip. (6) New terminals auto-cycle through the 7 colors.",
-      "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
-        "committed_pushed": false,
-        "status_set_to_pending_review": false
-      }
-    },
-    {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
       "size": "L",
@@ -86,6 +46,24 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-64",
+      "name": "Terminal text too close to left edge — add left padding to both terminals",
+      "size": "XS",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: MultiTerminal.jsx:382 padding changed from '8px' to '8px 8px 8px 16px'. index.css:642 .claude-code-terminal-area padding changed from 12px to '12px 12px 12px 16px'. Both terminals now have 16px left padding. Commit 30837e1."
+    },
+    {
+      "id": "FEAT-48",
+      "name": "Terminal color swatch update + increase max terminals from 4 to 6",
+      "size": "XS",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: TERMINAL_COLORS replaced with 7 bold colors (Jasmine, Green, Mint, Purple, Blue, Red, Orange). Max terminals changed from 4 to 6 at lines 740 and 842. Commit 30837e1."
+    },
     {
       "id": "BUG-63",
       "name": "Claude Code chat stuck on 'Connecting to your VPS' — detection never retries",
