@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T05:15",
+  "updated": "2026-02-09T06:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -26,27 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-42",
-      "name": "Align workspace color palette with landing page — shift --primary from blue to cyan",
-      "size": "S",
-      "priority": 3,
-      "status": "pending_review",
-      "description": "The landing page (LandingPage.jsx/css) uses cyan #38bdf8 as its primary accent, but the workspace and dashboard still use the old blue #3b82f6 (defined as --primary in index.css). These should be aligned.\n\n## Current state\n\n```css\n/* index.css :root */\n--primary: #3b82f6;      /* blue — workspace uses this everywhere */\n--primary-hover: #2563eb; /* darker blue */\n--accent: #f97316;        /* orange — already matches landing page */\n--success: #22c55e;       /* green — keep as-is */\n```\n\nLanding page uses:\n- Logo: 'Hub' white, 'LLM' cyan #38bdf8, '.dev' muted\n- Pipeline text: cyan #38bdf8\n- Feature icons: cyan #38bdf8\n- Orange accents: chevrons, 'Pro Vibe-Coding' tagline\n\n## Target\n\n```css\n--primary: #38bdf8;       /* cyan — matches landing page */\n--primary-hover: #0ea5e9;  /* slightly darker cyan */\n```\n\nThis is a CSS variable change so it propagates everywhere --primary is used: buttons, active states, borders, dividers, sidebar highlights, etc. The entire workspace shifts from blue to cyan.\n\n## Keep these unchanged\n- --accent: #f97316 (orange) — already correct, subtle LLM-Dev divider/label color\n- --success: #22c55e (green) — Pro badge, connected status, confirmed indicators\n- --error: #ef4444 (red)\n\n## Verify after change\n- Workspace buttons, active sidebar items, toggle states all look good in cyan\n- No contrast issues (cyan on dark backgrounds should be fine)\n- Landing page and workspace now feel like the same product\n- The orange accent in LLM-Dev panel is still visible and subtle",
-      "change": [
-        "frontend/src/index.css: Change --primary from #3b82f6 to #38bdf8. Change --primary-hover from #2563eb to #0ea5e9.",
-        "Spot-check: Any hardcoded #3b82f6 values in component files that should also become #38bdf8 or var(--primary)."
-      ],
-      "test": "(1) Open workspace — all blue UI elements are now cyan. (2) Buttons, sidebar active items, dividers, toggle states use cyan. (3) Landing page and workspace feel cohesive. (4) Orange accent still visible in LLM-Dev panel. (5) Green status indicators unchanged. (6) No contrast/readability issues.",
-      "completion_note": "Changed --primary from #3b82f6 to #38bdf8 and --primary-hover from #2563eb to #0ea5e9 in index.css :root. Replaced ALL hardcoded #3b82f6 (→ #38bdf8), #2563eb (→ #0ea5e9), and rgba(59,130,246,...) (→ rgba(56,189,248,...)) across 10 files: index.css, ClaudeCodeTerminalChat.jsx, DashboardSidebar.jsx, AnthropicSubscription.jsx, PreviewPanel.jsx, ModelSelector.jsx, WorkspaceFileExplorer.jsx, Settings.jsx, Setup.jsx, Dashboard.jsx, CreateProject.jsx. Updated SKILL.md CSS vars reference. Zero remaining old blue values in frontend/src/. --accent (orange), --success (green), --error (red) unchanged.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -58,6 +37,15 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-42",
+      "name": "Align workspace color palette — shift --primary from blue (#3b82f6) to cyan (#38bdf8)",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: zero old blue values (#3b82f6, #2563eb, rgba(59,130,246)) remain in frontend/src/. CSS vars --primary and --primary-hover updated in index.css. 10+ files cleaned of hardcoded hex. Commit 73cd6c1."
+    },
     {
       "id": "BUG-55",
       "name": "Welcome page persists until user navigates away + prominent 'Open in Browser' button",
