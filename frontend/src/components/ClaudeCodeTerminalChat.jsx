@@ -1082,7 +1082,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
                     or claude --resume to continue a previous one
                   </div>
                   <div style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'center', borderTop: '1px solid rgba(56, 189, 248, 0.1)', paddingTop: '8px' }}>
-                    Open the README.md file in the file explorer for more useful information.
+                    The Welcome guide is open in the Preview panel &rarr;
                   </div>
                 </>
               )}

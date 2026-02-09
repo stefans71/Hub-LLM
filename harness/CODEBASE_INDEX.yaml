@@ -291,13 +291,24 @@ frontend_pages:
     last_verified_session: 98
 
 # ============================================================================
+# FRONTEND — Static Files (frontend/public/)
+# ============================================================================
+frontend_static:
+  welcome-to-hubllm.html:
+    path: frontend/public/docs/welcome-to-hubllm.html
+    lines: 285
+    purpose: "Self-contained welcome/onboarding page — auto-loaded in PreviewPanel on first project visit (FEAT-37). Dark theme, HubLLM branding (cyan/orange), inline CSS, no deps. Sections: Getting Started, Workspace diagram, Git/GitHub, Getting Help."
+    served_at: "/docs/welcome-to-hubllm.html"
+    loaded_by: [Workspace.jsx]
+
+# ============================================================================
 # FRONTEND — Components (frontend/src/components/)
 # ============================================================================
 frontend_components:
   Workspace.jsx:
     path: frontend/src/components/Workspace.jsx
-    lines: 612
-    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), Claude processing state, enhance banner threading"
+    lines: 621
+    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), auto-load welcome page on first project visit via localStorage (FEAT-37), Claude processing state, enhance banner threading"
     props: "{project, model, apiKeys, onProjectChange, enhanceWithAI}"
     key_state:
       - {name: isConnected, type: useState, drives: "SSH connection status"}
@@ -342,7 +353,7 @@ frontend_components:
   ClaudeCodeTerminalChat.jsx:
     path: frontend/src/components/ClaudeCodeTerminalChat.jsx
     lines: 1151
-    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card with README tip (FEAT-35), auto-cd to project dir on connect (FEAT-33)"
+    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card pointing to Welcome guide in Preview panel (FEAT-35/FEAT-37), auto-cd to project dir on connect (FEAT-33)"
     props: "{project, serverId, projectSlug, onProcessingChange, enhanceWithAI, autoStart}"
     key_state:
       - {name: messages, type: "useState([])", drives: "parsed chat bubbles"}
@@ -762,9 +773,9 @@ backend_routers:
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 1042
+    lines: 1052
     prefix: "/api/projects"
-    purpose: "Project CRUD with chat history and VPS folder auto-creation + harness template scaffolding (FEAT-30). TEMPLATE_GENERATE_PRP updated (FEAT-31). FK safety check on create_project (BUG-47). Smart pre-commit hook + /audit-index command scaffolded (FEAT-36)"
+    purpose: "Project CRUD with chat history and VPS folder auto-creation + harness template scaffolding (FEAT-30). TEMPLATE_GENERATE_PRP updated (FEAT-31). FK safety check on create_project (BUG-47). Smart pre-commit hook + /audit-index command scaffolded (FEAT-36). TEMPLATE_CLAUDE_MD has Git Workflow section, TEMPLATE_README mentions welcome page (FEAT-37)"
     endpoints:
       - {method: GET, path: "/", purpose: "list all projects"}
       - {method: POST, path: "/", purpose: "create project (+ scaffold harness on VPS)"}

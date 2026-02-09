@@ -80,6 +80,14 @@ try {
   clearTimeout(timeout)
 }
 ```
+
+## Git Workflow
+
+- The AI engineer commits automatically after each task
+- If a GitHub remote is configured, push regularly: `git push origin main`
+- Never force push (`git push --force`) — it rewrites history and can lose work
+- Work on `main` unless instructed otherwise
+- Review commits with `git log --oneline` to see task history
 """
 
 TEMPLATE_CLAUDE_SETTINGS = """{
@@ -394,6 +402,8 @@ TEMPLATE_README = """# {{projectName}}
 {{projectBrief}}
 
 ## Getting Started
+
+When you first open this project, a **Welcome guide** loads automatically in the Preview panel (right side). It walks you through your workspace layout and first steps.
 
 ```bash
 # Install dependencies

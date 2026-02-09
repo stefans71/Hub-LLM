@@ -2160,6 +2160,13 @@ Three callbacks from Workspace to ServerManager:
 
 ---
 
+### Session — 2026-02-09 EST
+**Task**: FEAT-37 (Welcome to HubLLM page — auto-loads in preview panel)
+**What**: Created `frontend/public/docs/welcome-to-hubllm.html` — self-contained HTML with inline CSS, HubLLM dark branding (cyan #38bdf8, orange #f97316), responsive layout. Four sections: Getting Started steps, Workspace diagram, Git & GitHub, Getting Help. Workspace.jsx: checks `localStorage.welcomed_{projectId}` on mount — if first visit, passes `/docs/welcome-to-hubllm.html` to PreviewPanel and expands panel. Uses `useState(() => ...)` initializer to compute once. Sets localStorage flag immediately so subsequent visits skip welcome. Updated ClaudeCodeTerminalChat hint bubble to point at preview panel. Updated backend templates: added Git Workflow to TEMPLATE_CLAUDE_MD, added welcome page mention to TEMPLATE_README.
+**Key Pattern**: For one-time first-visit behavior, compute `isFirstVisit` at top of component render, use it in `useState` initializers (not useEffect), and set the localStorage flag immediately. This avoids flash-of-wrong-state and re-renders.
+
+---
+
 **Task**: BUG-53 (Preview panel doesn't load URLs)
 **What**: URL bar was a read-only `<div>` — replaced with `<input>` that navigates on Enter. Added `activeUrl`/`inputUrl` state, `handleNavigate()` with auto-prepend `https://`. Workspace passes `previewUrl=""` so panel was permanently stuck on DemoPreview. Now users can type any URL and load it in the iframe. useEffect syncs from prop for Codespaces integration.
 **Root Cause**: The URL bar was never an input element — it was a plain div showing a hardcoded demo URL. No user interaction was possible.
