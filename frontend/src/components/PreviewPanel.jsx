@@ -32,6 +32,9 @@ export default function PreviewPanel({
   const [activeUrl, setActiveUrl] = useState(previewUrl || '')
   const [inputUrl, setInputUrl] = useState(previewUrl || '')
   const isInternalDocs = activeUrl?.startsWith('/docs/')
+  // BUG-67: Only go edge-to-edge for internal docs in Fit mode.
+  // All other combos (docs+phone/tablet/desktop, external URLs) get centered device frame.
+  const isFullBleed = isInternalDocs && deviceMode === 'fit'
   const iframeRef = useRef(null)
 
   // Sync from prop when parent sets a URL (e.g., Codespaces)
@@ -302,24 +305,25 @@ export default function PreviewPanel({
           <div style={{
             flex: 1,
             display: 'flex',
-            justifyContent: isInternalDocs ? 'stretch' : 'center',
-            alignItems: isInternalDocs ? 'stretch' : 'flex-start',
-            padding: isInternalDocs ? 0 : '16px',
+            justifyContent: isFullBleed ? 'stretch' : 'center',
+            alignItems: isFullBleed ? 'stretch' : 'flex-start',
+            padding: isFullBleed ? 0 : '16px',
             overflow: 'auto',
             background: 'var(--bg-tertiary)'
           }}>
             <div
               style={{
-                background: isInternalDocs ? 'transparent' : 'white',
-                borderRadius: isInternalDocs ? 0 : '8px',
+                background: isFullBleed ? 'transparent' : 'white',
+                borderRadius: isFullBleed ? 0 : '8px',
                 display: 'flex',
                 flexDirection: 'column',
-                minHeight: isInternalDocs ? 0 : '400px',
-                boxShadow: isInternalDocs ? 'none' : '0 4px 20px rgba(0,0,0,0.3)',
+                minHeight: isFullBleed ? 0 : '400px',
+                boxShadow: isFullBleed ? 'none' : '0 4px 20px rgba(0,0,0,0.3)',
                 flexShrink: 0,
                 overflow: 'hidden',
                 transition: 'width 0.2s ease',
-                ...(isInternalDocs ? { width: '100%', height: '100%' } : getFrameStyles())
+                ...getFrameStyles(),
+                ...(isFullBleed ? { height: '100%' } : {})
               }}
             >
               <iframe
