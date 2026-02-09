@@ -67,6 +67,33 @@
   ],
   "completed": [
     {
+      "id": "BUG-73",
+      "name": "Terminal tabs should persist across project switches",
+      "size": "S",
+      "priority": 2,
+      "status": "completed",
+      "completed": "2026-02-09",
+      "description": "When user clicks a different project in the sidebar, ALL terminal tabs in MultiTerminal reconnect to the new project's VPS, killing the old SSH session. The backend already supports multiplexed SSH channels (INFRA-01: VPSConnectionManager singleton → VPSConnection per VPS → multiple PTYChannel per connection). The fix is purely frontend.\n\nExpected behavior: Old terminals stay alive. A new terminal tab opens for the new project. Chat area switches to new project (that's correct).\n\nRoot cause: TerminalInstance had a useEffect at ~line 247 watching projectId/serverId props. When MultiTerminal received new props from a project switch, it passed them down to ALL TerminalInstance children, causing every terminal to clear() and reconnect(). Additionally, terminal objects in state had no concept of which project they belonged to — they all shared parent props.",
+      "change": [
+        "frontend/src/components/MultiTerminal.jsx:434-435 — Add serverId/projectId fields to terminal state objects (null initial)",
+        "frontend/src/components/MultiTerminal.jsx:447-493 — Add prevServerIdRef/prevProjectIdRef + two useEffects: one-time init to stamp first terminal, project-switch handler that creates new tab or switches to existing (dedup by serverId+projectId)",
+        "frontend/src/components/MultiTerminal.jsx:571-587 — createTerminal() stamps new terminals with current serverId/projectId",
+        "frontend/src/components/MultiTerminal.jsx:756-757,873-874 — Both mobile and desktop render sites pass terminal.projectId||projectId and terminal.serverId||serverId to TerminalInstance",
+        "frontend/src/components/MultiTerminal.jsx:247-249 — Removed reconnect-on-prop-change useEffect from TerminalInstance"
+      ],
+      "test": "1. Open workspace with Project A → terminal connects (named after slug)\n2. Click + twice → 2 more terminals, all on A's VPS\n3. Click Project B in sidebar → NEW tab appears (named after B), A's 3 tabs stay connected\n4. Click back on A's tab → still alive, commands work\n5. Click + while on B → new terminal on B's VPS\n6. Vite build passes (2468 modules, no errors)",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      },
+      "completion_note": "Vite build clean (2468 modules, 7.12s). No backend changes needed — SSH multiplexing (INFRA-01) already supports multiple PTY channels per VPS connection. Each terminal object now owns {serverId, projectId}. Project switch creates new tab via useEffect watching props against refs. TerminalInstance no longer reconnects on prop changes. Index updated: MultiTerminal.jsx entry (lines 1082, new state fields, new feature, new known_issue) + recurring_bugs id 19.",
+      "reviewed_by": "Director",
+      "review_note": "Verified: terminal state objects carry serverId/projectId. Init effect stamps first terminal. Project-switch effect deduplicates by serverId+projectId or creates new tab. createTerminal stamps current project. Both render sites pass per-terminal IDs with fallback. TerminalInstance reconnect-on-prop-change removed. Vite build clean. CODEBASE_INDEX.yaml updated with BUG-73 details + recurring_bugs #19."
+    },
+    {
       "id": "BUG-71",
       "name": "Auto-connect regression — terminal connects but chat area doesn't know",
       "size": "S",

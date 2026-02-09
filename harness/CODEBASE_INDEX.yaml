@@ -520,14 +520,16 @@ frontend_components:
 
   MultiTerminal.jsx:
     path: frontend/src/components/MultiTerminal.jsx
-    lines: 1022
-    purpose: "Split-pane terminal manager — up to 6 independent terminals (no auto-cd) with 7 bold color palette (FEAT-48) and drag resize. FEAT-49: per-terminal cwd display in status bar."
+    lines: 1082
+    purpose: "Split-pane terminal manager — up to 6 independent terminals (no auto-cd) with 7 bold color palette (FEAT-48) and drag resize. FEAT-49: per-terminal cwd display in status bar. BUG-73: terminals persist across project switches — each terminal owns its serverId/projectId."
     props: "{projectId, serverId, projectSlug, onTerminalConnected}"
     key_state:
-      - {name: terminals, type: "useState([])", drives: "terminal instances array"}
+      - {name: terminals, type: "useState([])", drives: "terminal instances array — each entry has serverId, projectId"}
       - {name: activeTerminalId, type: useState, drives: "focused terminal"}
       - {name: colorPickerTerminalId, type: useState, drives: "color picker popup"}
       - {name: draggingDividerId, type: useState, drives: "divider drag state"}
+      - {name: prevServerIdRef, type: useRef, drives: "BUG-73: detect project switches"}
+      - {name: prevProjectIdRef, type: useRef, drives: "BUG-73: detect project switches"}
     sub_component: "TerminalInstance (inline)"
     sub_component_state:
       - {name: cwd, type: useState, drives: "current working directory from connected message"}
@@ -538,9 +540,11 @@ frontend_components:
       - "Max 6 terminals"
       - "Delta-based drag resize (BUG-16 fix)"
       - "FEAT-49: Per-terminal cwd display with IP+path tooltip"
+      - "BUG-73: Project switch creates new tab instead of reconnecting all. Old terminals stay alive. Dedup by serverId+projectId for auto-created tabs; + button always creates new."
     known_issues:
       - {desc: "fitAddon calculates absurd width without minWidth:0", sessions: [62], status: fixed}
       - {desc: "Divider drag couldn't shrink panes", sessions: [65], status: fixed}
+      - {desc: "Project switch killed all terminal sessions", sessions: [], status: "fixed (BUG-73)"}
     last_verified_session: 136
 
   Terminal.jsx:
@@ -1826,3 +1830,10 @@ recurring_bugs:
     affected_files: [frontend/src/App.jsx]
     status: fixed
     note: "Fixed in BUG-31: Changed to user.setup_completed === true. Only explicit true skips wizard. BUG-36/37 (Session 99): Merged skip+dismiss into single 'Skip setup' button that always persists to DB. Catch block no longer calls onComplete() on failure — shows inline error instead."
+
+  - id: 19
+    desc: "Project switch reconnected ALL terminal tabs — killed running SSH sessions"
+    sessions: []
+    affected_files: [MultiTerminal.jsx]
+    status: fixed
+    fix: "BUG-73: Each terminal object now owns its serverId/projectId. Project switch creates a new tab instead of reconnecting existing ones. Removed reconnect-on-prop-change useEffect from TerminalInstance. TerminalInstance receives per-terminal IDs with fallback to parent props."

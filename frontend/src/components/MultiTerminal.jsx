@@ -244,13 +244,9 @@ function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onSt
     }
   }, [])
 
-  // Reconnect when IDs change
-  useEffect(() => {
-    if (xtermRef.current && (projectId || serverId)) {
-      xtermRef.current.clear()
-      connect()
-    }
-  }, [projectId, serverId])
+  // BUG-73: Removed reconnect-on-prop-change effect.
+  // Each terminal now owns its serverId/projectId, so props won't change
+  // unless the component is freshly mounted (handled by the init effect above).
 
   // Handle resize - refit when becoming active or container resizes
   useEffect(() => {
@@ -433,8 +429,10 @@ function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onSt
 // Main MultiTerminal component
 export default function MultiTerminal({ projectId, serverId, projectSlug, onTerminalConnected }) {
   // FEAT-09: Terminal state now includes color and width for split panes
+  // BUG-73: Each terminal owns its serverId/projectId so project switches don't kill old sessions
   const [terminals, setTerminals] = useState([
-    { id: 1, name: 'bash', status: 'disconnected', color: TERMINAL_COLORS[0].value, width: 300 }
+    { id: 1, name: 'bash', status: 'disconnected', color: TERMINAL_COLORS[0].value, width: 300,
+      serverId: null, projectId: null }
   ])
   const [activeTerminalId, setActiveTerminalId] = useState(1)
   const [nextId, setNextId] = useState(2)
@@ -445,6 +443,54 @@ export default function MultiTerminal({ projectId, serverId, projectSlug, onTerm
   // FEAT-09: Color picker context menu state
   const [colorPickerTerminalId, setColorPickerTerminalId] = useState(null)
   const [colorPickerPosition, setColorPickerPosition] = useState({ x: 0, y: 0 })
+
+  // BUG-73: Track previous serverId/projectId to detect project switches
+  const prevServerIdRef = useRef(serverId)
+  const prevProjectIdRef = useRef(projectId)
+
+  // BUG-73: One-time initialization — stamp first terminal with initial project IDs
+  useEffect(() => {
+    if (serverId && terminals[0]?.serverId === null) {
+      setTerminals(prev => prev.map((t, i) =>
+        i === 0 ? { ...t, serverId, projectId, name: projectSlug || t.name } : t
+      ))
+    }
+  }, [serverId, projectId, projectSlug])
+
+  // BUG-73: On project switch, add a new tab instead of reconnecting all
+  useEffect(() => {
+    if (serverId && (serverId !== prevServerIdRef.current || projectId !== prevProjectIdRef.current)) {
+      // Skip the very first render (handled by init effect above)
+      if (prevServerIdRef.current === null && prevProjectIdRef.current === null) {
+        prevServerIdRef.current = serverId
+        prevProjectIdRef.current = projectId
+        return
+      }
+
+      const existing = terminals.find(t => t.projectId === projectId && t.serverId === serverId)
+      if (existing) {
+        setActiveTerminalId(existing.id)
+      } else {
+        const newId = Math.max(...terminals.map(t => t.id), 0) + 1
+        const colorIndex = terminals.length % TERMINAL_COLORS.length
+        const newTerminal = {
+          id: newId,
+          name: projectSlug || `bash ${newId}`,
+          status: 'disconnected',
+          color: TERMINAL_COLORS[colorIndex].value,
+          width: 300,
+          serverId,
+          projectId
+        }
+        setTerminals(prev => [...prev, newTerminal])
+        setActiveTerminalId(newId)
+        setNextId(prev => Math.max(prev, newId + 1))
+      }
+
+      prevServerIdRef.current = serverId
+      prevProjectIdRef.current = projectId
+    }
+  }, [serverId, projectId, projectSlug, terminals])
 
   // FEAT-09: Divider drag state - track which divider is being dragged
   const [draggingDividerId, setDraggingDividerId] = useState(null)
@@ -524,13 +570,16 @@ export default function MultiTerminal({ projectId, serverId, projectSlug, onTerm
 
   const createTerminal = () => {
     // FEAT-09: New terminals get default color (cycles through colors) and width
+    // BUG-73: Stamp new terminal with current project's serverId/projectId
     const colorIndex = terminals.length % TERMINAL_COLORS.length
     const newTerminal = {
       id: nextId,
       name: `bash ${nextId}`,
       status: 'disconnected',
       color: TERMINAL_COLORS[colorIndex].value,
-      width: 300
+      width: 300,
+      serverId: serverId || null,
+      projectId: projectId || null
     }
     setTerminals([...terminals, newTerminal])
     setActiveTerminalId(nextId)
@@ -704,8 +753,8 @@ export default function MultiTerminal({ projectId, serverId, projectSlug, onTerm
             <TerminalInstance
               key={terminal.id}
               id={terminal.id}
-              projectId={projectId}
-              serverId={serverId}
+              projectId={terminal.projectId || projectId}
+              serverId={terminal.serverId || serverId}
               isActive={terminal.id === activeTerminalId}
               onStatusChange={handleStatusChange}
               onTerminalConnected={onTerminalConnected}
@@ -821,8 +870,8 @@ export default function MultiTerminal({ projectId, serverId, projectSlug, onTerm
                 }} />
                 <TerminalInstance
                   id={terminal.id}
-                  projectId={projectId}
-                  serverId={serverId}
+                  projectId={terminal.projectId || projectId}
+                  serverId={terminal.serverId || serverId}
                   isActive={terminal.id === activeTerminalId}
                   isSplitPane={true}
                   onStatusChange={handleStatusChange}
