@@ -26,92 +26,23 @@
   },
   "queue": [
     {
-      "id": "BUG-65",
-      "name": "SSH reconnect doesn't unblock 'Connecting to your VPS' — isConnected state split",
+      "id": "BUG-67",
+      "name": "Preview device buttons (phone/tablet/desktop/fit) don't work — isInternalDocs overrides sizing",
       "size": "S",
-      "priority": 1,
-      "status": "pending",
-      "description": "Two reconnect buttons are broken because of an isConnected state split between Workspace.jsx and WorkspaceFileExplorer.jsx.\n\n## Root Cause\n\nWorkspace.jsx owns `isConnected` state (line 65). WorkspaceTopBar's Claude Code detection (line 58) bails immediately if `!isConnected`:\n```js\nif (!linkedServerId || !isConnected) {\n  applyStatus({ installed: false, ... authenticated: false ... })\n  return\n}\n```\n\nBut WorkspaceFileExplorer.jsx has its OWN `serverStatuses` state (line 48) and its own `reconnectServer()` (line 137) that calls `POST /api/ssh/servers/{id}/connect`. On success it updates its local `serverStatuses` — but Workspace.jsx's `isConnected` is never flipped to `true`. So detection never runs.\n\n## Broken button 1: SSH refresh (green RefreshCw icon)\n\nWorkspaceFileExplorer.jsx:566-581 — `reconnectAll()` successfully reconnects SSH (light turns green), but Workspace.jsx doesn't know. `isConnected` stays false → Claude Code detection skipped → chat stays stuck.\n\n## Broken button 2: 'Retry Connection' in Chat.jsx\n\nChat.jsx:387 calls `onRetryConnection` → Workspace.jsx:482 increments `retryTrigger` → WorkspaceTopBar useEffect fires → but `isConnected` is still false → `checkClaudeCode()` returns immediately at line 58 without checking anything.\n\n## Fix\n\n1. **Add `onSshReconnected` callback prop to WorkspaceFileExplorer.** In Workspace.jsx, pass a callback that sets `setIsConnected(true)` and also increments `retryTrigger`.\n\n2. **In WorkspaceFileExplorer.jsx:reconnectServer()** — after successful connect (line 152, `res.ok`), call `onSshReconnected?.(serverId)` so Workspace learns SSH is back.\n\n3. **Same for `reconnectAll()`** — the callback should fire for each successful reconnect.\n\n4. **In Chat.jsx 'Retry Connection' button** — the `onRetryConnection` handler should ALSO set `isConnected = true` (or at least skip the `isConnected` gate). Since the user is clicking retry, assume SSH may be connected and try the detection anyway. Change the guard in WorkspaceTopBar.jsx:58 to also proceed when `retryTrigger > 0`:\n```js\nif (!linkedServerId || (!isConnected && retryTrigger === 0)) {\n```\nThis way a manual retry always attempts detection regardless of isConnected state.\n\nSessions: BUG-63 (added retry logic), INFRA-02 (added reconnect buttons).",
-      "change": [
-        "frontend/src/components/Workspace.jsx:459-466 — Add onSshReconnected prop to WorkspaceFileExplorer that calls setIsConnected(true) and setRetryTrigger(prev => prev + 1).",
-        "frontend/src/components/WorkspaceFileExplorer.jsx:19 — Accept onSshReconnected prop.",
-        "frontend/src/components/WorkspaceFileExplorer.jsx:152 — After successful reconnect (res.ok), call onSshReconnected?.(serverId).",
-        "frontend/src/components/WorkspaceTopBar.jsx:58 — Change guard to: if (!linkedServerId || (!isConnected && retryTrigger === 0)) — so manual retry bypasses isConnected check."
-      ],
-      "test": "(1) Disconnect SSH (wait for light to go dim). (2) Click green RefreshCw button — light turns green AND chat area exits 'Connecting to your VPS' overlay within a few seconds. (3) If stuck, click 'Retry Connection' in chat — should also trigger detection and clear overlay. (4) Both LLM-Dev terminals and Claude Code chat terminal should be functional after reconnect.",
-      "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
-        "committed_pushed": false,
-        "status_set_to_pending_review": false
-      }
-    },
-    {
-      "id": "BUG-66",
-      "name": "Docs footer 'A VibeShip Creation' should use sidebar's cyan-green color",
-      "size": "XS",
       "priority": 3,
       "status": "pending",
-      "description": "In the internal docs portal, the footer tagline 'A VibeShip Creation' is a washed-out gray. It should match the sidebar header's cyan-green color.\n\nfrontend/public/docs/styles.css:337-340 — Change `.footer .footer-tagline` color from `rgba(150, 180, 200, 0.4)` to `#00d4aa` (same as `.brand-tagline` at line 47).",
+      "description": "The device viewport buttons in PreviewPanel (phone 375px, tablet 768px, desktop 1280px, fit) do nothing because the isInternalDocs path overrides all sizing.\n\n## Root Cause\n\nPreviewPanel.jsx:322 — when `isInternalDocs` is true, the frame container style is hardcoded to `{ width: '100%', height: '100%' }`, ignoring `getFrameStyles()` which reads `deviceMode`. So clicking the device buttons updates state but the style override means nothing changes visually.\n\n## Fix — Two-mode device sizing\n\nThe device buttons should work in BOTH modes, just targeting different things:\n\n### Mode 1: Internal docs (Docs button active, `isInternalDocs === true`)\nDevice buttons should constrain the **docs content wrapper** (the div at line 311). Remove the `isInternalDocs` override at line 322 and let `getFrameStyles()` apply normally. The docs content will render at 375px / 768px / 1280px / 100% width, centered in the preview area — letting users test responsive docs layouts.\n\nWhen docs mode is active and a device size is selected, the container should:\n- Apply `getFrameStyles()` width (375/768/1280/100%)\n- Center horizontally in the preview area\n- Keep full height\n- Use the same gray surround/shadow treatment as external sites so it looks like a device frame\n\n### Mode 2: External URL (user entered a URL, `isInternalDocs === false`)\nThis already works correctly — `getFrameStyles()` applies to the iframe container. Just keep existing behavior.\n\n### Implementation\n\nPreviewPanel.jsx:302-323 — Remove or simplify the `isInternalDocs` conditional in the frame container styles. Let `getFrameStyles()` always apply. The key change is line 322:\n\n```jsx\n// Before:\n...(isInternalDocs ? { width: '100%', height: '100%' } : getFrameStyles())\n\n// After — always use getFrameStyles:\n...getFrameStyles(),\n...(deviceMode === 'fit' ? { height: '100%' } : {})\n```\n\nAlso update the surrounding container styles (lines 305-309) — when a device size is selected (not fit), always center the frame and show the shadow/border treatment regardless of docs vs external.\n\nThe Fit mode should still go edge-to-edge for docs (current behavior).",
       "change": [
-        "frontend/public/docs/styles.css:339 — Change color from 'rgba(150, 180, 200, 0.4)' to '#00d4aa'."
+        "frontend/src/components/PreviewPanel.jsx:302-323 — Remove isInternalDocs override on frame sizing. Let getFrameStyles() always control width.",
+        "frontend/src/components/PreviewPanel.jsx:305-309 — Update container justify/align to center frame when a device size is active, regardless of isInternalDocs."
       ],
-      "test": "Open /docs/index.html — footer 'A VibeShip Creation' text matches the sidebar's cyan-green color.",
+      "test": "(1) Load docs — click Phone button → docs content constrains to 375px centered. (2) Click Tablet → 768px. (3) Click Desktop → 1280px. (4) Click Fit → docs go full width edge-to-edge. (5) Enter external URL — device buttons constrain iframe same way. (6) 'Open in Browser' still opens current URL in new tab.",
       "completion_checklist": {
         "code_works": false,
         "index_updated": false,
         "learnings_written": false,
         "committed_pushed": false,
         "status_set_to_pending_review": false
-      }
-    },
-    {
-      "id": "FEAT-50",
-      "name": "LLM-Dev tab bar polish: sleeker tabs, Coming Soon placeholders, remove mock data",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "completion_note": "Changed LLMDevPanel.jsx. Deleted mock containers/logs arrays (14 lines). Replaced Docker tab with swimming whale (🐳 + docker-swim keyframe), Logs and Project Context tabs with Coming Soon placeholders. Refactored 5 duplicate tab buttons into .map() loop. Tab styles: padding 5px 14px, fontSize 12px, cyan border on active (var(--accent)), borderRadius 6px 6px 0 0, perspective transform for angled look, gap 2px. Editor tab kept (has real Monaco functionality). Net -210 lines removed.",
-      "description": "Three changes to the LLM-Dev panel tabs in LLMDevPanel.jsx.\n\n## 1. Replace mock content with 'Coming Soon' placeholders\n\nDocker (lines 126-129), Logs (lines 131-139), and Project Context (lines 701-757) tabs all render hardcoded fake data. Replace ALL three tab content areas with a simple centered Coming Soon placeholder:\n\n```jsx\n<div style={{\n  display: 'flex',\n  flexDirection: 'column',\n  alignItems: 'center',\n  justifyContent: 'center',\n  height: '100%',\n  minHeight: '120px',\n  color: 'var(--text-muted)',\n  fontSize: '13px',\n  gap: '8px'\n}}>\n  <span style={{ fontSize: '24px', opacity: 0.4 }}>🚧</span>\n  <span>Coming Soon</span>\n</div>\n```\n\nDelete the mock data arrays (containers at line 126-129, logs at 131-139). Delete the full Docker tab content (lines 648-682), Logs tab content (lines 684-699), and Project Context tab content (lines 701-end of that block). Replace each with the Coming Soon placeholder above.\n\nAlso delete the Editor tab content if it's mock too — check what it renders.\n\n**Docker tab special treatment:** Instead of the generic 🚧 icon, use the Docker whale logo (🐳) with a CSS swimming animation. The whale should gently bob up and down and drift side to side like it's swimming:\n\n```jsx\n{activeTab === 'docker' && (\n  <div style={{\n    display: 'flex',\n    flexDirection: 'column',\n    alignItems: 'center',\n    justifyContent: 'center',\n    height: '100%',\n    minHeight: '120px',\n    color: 'var(--text-muted)',\n    fontSize: '13px',\n    gap: '8px'\n  }}>\n    <span style={{\n      fontSize: '32px',\n      animation: 'docker-swim 3s ease-in-out infinite'\n    }}>🐳</span>\n    <span>Coming Soon</span>\n  </div>\n)}\n```\n\nAdd the keyframe animation — either inline via a `<style>` tag injected in useEffect, or in index.css:\n\n```css\n@keyframes docker-swim {\n  0%, 100% { transform: translate(0, 0) rotate(0deg); }\n  25% { transform: translate(8px, -4px) rotate(2deg); }\n  50% { transform: translate(0, -8px) rotate(0deg); }\n  75% { transform: translate(-8px, -4px) rotate(-2deg); }\n}\n```\n\n## 2. Tighten tab height\n\nAll tab buttons (lines 388-490) have `padding: '8px 16px'`. Reduce to `padding: '5px 14px'` to make them more compact. Also reduce `fontSize: '13px'` to `fontSize: '12px'`.\n\n## 3. Angled tab styling with cyan border\n\nReplace the current flat tab style with angled/slanted trapezoid-style tabs:\n\n```jsx\n// For each tab button, replace the style object:\nstyle={{\n  padding: '5px 14px',\n  background: isActive ? 'var(--bg-primary)' : 'transparent',\n  border: isActive ? '1px solid var(--accent)' : '1px solid transparent',\n  borderBottom: isActive ? '1px solid var(--bg-primary)' : '1px solid transparent',\n  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',\n  fontSize: '12px',\n  cursor: 'pointer',\n  borderRadius: '6px 6px 0 0',\n  display: 'flex',\n  alignItems: 'center',\n  gap: '6px',\n  transform: 'perspective(4px) rotateX(0.5deg)',\n  transformOrigin: 'bottom'\n}}\n```\n\nThe key elements: `border: '1px solid var(--accent)'` gives the thin cyan border. `borderRadius: '6px 6px 0 0'` gives the small corner radius. The `perspective` + `rotateX` gives the subtle angled/tapered look — the tab is slightly narrower at the top than the bottom. If the perspective trick looks off, try using `clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 100%, 0 100%)` instead for a clean trapezoid shape.\n\nThe active tab should have the cyan border on top and sides, with the bottom border matching the background to blend into the content area. Inactive tabs have no border (transparent).\n\nAlso tighten the tab gap from `gap: '4px'` (line 383) to `gap: '2px'`.",
-      "change": [
-        "frontend/src/components/LLMDevPanel.jsx:126-139 — Delete mock containers and logs arrays.",
-        "frontend/src/components/LLMDevPanel.jsx:648-699 — Replace Docker and Logs tab content with Coming Soon placeholder.",
-        "frontend/src/components/LLMDevPanel.jsx:701-757+ — Replace Project Context tab content with Coming Soon placeholder.",
-        "frontend/src/components/LLMDevPanel.jsx:388-490 — Update all tab button styles: reduce padding to 5px 14px, fontSize to 12px, add 1px cyan border (var(--accent)) on active, borderRadius 6px 6px 0 0, add perspective angle effect, tighten gap to 2px."
-      ],
-      "test": "(1) Click Docker tab — shows centered 'Coming Soon' with 🚧 icon, no fake container list. (2) Click Logs tab — Coming Soon, no fake log lines. (3) Click Project Context tab — Coming Soon, no fake agents/config. (4) Tabs are visually shorter/tighter than before. (5) Active tab has thin cyan border on top + sides with slight angle/taper. (6) Inactive tabs have no border. (7) Terminal tab still fully functional.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
-      "id": "FEAT-49",
-      "name": "Terminal status bar: show cwd, remove dead top-right info bar",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "completion_note": "Changed LLMDevPanel.jsx, terminal.py, MultiTerminal.jsx. Deleted W-96 status bar div (hardcoded Tokens: 14.2k, UTF-8, duplicate server name). Added project_slug tracking in terminal.py (line 67). Added cwd field to connected WebSocket message derived from project slug (/root/llm-hub-projects/{slug} or ~ for direct connections). Added cwd state to TerminalInstance in MultiTerminal.jsx, stored on connected message, displayed in per-terminal status bar with shortened path (~/slug). Hover tooltip shows full IP + path.",
-      "description": "Two changes: (1) add cwd to each terminal's per-terminal status bar, (2) remove the dead top-right info bar in LLMDevPanel.\n\n## Part 1: Remove dead top-right info bar\n\nLLMDevPanel.jsx:493-514 — The W-96 'Dev Status Bar' div shows `● control-tower-01 (IP)`, `Tokens: 14.2k` (hardcoded, not real), and `UTF-8` (useless). **Delete the entire `llm-dev-status` div** (lines 493-514). The server name is already shown in each terminal's per-terminal status bar, so this is just duplication + dead data.\n\n## Part 2: Backend sends initial cwd on connect\n\nbackend/routers/terminal.py:195 — The `connected` WebSocket message already sends `server` and `host`. Also send `cwd` and `host` (IP) fields. The project slug is available from the DB lookup (lines 71-75). The project base path is '/root/llm-hub-projects' (projects.py:609). So `cwd = f'/root/llm-hub-projects/{project.slug}'` if we have a project, else '~' for direct serverId connections. The `host` field (server IP) is already sent — just make sure it's available to the frontend.\n\n## Part 3: Frontend per-terminal status bar enhancement\n\nMultiTerminal.jsx TerminalInstance:\n- Add `cwd` state alongside `serverInfo` (around line 30): `const [cwd, setCwd] = useState(null)`\n- On `connected` message (line 80-90), store `message.cwd`.\n- In the status bar (line 342-349), show: server name + cwd, with IP in hover tooltip:\n\n```jsx\n<span style={{ color: 'var(--text-secondary)' }}>{getStatusText()}</span>\n{cwd && (\n  <span\n    title={`${serverInfo?.host || ''} — ${cwd}`}\n    style={{\n      color: 'var(--text-muted)',\n      marginLeft: '8px',\n      fontSize: '10px',\n      overflow: 'hidden',\n      textOverflow: 'ellipsis',\n      whiteSpace: 'nowrap',\n      maxWidth: '200px'\n    }}\n  >\n    {cwd.replace('/root/llm-hub-projects/', '~/')}\n  </span>\n)}\n```\n\nHover tooltip shows: `155.138.232.201 — /root/llm-hub-projects/fist-stocker-app`\nThis consolidates server name, IP, and cwd into one clean line per terminal.\n\nApplies to ALL terminals — each status bar shows that terminal's own info.",
-      "change": [
-        "frontend/src/components/LLMDevPanel.jsx:493-514 — Delete the entire W-96 llm-dev-status div (server info, Tokens, UTF-8).",
-        "backend/routers/terminal.py:68-75 — Store project slug from DB lookup so we can derive the path.",
-        "backend/routers/terminal.py:195 — Add 'cwd' field to the 'connected' WebSocket message.",
-        "frontend/src/components/MultiTerminal.jsx:30 — Add cwd state to TerminalInstance.",
-        "frontend/src/components/MultiTerminal.jsx:80-90 — Store message.cwd on connected.",
-        "frontend/src/components/MultiTerminal.jsx:342-349 — Display cwd in status bar. Hover tooltip shows IP + full path."
-      ],
-      "test": "(1) LLM-Dev panel top-right no longer shows 'Tokens: 14.2k' or 'UTF-8' or duplicate server name. (2) Per-terminal status bar shows 'control-tower-01  ~/fist-stocker-app'. (3) Hover server name — tooltip shows '155.138.232.201 — /root/llm-hub-projects/fist-stocker-app'. (4) Open second terminal — also shows its own cwd. (5) Direct server connection shows '~'.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
       }
     },
     {
@@ -135,6 +66,42 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-50",
+      "name": "LLM-Dev tab bar polish: sleeker tabs, Coming Soon placeholders, swimming Docker whale",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: Mock data deleted (containers, logs arrays). Tabs refactored to .map() loop. Style: 5px 14px padding, 12px font, cyan border on active, 6px radius, perspective transform, 2px gap. Docker tab: swimming whale with docker-swim keyframe. Logs/Project Context: ComingSoonPlaceholder. W-96 status bar deleted. Editor kept (real Monaco). Net -210 lines. Commit ab7bf9d."
+    },
+    {
+      "id": "FEAT-49",
+      "name": "Terminal status bar: show cwd, remove dead top-right info bar",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: Backend terminal.py sends cwd field derived from project slug. MultiTerminal stores cwd state, displays ~/slug in status bar with IP+path hover tooltip. W-96 dead info bar removed. Commit ab7bf9d."
+    },
+    {
+      "id": "BUG-66",
+      "name": "Docs footer 'A VibeShip Creation' — teal color to match sidebar",
+      "size": "XS",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: styles.css .footer-tagline color changed from rgba(150,180,200,0.4) to #00d4aa. Commit 9a30dcc."
+    },
+    {
+      "id": "BUG-65",
+      "name": "SSH reconnect unblocks 'Connecting to your VPS' overlay",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: Workspace passes onSshReconnected callback to WorkspaceFileExplorer (sets isConnected+retryTrigger). FileExplorer calls it on successful reconnect. TopBar guard loosened to (!isConnected && !retryTrigger). Commit 81389f1."
+    },
     {
       "id": "BUG-64",
       "name": "Terminal text too close to left edge — add left padding to both terminals",
