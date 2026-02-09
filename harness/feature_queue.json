@@ -30,7 +30,7 @@
       "name": "GitHub OAuth popup fails — GITHUB_CLIENT_ID env var not set",
       "size": "S",
       "priority": 3,
-      "status": "pending",
+      "status": "pending_review",
       "description": "In Create Project, clicking 'Connect to GitHub' opens a popup that fails to load the GitHub sign-in page. Root cause: `GITHUB_CLIENT_ID` is read from env var in `backend/services/auth.py:35` with empty string default. The env var is not set in `.env`, `docker-compose.yml`, or any config file in the repo.\n\nThe OAuth flow at `backend/routers/auth.py:371` checks `if not GITHUB_CLIENT_ID` and returns 400. So the popup gets a 400 error instead of a GitHub redirect.\n\nThis is a configuration issue. The fix involves:\n1. Creating a GitHub OAuth App (Settings → Developer Settings → OAuth Apps) with callback URL pointing to the backend\n2. Setting GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in the environment\n3. For local dev: add to `backend/.env`\n4. For production: add to docker-compose.yml environment section or Coolify env vars\n\nNote: The user's current plan for GitHub is versioning + cloud storage (NOT Codespaces — too expensive). The OAuth scope `user:email read:user repo` in auth.py:387 is correct for this use case.\n\nThis task may be deprioritized if GitHub OAuth isn't needed for the current demo. The Welcome page (FEAT-37) includes manual GitHub setup instructions as an alternative.",
       "change": [
         "Create a GitHub OAuth App at github.com/settings/developers. Set callback URL to https://www.hubllm.dev/api/auth/oauth/github/callback (production) and http://localhost:8000/api/auth/oauth/github/popup/callback (dev).",
@@ -39,13 +39,13 @@
         "Verify: Click 'Connect to GitHub' in Create Project → GitHub sign-in page loads → authorize → popup returns token."
       ],
       "test": "(1) Start backend with env vars set. (2) Go to Create Project. (3) Click 'Connect to GitHub'. (4) GitHub sign-in page loads in popup. (5) Authorize → popup closes, repos appear in project form. (6) Without env vars: button shows helpful error instead of broken popup.",
-      "completion_note": "",
+      "completion_note": "Added GITHUB_CLIENT_ID/SECRET passthrough to docker-compose.yml. Frontend pre-checks /api/auth/providers before opening popup — shows inline error if not configured. Build: vite build 0 errors. Note: actual GitHub OAuth App creation and Coolify env var setup is a manual admin task.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

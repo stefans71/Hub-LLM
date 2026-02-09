@@ -2161,6 +2161,13 @@ Three callbacks from Workspace to ServerManager:
 ---
 
 ### Session — 2026-02-09 EST
+**Task**: BUG-54 (GitHub OAuth popup fails)
+**What**: Added GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET passthrough to docker-compose.yml backend environment. Frontend handleConnectGitHub now pre-checks `/api/auth/providers` endpoint before opening popup — if GitHub OAuth isn't configured, shows inline error with instructions instead of broken popup. Error state `githubOAuthError` displayed below Sign in / Create Account buttons. Also catches oauth-error postMessage and shows inline error.
+**Key Insight**: Backend already had `/api/auth/providers` endpoint returning `{"github": bool(GITHUB_CLIENT_ID)}` — use it as a pre-flight check before opening popups. The actual secret setup is a Coolify env var config task, not a code change.
+
+---
+
+### Session — 2026-02-09 EST
 **Task**: FEAT-39 (Kill Codespaces messaging, reframe GitHub as version control)
 **What**: Rewrote GitHub card in CreateProject.jsx Step 2. Title: 'Free Cloud Hosting' → 'Connect GitHub'. Subtitle: 'Powered by GitHub' → 'Version control & cloud backup'. Benefits: removed '60 hrs/mo free compute' and '15GB storage', replaced with 'Free unlimited repos' and 'Version history'. Status text: removed 'Preview via Codespaces'. Swapped card order: VPS card now appears FIRST (primary), GitHub card below with 'OPTIONAL' badge. VPS subtitle changed from 'Advanced - For power users' to 'SSH into your own server'. Added marginBottom to VPS card for spacing.
 **Key Insight**: Card swap is a large edit — safest approach is to replace the entire section (both cards) in one Edit call rather than trying to cut/paste individual blocks.

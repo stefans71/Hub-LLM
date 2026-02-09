@@ -974,7 +974,29 @@ In the meantime, I can help you think through your project. What would you like 
     }
   }
 
-  const handleConnectGitHub = () => {
+  const [githubOAuthError, setGithubOAuthError] = useState('')
+
+  const handleConnectGitHub = async () => {
+    setGithubOAuthError('')
+
+    // Pre-check: is GitHub OAuth configured on the backend?
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
+      try {
+        const res = await fetch('/api/auth/providers', { signal: controller.signal })
+        const providers = await res.json()
+        if (!providers.github) {
+          setGithubOAuthError('GitHub OAuth is not configured on this server. Ask the admin to set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET, or connect GitHub manually using git remote.')
+          return
+        }
+      } finally {
+        clearTimeout(timeout)
+      }
+    } catch {
+      // If the check fails, try opening the popup anyway
+    }
+
     // Open GitHub OAuth flow in popup mode
     const width = 600
     const height = 700
@@ -1006,6 +1028,7 @@ In the meantime, I can help you think through your project. What would you like 
         }
         window.removeEventListener('message', handleMessage)
       } else if (event.data?.type === 'oauth-error') {
+        setGithubOAuthError('GitHub sign-in failed. Please try again.')
         console.error('GitHub OAuth error:', event.data.error)
         window.removeEventListener('message', handleMessage)
       }
@@ -1992,6 +2015,20 @@ Examples:
                       <ExternalLink size={14} />
                     </a>
                   </div>
+                  {githubOAuthError && (
+                    <div style={{
+                      marginTop: '12px',
+                      padding: '12px',
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      color: cssVars.error,
+                      lineHeight: 1.5
+                    }}>
+                      {githubOAuthError}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div style={{
