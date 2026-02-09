@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T05:00",
+  "updated": "2026-02-09T05:15",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,27 +25,6 @@
     }
   },
   "queue": [
-    {
-      "id": "BUG-55",
-      "name": "Welcome page persists until user navigates away + prominent 'Open in Browser' button",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "Two small fixes to the welcome/preview panel UX:\n\n## 1. Welcome page persistence\n\nCurrently Workspace.jsx sets `localStorage.welcomed_{projectId}` immediately on mount (line ~44). This means if the user closes the workspace and comes back, the welcome is gone even if they never read it.\n\nFix: Move the localStorage flag from mount to when the user actively navigates away. Set the flag when PreviewPanel's activeUrl changes FROM the welcome URL TO something else. This means:\n- First visit: welcome shows\n- User closes workspace, comes back: welcome shows again (they haven't dismissed it)\n- User types a new URL in preview panel: flag set, welcome won't auto-show again\n- User clicks X or collapses panel: welcome shows again next visit (they didn't navigate away)\n\nImplementation: Workspace.jsx should NOT set the flag on mount. Instead, pass a callback to PreviewPanel (or watch the URL prop) that sets the flag when the URL changes from the welcome URL. PreviewPanel.jsx already has `handleNavigate()` — add the flag-setting there, or have Workspace.jsx watch for `onUrlChange` callback.\n\n## 2. Make 'Open in Browser' button more prominent\n\nThe ExternalLink button in PreviewPanel toolbar is small and undiscoverable. Users need it for Chrome DevTools access (iframe limitation). Make it more visible:\n- Add a text label: 'Open in Browser' or 'DevTools' next to the icon\n- Or add a tooltip on hover: 'Open in new tab for Chrome DevTools'\n- Consider a subtle hint in the welcome page itself: 'For Chrome DevTools, click the ↗ button in the toolbar above'",
-      "change": [
-        "frontend/src/components/Workspace.jsx: Remove the immediate localStorage.setItem on mount. Instead, track when the preview URL changes from welcome to something else, then set the flag.",
-        "frontend/src/components/PreviewPanel.jsx: Add tooltip or label to the ExternalLink button: 'Open in Browser (DevTools)'. Make it slightly more prominent."
-      ],
-      "test": "(1) Open workspace first time — welcome page shows. (2) Close workspace, reopen — welcome shows AGAIN (flag not set yet). (3) Type a URL in preview panel — welcome replaced, flag set. (4) Close and reopen — welcome does NOT show (flag was set). (5) ExternalLink button has visible label or tooltip mentioning DevTools.",
-      "completion_note": "Fix 1: Removed immediate localStorage.setItem on mount. Added onUrlChange callback prop to PreviewPanel, called from handleNavigate(). Workspace.jsx passes handlePreviewUrlChange callback that sets welcomed flag only when URL changes FROM the welcome URL. Uses useRef for welcomeUrlRef to avoid stale closures. Fix 2: Replaced small icon-only ActionButton with a styled button showing ExternalLink icon + 'Open in Browser' text label, cyan accent (rgba(56,189,248)), tooltip says 'Open in new tab for Chrome DevTools'. Backend-only fix — no browser testing needed (static HTML + React prop/callback wiring).",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": false,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
     {
       "id": "FEAT-42",
       "name": "Align workspace color palette with landing page — shift --primary from blue to cyan",
@@ -79,6 +58,16 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-55",
+      "name": "Welcome page persists until user navigates away + prominent 'Open in Browser' button",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-09",
+      "review_note": "Approved. Fix 1: useRef + useCallback pattern for welcome URL tracking, flag set only on navigate-away via onUrlChange prop. Fix 2: ExternalLink button now shows 'Open in Browser' text label with cyan accent and DevTools tooltip."
+    },
     {
       "id": "FEAT-41",
       "name": "Docs portal — multi-page static HTML site with nav, served in preview panel",
