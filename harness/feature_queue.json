@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-08T23:45",
+  "updated": "2026-02-09T00:30",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -27,17 +27,62 @@
   "queue": [
     {
       "id": "FEAT-37",
-      "name": "Scaffold git/GitHub onboarding: HTML guide + README link + CLAUDE.md git workflow",
+      "name": "Welcome to HubLLM onboarding page — served from frontend, linked in hint bubble",
+      "size": "L",
+      "priority": 2,
+      "status": "pending",
+      "description": "Consolidated onboarding HTML page that new users see in the preview panel when they open their first project. Replaces the earlier git-only onboarding plan with a full Welcome experience.\n\n## Deliverable 1: Welcome HTML page (frontend static file)\n\nCreate `frontend/public/docs/welcome-to-hubllm.html` — a polished, self-contained HTML file served by Vite at `/docs/welcome-to-hubllm.html`.\n\nDesign:\n- HubLLM branded header, dark theme matching workspace aesthetic\n- Self-contained (inline CSS, no external dependencies)\n- Responsive — must look good at any width inside the preview panel\n\nContent sections (in order):\n1. **Welcome / Next Steps** (at the top, most prominent)\n   - You're looking at the HubLLM workspace\n   - Brief visual overview: left = file explorer, center = terminal chat, right = this preview panel, bottom = LLM-Dev tools\n   - Step 1: In the terminal, `cd` into your project directory (it may have already done this)\n   - Step 2: Type `claude` to start your AI engineer, or `claude --resume` to continue\n   - Step 3: Tell Claude what to build — describe your feature or paste a task\n2. **Your Workspace** — what each area does (file explorer, chat terminal, preview panel, LLM-Dev tabs)\n3. **Git & Version Control** (consolidated from old FEAT-37)\n   - Your code is already tracked (git init happened during scaffold)\n   - What are commits? (1-2 paragraphs for beginners)\n   - The AI engineer commits automatically after each task\n   - Optional: Connect to GitHub for cloud backup + versioning\n   - GitHub sign-up link: https://github.com/join\n   - GitHub sign-in link: https://github.com/login\n   - Quick setup: `git remote add origin <url>` then `git push -u origin main`\n4. **Getting Help** — where to find docs, how to use the hint bubble, README.md in file explorer\n\n## Deliverable 2: Hint bubble update\n\nUpdate ClaudeCodeTerminalChat.jsx hint bubble text to include the welcome page URL. Replace the current README.md tip with:\n- 'Welcome guide: copy this URL into the Preview panel → /docs/welcome-to-hubllm.html'\n- Make the URL text selectable/copyable (use an <input> or a click-to-copy button)\n\n## Deliverable 3: Template updates\n\nUpdate `backend/routers/projects.py`:\n- TEMPLATE_README: Add 'Getting Started' section pointing to the welcome page URL\n- TEMPLATE_CLAUDE_MD: Add 'Git Workflow' section (commit after tasks, push if remote exists, never force push, work on main)\n\nNote: The welcome HTML lives in `frontend/public/` (served by Vite), NOT scaffolded into each project. It's a platform-level doc, not a per-project file. The README and CLAUDE.md templates just link to it.\n\nVite serves files from `public/` at the root path. Create `frontend/public/docs/` directory if it doesn't exist.\n\nReference: hubllm-demo-v7_3.html at repo root has the HubLLM brand styling — use similar color palette and design language.",
+      "change": [
+        "frontend/public/docs/welcome-to-hubllm.html: Create this file. Self-contained HTML with inline CSS. HubLLM branding, dark theme, responsive. Content: Next Steps → Workspace Overview → Git/GitHub → Getting Help. See hubllm-demo-v7_3.html for brand styling reference.",
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx: Update the hint bubble (FEAT-35 overlay). Replace 'Open the README.md file in the file explorer for more useful information.' with 'Welcome guide — copy into Preview panel: /docs/welcome-to-hubllm.html' and make the URL easy to copy (click-to-copy or selectable input).",
+        "backend/routers/projects.py: Update TEMPLATE_README to add 'Getting Started' section linking to /docs/welcome-to-hubllm.html.",
+        "backend/routers/projects.py: Update TEMPLATE_CLAUDE_MD to add 'Git Workflow' section — commit after tasks, push if remote exists, never force push, work on main."
+      ],
+      "test": "(1) Run `npm run build` or `npm run dev` in frontend/ — /docs/welcome-to-hubllm.html should be accessible. (2) Open workspace, see hint bubble with welcome URL. (3) Copy URL, paste into preview panel — page renders with HubLLM branding, dark theme, all 4 sections visible. (4) Resize preview panel to narrow width — content reflows without horizontal scroll. (5) Create a new project — README.md has Getting Started section. (6) CLAUDE.md template has Git Workflow section.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-38",
+      "name": "Preview panel draggable resize handle — replace collapse toggle with split-pane divider",
       "size": "M",
+      "priority": 2,
+      "status": "pending",
+      "description": "The preview panel currently only has a collapse/expand toggle button (chevron on left edge). There is NO draggable resize handle. Users can't adjust the preview width — it's either collapsed (60px) or flex:1 (takes half the space). This blocks practical use of the preview panel for viewing real websites, which often need more width than the default split gives.\n\nAdd a draggable vertical divider between the chat area and the preview panel. The divider should follow the same pattern already used in MultiTerminal.jsx for split-pane terminal resize (learnings Session FEAT-09, BUG-16).\n\n## Implementation\n\nPattern from learnings: delta-based drag resize with useState for width, useCallback for mousedown/mousemove/mouseup, useEffect for global mouse events, `document.body.style.cursor = 'col-resize'` during drag. Drag handle minimum 6-8px wide with visual indicator (learnings: 4px was too thin).\n\n## Requirements\n- Drag handle on the left edge of the preview panel (replaces or supplements the collapse toggle)\n- Min width: 200px (already set). Max width: 80% of container\n- Visual indicator: subtle vertical line or dots that highlight on hover (match workspace dark theme)\n- Double-click on divider: toggle collapse/expand (preserves current toggle behavior)\n- Persist width in component state (no need for localStorage yet)\n- Keep the collapse toggle button if the panel is collapsed (so user can re-expand)\n- The chat area (flex:1) absorbs the remaining space\n- `cursor: col-resize` on hover and during drag\n- `user-select: none` on body during drag to prevent text selection\n\nThe resize logic should live in Workspace.jsx (parent of both Chat and PreviewPanel) since it controls the flex layout. PreviewPanel would accept a `width` prop instead of managing its own flex.",
+      "change": [
+        "frontend/src/components/Workspace.jsx: Add drag resize state (previewWidth), mousedown/mousemove/mouseup handlers. Render a drag divider between Chat and PreviewPanel. Pass width to PreviewPanel. Double-click = toggle collapse.",
+        "frontend/src/components/PreviewPanel.jsx: Accept width prop from parent. Remove internal flex:1 logic — width is now controlled by Workspace. Keep collapsed state for the toggle button (double-click or button)."
+      ],
+      "test": "(1) Hover over left edge of preview panel — cursor changes to col-resize, divider highlights. (2) Drag left — preview panel grows, chat area shrinks. (3) Drag right — preview panel shrinks. (4) Preview panel cannot shrink below 200px or grow beyond 80% of container. (5) Double-click divider — panel collapses. Double-click again — expands to previous width. (6) No text selection occurs during drag. (7) Websites in iframe respond to new width without horizontal scroll.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "BUG-54",
+      "name": "GitHub OAuth popup fails — GITHUB_CLIENT_ID env var not set",
+      "size": "S",
       "priority": 3,
       "status": "pending",
-      "description": "The scaffolded template does 'git init' and creates an initial commit, but never explains git to the user. New users (experience 1-3) won't know what git is or have a GitHub account. Three deliverables:\n\n1. **docs/getting-started-with-git.html** — A polished, professional HTML onboarding page scaffolded into docs/. This is the PRIMARY onboarding document for git/GitHub. Design:\n   - HubLLM branded header (logo or 'HubLLM' text + page title like 'Getting Started with Git & GitHub')\n   - Professional, clean design (dark theme matching workspace aesthetic)\n   - Self-contained single HTML file (inline CSS, no external dependencies)\n   - Sections: What is Git? (1-2 paragraphs) → Your Code is Already Tracked → What are Commits? → Optional: Connect to GitHub (step-by-step with screenshots placeholder areas) → Creating a GitHub Account → git remote add + push walkthrough → What the AI Engineer Does Automatically (commits after tasks, pushes if remote exists) → Glossary (repo, commit, push, pull, branch, remote, clone)\n   - The user can copy the file path and paste it into the web preview panel to read it — this is a key UX moment where the preview panel becomes useful\n   - Should look like a real product onboarding page, not a plain doc\n   - At the top: 'HubLLM' branding + document title\n   - Responsive design (works in preview panel at any width)\n\n2. **README.md** — Add a 'Version Control' section that:\n   - Brief explanation that git is already set up\n   - Links to the HTML guide: 'For a complete guide, open docs/getting-started-with-git.html in the Preview panel or your browser'\n   - Quick-reference commands for users who already know git\n   - Note: the AI engineer commits automatically after each task\n\n3. **CLAUDE.md** — Add a 'Git Workflow' section for the engineer:\n   - Commit after every task completion\n   - If a GitHub remote exists, push after commit\n   - If no remote, just commit locally (don't error on push failure)\n   - Branch strategy: work on main for now (simple projects)\n   - Never force push\n\nThis establishes a PATTERN for future onboarding docs — any getting-started topic can be a branded HTML page in docs/ viewable in the preview panel. Future pages: 'Getting Started with Your Project', 'Understanding the Harness System', 'How to Use the AI Engineer', etc.\n\nSource: dogfooding TheFishStocker — new users seeing .git/ folder would be confused, and the preview panel now works (BUG-53 fixed) so HTML docs are viewable.",
+      "description": "In Create Project, clicking 'Connect to GitHub' opens a popup that fails to load the GitHub sign-in page. Root cause: `GITHUB_CLIENT_ID` is read from env var in `backend/services/auth.py:35` with empty string default. The env var is not set in `.env`, `docker-compose.yml`, or any config file in the repo.\n\nThe OAuth flow at `backend/routers/auth.py:371` checks `if not GITHUB_CLIENT_ID` and returns 400. So the popup gets a 400 error instead of a GitHub redirect.\n\nThis is a configuration issue. The fix involves:\n1. Creating a GitHub OAuth App (Settings → Developer Settings → OAuth Apps) with callback URL pointing to the backend\n2. Setting GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in the environment\n3. For local dev: add to `backend/.env`\n4. For production: add to docker-compose.yml environment section or Coolify env vars\n\nNote: The user's current plan for GitHub is versioning + cloud storage (NOT Codespaces — too expensive). The OAuth scope `user:email read:user repo` in auth.py:387 is correct for this use case.\n\nThis task may be deprioritized if GitHub OAuth isn't needed for the current demo. The Welcome page (FEAT-37) includes manual GitHub setup instructions as an alternative.",
       "change": [
-        "backend/routers/projects.py: Add TEMPLATE_GIT_ONBOARDING_HTML constant — full self-contained HTML page with HubLLM branding, dark theme, professional layout. Scaffold to docs/getting-started-with-git.html during create_vps_project_folder().",
-        "backend/routers/projects.py: Update TEMPLATE_README to include a 'Version Control' section linking to the HTML guide + quick-reference git commands.",
-        "backend/routers/projects.py: Update TEMPLATE_CLAUDE_MD to include a 'Git Workflow' section with commit/push rules and branch strategy."
+        "Create a GitHub OAuth App at github.com/settings/developers. Set callback URL to https://www.hubllm.dev/api/auth/oauth/github/callback (production) and http://localhost:8000/api/auth/oauth/github/popup/callback (dev).",
+        "backend/.env: Add GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET (DO NOT commit secrets — .env is in .gitignore).",
+        "docker-compose.yml: Add GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET to backend environment section for production.",
+        "Verify: Click 'Connect to GitHub' in Create Project → GitHub sign-in page loads → authorize → popup returns token."
       ],
-      "test": "(1) Create a new project. (2) Check docs/getting-started-with-git.html exists with HubLLM branding and professional layout. (3) Open it in a browser — should look polished, not plain. (4) Copy file path, paste in preview panel — should render correctly. (5) README.md has Version Control section linking to HTML guide. (6) CLAUDE.md has Git Workflow section. (7) HTML page is self-contained (no external CSS/JS dependencies).",
+      "test": "(1) Start backend with env vars set. (2) Go to Create Project. (3) Click 'Connect to GitHub'. (4) GitHub sign-in page loads in popup. (5) Authorize → popup closes, repos appear in project form. (6) Without env vars: button shows helpful error instead of broken popup.",
       "completion_note": "",
       "completion_checklist": {
         "code_works": false,
