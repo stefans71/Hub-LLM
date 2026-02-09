@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 134 - 2026-02-09 EST
+**Task**: FEAT-45 + BUG-59
+**What**: (FEAT-45) Removed H icon box from header, bumped logo to 22px, reduced tab padding to px-3/py-1 with rounded-sm. Added cyan focus border to PreviewPanel URL input via onFocus/onBlur. File explorer actions hover cyan instead of white. Collapse button styled. (BUG-59) Added minChatWidth=300 constraint to preview drag max width calc. Changed chat area minWidth from 0 to 300px. PreviewPanel already had flex:'none' preventing flex redistribution.
+**Key Learning**: For drag resize, always enforce min-width on BOTH sides of the divider — the dragged panel AND the opposing panel. Just constraining maxWidth of the growing side isn't enough if the shrinking side has minWidth:0.
+
 ### Session 133 - 2026-02-09 EST
 **Task**: FEAT-44
 **What**: Replaced 6 emoji nav icons with inline Feather SVG strings in nav.js (home, play, terminal, git-branch, star, settings). Updated .nav-icon CSS from font-size/text-align to inline-flex for SVG alignment. Redesigned footer in all 6 HTML docs pages: split single-line "HubLLM.dev · A VibeShip Creation" into two-line layout with footer-brand (16px bold) and footer-tagline (12px muted). Added corresponding CSS classes.

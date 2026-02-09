@@ -589,10 +589,10 @@ frontend_components:
 
   HeaderNavigation.jsx:
     path: frontend/src/components/HeaderNavigation.jsx
-    lines: 160
-    purpose: "Top nav bar — Dashboard/Workspace/Settings tabs, user menu. Logo uses three-part color split: Hub(white)/LLM(cyan)/dev(muted) (FEAT-43)"
+    lines: 153
+    purpose: "Top nav bar — Dashboard/Workspace/Settings tabs, user menu. Logo 22px three-part color split (no H box), compact tabs px-3 py-1 (FEAT-43/45)"
     props: "{onLogout}"
-    last_verified_session: 131
+    last_verified_session: 133
 
   AuthPage.jsx:
     path: frontend/src/components/AuthPage.jsx

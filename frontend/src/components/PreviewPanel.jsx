@@ -222,6 +222,8 @@ export default function PreviewPanel({
                   handleNavigate(inputUrl)
                 }
               }}
+              onFocus={(e) => { e.target.style.borderColor = 'var(--primary)' }}
+              onBlur={(e) => { e.target.style.borderColor = 'var(--border)' }}
               placeholder="Enter URL and press Enter..."
               style={{
                 flex: 1,
@@ -232,7 +234,8 @@ export default function PreviewPanel({
                 fontSize: '12px',
                 color: 'var(--text-primary)',
                 outline: 'none',
-                fontFamily: 'inherit'
+                fontFamily: 'inherit',
+                transition: 'border-color 0.15s ease'
               }}
             />
 

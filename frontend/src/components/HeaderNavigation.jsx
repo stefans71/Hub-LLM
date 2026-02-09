@@ -29,19 +29,11 @@ function HeaderNavigation({ onLogout }) {
     >
       {/* Logo */}
       <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white"
-            style={{ backgroundColor: 'var(--primary)' }}
-          >
-            H
-          </div>
-          <span className="font-semibold text-lg">
-            <span style={{ color: '#fff' }}>Hub</span>
-            <span style={{ color: 'var(--primary)' }}>LLM</span>
-            <span style={{ color: 'rgba(150, 180, 200, 0.5)' }}>.dev</span>
-          </span>
-        </div>
+        <span className="font-semibold" style={{ fontSize: '22px' }}>
+          <span style={{ color: '#fff' }}>Hub</span>
+          <span style={{ color: 'var(--primary)' }}>LLM</span>
+          <span style={{ color: 'rgba(150, 180, 200, 0.5)' }}>.dev</span>
+        </span>
 
         {/* Navigation Tabs */}
         <nav
@@ -56,7 +48,7 @@ function HeaderNavigation({ onLogout }) {
               <NavLink
                 key={path}
                 to={path}
-                className="nav-tab flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all"
+                className="nav-tab flex items-center gap-2 px-3 py-1 rounded-sm text-sm font-medium transition-all"
                 style={{
                   backgroundColor: isActive ? 'var(--primary)' : 'transparent',
                   color: isActive ? 'white' : 'var(--text-secondary)',

@@ -344,7 +344,8 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
   const handlePreviewDragMove = useCallback((e) => {
     if (!previewDragging || previewDragStartX.current === null) return
     const containerWidth = chatPreviewContainerRef.current?.offsetWidth || 1200
-    const maxWidth = containerWidth * 0.8
+    const minChatWidth = 300
+    const maxWidth = Math.min(containerWidth * 0.8, containerWidth - minChatWidth)
     // Dragging left = preview grows (negative clientX delta = larger width)
     const delta = previewDragStartX.current - e.clientX
     const newWidth = Math.max(200, Math.min(maxWidth, previewDragStartWidth.current + delta))
@@ -468,7 +469,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
           {/* Main Content - Chat + Preview */}
           <div ref={chatPreviewContainerRef} className="flex-1 flex overflow-hidden">
             {/* Chat area */}
-            <div className="flex-1 overflow-hidden" style={{ minWidth: 0 }}>
+            <div className="flex-1 overflow-hidden" style={{ minWidth: '300px' }}>
               <Chat
                 project={project}
                 model={selectedModel}

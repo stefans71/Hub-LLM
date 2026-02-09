@@ -158,7 +158,7 @@ html, body {
 
 .file-explorer-actions button:hover {
   background: var(--bg-tertiary);
-  color: var(--text-primary);
+  color: var(--primary);
 }
 
 .file-tree {

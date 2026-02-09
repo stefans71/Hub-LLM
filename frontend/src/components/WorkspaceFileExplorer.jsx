@@ -604,6 +604,7 @@ export default function WorkspaceFileExplorer({
           <button
             title="Collapse Panel"
             onClick={onToggle}
+            style={{ color: 'var(--text-secondary)' }}
           >
             ◀
           </button>
