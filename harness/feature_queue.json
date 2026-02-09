@@ -48,20 +48,62 @@
       }
     },
     {
-      "id": "FEAT-49",
-      "name": "Show current working directory in terminal status bar",
+      "id": "BUG-66",
+      "name": "Docs footer 'A VibeShip Creation' should use sidebar's cyan-green color",
+      "size": "XS",
+      "priority": 3,
+      "status": "pending",
+      "description": "In the internal docs portal, the footer tagline 'A VibeShip Creation' is a washed-out gray. It should match the sidebar header's cyan-green color.\n\nfrontend/public/docs/styles.css:337-340 — Change `.footer .footer-tagline` color from `rgba(150, 180, 200, 0.4)` to `#00d4aa` (same as `.brand-tagline` at line 47).",
+      "change": [
+        "frontend/public/docs/styles.css:339 — Change color from 'rgba(150, 180, 200, 0.4)' to '#00d4aa'."
+      ],
+      "test": "Open /docs/index.html — footer 'A VibeShip Creation' text matches the sidebar's cyan-green color.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-50",
+      "name": "LLM-Dev tab bar polish: sleeker tabs, Coming Soon placeholders, remove mock data",
       "size": "S",
       "priority": 2,
       "status": "pending",
-      "description": "In the LLM-Dev terminal status bar (the row showing green dot + server name like 'control-tower-01'), add the current working directory to the right of the server name.\n\n## Backend: send initial cwd on connect\n\nbackend/routers/terminal.py:195 — The `connected` WebSocket message already sends `server` and `host`. Also send a `cwd` field. The project slug is available from the DB lookup (lines 71-75). The project base path is '/root/llm-hub-projects' (projects.py:609). So `cwd = f'/root/llm-hub-projects/{project.slug}'` if we have a project, else '~' for direct serverId connections.\n\nNote: you'll need to import VPS_PROJECT_BASE from projects.py or just hardcode the path string.\n\n```python\nawait websocket.send_json({\n    \"type\": \"connected\",\n    \"server\": server_name,\n    \"host\": server_host,\n    \"cwd\": project_cwd,\n    ...\n})\n```\n\n## Frontend: store and display cwd\n\nMultiTerminal.jsx TerminalInstance:\n- Add `cwd` state alongside `serverInfo` (around line 30): `const [cwd, setCwd] = useState(null)`\n- On `connected` message (line 80-90), store `message.cwd` in state.\n- In the status bar (line 342-349), display cwd after the server name in muted text:\n\n```jsx\n<span style={{ color: 'var(--text-secondary)' }}>{getStatusText()}</span>\n{cwd && (\n  <span\n    title={cwd}\n    style={{\n      color: 'var(--text-muted)',\n      marginLeft: '8px',\n      fontSize: '10px',\n      overflow: 'hidden',\n      textOverflow: 'ellipsis',\n      whiteSpace: 'nowrap',\n      maxWidth: '200px'\n    }}\n  >\n    {cwd.replace('/root/llm-hub-projects/', '~/')}\n  </span>\n)}\n```\n\nThis applies to ALL terminals — each status bar shows that terminal's cwd. Skip live cwd tracking for now; just showing the initial project directory is the goal.",
+      "description": "Three changes to the LLM-Dev panel tabs in LLMDevPanel.jsx.\n\n## 1. Replace mock content with 'Coming Soon' placeholders\n\nDocker (lines 126-129), Logs (lines 131-139), and Project Context (lines 701-757) tabs all render hardcoded fake data. Replace ALL three tab content areas with a simple centered Coming Soon placeholder:\n\n```jsx\n<div style={{\n  display: 'flex',\n  flexDirection: 'column',\n  alignItems: 'center',\n  justifyContent: 'center',\n  height: '100%',\n  minHeight: '120px',\n  color: 'var(--text-muted)',\n  fontSize: '13px',\n  gap: '8px'\n}}>\n  <span style={{ fontSize: '24px', opacity: 0.4 }}>🚧</span>\n  <span>Coming Soon</span>\n</div>\n```\n\nDelete the mock data arrays (containers at line 126-129, logs at 131-139). Delete the full Docker tab content (lines 648-682), Logs tab content (lines 684-699), and Project Context tab content (lines 701-end of that block). Replace each with the Coming Soon placeholder above.\n\nAlso delete the Editor tab content if it's mock too — check what it renders.\n\n## 2. Tighten tab height\n\nAll tab buttons (lines 388-490) have `padding: '8px 16px'`. Reduce to `padding: '5px 14px'` to make them more compact. Also reduce `fontSize: '13px'` to `fontSize: '12px'`.\n\n## 3. Angled tab styling with cyan border\n\nReplace the current flat tab style with angled/slanted trapezoid-style tabs:\n\n```jsx\n// For each tab button, replace the style object:\nstyle={{\n  padding: '5px 14px',\n  background: isActive ? 'var(--bg-primary)' : 'transparent',\n  border: isActive ? '1px solid var(--accent)' : '1px solid transparent',\n  borderBottom: isActive ? '1px solid var(--bg-primary)' : '1px solid transparent',\n  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',\n  fontSize: '12px',\n  cursor: 'pointer',\n  borderRadius: '6px 6px 0 0',\n  display: 'flex',\n  alignItems: 'center',\n  gap: '6px',\n  transform: 'perspective(4px) rotateX(0.5deg)',\n  transformOrigin: 'bottom'\n}}\n```\n\nThe key elements: `border: '1px solid var(--accent)'` gives the thin cyan border. `borderRadius: '6px 6px 0 0'` gives the small corner radius. The `perspective` + `rotateX` gives the subtle angled/tapered look — the tab is slightly narrower at the top than the bottom. If the perspective trick looks off, try using `clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 100%, 0 100%)` instead for a clean trapezoid shape.\n\nThe active tab should have the cyan border on top and sides, with the bottom border matching the background to blend into the content area. Inactive tabs have no border (transparent).\n\nAlso tighten the tab gap from `gap: '4px'` (line 383) to `gap: '2px'`.",
       "change": [
+        "frontend/src/components/LLMDevPanel.jsx:126-139 — Delete mock containers and logs arrays.",
+        "frontend/src/components/LLMDevPanel.jsx:648-699 — Replace Docker and Logs tab content with Coming Soon placeholder.",
+        "frontend/src/components/LLMDevPanel.jsx:701-757+ — Replace Project Context tab content with Coming Soon placeholder.",
+        "frontend/src/components/LLMDevPanel.jsx:388-490 — Update all tab button styles: reduce padding to 5px 14px, fontSize to 12px, add 1px cyan border (var(--accent)) on active, borderRadius 6px 6px 0 0, add perspective angle effect, tighten gap to 2px."
+      ],
+      "test": "(1) Click Docker tab — shows centered 'Coming Soon' with 🚧 icon, no fake container list. (2) Click Logs tab — Coming Soon, no fake log lines. (3) Click Project Context tab — Coming Soon, no fake agents/config. (4) Tabs are visually shorter/tighter than before. (5) Active tab has thin cyan border on top + sides with slight angle/taper. (6) Inactive tabs have no border. (7) Terminal tab still fully functional.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-49",
+      "name": "Terminal status bar: show cwd, remove dead top-right info bar",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "Two changes: (1) add cwd to each terminal's per-terminal status bar, (2) remove the dead top-right info bar in LLMDevPanel.\n\n## Part 1: Remove dead top-right info bar\n\nLLMDevPanel.jsx:493-514 — The W-96 'Dev Status Bar' div shows `● control-tower-01 (IP)`, `Tokens: 14.2k` (hardcoded, not real), and `UTF-8` (useless). **Delete the entire `llm-dev-status` div** (lines 493-514). The server name is already shown in each terminal's per-terminal status bar, so this is just duplication + dead data.\n\n## Part 2: Backend sends initial cwd on connect\n\nbackend/routers/terminal.py:195 — The `connected` WebSocket message already sends `server` and `host`. Also send `cwd` and `host` (IP) fields. The project slug is available from the DB lookup (lines 71-75). The project base path is '/root/llm-hub-projects' (projects.py:609). So `cwd = f'/root/llm-hub-projects/{project.slug}'` if we have a project, else '~' for direct serverId connections. The `host` field (server IP) is already sent — just make sure it's available to the frontend.\n\n## Part 3: Frontend per-terminal status bar enhancement\n\nMultiTerminal.jsx TerminalInstance:\n- Add `cwd` state alongside `serverInfo` (around line 30): `const [cwd, setCwd] = useState(null)`\n- On `connected` message (line 80-90), store `message.cwd`.\n- In the status bar (line 342-349), show: server name + cwd, with IP in hover tooltip:\n\n```jsx\n<span style={{ color: 'var(--text-secondary)' }}>{getStatusText()}</span>\n{cwd && (\n  <span\n    title={`${serverInfo?.host || ''} — ${cwd}`}\n    style={{\n      color: 'var(--text-muted)',\n      marginLeft: '8px',\n      fontSize: '10px',\n      overflow: 'hidden',\n      textOverflow: 'ellipsis',\n      whiteSpace: 'nowrap',\n      maxWidth: '200px'\n    }}\n  >\n    {cwd.replace('/root/llm-hub-projects/', '~/')}\n  </span>\n)}\n```\n\nHover tooltip shows: `155.138.232.201 — /root/llm-hub-projects/fist-stocker-app`\nThis consolidates server name, IP, and cwd into one clean line per terminal.\n\nApplies to ALL terminals — each status bar shows that terminal's own info.",
+      "change": [
+        "frontend/src/components/LLMDevPanel.jsx:493-514 — Delete the entire W-96 llm-dev-status div (server info, Tokens, UTF-8).",
         "backend/routers/terminal.py:68-75 — Store project slug from DB lookup so we can derive the path.",
         "backend/routers/terminal.py:195 — Add 'cwd' field to the 'connected' WebSocket message.",
         "frontend/src/components/MultiTerminal.jsx:30 — Add cwd state to TerminalInstance.",
         "frontend/src/components/MultiTerminal.jsx:80-90 — Store message.cwd on connected.",
-        "frontend/src/components/MultiTerminal.jsx:342-349 — Display cwd in status bar with truncation + hover tooltip."
+        "frontend/src/components/MultiTerminal.jsx:342-349 — Display cwd in status bar. Hover tooltip shows IP + full path."
       ],
-      "test": "(1) Open LLM-Dev terminal — status bar shows 'control-tower-01  ~/fist-stocker-app'. (2) Open second terminal — also shows cwd. (3) Hover truncated path — tooltip shows full path. (4) Direct server connection (no project) shows '~'.",
+      "test": "(1) LLM-Dev panel top-right no longer shows 'Tokens: 14.2k' or 'UTF-8' or duplicate server name. (2) Per-terminal status bar shows 'control-tower-01  ~/fist-stocker-app'. (3) Hover server name — tooltip shows '155.138.232.201 — /root/llm-hub-projects/fist-stocker-app'. (4) Open second terminal — also shows its own cwd. (5) Direct server connection shows '~'.",
       "completion_checklist": {
         "code_works": false,
         "index_updated": false,

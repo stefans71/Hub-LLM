@@ -2256,6 +2256,10 @@ Three callbacks from Workspace to ServerManager:
 
 ---
 
+### Session N+5 - 2026-02-09 EST
+**Task**: BUG-66 docs footer tagline color
+**What**: Changed `.footer .footer-tagline` color from `rgba(150, 180, 200, 0.4)` to `#00d4aa` to match sidebar brand-tagline cyan-green.
+
 ### Session N+4 - 2026-02-09 EST
 **Task**: BUG-65 SSH reconnect doesn't unblock "Connecting to your VPS"
 **What**: Fixed isConnected state split between Workspace.jsx and WorkspaceFileExplorer.jsx. Added onSshReconnected callback prop to WorkspaceFileExplorer — called after successful reconnect, sets isConnected=true and increments retryTrigger in Workspace. Relaxed WorkspaceTopBar detection guard to skip isConnected check when retryTrigger > 0, so manual retry from Chat always attempts detection. Pattern: when child components manage their own connection state, they must notify the parent on state changes via callback props.
