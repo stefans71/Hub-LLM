@@ -22,7 +22,8 @@ export default function PreviewPanel({
   previewUrl = '',
   collapsed = true,
   onCollapsedChange,
-  width = 400
+  width = 400,
+  onUrlChange
 }) {
   const [deviceMode, setDeviceMode] = useState('fit') // 'phone', 'tablet', 'desktop', 'fit'
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -51,6 +52,8 @@ export default function PreviewPanel({
     }
     setActiveUrl(normalized)
     setInputUrl(normalized)
+    // BUG-55: Notify parent when URL changes (for welcome page persistence)
+    onUrlChange?.(normalized)
   }
 
   const handleRefresh = () => {
@@ -233,13 +236,30 @@ export default function PreviewPanel({
             />
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <ActionButton
-                icon={<ExternalLink size={14} />}
-                title="Open in new tab"
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+              <button
                 onClick={handleOpenInNewTab}
                 disabled={!activeUrl}
-              />
+                title="Open in new tab for Chrome DevTools"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 10px',
+                  background: activeUrl ? 'rgba(56, 189, 248, 0.1)' : 'transparent',
+                  border: activeUrl ? '1px solid rgba(56, 189, 248, 0.25)' : '1px solid transparent',
+                  borderRadius: '4px',
+                  color: activeUrl ? '#38bdf8' : 'var(--text-muted)',
+                  cursor: activeUrl ? 'pointer' : 'not-allowed',
+                  fontSize: '11px',
+                  fontFamily: 'inherit',
+                  opacity: activeUrl ? 1 : 0.5,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <ExternalLink size={13} />
+                <span>Open in Browser</span>
+              </button>
               <ActionButton
                 icon={<RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />}
                 title="Refresh"

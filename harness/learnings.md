@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 129 - 2026-02-09 EST
+**Task**: BUG-55
+**What**: Fixed welcome page persistence — removed immediate localStorage flag on mount, added onUrlChange callback from PreviewPanel to Workspace that sets the flag only when user navigates away from the welcome URL. Made "Open in Browser" button prominent with text label + cyan styling + tooltip mentioning DevTools.
+**Key Learning**: For "dismiss on action" UX (vs "dismiss on view"), pass a callback from parent to child that fires on the dismissing action (URL change), not on mount. The welcomeUrlRef avoids stale closure since it captures the initial welcome URL.
+
+---
+
 ### Session 128 - 2026-02-09 EST
 **Task**: FEAT-41
 **What**: Created multi-page docs portal in `frontend/public/docs/`. 8 files: index.html (hub page with card grid + search + what's-new preview), welcome.html (migrated from welcome-to-hubllm.html), workspace-guide.html (detailed panel walkthrough), git-github.html (full Git/GitHub setup guide), whats-new.html (changelog with tagged entries), harness-guide.html (CODEBASE_INDEX, feature_queue, learnings, Director/Engineer workflow), nav.js (shared sidebar injection + current-page highlighting + text search), styles.css (extracted shared dark theme). Updated Workspace.jsx welcome URL from `/docs/welcome-to-hubllm.html` to `/docs/index.html`. Deleted old welcome-to-hubllm.html.

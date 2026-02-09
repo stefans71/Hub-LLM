@@ -38,15 +38,19 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
   const [rightPanelContent, setRightPanelContent] = useState(null) // 'files', 'terminal', 'editor'
   const [editingFile, setEditingFile] = useState(null) // { path, content }
   // FEAT-37: Auto-load welcome page on first project open
+  // BUG-55: Flag set when user navigates away, not on mount
   const isFirstVisit = project?.id && !localStorage.getItem(`welcomed_${project.id}`)
   const [welcomeUrl] = useState(() =>
     isFirstVisit ? '/docs/index.html' : ''
   )
   const [previewCollapsed, setPreviewCollapsed] = useState(() => !isFirstVisit)
-  // Set localStorage flag so welcome doesn't show again for this project
-  if (isFirstVisit && project?.id) {
-    localStorage.setItem(`welcomed_${project.id}`, '1')
-  }
+  const welcomeUrlRef = useRef(welcomeUrl)
+  const handlePreviewUrlChange = useCallback((newUrl) => {
+    // Set welcomed flag when user navigates away from the welcome page
+    if (welcomeUrlRef.current && project?.id && newUrl !== welcomeUrlRef.current) {
+      localStorage.setItem(`welcomed_${project.id}`, '1')
+    }
+  }, [project?.id])
   // FEAT-38: Preview panel drag resize
   const [previewWidth, setPreviewWidth] = useState(400)
   const [previewDragging, setPreviewDragging] = useState(false)
@@ -515,6 +519,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
               collapsed={previewCollapsed}
               onCollapsedChange={setPreviewCollapsed}
               width={previewWidth}
+              onUrlChange={handlePreviewUrlChange}
             />
           </div>
         </div>
