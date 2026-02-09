@@ -521,7 +521,7 @@ frontend_components:
   MultiTerminal.jsx:
     path: frontend/src/components/MultiTerminal.jsx
     lines: 1082
-    purpose: "Split-pane terminal manager — up to 6 independent terminals (no auto-cd) with 7 bold color palette (FEAT-48) and drag resize. FEAT-49: per-terminal cwd display in status bar. BUG-73: terminals persist across project switches — each terminal owns its serverId/projectId."
+    purpose: "Split-pane terminal manager — up to 6 independent terminals (no auto-cd) with 7 bold color palette (FEAT-48) and drag resize. FEAT-49: per-terminal cwd display in status bar. BUG-72: close button in desktop tab header, color picker clamped to viewport. BUG-73: terminals persist across project switches — each terminal owns its serverId/projectId."
     props: "{projectId, serverId, projectSlug, onTerminalConnected}"
     key_state:
       - {name: terminals, type: "useState([])", drives: "terminal instances array — each entry has serverId, projectId"}

@@ -814,6 +814,26 @@ export default function MultiTerminal({ projectId, serverId, projectSlug, onTerm
               boxShadow: terminal.status === 'connected' ? `0 0 4px ${terminal.color}` : 'none'
             }} />
             <span>{terminal.name}</span>
+            {/* BUG-72: Close button in split-pane tab header */}
+            {terminals.length > 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); closeTerminal(terminal.id); }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  opacity: 0.5
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = 0.5}
+              >
+                <X size={12} />
+              </button>
+            )}
           </div>
         ))}
         <button
@@ -1031,8 +1051,8 @@ export default function MultiTerminal({ projectId, serverId, projectSlug, onTerm
           onClick={(e) => e.stopPropagation()}
           style={{
             position: 'fixed',
-            left: colorPickerPosition.x,
-            top: colorPickerPosition.y,
+            left: Math.min(colorPickerPosition.x, window.innerWidth - 180),
+            top: Math.min(colorPickerPosition.y, window.innerHeight - 120),
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border)',
             borderRadius: '8px',
