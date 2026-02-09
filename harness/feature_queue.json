@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T12:10",
+  "updated": "2026-02-09T12:30",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,46 @@
     }
   },
   "queue": [
+    {
+      "id": "BUG-71",
+      "name": "Auto-connect regression — terminal connects but chat area doesn't know",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "After deployment/page load, the LLM-Dev terminal connects to the VPS fine (green dot, shows 'Connected to control-tower-01'), but the chat area stays stuck on 'Connecting to your VPS' with 'Retry Connection'. User must manually click the SSH refresh button in the file explorer to unblock the chat.\n\nRoot cause: `checkAndAutoConnect()` in Workspace.jsx (lines 136-214) checks backend in-memory server state via `GET /api/ssh/servers`. After container restart, backend state is empty, so auto-connect fails silently. Meanwhile, MultiTerminal connects via its WebSocket path independently — but never notifies Workspace.\n\n## Fix: Thread an onTerminalConnected callback\n\n1. **Workspace.jsx** — Create a memoized callback:\n```jsx\nconst handleTerminalConnected = useCallback(() => {\n  setIsConnected(true)\n}, [])\n```\nPass it to LLMDevPanel: `onTerminalConnected={handleTerminalConnected}`\n\n2. **LLMDevPanel.jsx** — Accept `onTerminalConnected` prop (line 21), pass it through to MultiTerminal (line 455):\n```jsx\nexport default function LLMDevPanel({ project, linkedServerId, onEditorReady, onTerminalConnected }) {\n```\n```jsx\n<MultiTerminal\n  projectId={project?.id}\n  serverId={serverId}\n  onTerminalConnected={onTerminalConnected}\n/>\n```\n\n3. **MultiTerminal.jsx** — In the `MultiTerminal` wrapper component, accept `onTerminalConnected` and pass to TerminalInstance. In `TerminalInstance`, when WebSocket receives `connected` message (around line 82-83), call the callback:\n```jsx\ncase 'connected':\n  setStatus('connected')\n  setServerInfo({ server: message.server, host: message.host })\n  if (message.cwd) setCwd(message.cwd)\n  onTerminalConnected?.()  // <-- ADD THIS\n```\n\nOnly call it once (use a ref to track if already notified) to avoid spamming on every terminal tab connect.\n\nThis ensures: terminal connects → Workspace knows → chat area unblocks. No manual refresh needed.",
+      "change": [
+        "frontend/src/components/Workspace.jsx — Add handleTerminalConnected useCallback, pass to LLMDevPanel",
+        "frontend/src/components/LLMDevPanel.jsx:21 — Accept and pass through onTerminalConnected prop",
+        "frontend/src/components/MultiTerminal.jsx — Call onTerminalConnected on 'connected' WebSocket message (with once-guard ref)"
+      ],
+      "test": "(1) Hard refresh the workspace page. (2) Wait 2-3 seconds. (3) Chat area should auto-switch from 'Connecting to your VPS' to Claude Code terminal without clicking refresh. (4) Bottom terminal and chat area both show connected.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "BUG-72",
+      "name": "Terminal tab close button missing in tabbed mode",
+      "size": "XS",
+      "priority": 3,
+      "status": "pending",
+      "description": "The terminal close (X) button exists in split-pane mode (MultiTerminal.jsx lines 659-675) but is missing from the tabbed mode tab header (lines 732-762). Users see tabs like 'bash' but can't close them.\n\n## Fix\n\nIn the tabbed mode section (~line 760), after the `<span>{terminal.name}</span>`, add the same close button pattern from split-pane mode:\n\n```jsx\n<span>{terminal.name}</span>\n{terminals.length > 1 && (\n  <button\n    onClick={(e) => { e.stopPropagation(); closeTerminal(terminal.id); }}\n    style={{\n      background: 'none',\n      border: 'none',\n      color: 'var(--text-muted)',\n      cursor: 'pointer',\n      padding: '2px',\n      display: 'flex',\n      alignItems: 'center',\n      fontSize: '10px',\n      opacity: 0.5\n    }}\n    onMouseEnter={(e) => e.currentTarget.style.opacity = 1}\n    onMouseLeave={(e) => e.currentTarget.style.opacity = 0.5}\n  >\n    <X size={12} />\n  </button>\n)}\n```\n\nNote: subtle styling — `opacity: 0.5` by default, full opacity on hover. Only shows when more than 1 terminal exists (can't close the last one).",
+      "change": [
+        "frontend/src/components/MultiTerminal.jsx:~760 — Add X close button to tabbed mode tabs (after terminal name span)"
+      ],
+      "test": "(1) Open 2+ terminals. (2) Hover over a tab — X button appears with higher opacity. (3) Click X — terminal closes, switches to another tab. (4) With only 1 terminal, no X shown.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
     {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
