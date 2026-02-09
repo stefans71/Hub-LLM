@@ -1,24 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
-import { Save, X, Loader2 } from 'lucide-react'
+import { Save, X, Loader2, Eye, Code } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 
 /**
  * CodeEditor Component
- * 
+ *
  * Monaco-based code editor with syntax highlighting.
  * Loaded dynamically to reduce bundle size.
+ * FEAT-52: Markdown preview toggle for .md files.
  */
-export default function CodeEditor({ 
-  path, 
-  content, 
-  onSave, 
+export default function CodeEditor({
+  path,
+  content,
+  onSave,
   onClose,
-  readOnly = false 
+  readOnly = false
 }) {
   const containerRef = useRef(null)
   const editorRef = useRef(null)
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [monacoLoaded, setMonacoLoaded] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   // Determine language from file extension
   const getLanguage = (filepath) => {
@@ -57,6 +60,8 @@ export default function CodeEditor({
     }
     return languageMap[ext] || 'plaintext'
   }
+
+  const isMarkdown = getLanguage(path) === 'markdown'
 
   useEffect(() => {
     // Dynamically load Monaco
@@ -119,6 +124,12 @@ export default function CodeEditor({
       handleSave()
     })
 
+    // FEAT-52: Ctrl+Shift+V toggles markdown preview
+    editor.addCommand(
+      window.monaco.KeyMod.CtrlCmd | window.monaco.KeyMod.Shift | window.monaco.KeyCode.KeyV,
+      () => { if (getLanguage(path) === 'markdown') setShowPreview(prev => !prev) }
+    )
+
     return () => {
       editor.dispose()
     }
@@ -132,9 +143,14 @@ export default function CodeEditor({
     }
   }, [content])
 
+  // FEAT-52: Reset preview when switching to non-markdown file
+  useEffect(() => {
+    if (!isMarkdown) setShowPreview(false)
+  }, [path])
+
   const handleSave = async () => {
     if (!editorRef.current || readOnly) return
-    
+
     setIsSaving(true)
     try {
       const newContent = editorRef.current.getValue()
@@ -159,6 +175,23 @@ export default function CodeEditor({
             {hasChanges && <span className="text-yellow-500 ml-1">●</span>}
           </span>
           <span className="text-xs text-gray-500">{getLanguage(path)}</span>
+          {/* FEAT-52: Markdown preview toggle */}
+          {isMarkdown && (
+            <button
+              onClick={() => setShowPreview(prev => !prev)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '4px',
+                padding: '2px 8px', fontSize: '11px',
+                background: showPreview ? 'var(--primary, #3b82f6)' : 'transparent',
+                border: '1px solid var(--border, #374151)',
+                borderRadius: '4px', color: 'var(--text-primary, #e5e7eb)',
+                cursor: 'pointer'
+              }}
+              title="Toggle markdown preview (Ctrl+Shift+V)"
+            >
+              {showPreview ? <><Code size={12} /> Source</> : <><Eye size={12} /> Preview</>}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-1">
           {!readOnly && (
@@ -186,19 +219,47 @@ export default function CodeEditor({
         </div>
       </div>
 
-      {/* Editor */}
+      {/* Editor / Preview */}
       {!monacoLoaded ? (
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="animate-spin" size={24} />
         </div>
+      ) : showPreview && isMarkdown ? (
+        <div style={{
+          flex: 1, overflow: 'auto', padding: '24px 32px',
+          background: '#1e1e1e', color: '#c0caf5',
+          fontSize: '14px', lineHeight: '1.7'
+        }}>
+          <ReactMarkdown
+            components={{
+              h1: ({children}) => <h1 style={{fontSize:'28px',fontWeight:700,marginTop:'24px',marginBottom:'12px',borderBottom:'1px solid #333',paddingBottom:'8px'}}>{children}</h1>,
+              h2: ({children}) => <h2 style={{fontSize:'22px',fontWeight:600,marginTop:'20px',marginBottom:'8px',borderBottom:'1px solid #333',paddingBottom:'6px'}}>{children}</h2>,
+              h3: ({children}) => <h3 style={{fontSize:'18px',fontWeight:600,marginTop:'16px',marginBottom:'6px'}}>{children}</h3>,
+              p: ({children}) => <p style={{margin:'8px 0'}}>{children}</p>,
+              code: ({inline,children,...props}) => inline
+                ? <code style={{background:'#2d2d2d',padding:'2px 6px',borderRadius:'4px',fontSize:'13px'}} {...props}>{children}</code>
+                : <pre style={{background:'#0d1117',padding:'16px',borderRadius:'8px',overflow:'auto',fontSize:'13px'}}><code {...props}>{children}</code></pre>,
+              ul: ({children}) => <ul style={{paddingLeft:'24px',margin:'8px 0'}}>{children}</ul>,
+              ol: ({children}) => <ol style={{paddingLeft:'24px',margin:'8px 0'}}>{children}</ol>,
+              li: ({children}) => <li style={{margin:'4px 0'}}>{children}</li>,
+              blockquote: ({children}) => <blockquote style={{borderLeft:'3px solid #3b82f6',paddingLeft:'16px',margin:'12px 0',color:'#9ca3af'}}>{children}</blockquote>,
+              a: ({href,children}) => <a href={href} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6',textDecoration:'underline'}}>{children}</a>,
+              table: ({children}) => <table style={{borderCollapse:'collapse',width:'100%',margin:'12px 0'}}>{children}</table>,
+              th: ({children}) => <th style={{border:'1px solid #333',padding:'8px',textAlign:'left',background:'#2d2d2d'}}>{children}</th>,
+              td: ({children}) => <td style={{border:'1px solid #333',padding:'8px'}}>{children}</td>
+            }}
+          >
+            {content}
+          </ReactMarkdown>
+        </div>
       ) : (
-        <div ref={containerRef} className="flex-1" />
+        <div ref={containerRef} className="flex-1" style={{ display: showPreview ? 'none' : undefined }} />
       )}
 
       {/* Footer */}
       <div className="flex items-center justify-between px-3 py-1 text-xs text-gray-500 bg-gray-800 border-t border-gray-700">
         <span>{path}</span>
-        <span>Ctrl+S to save</span>
+        <span>{showPreview && isMarkdown ? 'Ctrl+Shift+V for source' : 'Ctrl+S to save'}</span>
       </div>
     </div>
   )

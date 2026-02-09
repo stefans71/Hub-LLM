@@ -568,8 +568,8 @@ frontend_components:
 
   CodeEditor.jsx:
     path: frontend/src/components/CodeEditor.jsx
-    lines: 205
-    purpose: "Monaco editor loaded from CDN — 30+ language support, Ctrl+S save"
+    lines: 266
+    purpose: "Monaco editor loaded from CDN — 30+ language support, Ctrl+S save. FEAT-52: Markdown preview toggle (ReactMarkdown) with Ctrl+Shift+V shortcut."
     props: "{path, content, onSave, onClose, readOnly}"
     features:
       - "CDN-loaded Monaco (not bundled)"

@@ -4,6 +4,10 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 143 - 2026-02-09 08:58 EST
+**Task**: FEAT-52
+**What**: Added markdown preview toggle in CodeEditor.jsx. showPreview state + isMarkdown derived from path. Toggle button (Eye/Code icons) in header, Ctrl+Shift+V shortcut in Monaco, ReactMarkdown render with styled components for headings/code/tables/links. Footer hint updates. Preview resets when switching to non-md file.
+
 ### Session 142 - 2026-02-09 07:58 EST
 **Task**: BUG-72
 **What**: Added X close button to split-pane tab header (was only in mobile tabbed mode). Fixed color picker overflow by clamping position with Math.min to keep popup within viewport.
