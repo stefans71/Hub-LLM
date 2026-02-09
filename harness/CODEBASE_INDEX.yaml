@@ -122,6 +122,17 @@ frontend_pages:
       - {key: openrouter_api_key, direction: read}
     last_verified_session: 113
 
+  ExportModal.jsx:
+    path: frontend/src/components/ExportModal.jsx
+    lines: 207
+    purpose: "FEAT-51: Confirmation modal for project export. Shows included/excluded files list, handles tar.gz download with spinner, error handling."
+    props: "{project, open, onClose}"
+    key_state:
+      - {name: downloading, type: useState, drives: "download in progress spinner"}
+    api_calls:
+      - {endpoint: "/api/projects/{id}/export", method: GET, purpose: "download project tar.gz"}
+    last_verified_session: 138
+
   Setup.jsx:
     path: frontend/src/pages/Setup.jsx
     lines: 1301
@@ -325,8 +336,8 @@ frontend_styles:
 frontend_components:
   Workspace.jsx:
     path: frontend/src/components/Workspace.jsx
-    lines: 621
-    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), auto-load docs portal on first project visit via localStorage (FEAT-37/41), preview always open by default (BUG-62), Claude processing state, enhance banner threading"
+    lines: 642
+    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), auto-load docs portal on first project visit via localStorage (FEAT-37/41), preview always open by default (BUG-62), Claude processing state, enhance banner threading, export modal (FEAT-51)"
     props: "{project, model, apiKeys, onProjectChange, enhanceWithAI}"
     key_state:
       - {name: isConnected, type: useState, drives: "SSH connection status"}
@@ -345,7 +356,7 @@ frontend_components:
     localStorage_keys:
       - {key: vps_servers, direction: read}
       - {key: last_used_model, direction: both}
-    children: [Chat, WorkspaceTopBar, WorkspaceIconSidebar, WorkspaceFileExplorer, LLMDevPanel, PreviewPanel]
+    children: [Chat, WorkspaceTopBar, WorkspaceIconSidebar, WorkspaceFileExplorer, LLMDevPanel, PreviewPanel, ExportModal]
     known_issues:
       - {desc: "linkedServerId not updating on project change", sessions: [73], status: fixed}
     last_verified_session: 105
@@ -801,9 +812,9 @@ backend_routers:
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 1052
+    lines: 1204
     prefix: "/api/projects"
-    purpose: "Project CRUD with chat history and VPS folder auto-creation + harness template scaffolding (FEAT-30). TEMPLATE_GENERATE_PRP updated (FEAT-31). FK safety check on create_project (BUG-47). Smart pre-commit hook + /audit-index command scaffolded (FEAT-36). TEMPLATE_CLAUDE_MD has Git Workflow section, TEMPLATE_README mentions welcome page (FEAT-37)"
+    purpose: "Project CRUD with chat history, VPS folder auto-creation, harness template scaffolding (FEAT-30), and project export (FEAT-51)."
     endpoints:
       - {method: GET, path: "/", purpose: "list all projects"}
       - {method: POST, path: "/", purpose: "create project (+ scaffold harness on VPS)"}
@@ -813,11 +824,12 @@ backend_routers:
       - {method: GET, path: "/{id}/history", purpose: "get chat history"}
       - {method: POST, path: "/{id}/history", purpose: "add chat message"}
       - {method: DELETE, path: "/{id}/history", purpose: "clear chat history"}
-    helpers: "create_vps_project_folder(vps_server_id, slug, name, tech_stack, brief) — SSH mkdir + scaffold 10 harness template files + git init (FEAT-30). _detect_commands(tech_stack) — returns install/start commands. _fill_template(template, vars) — replaces {{placeholders}}."
-    template_constants: "TEMPLATE_CLAUDE_MD, TEMPLATE_CLAUDE_SETTINGS, TEMPLATE_GENERATE_PRP, TEMPLATE_EXECUTE_PRP, TEMPLATE_FEATURE_QUEUE, TEMPLATE_CODEBASE_INDEX, TEMPLATE_LEARNINGS, TEMPLATE_README"
-    called_by_frontend: [App.jsx, Dashboard.jsx, CreateProject.jsx, Workspace.jsx, WorkspaceFileExplorer.jsx]
+      - {method: GET, path: "/{id}/export", purpose: "FEAT-51: export project as tar.gz download from VPS"}
+    helpers: "create_vps_project_folder(vps_server_id, slug, name, tech_stack, brief) — SSH mkdir + scaffold 10 harness template files + git init (FEAT-30). _detect_commands(tech_stack) — returns install/start commands. _fill_template(template, vars) — replaces {{placeholders}}. _cleanup_export(conn, path) — best-effort temp file cleanup."
+    template_constants: "TEMPLATE_CLAUDE_MD, TEMPLATE_CLAUDE_SETTINGS, TEMPLATE_GENERATE_PRP, TEMPLATE_EXECUTE_PRP, TEMPLATE_FEATURE_QUEUE, TEMPLATE_CODEBASE_INDEX, TEMPLATE_LEARNINGS, TEMPLATE_README, TEMPLATE_PORTABLE_README"
+    called_by_frontend: [App.jsx, Dashboard.jsx, CreateProject.jsx, Workspace.jsx, WorkspaceFileExplorer.jsx, ExportModal.jsx]
     db_tables: [projects, chat_messages, vps_servers]
-    last_verified_session: 117
+    last_verified_session: 138
 
   ssh.py:
     path: backend/routers/ssh.py

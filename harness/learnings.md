@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 138 - 2026-02-09 EST
+**Task**: FEAT-51
+**What**: Added Export Project feature. New ExportModal.jsx component with confirmation modal showing included/excluded files, download spinner, and error handling. Backend GET /api/projects/{id}/export endpoint: writes PORTABLE_README.md to VPS project folder, runs tar -czf excluding node_modules/__pycache__/.venv etc, reads back via base64, streams as tar.gz download. Workspace.jsx wires showExportModal state to handleExport and renders ExportModal.
+**Key Learning**: For reading binary files back from SSH, base64 encoding via `run_command("base64 /path")` then `base64.b64decode()` is more reliable than trying to read raw bytes through SFTP when you need to return them in a StreamingResponse. Generous timeouts (60s for tar, 120s on frontend fetch) are needed for large projects.
+
 ### Session 137 - 2026-02-09 EST
 **Task**: BUG-67
 **What**: Preview device buttons (phone/tablet/desktop/fit) were non-functional when viewing internal docs because `isInternalDocs` forced `{ width: '100%', height: '100%' }` overriding `getFrameStyles()`. Fix: introduced `isFullBleed = isInternalDocs && deviceMode === 'fit'` — only Fit+docs goes edge-to-edge, all other combos use `getFrameStyles()` with centered frame and shadow treatment.

@@ -2,6 +2,7 @@
 Projects Router - Manage development projects/workspaces
 """
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -12,6 +13,8 @@ import json
 import re
 import logging
 import asyncio
+import base64
+import io
 
 from models import Project as ProjectModel, ChatMessage as ChatMessageModel, VPSServer as VPSServerModel, async_session
 from services.ssh import get_connection, load_server_to_cache
@@ -1050,3 +1053,152 @@ async def clear_history(project_id: str):
         )
         await session.commit()
         return {"status": "cleared"}
+
+
+# =============================================================================
+# FEAT-51: Export Project
+# =============================================================================
+
+TEMPLATE_PORTABLE_README = """# Exported from HubLLM.dev
+
+This project was exported from HubLLM.dev on {date}.
+
+## Quick Start
+
+1. Unzip this archive
+2. Install dependencies (check package.json, requirements.txt, or similar)
+3. Review .env files and update credentials for your environment
+
+## Project Structure
+
+- `src/` — Application source code
+- `CLAUDE.md` — Instructions for AI coding assistants (Claude, Cursor, etc.)
+- `.claude/commands/` — Reusable AI workflows:
+  - `generate-prp.md` — Product requirements gathering
+  - `execute-prp.md` — Task execution workflow
+  - `audit-index.md` — Codebase index audit
+- `harness/` — Development tracking:
+  - `feature_queue.json` — Task queue
+  - `CODEBASE_INDEX.yaml` — AI-readable codebase map
+  - `learnings.md` — Development session history
+- `PRPs/` — Product Requirement Packs
+- `docs/` — Documentation
+- `README.md` — Project overview
+
+## Using with Another LLM Assistant
+
+The `CLAUDE.md` file and `harness/` directory work with any LLM coding tool.
+Point your AI assistant at `CLAUDE.md` for project context, and use
+`harness/feature_queue.json` to track tasks.
+
+Built with HubLLM.dev — AI-powered development workspace.
+"""
+
+
+@router.get("/{project_id}/export")
+async def export_project(project_id: str):
+    """Export project as .tar.gz download from VPS"""
+    # Look up project
+    async with async_session() as session:
+        result = await session.execute(
+            select(ProjectModel).where(ProjectModel.id == project_id)
+        )
+        project = result.scalar_one_or_none()
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        if not project.vps_server_id:
+            raise HTTPException(status_code=400, detail="Project has no VPS server linked")
+
+        slug = project.slug
+        server_id = project.vps_server_id
+
+    # Load server and get SSH connection
+    async with async_session() as session:
+        result = await session.execute(
+            select(VPSServerModel).where(VPSServerModel.id == server_id)
+        )
+        server_model = result.scalar_one_or_none()
+        if not server_model:
+            raise HTTPException(status_code=404, detail="VPS server not found")
+        await load_server_to_cache(server_model)
+
+    try:
+        conn = await get_connection(server_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SSH connection failed: {e}")
+
+    project_path = f"/root/llm-hub-projects/{slug}"
+    export_path = f"/tmp/{slug}-export.tar.gz"
+
+    try:
+        # Write PORTABLE_README.md into the project folder
+        readme_content = TEMPLATE_PORTABLE_README.format(
+            date=datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+        )
+        await asyncio.wait_for(
+            conn.write_file(f"{project_path}/PORTABLE_README.md", readme_content),
+            timeout=10.0
+        )
+
+        # Create tar.gz excluding bloat
+        tar_cmd = (
+            f"cd /root/llm-hub-projects && tar -czf {export_path} "
+            f"--exclude='node_modules' --exclude='__pycache__' --exclude='.venv' "
+            f"--exclude='*.pyc' --exclude='.next' --exclude='dist' "
+            f"--exclude='.nuxt' --exclude='target' "
+            f"{slug}/"
+        )
+        stdout, stderr, exit_code = await asyncio.wait_for(
+            conn.run_command(tar_cmd, timeout=60.0),
+            timeout=65.0
+        )
+
+        if exit_code != 0:
+            raise HTTPException(
+                status_code=500,
+                detail=f"tar failed: {stderr.strip() or 'unknown error'}"
+            )
+
+        # Read the tar.gz as base64 (reliable for binary over SSH)
+        read_cmd = f"base64 {export_path}"
+        stdout, stderr, exit_code = await asyncio.wait_for(
+            conn.run_command(read_cmd, timeout=60.0),
+            timeout=65.0
+        )
+
+        if exit_code != 0:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to read export: {stderr.strip()}"
+            )
+
+        file_bytes = base64.b64decode(stdout.strip())
+
+        # Clean up temp file (non-blocking, best-effort)
+        asyncio.create_task(_cleanup_export(conn, export_path))
+
+        return StreamingResponse(
+            io.BytesIO(file_bytes),
+            media_type="application/gzip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{slug}-export.tar.gz"',
+                "Content-Length": str(len(file_bytes))
+            }
+        )
+
+    except HTTPException:
+        raise
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail="Export timed out — project may be too large")
+    except Exception as e:
+        logger.error(f"Export failed for {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
+
+async def _cleanup_export(conn, export_path: str):
+    """Best-effort cleanup of temp export file"""
+    try:
+        await conn.run_command(f"rm -f {export_path}", timeout=5.0)
+    except Exception:
+        pass

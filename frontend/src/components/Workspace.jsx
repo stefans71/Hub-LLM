@@ -9,6 +9,7 @@ import WorkspaceTopBar from './WorkspaceTopBar'
 import WorkspaceIconSidebar from './WorkspaceIconSidebar'
 import WorkspaceFileExplorer from './WorkspaceFileExplorer'
 import LLMDevPanel from './LLMDevPanel'
+import ExportModal from './ExportModal'
 import {
   Terminal as TerminalIcon,
   FolderOpen,
@@ -42,6 +43,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
   const isFirstVisit = project?.id && !localStorage.getItem(`welcomed_${project.id}`)
   const [welcomeUrl] = useState('/docs/index.html')
   const [previewCollapsed, setPreviewCollapsed] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
   const welcomeUrlRef = useRef(welcomeUrl)
   const handlePreviewUrlChange = useCallback((newUrl) => {
     // Set welcomed flag when user navigates away from the welcome page
@@ -300,8 +302,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
   }
 
   const handleExport = () => {
-    // TODO: Implement project export functionality
-    console.log('Export project:', project?.name)
+    setShowExportModal(true)
   }
 
   // W-31: Icon Sidebar handlers
@@ -629,6 +630,13 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
 
       {/* W-88: LLM-Dev Bottom Panel */}
       <LLMDevPanel project={project} linkedServerId={linkedServerId} onEditorReady={handleEditorReady} />
+
+      {/* FEAT-51: Export Project Modal */}
+      <ExportModal
+        project={project}
+        open={showExportModal}
+        onClose={() => setShowExportModal(false)}
+      />
     </div>
   )
 }
