@@ -31,6 +31,7 @@ function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onSt
   const fitAddonRef = useRef(null)
   const [status, setStatus] = useState('disconnected')
   const [serverInfo, setServerInfo] = useState(null)
+  const [cwd, setCwd] = useState(null)
   const [error, setError] = useState(null)
 
   // Notify parent of status changes
@@ -80,6 +81,7 @@ function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onSt
           case 'connected':
             setStatus('connected')
             setServerInfo({ server: message.server, host: message.host })
+            if (message.cwd) setCwd(message.cwd)
             if (xtermRef.current) {
               const channelInfo = message.channel_id ? ` [channel ${message.channel_id.slice(0,8)}]` : ''
               const connInfo = message.connection_channels ? ` (${message.connection_channels} active)` : ''
@@ -339,14 +341,31 @@ function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onSt
         fontSize: '11px',
         flexShrink: 0
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
           <span style={{
             width: '6px',
             height: '6px',
             borderRadius: '50%',
-            background: getStatusColor()
+            background: getStatusColor(),
+            flexShrink: 0
           }} />
           <span style={{ color: 'var(--text-secondary)' }}>{getStatusText()}</span>
+          {cwd && (
+            <span
+              title={`${serverInfo?.host || ''} — ${cwd}`}
+              style={{
+                color: 'var(--text-muted)',
+                marginLeft: '8px',
+                fontSize: '10px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '200px'
+              }}
+            >
+              {cwd.replace('/root/llm-hub-projects/', '~/')}
+            </span>
+          )}
         </div>
 
         {(status === 'disconnected' || status === 'error') && (projectId || serverId) && (

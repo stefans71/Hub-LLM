@@ -122,21 +122,23 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
 
   // FEAT-03: Removed navigateToFolder (was for Explorer)
 
-  // Mock docker containers (will be real in future)
-  const containers = [
-    { name: 'api-backend-db-1', image: 'postgres:15', status: 'Running' },
-    { name: 'api-backend-redis-1', image: 'redis:7', status: 'Running' }
-  ]
-
-  // Mock logs (will be real in future)
-  const logs = [
-    { time: '2025-01-22 10:23:45', level: 'INFO', text: 'Server started' },
-    { time: '2025-01-22 10:23:46', level: 'INFO', text: 'Database connected' },
-    { time: '2025-01-22 10:23:47', level: 'INFO', text: 'Ready to accept connections', success: true },
-    { time: '2025-01-22 10:24:12', level: 'INFO', text: 'GET / - 200 - 12ms' },
-    { time: '2025-01-22 10:24:15', level: 'INFO', text: 'GET /api/users - 200 - 45ms' },
-    { time: '2025-01-22 10:24:20', level: 'WARN', text: 'Slow query detected (>100ms)', warning: true }
-  ]
+  // Coming Soon placeholder for unimplemented tabs
+  const ComingSoonPlaceholder = () => (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      minHeight: '120px',
+      color: 'var(--text-muted)',
+      fontSize: '13px',
+      gap: '8px'
+    }}>
+      <span style={{ fontSize: '24px', opacity: 0.4 }}>🚧</span>
+      <span>Coming Soon</span>
+    </div>
+  )
 
   // Drag resize handlers - simplified since we have a dedicated drag handle
 
@@ -380,138 +382,46 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
           className="llm-dev-tabs"
           style={{
             display: 'flex',
-            gap: '4px',
+            gap: '2px',
             marginLeft: '24px'
           }}
         >
-          {/* W-92: Terminal Tab */}
-          <button
-            className={activeTab === 'terminal' ? 'active' : ''}
-            onClick={(e) => { e.stopPropagation(); handleTabClick('terminal'); }}
-            style={{
-              padding: '8px 16px',
-              background: activeTab === 'terminal' ? 'var(--bg-primary)' : 'transparent',
-              border: 'none',
-              color: activeTab === 'terminal' ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontSize: '13px',
-              cursor: 'pointer',
-              borderRadius: '4px 4px 0 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <TerminalIcon />
-            Terminal
-          </button>
-
-          {/* FEAT-06: Editor Tab */}
-          <button
-            className={activeTab === 'editor' ? 'active' : ''}
-            onClick={(e) => { e.stopPropagation(); handleTabClick('editor'); }}
-            style={{
-              padding: '8px 16px',
-              background: activeTab === 'editor' ? 'var(--bg-primary)' : 'transparent',
-              border: 'none',
-              color: activeTab === 'editor' ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontSize: '13px',
-              cursor: 'pointer',
-              borderRadius: '4px 4px 0 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <EditorIcon />
-            Editor
-          </button>
-
-          {/* W-93: Docker Tab */}
-          <button
-            className={activeTab === 'docker' ? 'active' : ''}
-            onClick={(e) => { e.stopPropagation(); handleTabClick('docker'); }}
-            style={{
-              padding: '8px 16px',
-              background: activeTab === 'docker' ? 'var(--bg-primary)' : 'transparent',
-              border: 'none',
-              color: activeTab === 'docker' ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontSize: '13px',
-              cursor: 'pointer',
-              borderRadius: '4px 4px 0 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <DockerIcon />
-            Docker
-          </button>
-
-          {/* W-94: Logs Tab */}
-          <button
-            className={activeTab === 'logs' ? 'active' : ''}
-            onClick={(e) => { e.stopPropagation(); handleTabClick('logs'); }}
-            style={{
-              padding: '8px 16px',
-              background: activeTab === 'logs' ? 'var(--bg-primary)' : 'transparent',
-              border: 'none',
-              color: activeTab === 'logs' ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontSize: '13px',
-              cursor: 'pointer',
-              borderRadius: '4px 4px 0 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <LogsIcon />
-            Logs
-          </button>
-
-          {/* W-95: Project Context Tab */}
-          <button
-            className={activeTab === 'prompt' ? 'active' : ''}
-            onClick={(e) => { e.stopPropagation(); handleTabClick('prompt'); }}
-            style={{
-              padding: '8px 16px',
-              background: activeTab === 'prompt' ? 'var(--bg-primary)' : 'transparent',
-              border: 'none',
-              color: activeTab === 'prompt' ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontSize: '13px',
-              cursor: 'pointer',
-              borderRadius: '4px 4px 0 0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            <ContextIcon />
-            Project Context
-          </button>
+          {[
+            { key: 'terminal', label: 'Terminal', Icon: TerminalIcon },
+            { key: 'editor', label: 'Editor', Icon: EditorIcon },
+            { key: 'docker', label: 'Docker', Icon: DockerIcon },
+            { key: 'logs', label: 'Logs', Icon: LogsIcon },
+            { key: 'prompt', label: 'Project Context', Icon: ContextIcon },
+          ].map(({ key, label, Icon }) => {
+            const isActive = activeTab === key
+            return (
+              <button
+                key={key}
+                className={isActive ? 'active' : ''}
+                onClick={(e) => { e.stopPropagation(); handleTabClick(key); }}
+                style={{
+                  padding: '5px 14px',
+                  background: isActive ? 'var(--bg-primary)' : 'transparent',
+                  border: isActive ? '1px solid var(--accent)' : '1px solid transparent',
+                  borderBottom: isActive ? '1px solid var(--bg-primary)' : '1px solid transparent',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  borderRadius: '6px 6px 0 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transform: 'perspective(4px) rotateX(0.5deg)',
+                  transformOrigin: 'bottom'
+                }}
+              >
+                <Icon />
+                {label}
+              </button>
+            )
+          })}
         </div>
 
-        {/* W-96: Dev Status Bar */}
-        <div
-          className="llm-dev-status"
-          style={{
-            marginLeft: 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            fontSize: '12px',
-            color: 'var(--text-secondary)'
-          }}
-        >
-          {serverInfo ? (
-            <span className="server" style={{ color: 'var(--success)' }}>● {serverInfo.name} ({serverInfo.host})</span>
-          ) : serverId ? (
-            <span className="server" style={{ color: 'var(--warning, #f59e0b)' }}>● Connecting...</span>
-          ) : (
-            <span className="server" style={{ color: 'var(--text-muted)' }}>● No VPS connected</span>
-          )}
-          <span>Tokens: 14.2k</span>
-          <span>UTF-8</span>
-        </div>
       </div>
 
       {/* W-97: Dev Panel Content */}
@@ -647,164 +557,43 @@ export default function LLMDevPanel({ project, linkedServerId, onEditorReady }) 
 
           {/* W-109: Docker Tab Content */}
           {activeTab === 'docker' && (
-            <div style={{ padding: '16px', width: '100%' }}>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-                <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '12px', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)', cursor: 'pointer' }}>🔄 Refresh</button>
-                <button className="btn btn-primary" style={{ padding: '8px 12px', fontSize: '12px', background: 'var(--primary)', border: 'none', borderRadius: '6px', color: 'white', cursor: 'pointer' }}>▶️ Start All</button>
-              </div>
-              <div style={{ background: 'var(--bg-tertiary)', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '8px 16px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', borderBottom: '1px solid var(--border)' }}>
-                  <span>CONTAINER</span>
-                  <span>IMAGE</span>
-                  <span>STATUS</span>
-                  <span>ACTIONS</span>
-                </div>
-                {containers.map((container, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '2fr 1fr 1fr 1fr',
-                      padding: '12px 16px',
-                      fontSize: '13px',
-                      alignItems: 'center',
-                      borderTop: index > 0 ? '1px solid var(--border)' : 'none'
-                    }}
-                  >
-                    <span>{container.name}</span>
-                    <span style={{ color: 'var(--text-secondary)' }}>{container.image}</span>
-                    <span style={{ color: 'var(--success)' }}>● {container.status}</span>
-                    <span><button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>⏹️</button></span>
-                  </div>
-                ))}
-              </div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              minHeight: '120px',
+              color: 'var(--text-muted)',
+              fontSize: '13px',
+              gap: '8px'
+            }}>
+              <span style={{
+                fontSize: '32px',
+                animation: 'docker-swim 3s ease-in-out infinite'
+              }}>🐳</span>
+              <span>Coming Soon</span>
             </div>
           )}
 
           {/* W-110: Logs Tab Content */}
-          {activeTab === 'logs' && (
-            <div style={{ padding: '16px', width: '100%', fontFamily: "'Monaco', 'Consolas', monospace", fontSize: '12px', overflowY: 'auto' }}>
-              {logs.map((log, index) => (
-                <div
-                  key={index}
-                  style={{
-                    marginBottom: '4px',
-                    color: log.success ? 'var(--success)' : log.warning ? 'var(--warning)' : 'var(--text-muted)'
-                  }}
-                >
-                  [{log.time}] {log.level}: {log.text}
-                </div>
-              ))}
-            </div>
-          )}
+          {activeTab === 'logs' && <ComingSoonPlaceholder />}
 
           {/* W-111: Project Context Tab Content */}
-          {activeTab === 'prompt' && (
-            <div style={{ padding: '16px', width: '100%', overflowY: 'auto', maxHeight: 'calc(100% - 40px)' }}>
-              {/* Current Model & Auto-generated Files */}
-              <div style={{ background: 'var(--bg-tertiary)', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Current Model:</span>
-                    <span style={{ fontWeight: 500 }}>Claude Opus 4.5</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '11px', background: 'rgba(34, 197, 94, 0.2)', color: 'var(--success)', padding: '2px 8px', borderRadius: '4px' }}>CLAUDE.md ✓</span>
-                    <span style={{ fontSize: '11px', background: 'rgba(34, 197, 94, 0.2)', color: 'var(--success)', padding: '2px 8px', borderRadius: '4px' }}>.claude/agents/ ✓</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Project Description */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Project Context</span>
-                  <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '11px', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', cursor: 'pointer' }}>Edit</button>
-                </div>
-                <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', fontFamily: "'Monaco', 'Consolas', monospace", fontSize: '12px', color: 'var(--text-primary)', maxHeight: '120px', overflowY: 'auto' }}>
-                  <div style={{ color: 'var(--text-muted)' }}># API Backend Optimization</div>
-                  <div style={{ marginTop: '8px' }}><span style={{ color: 'var(--accent)' }}>Tech:</span> Node.js, Express, PostgreSQL, Redis</div>
-                  <div style={{ marginTop: '4px' }}><span style={{ color: 'var(--accent)' }}>Standards:</span> TypeScript strict, async/await, JSDoc</div>
-                  <div style={{ marginTop: '8px', color: 'var(--text-muted)' }}>## Commands</div>
-                  <div>npm run dev → Start dev server</div>
-                  <div>npm test → Run tests</div>
-                  <div>npm run lint → ESLint check</div>
-                </div>
-              </div>
-
-              {/* Project Agents */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Agents</span>
-                  <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '11px', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', cursor: 'pointer' }}>+ Add</button>
-                </div>
-
-                {/* Project-specific agents */}
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>PROJECT-SPECIFIC</div>
-                <div style={{ background: 'var(--bg-tertiary)', borderRadius: '6px', padding: '8px 10px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>🔧</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 500 }}>api-designer</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Designs REST API endpoints</div>
-                  </div>
-                  <button style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '10px' }}>Edit</button>
-                </div>
-
-                {/* Global agents */}
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '12px', marginBottom: '4px' }}>GLOBAL (INHERITED)</div>
-                <div style={{ background: 'var(--bg-tertiary)', borderRadius: '6px', padding: '8px 10px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.7 }}>
-                  <span>📝</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 500 }}>doc-generator</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Generates documentation</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* MCP Servers */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>MCP Servers</span>
-                  <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '11px', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', cursor: 'pointer' }}>+ Add</button>
-                </div>
-                <div style={{ background: 'var(--bg-tertiary)', borderRadius: '6px', padding: '8px 10px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: 'var(--success)' }}>●</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 500 }}>PostgreSQL</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Connected to production DB</div>
-                  </div>
-                  <button style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '10px' }}>Edit</button>
-                </div>
-              </div>
-
-              {/* Regenerate Button */}
-              <button
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  background: 'var(--bg-tertiary)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '6px',
-                  color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                🔄 Regenerate CLAUDE.md
-              </button>
-            </div>
-          )}
+          {activeTab === 'prompt' && <ComingSoonPlaceholder />}
         </div>
 
-      {/* Keyframe animation for cursor blink */}
+      {/* Keyframe animations */}
       <style>{`
         @keyframes blink {
           0%, 50% { opacity: 1; }
           51%, 100% { opacity: 0; }
+        }
+        @keyframes docker-swim {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          25% { transform: translate(8px, -4px) rotate(2deg); }
+          50% { transform: translate(0, -8px) rotate(0deg); }
+          75% { transform: translate(-8px, -4px) rotate(-2deg); }
         }
       `}</style>
     </div>

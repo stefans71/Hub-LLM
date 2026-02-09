@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 136 - 2026-02-09 EST
+**Task**: FEAT-50 + FEAT-49
+**What**: (FEAT-50) Replaced mock Docker/Logs/Project Context tab content with Coming Soon placeholders. Deleted mock containers and logs arrays. Tightened tab height (padding 5px 14px, fontSize 12px). Added angled tab styling with cyan border (var(--accent)) on active tab using perspective transform. Tab gap reduced from 4px to 2px. Refactored 5 duplicate tab buttons into a .map() loop. (FEAT-49) Deleted dead W-96 status bar (hardcoded Tokens: 14.2k, UTF-8). Added cwd field to backend terminal connected WebSocket message derived from project slug. Added cwd state to TerminalInstance, displayed in per-terminal status bar with tooltip showing IP + full path.
+**Key Learning**: When refactoring repetitive JSX (5 identical button patterns), extracting to a .map() over a config array is cleaner than individual edits. Tab perspective transform `perspective(4px) rotateX(0.5deg)` with `transformOrigin: bottom` gives subtle angled/trapezoid look.
+
 ### Session 135 - 2026-02-09 EST
 **Task**: BUG-61 + BUG-60
 **What**: (BUG-61) Changed welcomeUrl to always default to '/docs/index.html' (removed isFirstVisit conditional for URL). Added 'Docs' button (BookOpen icon) to PreviewPanel toolbar. Removed DemoPreview function — iframe fallback is /docs/index.html. (BUG-60) Passed previewDragging as 'dragging' prop to PreviewPanel. Added absolute transparent overlay (zIndex 10) that renders during drag to prevent iframe from stealing mousemove events.

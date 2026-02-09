@@ -62,6 +62,7 @@ async def terminal_websocket(
     # Resolve server ID
     resolved_server_id = None
     server_name = "Unknown"
+    project_slug = None
 
     if serverId:
         resolved_server_id = serverId
@@ -73,6 +74,7 @@ async def terminal_websocket(
             if project:
                 resolved_server_id = project.vps_server_id
                 server_name = project.name
+                project_slug = project.slug
             else:
                 await websocket.send_json({
                     "type": "error",
@@ -192,12 +194,14 @@ async def terminal_websocket(
         }
 
         # Notify client of successful connection
+        cwd = f"/root/llm-hub-projects/{project_slug}" if project_slug else "~"
         await websocket.send_json({
             "type": "connected",
             "server": server_name,
             "host": server_host,
             "channel_id": channel.id,
-            "connection_channels": vps_conn.channel_count
+            "connection_channels": vps_conn.channel_count,
+            "cwd": cwd
         })
 
         # Handle bidirectional communication

@@ -479,8 +479,8 @@ frontend_components:
 
   LLMDevPanel.jsx:
     path: frontend/src/components/LLMDevPanel.jsx
-    lines: 812
-    purpose: "Bottom collapsible panel — Terminal, Editor (Monaco via CodeEditor), Docker, Logs, Project Context tabs. BUG-52: fixed tab label, close X stale closure, replaced DIY highlighter with CodeEditor."
+    lines: 601
+    purpose: "Bottom collapsible panel — Terminal, Editor (Monaco via CodeEditor), Docker, Logs, Project Context tabs. FEAT-50: Docker/Logs/Context tabs show Coming Soon placeholders (Docker has swimming whale animation). Tab buttons refactored to .map() loop with angled cyan-border styling."
     props: "{project, linkedServerId, onEditorReady}"
     key_state:
       - {name: activeTab, type: "useState('terminal')", drives: "tab selection"}
@@ -491,18 +491,19 @@ frontend_components:
       - "Drag-resizable panel height"
       - "CSS hiding (not conditional render) to preserve WebSocket connections"
       - "Editor API callback pattern for parent integration"
+      - "FEAT-50: Angled tabs with cyan border, perspective transform, Coming Soon placeholders"
     children: [MultiTerminal, CodeEditor]
     localStorage_keys:
       - {key: vps_servers, direction: read}
     known_issues:
       - {desc: "Conditional render killed WebSocket connections", sessions: [65], status: fixed}
       - {desc: "Stale closure in openEditors", sessions: [63], status: fixed}
-    last_verified_session: 86
+    last_verified_session: 136
 
   MultiTerminal.jsx:
     path: frontend/src/components/MultiTerminal.jsx
-    lines: 1004
-    purpose: "Split-pane terminal manager — up to 6 independent terminals (no auto-cd) with 7 bold color palette (FEAT-48) and drag resize"
+    lines: 1022
+    purpose: "Split-pane terminal manager — up to 6 independent terminals (no auto-cd) with 7 bold color palette (FEAT-48) and drag resize. FEAT-49: per-terminal cwd display in status bar."
     props: "{projectId, serverId, projectSlug}"
     key_state:
       - {name: terminals, type: "useState([])", drives: "terminal instances array"}
@@ -510,16 +511,19 @@ frontend_components:
       - {name: colorPickerTerminalId, type: useState, drives: "color picker popup"}
       - {name: draggingDividerId, type: useState, drives: "divider drag state"}
     sub_component: "TerminalInstance (inline)"
+    sub_component_state:
+      - {name: cwd, type: useState, drives: "current working directory from connected message"}
     features:
       - "Side-by-side split panes with draggable dividers"
       - "8 color options per terminal (right-click color picker)"
       - "Tab header with colored dots and active underline"
-      - "Max 4 terminals"
+      - "Max 6 terminals"
       - "Delta-based drag resize (BUG-16 fix)"
+      - "FEAT-49: Per-terminal cwd display with IP+path tooltip"
     known_issues:
       - {desc: "fitAddon calculates absurd width without minWidth:0", sessions: [62], status: fixed}
       - {desc: "Divider drag couldn't shrink panes", sessions: [65], status: fixed}
-    last_verified_session: 86
+    last_verified_session: 136
 
   Terminal.jsx:
     path: frontend/src/components/Terminal.jsx
@@ -842,9 +846,9 @@ backend_routers:
 
   terminal.py:
     path: backend/routers/terminal.py
-    lines: 296
+    lines: 300
     prefix: "/api/terminal"
-    purpose: "New multiplexed terminal — one SSH connection per VPS, multiple PTY channels"
+    purpose: "Multiplexed terminal — one SSH connection per VPS, multiple PTY channels. FEAT-49: sends cwd in connected message."
     endpoints:
       - {method: WS, path: "/ws", purpose: "interactive terminal WebSocket (multiplexed)"}
       - {method: GET, path: "/status", purpose: "terminal sessions status"}
@@ -854,12 +858,13 @@ backend_routers:
       input: "{type: 'input', data: 'cmd\\n'}"
       output: "{type: 'output', data: '...'}"
       resize: "{type: 'resize', cols, rows}"
+      connected: "{type: 'connected', server, host, channel_id, connection_channels, cwd}"
       status: "{type: 'connection_status', status, message}"
     error_codes: "4000=missing params, 4003=SSH failed, 4004=not found, 4008=timeout"
     uses_service: vps_connection.py
     called_by_frontend: [ClaudeCodeTerminalChat.jsx, MultiTerminal.jsx, WorkspaceTerminal.jsx]
     db_tables: [projects, vps_servers]
-    last_verified_session: 86
+    last_verified_session: 136
 
   servers.py:
     path: backend/routers/servers.py
