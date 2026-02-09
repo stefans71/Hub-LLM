@@ -26,53 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-45",
-      "name": "Header nav polish — remove H box, bigger logo, tighter tab padding, cyan consistency",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "Several header/toolbar polish items from UI review:\n\n## 1. Remove the 'H' icon box\n\nHeaderNavigation.jsx:33-38 — Delete the cyan rounded 'H' box entirely. The three-color 'HubLLM.dev' text is the logo now. Remove the div with `w-8 h-8 rounded-lg` and the 'H' text inside it.\n\n## 2. Make logo text the biggest element in the header\n\nHeaderNavigation.jsx:39 — The logo span uses `text-lg` (18px). Bump to ~22px so it's clearly the most prominent element. Nav tab labels are 14px (`text-sm`), so 22px gives good visual hierarchy.\n\n## 3. Reduce nav tab padding\n\nHeaderNavigation.jsx:59 — Active tab has `px-4 py-2` (16px horizontal, 8px vertical). This makes the nav container taller than necessary. Reduce to `px-3 py-1` (12px horizontal, 4px vertical) so the active background pill is more compact. Also consider `rounded-sm` instead of `rounded-md` for a tighter look.\n\n## 4. Cyan color consistency across workspace toolbar elements\n\nCheck these areas and ensure interactive/active elements use cyan (var(--primary) / #38bdf8):\n\n- **WORKSPACES header buttons** (WorkspaceFileExplorer.jsx:565-609): The collapse button (line 604-608) has no color styling — add `color: 'var(--text-secondary)'` with hover to `var(--primary)`. The '+' create button (line 586-601) already uses `var(--primary)` — good.\n- **Preview toolbar device buttons** (PreviewPanel.jsx DeviceButton, line 323-343): Already uses `var(--primary)` for active — good.\n- **URL bar focus state** (PreviewPanel.jsx:226-236): The input has no focus styling. Add a `:focus` border color of `var(--primary)` or use an inline onFocus/onBlur handler to set `borderColor: 'var(--primary)'`.\n- **File explorer action buttons** (index.css:145-162): Hover state uses `var(--bg-tertiary)` — consider adding `color: var(--primary)` on hover for the icon buttons.",
-      "change": [
-        "frontend/src/components/HeaderNavigation.jsx:33-38 — Remove the 'H' icon box div entirely.",
-        "frontend/src/components/HeaderNavigation.jsx:39 — Increase logo text from text-lg to ~22px.",
-        "frontend/src/components/HeaderNavigation.jsx:59 — Reduce tab padding from px-4 py-2 to px-3 py-1. Consider rounded-sm.",
-        "frontend/src/components/PreviewPanel.jsx:226-236 — Add focus border color var(--primary) to URL input.",
-        "frontend/src/components/WorkspaceFileExplorer.jsx:604-608 — Style collapse button with proper color.",
-        "frontend/src/index.css:159-162 — Add color: var(--primary) to .file-explorer-actions button:hover."
-      ],
-      "test": "(1) Header shows HubLLM.dev text only — no 'H' box. (2) Logo text is visually biggest in the header. (3) Nav tabs are more compact — header bar is shorter. (4) Active tab still has cyan background. (5) URL bar shows cyan border on focus. (6) WORKSPACES buttons use cyan hover. (7) No overflow or clipping anywhere.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      },
-      "completion_note": "Removed H icon box, bumped logo to 22px, reduced tab padding to px-3 py-1 rounded-sm. Added cyan focus border on PreviewPanel URL input via onFocus/onBlur. File explorer action buttons now hover cyan. Collapse button gets text-secondary color. Build passes."
-    },
-    {
-      "id": "BUG-59",
-      "name": "Preview panel drag divider — can drag too far left + moves without clicking",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "Two issues with the preview panel resize divider (Workspace.jsx:483-514):\n\n## Bug 1: Can drag left past terminal, under settings area\n\nThe max width constraint is `containerWidth * 0.8` (line 347), but `containerWidth` comes from `chatPreviewContainerRef.current?.offsetWidth` which is the chat+preview area only. The divider can be dragged so far left that the preview panel covers most of the workspace, pushing the chat area to nearly zero width (the chat div has `minWidth: 0` on line 471).\n\nFix: Add a minimum chat width constraint. The chat area should never shrink below ~300px. Change the max preview width calculation:\n```js\nconst minChatWidth = 300\nconst maxWidth = Math.min(containerWidth * 0.8, containerWidth - minChatWidth)\n```\n\n## Bug 2: Divider moves around even when not clicked\n\nThe user reports the vertical divider line shifts position without being actively dragged. Possible causes:\n- The `previewWidth` state changes due to re-renders (e.g., when chat content updates, flex layout recalculates)\n- The PreviewPanel has `minWidth: '200px'` (PreviewPanel.jsx:113) as a CSS style, but the parent sets `width: ${previewWidth}px`. If the container resizes (e.g., file explorer opens/closes), the flex layout may redistribute space, causing the divider to shift.\n- The `onMouseEnter`/`onMouseLeave` handlers (lines 499-500) directly mutate `e.currentTarget.style.background`. If these fire during layout shifts, the divider may appear to jump.\n\nFix: Ensure `flex: 'none'` is on the preview panel container so it uses the explicit width and doesn't participate in flex redistribution. Also verify the divider has `flex-shrink: 0` (it does, line 489). Consider adding `will-change: width` to the preview panel to reduce layout thrashing.",
-      "change": [
-        "frontend/src/components/Workspace.jsx:347 — Add minChatWidth=300 constraint to maxWidth calculation.",
-        "frontend/src/components/Workspace.jsx:471 — Change chat div minWidth from 0 to 300px.",
-        "frontend/src/components/Workspace.jsx — Investigate and fix divider movement without interaction. Ensure preview panel has flex:'none' and doesn't shift during layout changes."
-      ],
-      "test": "(1) Drag divider left — stops before chat area shrinks below ~300px. (2) Drag divider right — preview collapses to 200px min. (3) Open/close file explorer — divider stays in place. (4) Type in chat — divider doesn't shift. (5) Double-click divider — still toggles collapse correctly.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      },
-      "completion_note": "Added minChatWidth=300 constraint to preview drag handler maxWidth calculation. Changed chat div minWidth from 0 to 300px so chat area can't be squished. PreviewPanel already has flex:'none' (line 106) so it doesn't participate in flex redistribution. Build passes."
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -84,6 +37,24 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-45",
+      "name": "Header nav polish — remove H box, bigger logo, tighter tabs, cyan consistency",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: H box removed, logo 22px, tabs px-3 py-1 rounded-sm, URL bar cyan focus, file explorer cyan hover. Commit 556a513."
+    },
+    {
+      "id": "BUG-59",
+      "name": "Preview drag divider — min chat width 300px constraint",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: minChatWidth=300 in drag handler, chat div minWidth='300px', PreviewPanel has flex:'none'. Commit 556a513."
+    },
     {
       "id": "FEAT-44",
       "name": "Docs portal polish — SVG nav icons + two-line footer",
