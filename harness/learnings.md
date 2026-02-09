@@ -4,6 +4,13 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 128 - 2026-02-09 EST
+**Task**: FEAT-41
+**What**: Created multi-page docs portal in `frontend/public/docs/`. 8 files: index.html (hub page with card grid + search + what's-new preview), welcome.html (migrated from welcome-to-hubllm.html), workspace-guide.html (detailed panel walkthrough), git-github.html (full Git/GitHub setup guide), whats-new.html (changelog with tagged entries), harness-guide.html (CODEBASE_INDEX, feature_queue, learnings, Director/Engineer workflow), nav.js (shared sidebar injection + current-page highlighting + text search), styles.css (extracted shared dark theme). Updated Workspace.jsx welcome URL from `/docs/welcome-to-hubllm.html` to `/docs/index.html`. Deleted old welcome-to-hubllm.html.
+**Key Learning**: For static multi-page HTML sites with shared navigation, vanilla JS DOM injection (nav.js) works well — create sidebar element, move existing body children into a content wrapper, inject layout. No build step needed. The text search uses TreeWalker to walk text nodes and wraps matches in `<mark>` tags, saving/restoring original innerHTML for reset.
+
+---
+
 ### Session 127 - 2026-02-08 EST
 **Task**: BUG-52
 **What**: Fixed three bugs in LLM-Dev editor panel. (1) Tab label: Editor tab always shows "Editor" instead of changing to filename (which looked like a new top-level tab). (2) Close X: `openFile` used stale `openEditors` from closure — changed to functional update (`setOpenEditors(prev => ...)`) matching the pattern already used in `onEditorReady`. (3) Syntax highlighting: replaced entire DIY regex highlighter (dangerouslySetInnerHTML with .replace chains) with `<CodeEditor path={...} content={codeContent} readOnly={true} />` which uses Monaco Editor with proper language detection. LLMDevPanel.jsx 858→812 lines (net -46). Build: 0 errors.

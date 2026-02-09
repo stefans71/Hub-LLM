@@ -294,12 +294,20 @@ frontend_pages:
 # FRONTEND — Static Files (frontend/public/)
 # ============================================================================
 frontend_static:
-  welcome-to-hubllm.html:
-    path: frontend/public/docs/welcome-to-hubllm.html
-    lines: 285
-    purpose: "Self-contained welcome/onboarding page — auto-loaded in PreviewPanel on first project visit (FEAT-37). Dark theme, HubLLM branding (cyan/orange), inline CSS, no deps. Sections: Getting Started, Workspace diagram, Git/GitHub, Getting Help."
-    served_at: "/docs/welcome-to-hubllm.html"
+  docs_portal:
+    path: frontend/public/docs/
+    purpose: "Multi-page static HTML docs portal (FEAT-41). HubLLM platform help — dark theme, shared nav sidebar, text search, HubLLM+VibeShip branding."
+    served_at: "/docs/"
     loaded_by: [Workspace.jsx]
+    files:
+      - {name: index.html, purpose: "Hub/landing page — card grid linking to all doc pages, search bar, what's-new preview"}
+      - {name: welcome.html, purpose: "Getting started guide (migrated from welcome-to-hubllm.html) — first steps, workspace diagram, quick tips"}
+      - {name: workspace-guide.html, purpose: "Detailed walkthrough of every workspace panel — top bar, file explorer, terminal chat, preview, LLM-Dev"}
+      - {name: git-github.html, purpose: "Git/GitHub setup — what is git, commits, GitHub account creation, push/pull commands, branching"}
+      - {name: whats-new.html, purpose: "Changelog — feature/fix/improvement entries with dates and tags"}
+      - {name: harness-guide.html, purpose: "Harness system explained — CODEBASE_INDEX, feature_queue, learnings, CLAUDE.md, Director/Engineer workflow, pre-commit hook"}
+      - {name: nav.js, purpose: "Shared vanilla JS — injects sidebar nav into every page, current-page highlighting, text search with mark highlighting"}
+      - {name: styles.css, purpose: "Shared dark theme stylesheet extracted from welcome page — responsive at 600px/420px breakpoints"}
 
 # ============================================================================
 # FRONTEND — Components (frontend/src/components/)
@@ -308,7 +316,7 @@ frontend_components:
   Workspace.jsx:
     path: frontend/src/components/Workspace.jsx
     lines: 621
-    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), auto-load welcome page on first project visit via localStorage (FEAT-37), Claude processing state, enhance banner threading"
+    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), auto-load docs portal on first project visit via localStorage (FEAT-37/41), Claude processing state, enhance banner threading"
     props: "{project, model, apiKeys, onProjectChange, enhanceWithAI}"
     key_state:
       - {name: isConnected, type: useState, drives: "SSH connection status"}

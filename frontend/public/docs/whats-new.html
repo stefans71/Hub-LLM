@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What's New — HubLLM Docs</title>
+  <link rel="stylesheet" href="/docs/styles.css">
+</head>
+<body>
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1>What's New</h1>
+    <p class="page-desc">Changelog and release notes &mdash; new features, improvements, and fixes.</p>
+  </div>
+
+  <!-- February 2026 -->
+  <div class="changelog-entry">
+    <div class="cl-date">February 9, 2026</div>
+    <div class="cl-title"><span class="changelog-tag feature">Feature</span> Docs Portal</div>
+    <div class="cl-body">
+      <p>Launched the multi-page documentation portal you're reading right now. All HubLLM platform help lives in one searchable, navigable place.</p>
+      <ul>
+        <li>Six pages covering getting started, workspace, Git, changelog, and the harness system</li>
+        <li>Shared navigation sidebar with current-page highlighting</li>
+        <li>Text search on every page</li>
+        <li>Responsive design that works at any preview panel width</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="cl-date">February 9, 2026</div>
+    <div class="cl-title"><span class="changelog-tag feature">Feature</span> VibeShip CTA Button</div>
+    <div class="cl-body">
+      <p>Added a VibeShip call-to-action button next to the PRP download in the OpenRouter setup flow. Users who need a VPS can quickly navigate to VibeShip for cloud hosting.</p>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="cl-date">February 9, 2026</div>
+    <div class="cl-title"><span class="changelog-tag fix">Fix</span> GitHub OAuth Error Handling</div>
+    <div class="cl-body">
+      <p>GitHub OAuth popup now shows a clear error message instead of silently failing when the server-side <code>GITHUB_CLIENT_ID</code> isn't configured. The frontend pre-checks the <code>/api/auth/providers</code> endpoint before opening the OAuth popup.</p>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="cl-date">February 9, 2026</div>
+    <div class="cl-title"><span class="changelog-tag improvement">Improvement</span> Create Project Reframe</div>
+    <div class="cl-body">
+      <p>Removed all Codespaces messaging from the project creation wizard. GitHub is now positioned as version control and cloud backup (which is what it actually is). VPS card shows first as the primary hosting option.</p>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="cl-date">February 9, 2026</div>
+    <div class="cl-title"><span class="changelog-tag feature">Feature</span> Welcome Page</div>
+    <div class="cl-body">
+      <p>New welcome page auto-loads in the Preview Panel on first project open. Includes getting started steps, workspace diagram, Git setup guide, and helpful tips. Shows once per project, then gets out of your way.</p>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="cl-date">February 9, 2026</div>
+    <div class="cl-title"><span class="changelog-tag feature">Feature</span> Preview Panel Drag Resize</div>
+    <div class="cl-body">
+      <p>The Preview Panel now has a draggable left edge for resizing. No more fixed width &mdash; give the preview as much or as little space as you need.</p>
+    </div>
+  </div>
+
+  <!-- Earlier -->
+  <div class="changelog-entry">
+    <div class="cl-date">January 2026</div>
+    <div class="cl-title"><span class="changelog-tag feature">Feature</span> Multi-Terminal Split Panes</div>
+    <div class="cl-body">
+      <p>The LLM-Dev panel now supports up to four split-pane terminals. Each terminal runs an independent SSH session, so you can run a dev server in one pane and tail logs in another.</p>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="cl-date">January 2026</div>
+    <div class="cl-title"><span class="changelog-tag feature">Feature</span> Claude Code Terminal Chat</div>
+    <div class="cl-body">
+      <p>Integrated Claude Code directly into the workspace terminal. Start a session with <code>claude</code> and interact with your AI engineer without leaving HubLLM. Includes bubble view for a chat-like experience.</p>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="cl-date">January 2026</div>
+    <div class="cl-title"><span class="changelog-tag feature">Feature</span> Monaco Code Editor</div>
+    <div class="cl-body">
+      <p>Added a VS Code-powered code editor in the LLM-Dev panel. Click any file in the File Explorer to open it with full syntax highlighting, IntelliSense hints, and multi-tab support.</p>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="cl-date">December 2025</div>
+    <div class="cl-title"><span class="changelog-tag feature">Feature</span> VPS Connection Manager</div>
+    <div class="cl-body">
+      <p>Link a VPS to your project for a persistent development environment. SSH connections are managed automatically with reconnection on drop. Supports password and key-based auth.</p>
+    </div>
+  </div>
+
+  <div class="changelog-entry">
+    <div class="cl-date">December 2025</div>
+    <div class="cl-title"><span class="changelog-tag feature">Feature</span> Platform Launch</div>
+    <div class="cl-body">
+      <p>HubLLM.dev goes live &mdash; AI-powered development workspaces with Claude Code integration, project management, and a full web-based IDE. Powered by VibeShip.</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span>
+    &nbsp;&middot;&nbsp; A VibeShip Creation
+  </div>
+
+  <script src="/docs/nav.js"></script>
+</body>
+</html>

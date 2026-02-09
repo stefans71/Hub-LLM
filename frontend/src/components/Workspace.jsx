@@ -40,7 +40,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
   // FEAT-37: Auto-load welcome page on first project open
   const isFirstVisit = project?.id && !localStorage.getItem(`welcomed_${project.id}`)
   const [welcomeUrl] = useState(() =>
-    isFirstVisit ? '/docs/welcome-to-hubllm.html' : ''
+    isFirstVisit ? '/docs/index.html' : ''
   )
   const [previewCollapsed, setPreviewCollapsed] = useState(() => !isFirstVisit)
   // Set localStorage flag so welcome doesn't show again for this project
