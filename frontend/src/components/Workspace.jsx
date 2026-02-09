@@ -463,6 +463,10 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
           onSelectProject={handleSelectProject}
           onFileSelect={handleFileSelect}
           isClaudeProcessing={isClaudeProcessing}
+          onSshReconnected={() => {
+            setIsConnected(true)
+            setRetryTrigger(prev => prev + 1)
+          }}
         />
 
         {/* Left side - Main content (UI-02: Chat only, no tabs) */}

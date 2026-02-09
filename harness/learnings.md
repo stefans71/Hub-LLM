@@ -2256,6 +2256,10 @@ Three callbacks from Workspace to ServerManager:
 
 ---
 
+### Session N+4 - 2026-02-09 EST
+**Task**: BUG-65 SSH reconnect doesn't unblock "Connecting to your VPS"
+**What**: Fixed isConnected state split between Workspace.jsx and WorkspaceFileExplorer.jsx. Added onSshReconnected callback prop to WorkspaceFileExplorer — called after successful reconnect, sets isConnected=true and increments retryTrigger in Workspace. Relaxed WorkspaceTopBar detection guard to skip isConnected check when retryTrigger > 0, so manual retry from Chat always attempts detection. Pattern: when child components manage their own connection state, they must notify the parent on state changes via callback props.
+
 ### Session N+3 - 2026-02-09 EST
 **Task**: BUG-64 terminal left padding + FEAT-48 color palette + max terminals
 **What**: BUG-64: Added 16px left padding to both MultiTerminal xterm-container and .claude-code-terminal-area CSS. FEAT-48: Replaced 8-color palette with 7 bold high-contrast colors (Jasmine, Green, Mint, Purple, Blue, Red, Orange). Increased max terminals from 4 to 6.

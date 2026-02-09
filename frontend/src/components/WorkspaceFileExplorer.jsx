@@ -19,7 +19,8 @@ export default function WorkspaceFileExplorer({
   currentProject,
   onSelectProject,
   onFileSelect,  // callback when a file is clicked
-  isClaudeProcessing = false  // FEAT-10: true when Claude is processing (for dot pulse)
+  isClaudeProcessing = false,  // FEAT-10: true when Claude is processing (for dot pulse)
+  onSshReconnected  // BUG-65: notify parent when SSH reconnects
 }) {
   const navigate = useNavigate()
   const { getAuthHeader } = useAuth()
@@ -154,6 +155,7 @@ export default function WorkspaceFileExplorer({
           ...prev,
           [serverId]: { connected: true, error: null }
         }))
+        onSshReconnected?.(serverId)
       } else {
         const data = await res.json().catch(() => ({}))
         setServerStatuses(prev => ({

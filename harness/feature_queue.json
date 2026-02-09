@@ -26,6 +26,51 @@
   },
   "queue": [
     {
+      "id": "BUG-65",
+      "name": "SSH reconnect doesn't unblock 'Connecting to your VPS' — isConnected state split",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Two reconnect buttons are broken because of an isConnected state split between Workspace.jsx and WorkspaceFileExplorer.jsx.\n\n## Root Cause\n\nWorkspace.jsx owns `isConnected` state (line 65). WorkspaceTopBar's Claude Code detection (line 58) bails immediately if `!isConnected`:\n```js\nif (!linkedServerId || !isConnected) {\n  applyStatus({ installed: false, ... authenticated: false ... })\n  return\n}\n```\n\nBut WorkspaceFileExplorer.jsx has its OWN `serverStatuses` state (line 48) and its own `reconnectServer()` (line 137) that calls `POST /api/ssh/servers/{id}/connect`. On success it updates its local `serverStatuses` — but Workspace.jsx's `isConnected` is never flipped to `true`. So detection never runs.\n\n## Broken button 1: SSH refresh (green RefreshCw icon)\n\nWorkspaceFileExplorer.jsx:566-581 — `reconnectAll()` successfully reconnects SSH (light turns green), but Workspace.jsx doesn't know. `isConnected` stays false → Claude Code detection skipped → chat stays stuck.\n\n## Broken button 2: 'Retry Connection' in Chat.jsx\n\nChat.jsx:387 calls `onRetryConnection` → Workspace.jsx:482 increments `retryTrigger` → WorkspaceTopBar useEffect fires → but `isConnected` is still false → `checkClaudeCode()` returns immediately at line 58 without checking anything.\n\n## Fix\n\n1. **Add `onSshReconnected` callback prop to WorkspaceFileExplorer.** In Workspace.jsx, pass a callback that sets `setIsConnected(true)` and also increments `retryTrigger`.\n\n2. **In WorkspaceFileExplorer.jsx:reconnectServer()** — after successful connect (line 152, `res.ok`), call `onSshReconnected?.(serverId)` so Workspace learns SSH is back.\n\n3. **Same for `reconnectAll()`** — the callback should fire for each successful reconnect.\n\n4. **In Chat.jsx 'Retry Connection' button** — the `onRetryConnection` handler should ALSO set `isConnected = true` (or at least skip the `isConnected` gate). Since the user is clicking retry, assume SSH may be connected and try the detection anyway. Change the guard in WorkspaceTopBar.jsx:58 to also proceed when `retryTrigger > 0`:\n```js\nif (!linkedServerId || (!isConnected && retryTrigger === 0)) {\n```\nThis way a manual retry always attempts detection regardless of isConnected state.\n\nSessions: BUG-63 (added retry logic), INFRA-02 (added reconnect buttons).",
+      "change": [
+        "frontend/src/components/Workspace.jsx:459-466 — Add onSshReconnected prop to WorkspaceFileExplorer that calls setIsConnected(true) and setRetryTrigger(prev => prev + 1).",
+        "frontend/src/components/WorkspaceFileExplorer.jsx:19 — Accept onSshReconnected prop.",
+        "frontend/src/components/WorkspaceFileExplorer.jsx:152 — After successful reconnect (res.ok), call onSshReconnected?.(serverId).",
+        "frontend/src/components/WorkspaceTopBar.jsx:58 — Change guard to: if (!linkedServerId || (!isConnected && retryTrigger === 0)) — so manual retry bypasses isConnected check."
+      ],
+      "test": "(1) Disconnect SSH (wait for light to go dim). (2) Click green RefreshCw button — light turns green AND chat area exits 'Connecting to your VPS' overlay within a few seconds. (3) If stuck, click 'Retry Connection' in chat — should also trigger detection and clear overlay. (4) Both LLM-Dev terminals and Claude Code chat terminal should be functional after reconnect.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-49",
+      "name": "Show current working directory in terminal status bar",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "In the LLM-Dev terminal status bar (the row showing green dot + server name like 'control-tower-01'), add the current working directory to the right of the server name.\n\n## Backend: send initial cwd on connect\n\nbackend/routers/terminal.py:195 — The `connected` WebSocket message already sends `server` and `host`. Also send a `cwd` field. The project slug is available from the DB lookup (lines 71-75). The project base path is '/root/llm-hub-projects' (projects.py:609). So `cwd = f'/root/llm-hub-projects/{project.slug}'` if we have a project, else '~' for direct serverId connections.\n\nNote: you'll need to import VPS_PROJECT_BASE from projects.py or just hardcode the path string.\n\n```python\nawait websocket.send_json({\n    \"type\": \"connected\",\n    \"server\": server_name,\n    \"host\": server_host,\n    \"cwd\": project_cwd,\n    ...\n})\n```\n\n## Frontend: store and display cwd\n\nMultiTerminal.jsx TerminalInstance:\n- Add `cwd` state alongside `serverInfo` (around line 30): `const [cwd, setCwd] = useState(null)`\n- On `connected` message (line 80-90), store `message.cwd` in state.\n- In the status bar (line 342-349), display cwd after the server name in muted text:\n\n```jsx\n<span style={{ color: 'var(--text-secondary)' }}>{getStatusText()}</span>\n{cwd && (\n  <span\n    title={cwd}\n    style={{\n      color: 'var(--text-muted)',\n      marginLeft: '8px',\n      fontSize: '10px',\n      overflow: 'hidden',\n      textOverflow: 'ellipsis',\n      whiteSpace: 'nowrap',\n      maxWidth: '200px'\n    }}\n  >\n    {cwd.replace('/root/llm-hub-projects/', '~/')}\n  </span>\n)}\n```\n\nThis applies to ALL terminals — each status bar shows that terminal's cwd. Skip live cwd tracking for now; just showing the initial project directory is the goal.",
+      "change": [
+        "backend/routers/terminal.py:68-75 — Store project slug from DB lookup so we can derive the path.",
+        "backend/routers/terminal.py:195 — Add 'cwd' field to the 'connected' WebSocket message.",
+        "frontend/src/components/MultiTerminal.jsx:30 — Add cwd state to TerminalInstance.",
+        "frontend/src/components/MultiTerminal.jsx:80-90 — Store message.cwd on connected.",
+        "frontend/src/components/MultiTerminal.jsx:342-349 — Display cwd in status bar with truncation + hover tooltip."
+      ],
+      "test": "(1) Open LLM-Dev terminal — status bar shows 'control-tower-01  ~/fist-stocker-app'. (2) Open second terminal — also shows cwd. (3) Hover truncated path — tooltip shows full path. (4) Direct server connection (no project) shows '~'.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
       "size": "L",

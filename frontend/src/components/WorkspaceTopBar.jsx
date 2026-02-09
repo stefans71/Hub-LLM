@@ -55,7 +55,7 @@ export default function WorkspaceTopBar({
     }
 
     const checkClaudeCode = async () => {
-      if (!linkedServerId || !isConnected) {
+      if (!linkedServerId || (!isConnected && !retryTrigger)) {
         applyStatus({ installed: false, version: null, authenticated: false, checking: false, error: null })
         return
       }
