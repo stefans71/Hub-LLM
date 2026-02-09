@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "updated": "{{createdDate}}",
+  "project": "{{projectName}}",
+  "queue": [
+    {
+      "id": "DOCS-01",
+      "name": "Generate initial CODEBASE_INDEX.yaml",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Scan the project directory and populate harness/CODEBASE_INDEX.yaml with all source files, their line counts, purposes, and relationships. This is the foundation — every future task references this index.",
+      "change": [
+        "harness/CODEBASE_INDEX.yaml: Populate with all files in src/, their line counts, exports, imports, and purpose descriptions"
+      ],
+      "test": "Verify every file in src/ has an entry in the index. Line counts should match actual files.",
+      "completion_note": "",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    }
+  ],
+  "completed": []
+}
