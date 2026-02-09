@@ -14,14 +14,13 @@ import { Plus, X, RefreshCw, Terminal } from 'lucide-react'
 
 // Available terminal colors
 const TERMINAL_COLORS = [
-  { name: 'Gray', value: 'var(--text-muted)' },
-  { name: 'Red', value: '#f7768e' },
-  { name: 'Orange', value: '#ff9e64' },
-  { name: 'Yellow', value: '#e0af68' },
-  { name: 'Green', value: '#9ece6a' },
-  { name: 'Cyan', value: '#7dcfff' },
-  { name: 'Blue', value: '#7aa2f7' },
-  { name: 'Purple', value: '#bb9af7' },
+  { name: 'Jasmine', value: '#FFD078' },
+  { name: 'Green', value: '#04E434' },
+  { name: 'Mint', value: '#05F7CB' },
+  { name: 'Purple', value: '#A313EB' },
+  { name: 'Blue', value: '#2718FD' },
+  { name: 'Red', value: '#F50A0A' },
+  { name: 'Orange', value: '#FA8816' },
 ]
 
 // Individual terminal instance component
@@ -379,7 +378,7 @@ function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onSt
         style={{
           flex: '1 1 auto',
           minHeight: 0,
-          padding: '8px',
+          padding: '8px 8px 8px 16px',
           boxSizing: 'border-box'
         }}
       />
@@ -741,18 +740,18 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
         ))}
         <button
           onClick={createTerminal}
-          disabled={terminals.length >= 4}
+          disabled={terminals.length >= 6}
           style={{
             background: 'none',
             border: 'none',
-            color: terminals.length >= 4 ? 'var(--text-muted)' : 'var(--text-secondary)',
-            cursor: terminals.length >= 4 ? 'not-allowed' : 'pointer',
+            color: terminals.length >= 6 ? 'var(--text-muted)' : 'var(--text-secondary)',
+            cursor: terminals.length >= 6 ? 'not-allowed' : 'pointer',
             padding: '6px',
             display: 'flex',
             alignItems: 'center',
             marginLeft: '4px'
           }}
-          title={terminals.length >= 4 ? 'Maximum 4 terminals' : 'New terminal'}
+          title={terminals.length >= 6 ? 'Maximum 6 terminals' : 'New terminal'}
         >
           <Plus size={16} />
         </button>
@@ -843,17 +842,17 @@ export default function MultiTerminal({ projectId, serverId, projectSlug }) {
             <span>Terms</span>
             <button
               onClick={createTerminal}
-              disabled={terminals.length >= 4}
+              disabled={terminals.length >= 6}
               style={{
                 background: 'none',
                 border: 'none',
-                color: terminals.length >= 4 ? 'var(--text-muted)' : 'var(--text-secondary)',
-                cursor: terminals.length >= 4 ? 'not-allowed' : 'pointer',
+                color: terminals.length >= 6 ? 'var(--text-muted)' : 'var(--text-secondary)',
+                cursor: terminals.length >= 6 ? 'not-allowed' : 'pointer',
                 padding: '2px',
                 display: 'flex',
                 alignItems: 'center'
               }}
-              title={terminals.length >= 4 ? 'Maximum 4 terminals' : 'New terminal'}
+              title={terminals.length >= 6 ? 'Maximum 6 terminals' : 'New terminal'}
             >
               <Plus size={12} />
             </button>

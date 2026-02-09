@@ -46,19 +46,17 @@
       }
     },
     {
-      "id": "BUG-63",
-      "name": "Claude Code chat stuck on 'Connecting to your VPS' — detection never retries",
-      "size": "S",
-      "priority": 1,
+      "id": "FEAT-48",
+      "name": "Terminal color swatch update + increase max terminals from 4 to 6",
+      "size": "XS",
+      "priority": 2,
       "status": "pending",
-      "description": "## Problem\n\nThe main chat area shows 'Connecting to your VPS / Setting up Claude Code terminal...' with permanent spinning dots. This is an intentional loading indicator while the terminal starts up (~20-30s). But when the backend detection fails, `authenticated` stays `false` permanently and the overlay never goes away. There's no retry and no way for the user to recover.\n\nThe LLM-Dev terminal below connects fine because it connects directly via WebSocket with no upstream detection gate.\n\n## Root Cause\n\nChat.jsx:24-27 gates rendering of ClaudeCodeTerminalChat on `claudeCodeStatus?.authenticated`. This status comes from WorkspaceTopBar.jsx:43-94 which calls `GET /api/ssh/servers/{id}/claude-code`.\n\nThat endpoint (ssh.py:238-291) runs 3 sequential SSH commands:\n- `which claude`\n- `claude --version`\n- `claude --help 2>&1 | head -5`\n\nIf ANY command fails, times out, or the SSH connection isn't ready yet, `authenticated` returns `false`. The useEffect at WorkspaceTopBar.jsx:93 fires on `[linkedServerId, isConnected]` changes — **it never retries on failure**.\n\nResult: the 'Connecting to your VPS' overlay stays forever with no escape.\n\n## Fix (3 parts)\n\n### Part 1: Add retry logic to WorkspaceTopBar detection\n\nWorkspaceTopBar.jsx:43-94 — if detection fails or returns `authenticated: false` when `isConnected` is `true`, retry after 3 seconds, up to 3 attempts:\n\n```jsx\nuseEffect(() => {\n  let retryCount = 0\n  const maxRetries = 3\n  let retryTimeout = null\n\n  const checkClaudeCode = async () => {\n    if (!linkedServerId || !isConnected) {\n      // ... existing early-return logic unchanged\n      return\n    }\n    setClaudeCodeStatus(prev => ({ ...prev, checking: true }))\n    try {\n      const controller = new AbortController()\n      const timeout = setTimeout(() => controller.abort(), 10000)\n      const res = await fetch(`${API_URL}/api/ssh/servers/${linkedServerId}/claude-code`, { signal: controller.signal })\n      clearTimeout(timeout)\n      if (res.ok) {\n        const data = await res.json()\n        // ... existing status update logic ...\n        // NEW: retry if not authenticated\n        if (!data.authenticated && retryCount < maxRetries) {\n          retryCount++\n          retryTimeout = setTimeout(checkClaudeCode, 3000)\n        }\n      } else {\n        // ... existing error handling + retry\n        if (retryCount < maxRetries) { retryCount++; retryTimeout = setTimeout(checkClaudeCode, 3000) }\n      }\n    } catch (err) {\n      // ... existing catch + retry\n      if (retryCount < maxRetries) { retryCount++; retryTimeout = setTimeout(checkClaudeCode, 3000) }\n    }\n  }\n  checkClaudeCode()\n  return () => { if (retryTimeout) clearTimeout(retryTimeout) }\n}, [linkedServerId, isConnected, onClaudeCodeStatusChange])\n```\n\n### Part 2: Add 'Retry Connection' button to the connecting overlay\n\nChat.jsx:365-374 — after 10 seconds of showing 'Connecting to your VPS', show a 'Retry Connection' button. This gives the user a way to recover if all auto-retries fail.\n\nAdd state in Chat.jsx:\n```jsx\nconst [showRetry, setShowRetry] = useState(false)\nuseEffect(() => {\n  if (showConnectingWelcome) {\n    const timer = setTimeout(() => setShowRetry(true), 10000)\n    return () => clearTimeout(timer)\n  }\n  setShowRetry(false)\n}, [showConnectingWelcome])\n```\n\nAdd button after 'Setting up Claude Code terminal...' (Chat.jsx:373):\n```jsx\n{showRetry && (\n  <button onClick={onRetryConnection} className=\"vps-retry-btn\">Retry Connection</button>\n)}\n```\n\nStyle: subtle, same as existing workspace buttons. Just text + border, nothing fancy.\n\nThread `onRetryConnection` from Workspace.jsx → Chat.jsx. In Workspace, implement it by incrementing a `retryTrigger` counter state passed as a prop to WorkspaceTopBar, added to the useEffect dependency array so it re-runs detection.\n\n### Part 3: Speed up backend detection\n\nssh.py:238-291 — combine 3 SSH commands into 1:\n```python\nstdout, stderr, exit_code = await conn.run_command(\n    'which claude && claude --version 2>/dev/null'\n)\n```\nIf `which claude` succeeds, set `installed=True` and `authenticated=True`. The slow `claude --help | head -5` check for 'not authenticated' is unreliable and adds seconds. The real auth check happens when ClaudeCodeTerminalChat actually starts the `claude` session.\n\n## Learnings refs\n- Sessions 81-82: claudeCodeStatus timing — no `checking` field initially, renders before async check\n- CLAUDE.md recurring bug #2: claudeCodeStatus timing",
+      "description": "Two changes to the MultiTerminal component.\n\n## 1. Replace terminal color palette\n\nMultiTerminal.jsx:16-25 — replace the current `TERMINAL_COLORS` array with these 7 bold, high-contrast colors:\n\n```jsx\nconst TERMINAL_COLORS = [\n  { name: 'Jasmine', value: '#FFD078' },\n  { name: 'Green', value: '#04E434' },\n  { name: 'Mint', value: '#05F7CB' },\n  { name: 'Purple', value: '#A313EB' },\n  { name: 'Blue', value: '#2718FD' },\n  { name: 'Red', value: '#F50A0A' },\n  { name: 'Orange', value: '#FA8816' },\n]\n```\n\nThe first terminal should default to the first color (Jasmine). New terminals cycle through in order via `colorIndex = terminals.length % TERMINAL_COLORS.length` (this logic already exists at line 500).\n\n## 2. Increase max terminals from 4 to 6\n\nMultiTerminal.jsx:755,856 — the 'New terminal' button shows 'Maximum 4 terminals' tooltip. Change both instances from 4 to 6:\n- Line 755: `terminals.length >= 4` → `terminals.length >= 6`\n- Line 856: `terminals.length >= 4` → `terminals.length >= 6`\n\nAlso check if there's a guard in `createTerminal()` (~line 498) that limits creation — if so, update that too.",
       "change": [
-        "frontend/src/components/WorkspaceTopBar.jsx:43-94 — Add retry logic (3 attempts, 3s apart) when detection fails while isConnected=true. Clean up timeout on unmount.",
-        "frontend/src/components/Chat.jsx:365-374 — Add 'Retry Connection' button that appears after 10s of stuck 'Connecting to your VPS' state.",
-        "frontend/src/components/Workspace.jsx — Add retryTrigger counter state, thread onRetryConnection to Chat and retryTrigger to WorkspaceTopBar.",
-        "backend/routers/ssh.py:238-291 — Combine 3 SSH commands into 1. If `which claude` succeeds, assume authenticated. Drop the slow `claude --help` check."
+        "frontend/src/components/MultiTerminal.jsx:16-25 — Replace TERMINAL_COLORS array with 7 new colors: Jasmine #FFD078, Green #04E434, Mint #05F7CB, Purple #A313EB, Blue #2718FD, Red #F50A0A, Orange #FA8816.",
+        "frontend/src/components/MultiTerminal.jsx:755,856 — Change max terminal limit from 4 to 6 in both tooltip checks and any creation guard."
       ],
-      "test": "(1) Open project with VPS — connecting overlay shows briefly, then terminal loads within 10-15s even if first detection fails. (2) If all retries fail, 'Retry Connection' button appears at 10s mark. (3) Clicking retry re-runs detection and overlay goes away when successful. (4) LLM-Dev terminal still works independently. (5) OpenRouter model with no VPS still shows regular chat.",
+      "test": "(1) Open LLM-Dev terminal — default color is Jasmine (#FFD078). (2) Click gray dot on terminal — color swatch shows 7 new colors. (3) Select each color — terminal dot and header stripe update. (4) Open 6 terminals — all allowed. (5) Try to open a 7th — button disabled with 'Maximum 6 terminals' tooltip. (6) New terminals auto-cycle through the 7 colors.",
       "completion_checklist": {
         "code_works": false,
         "index_updated": false,
@@ -88,6 +86,15 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-63",
+      "name": "Claude Code chat stuck on 'Connecting to your VPS' — detection never retries",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: WorkspaceTopBar retries 3x at 3s intervals with cancelled flag + cleanup. Chat.jsx shows Retry Connection button after 10s. Workspace threads retryTrigger counter. Backend combines 3 SSH commands into 1, assumes authenticated if which claude succeeds. Commit 16236aa."
+    },
     {
       "id": "BUG-62",
       "name": "Preview pane should default to open on every workspace visit",
