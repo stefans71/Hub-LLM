@@ -138,6 +138,181 @@ function PathCard({ icon: Icon, iconSize = 24, title, description, selected, onC
   )
 }
 
+// VibeShip brand colors (from vibeship.cloud)
+const vibeShip = {
+  bgDark: '#1a2e1a',
+  bgCard: '#1c3220',
+  border: '#2a5a30',
+  borderGlow: '#00e5c8',
+  cyan: '#00e5ff',
+  cyanDim: '#00b8cc',
+  textPrimary: '#e8f5e8',
+  textSecondary: '#9ec49e'
+}
+
+// VibeShip.cloud waitlist card
+function WaitlistCard() {
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState('idle') // idle | submitting | success | error
+  const [message, setMessage] = useState('')
+  const [hovered, setHovered] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!email.trim()) return
+
+    setStatus('submitting')
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000)
+    try {
+      const res = await fetch('/api/waitlist/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), source: 'setup_wizard' }),
+        signal: controller.signal
+      })
+      const data = await res.json()
+      if (data.success) {
+        setStatus('success')
+        setMessage(data.message)
+      } else {
+        setStatus('error')
+        setMessage('Something went wrong. Please try again.')
+      }
+    } catch {
+      setStatus('error')
+      setMessage('Failed to connect. Please try again.')
+    } finally {
+      clearTimeout(timeout)
+    }
+  }
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        border: `1px solid ${hovered ? vibeShip.borderGlow : vibeShip.border}`,
+        borderRadius: '12px',
+        padding: '20px 24px',
+        background: `linear-gradient(135deg, ${vibeShip.bgCard} 0%, ${vibeShip.bgDark} 100%)`,
+        marginBottom: '24px',
+        transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
+        boxShadow: hovered ? `0 0 20px ${vibeShip.borderGlow}15` : 'none'
+      }}
+    >
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        marginBottom: '10px'
+      }}>
+        <span style={{
+          fontSize: '15px',
+          fontWeight: 700,
+          color: vibeShip.textPrimary,
+          letterSpacing: '-0.2px'
+        }}>
+          Don't have a VPS?
+        </span>
+        <span style={{
+          fontSize: '10px',
+          fontWeight: 700,
+          color: vibeShip.cyan,
+          background: `${vibeShip.cyan}15`,
+          padding: '2px 8px',
+          borderRadius: '4px',
+          letterSpacing: '0.8px',
+          border: `1px solid ${vibeShip.cyan}30`,
+          marginLeft: 'auto'
+        }}>COMING SOON</span>
+      </div>
+
+      <p style={{
+        fontSize: '13px',
+        color: vibeShip.textSecondary,
+        lineHeight: 1.6,
+        marginBottom: '14px'
+      }}>
+        <span style={{ color: vibeShip.cyan, fontWeight: 600 }}>You Vibe, </span>
+        <span style={{ color: vibeShip.textPrimary, fontWeight: 600 }}>We Ship.</span>
+        {' '}Join the{' '}
+        <a
+          href="https://www.vibeship.cloud"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: vibeShip.cyan, textDecoration: 'none', fontWeight: 600 }}
+        >VibeShip.cloud</a>
+        {' '}waitlist — one-click deploy, zero terminal needed.
+      </p>
+
+      {status === 'success' ? (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          color: vibeShip.cyan,
+          fontSize: '14px',
+          fontWeight: 600
+        }}>
+          <CheckCircle size={16} />
+          {message === 'Already on the waitlist' ? "You're already on the list!" : "You're on the list!"}
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} style={{
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'stretch'
+        }}>
+          <input
+            type="email"
+            placeholder="email@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              background: 'rgba(0, 0, 0, 0.3)',
+              border: `1px solid ${vibeShip.border}`,
+              borderRadius: '6px',
+              color: vibeShip.textPrimary,
+              fontSize: '13px',
+              outline: 'none',
+              minWidth: 0
+            }}
+            onFocus={(e) => e.target.style.borderColor = vibeShip.cyan}
+            onBlur={(e) => e.target.style.borderColor = vibeShip.border}
+          />
+          <button
+            type="submit"
+            disabled={status === 'submitting'}
+            style={{
+              padding: '8px 16px',
+              background: status === 'submitting' ? vibeShip.cyanDim : vibeShip.cyan,
+              color: '#0a1f0a',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: status === 'submitting' ? 'wait' : 'pointer',
+              whiteSpace: 'nowrap',
+              opacity: status === 'submitting' ? 0.7 : 1,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {status === 'submitting' ? 'Joining...' : 'Join Waitlist'}
+          </button>
+        </form>
+      )}
+
+      {status === 'error' && (
+        <p style={{ color: cssVars.error, fontSize: '12px', marginTop: '8px' }}>{message}</p>
+      )}
+    </div>
+  )
+}
+
 // Step 1: Choose Path
 function ChoosePathStep({ path, setPath, onNext }) {
   return (
@@ -182,6 +357,8 @@ function ChoosePathStep({ path, setPath, onNext }) {
           onClick={() => setPath('anthropic')}
         />
       </div>
+
+      <WaitlistCard />
 
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <button

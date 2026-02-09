@@ -222,6 +222,16 @@ class ChatMessage(Base):
         }
 
 
+class WaitlistSignup(Base):
+    """VibeShip.cloud beta waitlist signups"""
+    __tablename__ = "waitlist_signups"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, default=lambda: __import__('uuid').uuid4().hex)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    source: Mapped[str] = mapped_column(String(64), default="setup_wizard")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class UserSetting(Base):
     """User settings storage"""
     __tablename__ = "user_settings"
@@ -329,6 +339,7 @@ __all__ = [
     "VPSServer",
     "Project",
     "ChatMessage",
+    "WaitlistSignup",
     "UserSetting",
     "slugify",
     "engine",

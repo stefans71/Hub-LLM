@@ -23,7 +23,7 @@ meta:
   total_backend_routers: 12
   total_backend_services: 6
   total_localStorage_keys: 19
-  total_db_tables: 5
+  total_db_tables: 6
   last_full_index_session: 86
   last_partial_update_session: 98
 
@@ -132,7 +132,7 @@ frontend_pages:
       - {name: path, type: "useState(null)", drives: "'openrouter' or 'anthropic'"}
       - {name: completing, type: useState, drives: "completion spinner"}
       - {name: skipError, type: "useState(null)", drives: "inline error when skip API fails"}
-    sub_components: [ChoosePathStep, OpenRouterStep, SSHHelpModal, AnthropicStep]
+    sub_components: [ChoosePathStep, WaitlistCard, OpenRouterStep, SSHHelpModal, AnthropicStep]
     icon_usage:
       - {component: PathCard, line: 78, renders: "lucide icon OR img tag (objectFit:contain) based on typeof icon prop, iconSize prop (default 24)"}
       - {component: ChoosePathStep, line: 163, icon: "openrouter-logo.svg (was lucide Key)"}
@@ -147,6 +147,7 @@ frontend_pages:
       - {endpoint: "https://openrouter.ai/api/v1/models", method: GET, purpose: "validate OpenRouter key"}
       - {endpoint: "/api/ssh/test", method: POST, purpose: "test VPS connection"}
       - {endpoint: "/api/auth/me/setup-complete", method: POST, purpose: "mark setup done"}
+      - {endpoint: "/api/waitlist/", method: POST, purpose: "join VibeShip.cloud beta waitlist"}
     localStorage_keys:
       - {key: openrouter_key, direction: both}
       - {key: vps_servers, direction: both}
@@ -965,6 +966,17 @@ backend_routers:
     db_tables: [user_settings]
     last_verified_session: 93
 
+  waitlist.py:
+    path: backend/routers/waitlist.py
+    lines: 39
+    prefix: "/api/waitlist"
+    purpose: "VibeShip.cloud beta waitlist email signup — no auth required"
+    endpoints:
+      - {method: POST, path: "/", purpose: "add email to waitlist (deduplicates)"}
+    called_by_frontend: [Setup.jsx]
+    db_tables: [waitlist_signups]
+    last_verified_session: 114
+
   voice.py:
     path: backend/routers/voice.py
     lines: 90
@@ -1294,6 +1306,14 @@ database:
         - {name: id, type: Integer, pk: true, autoincrement: true}
         - {name: key, type: "String(255)", unique: true}
         - {name: value, type: Text, nullable: true}
+
+    waitlist_signups:
+      columns:
+        - {name: id, type: "String(64)", pk: true, default: "uuid4().hex"}
+        - {name: email, type: "String(255)", unique: true, nullable: false, index: true}
+        - {name: source, type: "String(64)", default: "setup_wizard"}
+        - {name: created_at, type: DateTime, default: "datetime.utcnow"}
+      migration: backend/migrations/005_add_waitlist_table.py
 
 # ============================================================================
 # DATA FLOW — localStorage

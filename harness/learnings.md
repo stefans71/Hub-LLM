@@ -2256,3 +2256,9 @@ Three callbacks from Workspace to ServerManager:
 
 ---
 
+### Session N - 2026-02-09 EST
+**Task**: FEAT-46 VibeShip.cloud waitlist card in Setup wizard
+**What**: Added VibeShip-branded waitlist card to Setup wizard step 1 (path selection). Card uses VibeShip brand colors (dark green bg + cyan accents) matching vibeship.cloud landing page. Backend waitlist endpoint, model, and migration were already in place from previous session. This session: restyled card with brand colors, placed it in ChoosePathStep between PathCards and Continue button, changed badge from "BETA" to "COMING SOON", added tagline "You Vibe, We Ship." with link to vibeship.cloud. Frontend builds clean.
+
+---
+
