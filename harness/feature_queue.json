@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T07:45",
+  "updated": "2026-02-09T08:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,29 @@
     }
   },
   "queue": [
+    {
+      "id": "FEAT-44",
+      "name": "Polish internal docs — SVG nav icons, footer layout, consistent branding",
+      "size": "S",
+      "priority": 2,
+      "status": "pending_review",
+      "description": "The internal docs portal (/docs/*.html) uses emoji icons in the sidebar nav and has a cramped single-line footer. Needs to match the rest of HubLLM's modern Feather-style SVG icons and consistent branding.\n\n## 1. Replace emoji nav icons with SVGs\n\nIn `frontend/public/docs/nav.js` lines 8-15, the `pages` array uses Unicode emoji for icons (⌂, 🚀, 🖥️, 🔀, ✨, ⚙️). Replace with inline SVG strings from `harness/icons.md` (Feather icon style, stroke-based, currentColor).\n\nIcon mapping:\n- Home (⌂) → Use a home/house SVG: `<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"></path><polyline points=\"9 22 9 12 15 12 15 22\"></polyline></svg>`\n- Getting Started (🚀) → Use a play/rocket SVG: `<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"5 3 19 12 5 21 5 3\"></polygon></svg>`\n- Workspace Guide (🖥️) → Use the terminal SVG from icons.md\n- Git & GitHub (🔀) → Use the git-branch SVG from icons.md\n- What's New (✨) → Use a star/zap SVG: `<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"></polygon></svg>`\n- Harness System (⚙️) → Use the settings/gear SVG from icons.md\n\nThe nav-icon span currently holds a text character. Change it to hold the SVG markup. Update `.nav-icon` CSS in styles.css if needed (may need `display: inline-flex; align-items: center;` instead of text-based sizing).\n\n## 2. Footer redesign — all 6 HTML files\n\nCurrent footer (e.g. git-github.html:166-168):\n```html\n<div class=\"footer\">\n  <span class=\"logo-hub\">Hub</span><span class=\"logo-llm\">LLM</span><span class=\"logo-dev\">.dev</span>\n  &nbsp;&middot;&nbsp; A VibeShip Creation\n</div>\n```\n\nChange to:\n```html\n<div class=\"footer\">\n  <div class=\"footer-brand\"><span class=\"logo-hub\">Hub</span><span class=\"logo-llm\">LLM</span><span class=\"logo-dev\">.dev</span></div>\n  <div class=\"footer-tagline\">A VibeShip Creation</div>\n</div>\n```\n\nUpdate in ALL 6 files: index.html, welcome.html, workspace-guide.html, git-github.html, whats-new.html, harness-guide.html.\n\n## 3. Footer CSS update in styles.css\n\nUpdate `.footer` (line 322):\n```css\n.footer {\n  text-align: center;\n  margin-top: 32px;\n  padding-top: 20px;\n  border-top: 1px solid rgba(56, 189, 248, 0.1);\n  color: rgba(150, 180, 200, 0.5);\n}\n.footer .footer-brand {\n  font-size: 16px; /* 25% bigger than current 13px */\n  margin-bottom: 4px;\n}\n.footer .footer-tagline {\n  font-size: 12px;\n  color: rgba(150, 180, 200, 0.4);\n}\n```\n\nThe `.logo-hub`, `.logo-llm`, `.logo-dev` classes are already defined in styles.css and match the header branding colors — reuse them.\n\n## 4. Nav-icon CSS update in styles.css\n\nUpdate `.docs-sidebar nav a .nav-icon` (line 80):\n```css\n.docs-sidebar nav a .nav-icon {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 20px;\n  flex-shrink: 0;\n}\n```\nRemove `font-size: 16px` and `text-align: center` since SVGs are sized via width/height attributes.",
+      "change": [
+        "frontend/public/docs/nav.js:8-15 — Replace emoji icon strings with inline SVG markup for each page.",
+        "frontend/public/docs/styles.css:80-85 — Update .nav-icon CSS for inline-flex SVG layout.",
+        "frontend/public/docs/styles.css:321-329 — Rework .footer CSS: add .footer-brand (16px) and .footer-tagline (12px) sub-classes.",
+        "frontend/public/docs/index.html, welcome.html, workspace-guide.html, git-github.html, whats-new.html, harness-guide.html — Update footer HTML in all 6 files: split into footer-brand div + footer-tagline div."
+      ],
+      "test": "(1) Open /docs/index.html in preview — sidebar shows clean SVG icons, no emoji. (2) Navigate to each page — icons consistent, active state highlight works. (3) Footer on every page shows HubLLM.dev (larger) on first line, 'A VibeShip Creation' (smaller, muted) on second line. (4) Logo colors in footer match header (Hub=white, LLM=cyan, .dev=muted). (5) No layout shifts or overflow in sidebar.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      },
+      "completion_note": "Replaced 6 emoji nav icons with Feather-style inline SVGs (home, play, terminal, git-branch, star, settings) in nav.js. Updated .nav-icon CSS from text-based to inline-flex for SVG alignment. Redesigned footer in all 6 HTML files: split into footer-brand (16px, bold) + footer-tagline (12px, muted) on separate lines. Added .footer-brand and .footer-tagline CSS classes. Build passes, 0 errors."
+    },
     {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",

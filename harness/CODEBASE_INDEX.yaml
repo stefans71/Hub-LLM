@@ -306,8 +306,8 @@ frontend_static:
       - {name: git-github.html, purpose: "Git/GitHub setup — what is git, commits, GitHub account creation, push/pull commands, branching"}
       - {name: whats-new.html, purpose: "Changelog — feature/fix/improvement entries with dates and tags"}
       - {name: harness-guide.html, purpose: "Harness system explained — CODEBASE_INDEX, feature_queue, learnings, CLAUDE.md, Director/Engineer workflow, pre-commit hook"}
-      - {name: nav.js, purpose: "Shared vanilla JS — injects sidebar nav into every page, current-page highlighting, text search with mark highlighting"}
-      - {name: styles.css, purpose: "Shared dark theme stylesheet extracted from welcome page — responsive at 600px/420px breakpoints"}
+      - {name: nav.js, purpose: "Shared vanilla JS — injects sidebar nav with Feather SVG icons (FEAT-44), current-page highlighting, text search with mark highlighting"}
+      - {name: styles.css, purpose: "Shared dark theme stylesheet — SVG nav-icon layout, two-line footer (footer-brand 16px + footer-tagline 12px), responsive at 600px/420px breakpoints"}
 
 # ============================================================================
 # FRONTEND — Styles (frontend/src/)

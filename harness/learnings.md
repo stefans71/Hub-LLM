@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 133 - 2026-02-09 EST
+**Task**: FEAT-44
+**What**: Replaced 6 emoji nav icons with inline Feather SVG strings in nav.js (home, play, terminal, git-branch, star, settings). Updated .nav-icon CSS from font-size/text-align to inline-flex for SVG alignment. Redesigned footer in all 6 HTML docs pages: split single-line "HubLLM.dev · A VibeShip Creation" into two-line layout with footer-brand (16px bold) and footer-tagline (12px muted). Added corresponding CSS classes.
+**Key Learning**: When using inline SVG in vanilla JS (not React), store SVG strings as variables and inject via innerHTML. The nav-icon span needs `display: inline-flex; align-items: center` to vertically center SVGs with text labels.
+
 ### Session 132 - 2026-02-09 EST
 **Task**: BUG-57
 **What**: Fixed auth clearing tokens on network errors during deploys. Removed `clearTokens()` from catch block (network errors) and non-401 HTTP error branch. Only 401-after-failed-refresh clears tokens. Added `connectionError` state and `retryAuth()` to AuthContext. AppRouter now shows "Backend Unreachable" UI (WifiOff icon, retry button) with 10s auto-retry interval when tokens exist in localStorage but backend is unreachable. On recovery, connectionError clears and user session resumes.
