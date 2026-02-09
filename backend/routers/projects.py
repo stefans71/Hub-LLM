@@ -478,6 +478,114 @@ This roadmap tracks the evolution of the HubLLM harness — the automation layer
 *Updated: {{createdDate}}*
 """
 
+# =============================================================================
+# Director Template Strings (FEAT-55)
+# =============================================================================
+
+TEMPLATE_DIRECTOR_CLAUDE_MD = """# {{projectName}} — Director
+
+## Role
+You are the Director for **{{projectName}}**. You architect, plan, and manage the task queue. You coordinate the Lead Engineer. You do NOT write application code.
+
+## Environment
+
+| Path | Purpose |
+|------|---------|
+| `{{appDir}}/` | Application directory (READ-ONLY for you) |
+| `{{appDir}}/harness/feature_queue.json` | Task queue (you write tasks here) |
+| `{{appDir}}/harness/CODEBASE_INDEX.yaml` | Source of truth for codebase structure |
+| `{{appDir}}/harness/learnings.md` | Session-by-session debugging history |
+| `{{appDir}}/CLAUDE.md` | Engineer's project rules |
+
+## Session Workflow
+1. `grep -i '[area]' {{appDir}}/harness/CODEBASE_INDEX.yaml` — understand current code
+2. `grep -i '[area]' {{appDir}}/harness/learnings.md` — check past debugging
+3. Review pending_review tasks — approve or request changes
+4. Write new tasks based on project goals
+5. Update this file if workflow changes
+
+## Queue Entry Format
+```json
+{
+  "id": "FEAT-N",
+  "name": "Short imperative title",
+  "size": "XS|S|M|L",
+  "priority": 1-5,
+  "status": "pending",
+  "description": "Detailed requirements with acceptance criteria",
+  "change": ["file:~line — what to change"],
+  "test": "How to verify the task is complete",
+  "completion_checklist": {
+    "code_works": false,
+    "index_updated": false,
+    "learnings_written": false,
+    "committed_pushed": false,
+    "status_set_to_pending_review": false
+  }
+}
+```
+
+## Task Creation Gates
+Before writing ANY task:
+1. Grep the codebase index for the target area
+2. Grep learnings for past issues in that area
+3. Verify the source of the requirement (user request, dogfooding, bug report)
+4. Include specific file paths and line numbers in the `change` field
+5. Include concrete test steps in the `test` field
+
+## Review Workflow
+When reviewing `pending_review` tasks:
+1. Check `completion_note` — must be 30+ words with pasted test evidence
+2. Check `completion_checklist` — all items must be true
+3. Verify CODEBASE_INDEX.yaml was updated for changed files
+4. If approved: move task to `completed[]` array with review_note
+5. If rejected: set status back to `pending` with feedback in description
+
+## Rules
+- NEVER write application code (src/, backend/, frontend/)
+- NEVER approve tasks where the index wasn't updated
+- NEVER set tasks to 'done' or 'completed' — move to completed[] array
+- Always grep the index before writing tasks — never cat the whole file
+- Size tasks correctly: XS (<10 lines), S (<50), M (<200), L (200+)
+"""
+
+TEMPLATE_DIRECTOR_SETTINGS = """{
+  "permissions": {
+    "allow": [
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(grep *)",
+      "Bash(wc *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git show *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(sudo *)"
+    ]
+  },
+  "systemPrompt": "You are the Director for {{projectName}}. You coordinate the Lead Engineer by writing tasks and reviewing completions. You do NOT write application code.\\n\\n## Source of Truth\\nCODEBASE_INDEX.yaml in the app directory is the primary reference. Grep it before writing any task — NEVER cat the whole file.\\n\\n## Task Creation Gates\\n1. Grep the codebase index for the target area\\n2. Grep learnings for past issues in that area\\n3. Verify the source of the requirement\\n4. Include specific file paths and line numbers in change field\\n5. Include concrete test steps\\n\\n## Review Gates\\nWhen reviewing pending_review tasks:\\n- completion_note must be 30+ words with pasted test evidence\\n- All completion_checklist items must be true\\n- CODEBASE_INDEX.yaml must be updated for changed files\\n- If evidence is missing or index not updated: reject and set back to pending\\n\\n## Rules\\n- NEVER write application code — you are the architect, not the builder\\n- NEVER approve tasks where the index wasn't updated\\n- NEVER cat the full index — grep for the specific area\\n- Move approved tasks to the completed[] array with a review_note\\n- Size tasks correctly: XS (<10 lines), S (<50), M (<200), L (200+)"
+}
+"""
+
+TEMPLATE_DIRECTOR_SETTINGS_LOCAL = """{
+  "permissions": {
+    "deny": [
+      "Write({{appDir}}/src/*)",
+      "Write({{appDir}}/backend/*)",
+      "Write({{appDir}}/frontend/*)",
+      "Edit({{appDir}}/src/*)",
+      "Edit({{appDir}}/backend/*)",
+      "Edit({{appDir}}/frontend/*)",
+      "Bash(cd {{appDir}} && npm *)",
+      "Bash(cd {{appDir}} && node *)",
+      "Bash(cd {{appDir}} && python *)"
+    ]
+  }
+}
+"""
+
 
 TEMPLATE_PRE_COMMIT_HOOK = r"""#!/bin/bash
 # =============================================================================
@@ -780,6 +888,47 @@ async def create_vps_project_folder(
             print(f"Git initialized with pre-commit hook in {project_path}")
         except Exception as e:
             print(f"Git init failed (non-blocking): {e}")
+
+        # Scaffold Director directory alongside project (FEAT-55)
+        director_path = f"{VPS_PROJECT_BASE}/{project_slug}-director"
+        director_variables = {
+            **variables,
+            "appDir": project_path,
+        }
+        try:
+            # Create director subdirectories
+            for subdir in ["", ".claude"]:
+                try:
+                    await asyncio.wait_for(
+                        conn.create_directory(
+                            f"{director_path}/{subdir}" if subdir else director_path
+                        ),
+                        timeout=5.0,
+                    )
+                except Exception:
+                    pass  # May already exist
+
+            # Write director files
+            director_files = {
+                "CLAUDE.md": TEMPLATE_DIRECTOR_CLAUDE_MD,
+                ".claude/settings.json": TEMPLATE_DIRECTOR_SETTINGS,
+                ".claude/settings.local.json": TEMPLATE_DIRECTOR_SETTINGS_LOCAL,
+            }
+            for file_path, template in director_files.items():
+                content = _fill_template(template, director_variables)
+                try:
+                    await asyncio.wait_for(
+                        conn.write_file(
+                            f"{director_path}/{file_path}", content
+                        ),
+                        timeout=5.0,
+                    )
+                except Exception as e:
+                    print(f"Failed to write director {file_path}: {e}")
+
+            print(f"Scaffolded Director directory at {director_path}")
+        except Exception as e:
+            print(f"Director scaffold failed (non-blocking): {e}")
 
         return True
 

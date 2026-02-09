@@ -19,7 +19,7 @@
       "terminal": "Multi-terminal split panes with color coding"
     },
     "left_sidebar": {
-      "status_dots": "\u25cf green=connected, \u25cb gray=disconnected, \ud83d\udd34 red=error",
+      "status_dots": "● green=connected, ○ gray=disconnected, 🔴 red=error",
       "project_menu": "3-dot menu (Rename, Settings, Delete)",
       "truncation": "Names truncate with hover tooltip"
     }
@@ -50,31 +50,12 @@
       }
     },
     {
-      "id": "FEAT-54",
-      "name": "Add Engineer systemPrompt to TEMPLATE_CLAUDE_SETTINGS",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "completion_note": "Added systemPrompt field to TEMPLATE_CLAUDE_SETTINGS in projects.py:96-117. JSON validated with python3 json.loads() — parses correctly with both permissions and systemPrompt keys. systemPrompt is 286 words covering: Lead Engineer role, CODEBASE_INDEX.yaml as source of truth, 10-step task workflow, completion enforcement (30+ words, pasted output), pre-commit hook reference, M/L task limit, and rules against skipping learnings/index. Existing permissions block unchanged.",
-      "description": "The scaffolded .claude/settings.json currently has permissions only — no systemPrompt. This means the Engineer has NO persistent behavioral rules during long sessions. Rules in CLAUDE.md drift as context grows; the systemPrompt persists.\n\nAdd a systemPrompt to the TEMPLATE_CLAUDE_SETTINGS constant in backend/routers/projects.py. The systemPrompt should include:\n\n1. **Role**: You are the Lead Engineer. Implement tasks from harness/feature_queue.json. One task at a time.\n2. **Index is source of truth**: CODEBASE_INDEX.yaml is the primary reference for understanding the codebase. Grep it before every task — never cat the whole file. Update it after every task that changes code.\n3. **Task workflow**: Read CLAUDE.md → grep learnings → grep index → write TODO list → implement → update index → write learnings → write completion_note with test evidence → set pending_review. NEVER set done or completed.\n4. **Completion enforcement**: completion_note must be 30+ words with pasted test output. All checklist items true. The git pre-commit hook blocks commits where code changed but index didn't.\n5. **One M/L task per session**: XS/S can do multiple.\n\nKeep the systemPrompt under ~800 words. It needs to be dense and actionable, not verbose.",
-      "change": [
-        "backend/routers/projects.py — Find TEMPLATE_CLAUDE_SETTINGS constant (currently just permissions JSON). Add a 'systemPrompt' field with the Engineer behavioral rules described above. Keep existing permissions structure intact."
-      ],
-      "test": "(1) Create a new test project in HubLLM (Terminal Track). (2) Check scaffolded .claude/settings.json on VPS — should have both 'permissions' and 'systemPrompt' fields. (3) systemPrompt should mention: index as source of truth, pending_review only, completion_note with evidence, one M/L task limit.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "FEAT-55",
       "name": "Director auto-scaffold — create Director directory alongside project",
       "size": "M",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
+      "completion_note": "Added 3 Director template constants to projects.py: TEMPLATE_DIRECTOR_CLAUDE_MD (role definition, env paths, queue format, task creation gates, review workflow, session workflow), TEMPLATE_DIRECTOR_SETTINGS (read-only permissions + 180-word systemPrompt with task/review gates), TEMPLATE_DIRECTOR_SETTINGS_LOCAL (deny writes to app src/backend/frontend + deny npm/node/python execution). Updated create_vps_project_folder() to create {{slug}}-director/ with .claude/ subdirectory and write CLAUDE.md, settings.json, settings.local.json using director_variables that include appDir. All templates use _fill_template for {{placeholder}} substitution. Both JSON templates validated clean. Python syntax OK. projects.py 1245→1394 lines.",
       "description": "Currently the template only scaffolds the Engineer environment. The Director directory must be created manually. This task adds Director scaffolding as part of project creation.\n\nWhen Hub-LLM creates a Terminal Track project at /root/llm-hub-projects/{{slug}}/, it should ALSO create /root/llm-hub-projects/{{slug}}-director/ with:\n\n1. **CLAUDE.md** — Director role definition, reference material:\n   - Role: Architect, planner, queue manager. Does NOT write app code.\n   - Environment paths (app directory, harness files)\n   - Queue entry format\n   - Review workflow (how to review pending_review tasks)\n   - Session workflow\n\n2. **.claude/settings.json** with:\n   - **permissions**: Read-only access to app directory + write access to app's harness/ files only\n   - **systemPrompt**: Director behavioral rules:\n     - You coordinate the Lead Engineer. Write tasks, review completions.\n     - CODEBASE_INDEX.yaml is the source of truth. Grep it before writing any task — never cat the whole file.\n     - Task creation gates: check index, check learnings, verify source, then write task.\n     - Review gates: completion_note with evidence, index updated, checklist true.\n     - DO NOT write app code. DO NOT approve tasks where index wasn't updated.\n\n3. **.claude/settings.local.json** — deny writes to app's src/, backend/, frontend/ directories\n\nNew template constants needed:\n- TEMPLATE_DIRECTOR_CLAUDE_MD\n- TEMPLATE_DIRECTOR_SETTINGS\n- TEMPLATE_DIRECTOR_SETTINGS_LOCAL\n\nUpdate create_vps_project_folder() in projects.py to create the director directory and write these files after the main project scaffold.",
       "change": [
         "backend/routers/projects.py — Add 3 new template constants: TEMPLATE_DIRECTOR_CLAUDE_MD, TEMPLATE_DIRECTOR_SETTINGS, TEMPLATE_DIRECTOR_SETTINGS_LOCAL",
@@ -82,11 +63,11 @@
       ],
       "test": "(1) Create a new test project. (2) Verify /root/llm-hub-projects/{{slug}}-director/ exists with CLAUDE.md, .claude/settings.json, .claude/settings.local.json. (3) Director settings.json has systemPrompt with task creation gates and review process. (4) Director settings.local.json denies writes to app source code. (5) Director CLAUDE.md has queue format, review workflow, session workflow.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
-        "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
       }
     },
     {
@@ -110,27 +91,6 @@
       }
     },
     {
-      "id": "FEAT-57",
-      "name": "Add harness ROADMAP.md to template scaffold",
-      "size": "XS",
-      "priority": 3,
-      "status": "pending_review",
-      "completion_note": "Added TEMPLATE_ROADMAP constant after TEMPLATE_README in projects.py. Contains 5 phases: Phase 1 Manual (SHIPPED), Phase 2 PRP Generation (SHIPPED), Phase 3 Ralph Loop (PLANNED), Phase 4 MCP Server (PLANNED), Phase 5 Browser Testing (FUTURE). Each phase has description + status emoji. Wired into create_vps_project_folder() template_files dict as harness/ROADMAP.md. Uses {{createdDate}} variable. Python syntax verified clean.",
-      "description": "Every scaffolded project should include visibility into the harness automation roadmap so both Director and Engineer understand the planned evolution.\n\nAdd TEMPLATE_ROADMAP constant to projects.py. Content:\n\n- Phase 1: Manual (current) — user prompts 'do next task', one at a time\n- Phase 2: PRP Generation — /generate-prp + /execute-prp automate planning and task creation\n- Phase 3: Ralph Loop — agent auto-continues after task completion with verification gates\n- Phase 4: MCP Server — file-based task automation (get_next_task, complete_task, update_index)\n- Phase 5: Browser Testing — Puppeteer/Playwright for automated UI verification\n\nInclude current status markers (which phases are shipped vs planned).\n\nUpdate create_vps_project_folder() to write harness/ROADMAP.md.",
-      "change": [
-        "backend/routers/projects.py — Add TEMPLATE_ROADMAP constant",
-        "backend/routers/projects.py — In create_vps_project_folder(), write harness/ROADMAP.md"
-      ],
-      "test": "(1) Create test project. (2) Verify harness/ROADMAP.md exists with 5 phases. (3) Phase status markers are accurate.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
       "size": "L",
@@ -151,6 +111,49 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-54",
+      "name": "Add Engineer systemPrompt to TEMPLATE_CLAUDE_SETTINGS",
+      "size": "S",
+      "priority": 2,
+      "status": "completed",
+      "completion_note": "Added systemPrompt field to TEMPLATE_CLAUDE_SETTINGS in projects.py:96-117. JSON validated with python3 json.loads() — parses correctly with both permissions and systemPrompt keys. systemPrompt is 286 words covering: Lead Engineer role, CODEBASE_INDEX.yaml as source of truth, 10-step task workflow, completion enforcement (30+ words, pasted output), pre-commit hook reference, M/L task limit, and rules against skipping learnings/index. Existing permissions block unchanged.",
+      "description": "The scaffolded .claude/settings.json currently has permissions only — no systemPrompt. This means the Engineer has NO persistent behavioral rules during long sessions. Rules in CLAUDE.md drift as context grows; the systemPrompt persists.\n\nAdd a systemPrompt to the TEMPLATE_CLAUDE_SETTINGS constant in backend/routers/projects.py. The systemPrompt should include:\n\n1. **Role**: You are the Lead Engineer. Implement tasks from harness/feature_queue.json. One task at a time.\n2. **Index is source of truth**: CODEBASE_INDEX.yaml is the primary reference for understanding the codebase. Grep it before every task — never cat the whole file. Update it after every task that changes code.\n3. **Task workflow**: Read CLAUDE.md → grep learnings → grep index → write TODO list → implement → update index → write learnings → write completion_note with test evidence → set pending_review. NEVER set done or completed.\n4. **Completion enforcement**: completion_note must be 30+ words with pasted test output. All checklist items true. The git pre-commit hook blocks commits where code changed but index didn't.\n5. **One M/L task per session**: XS/S can do multiple.\n\nKeep the systemPrompt under ~800 words. It needs to be dense and actionable, not verbose.",
+      "change": [
+        "backend/routers/projects.py — Find TEMPLATE_CLAUDE_SETTINGS constant (currently just permissions JSON). Add a 'systemPrompt' field with the Engineer behavioral rules described above. Keep existing permissions structure intact."
+      ],
+      "test": "(1) Create a new test project in HubLLM (Terminal Track). (2) Check scaffolded .claude/settings.json on VPS — should have both 'permissions' and 'systemPrompt' fields. (3) systemPrompt should mention: index as source of truth, pending_review only, completion_note with evidence, one M/L task limit.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      },
+      "completed": "2026-02-09"
+    },
+    {
+      "id": "FEAT-57",
+      "name": "Add harness ROADMAP.md to template scaffold",
+      "size": "XS",
+      "priority": 3,
+      "status": "completed",
+      "completion_note": "Added TEMPLATE_ROADMAP constant after TEMPLATE_README in projects.py. Contains 5 phases: Phase 1 Manual (SHIPPED), Phase 2 PRP Generation (SHIPPED), Phase 3 Ralph Loop (PLANNED), Phase 4 MCP Server (PLANNED), Phase 5 Browser Testing (FUTURE). Each phase has description + status emoji. Wired into create_vps_project_folder() template_files dict as harness/ROADMAP.md. Uses {{createdDate}} variable. Python syntax verified clean.",
+      "description": "Every scaffolded project should include visibility into the harness automation roadmap so both Director and Engineer understand the planned evolution.\n\nAdd TEMPLATE_ROADMAP constant to projects.py. Content:\n\n- Phase 1: Manual (current) — user prompts 'do next task', one at a time\n- Phase 2: PRP Generation — /generate-prp + /execute-prp automate planning and task creation\n- Phase 3: Ralph Loop — agent auto-continues after task completion with verification gates\n- Phase 4: MCP Server — file-based task automation (get_next_task, complete_task, update_index)\n- Phase 5: Browser Testing — Puppeteer/Playwright for automated UI verification\n\nInclude current status markers (which phases are shipped vs planned).\n\nUpdate create_vps_project_folder() to write harness/ROADMAP.md.",
+      "change": [
+        "backend/routers/projects.py — Add TEMPLATE_ROADMAP constant",
+        "backend/routers/projects.py — In create_vps_project_folder(), write harness/ROADMAP.md"
+      ],
+      "test": "(1) Create test project. (2) Verify harness/ROADMAP.md exists with 5 phases. (3) Phase status markers are accurate.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      },
+      "completed": "2026-02-09"
+    },
     {
       "id": "FEAT-52",
       "name": "Markdown preview toggle in Editor tab",
@@ -556,13 +559,13 @@
       "reviewed_by": "Director",
       "reviewed_date": "2026-02-08",
       "review_note": "Approved. Monaco replaces DIY regex highlighter. Stale closure fix for close X. Editor tab label correct.",
-      "description": "Three bugs in the LLM-Dev panel when opening files from file explorer:\n\n(1) TAB ROUTING: Clicking a file (e.g. CODEBASE_INDEX.yaml) creates a NEW top-level tab in the LLM-Dev tab bar as a peer to Terminal/Docker/Logs/Project Context. Expected: files should open under the existing Editor tab with file sub-tabs inside it.\n\n(2) FILE CLOSE X: The file sub-tabs (README.md \u00d7, CODEBASE_INDEX.yaml \u00d7) have X buttons but clicking X doesn't close the file. The close handler at LLMDevPanel.jsx:592-604 looks correct (filters openEditors, updates state), but something prevents it from working. Debug the click handler.\n\n(3) SYNTAX HIGHLIGHTING: LLMDevPanel.jsx lines 644-688 has a hand-rolled regex syntax highlighter using dangerouslySetInnerHTML instead of using the existing CodeEditor component (which already has Monaco Editor). The regex highlighter (lines 674-683) is JS-centric and breaks on YAML \u2014 the HTML-escaping at lines 676-678 runs BEFORE the regex colorization at 679-683, causing raw HTML color spans to appear in the output. ROOT CAUSE: The escape order is wrong AND the approach is wrong. FIX: Replace the entire hand-rolled renderer (lines 644-688) with the CodeEditor component that already exists and works correctly with Monaco. CodeEditor.jsx already has: Monaco CDN loading, language detection (YAML included), vs-dark theme, line numbers, word wrap. Just render <CodeEditor path={activeFilePath} content={codeContent} readOnly={true} onClose={...} /> instead of the DIY renderer.\n\nScreenshot reference: WorkSpace_LLM-Dev-01.png",
+      "description": "Three bugs in the LLM-Dev panel when opening files from file explorer:\n\n(1) TAB ROUTING: Clicking a file (e.g. CODEBASE_INDEX.yaml) creates a NEW top-level tab in the LLM-Dev tab bar as a peer to Terminal/Docker/Logs/Project Context. Expected: files should open under the existing Editor tab with file sub-tabs inside it.\n\n(2) FILE CLOSE X: The file sub-tabs (README.md ×, CODEBASE_INDEX.yaml ×) have X buttons but clicking X doesn't close the file. The close handler at LLMDevPanel.jsx:592-604 looks correct (filters openEditors, updates state), but something prevents it from working. Debug the click handler.\n\n(3) SYNTAX HIGHLIGHTING: LLMDevPanel.jsx lines 644-688 has a hand-rolled regex syntax highlighter using dangerouslySetInnerHTML instead of using the existing CodeEditor component (which already has Monaco Editor). The regex highlighter (lines 674-683) is JS-centric and breaks on YAML — the HTML-escaping at lines 676-678 runs BEFORE the regex colorization at 679-683, causing raw HTML color spans to appear in the output. ROOT CAUSE: The escape order is wrong AND the approach is wrong. FIX: Replace the entire hand-rolled renderer (lines 644-688) with the CodeEditor component that already exists and works correctly with Monaco. CodeEditor.jsx already has: Monaco CDN loading, language detection (YAML included), vs-dark theme, line numbers, word wrap. Just render <CodeEditor path={activeFilePath} content={codeContent} readOnly={true} onClose={...} /> instead of the DIY renderer.\n\nScreenshot reference: WorkSpace_LLM-Dev-01.png",
       "change": [
         "frontend/src/components/LLMDevPanel.jsx: (1) Fix tab routing so files open under the Editor tab, not as new top-level tabs. (2) Debug the file close X handler at lines 592-604. (3) Replace the hand-rolled regex syntax highlighter (lines 644-688, the dangerouslySetInnerHTML block) with <CodeEditor path={path} content={codeContent} readOnly={true} onClose={handleClose} />. Import CodeEditor at the top of the file.",
-        "frontend/src/components/CodeEditor.jsx: No changes needed \u2014 it already works correctly with Monaco, language detection, and vs-dark theme. Just needs to be used by LLMDevPanel instead of the DIY renderer."
+        "frontend/src/components/CodeEditor.jsx: No changes needed — it already works correctly with Monaco, language detection, and vs-dark theme. Just needs to be used by LLMDevPanel instead of the DIY renderer."
       ],
-      "test": "(1) Open file explorer, click a YAML file. (2) File opens inside the Editor tab (not as new top-level tab). (3) Monaco editor renders with proper YAML syntax highlighting (comments in gray, keys in color, strings highlighted \u2014 VS Code style). No raw HTML color codes visible. (4) Click X on file sub-tab \u2014 file closes. (5) Open a .md file \u2014 Monaco renders with markdown highlighting. (6) Open a .json file \u2014 Monaco renders with JSON highlighting.",
-      "completion_note": "Changed LLMDevPanel.jsx (858\u2192812 lines). (1) Tab label: line 423 changed from `{activeFile ? activeFile : 'Editor'}` to just `Editor` \u2014 top-level tab always says 'Editor', filenames shown in sub-tabs only. (2) Close X: `openFile` function at line 96 changed `setOpenEditors(openEditors.map(...))` to `setOpenEditors(prev => { ... })` using functional update \u2014 fixes stale closure where close handler's state removal was overwritten by openFile re-reading old openEditors. (3) Syntax highlighting: replaced entire DIY regex renderer (dangerouslySetInnerHTML, ~45 lines) with `<CodeEditor path={...} content={codeContent} readOnly={true} />`. Imported CodeEditor at top. Monaco provides proper language detection (YAML, JSON, markdown, etc.), vs-dark theme, line numbers, word wrap. Build: vite build 0 errors. CODEBASE_INDEX updated (lines 858\u2192812, purpose).",
+      "test": "(1) Open file explorer, click a YAML file. (2) File opens inside the Editor tab (not as new top-level tab). (3) Monaco editor renders with proper YAML syntax highlighting (comments in gray, keys in color, strings highlighted — VS Code style). No raw HTML color codes visible. (4) Click X on file sub-tab — file closes. (5) Open a .md file — Monaco renders with markdown highlighting. (6) Open a .json file — Monaco renders with JSON highlighting.",
+      "completion_note": "Changed LLMDevPanel.jsx (858→812 lines). (1) Tab label: line 423 changed from `{activeFile ? activeFile : 'Editor'}` to just `Editor` — top-level tab always says 'Editor', filenames shown in sub-tabs only. (2) Close X: `openFile` function at line 96 changed `setOpenEditors(openEditors.map(...))` to `setOpenEditors(prev => { ... })` using functional update — fixes stale closure where close handler's state removal was overwritten by openFile re-reading old openEditors. (3) Syntax highlighting: replaced entire DIY regex renderer (dangerouslySetInnerHTML, ~45 lines) with `<CodeEditor path={...} content={codeContent} readOnly={true} />`. Imported CodeEditor at top. Monaco provides proper language detection (YAML, JSON, markdown, etc.), vs-dark theme, line numbers, word wrap. Build: vite build 0 errors. CODEBASE_INDEX updated (lines 858→812, purpose).",
       "completion_checklist": {
         "code_works": true,
         "index_updated": true,
@@ -573,7 +576,7 @@
     },
     {
       "id": "BUG-53",
-      "name": "Preview panel doesn't load URLs \u2014 web preview is non-functional",
+      "name": "Preview panel doesn't load URLs — web preview is non-functional",
       "size": "M",
       "priority": 3,
       "status": "completed",
@@ -581,12 +584,12 @@
       "reviewed_by": "Director",
       "reviewed_date": "2026-02-08",
       "review_note": "Approved. URL bar now editable input with Enter navigation. Auto-prepend https://.",
-      "description": "The web preview panel to the right of the main chat terminal has a URL bar but doesn't actually load web pages. Changing the URL and pressing enter does nothing. This is a key feature for dogfooding \u2014 users need to see their live site (localhost or production) next to the chat terminal while developing. Check PreviewPanel.jsx for the iframe/webview implementation and URL handling.",
+      "description": "The web preview panel to the right of the main chat terminal has a URL bar but doesn't actually load web pages. Changing the URL and pressing enter does nothing. This is a key feature for dogfooding — users need to see their live site (localhost or production) next to the chat terminal while developing. Check PreviewPanel.jsx for the iframe/webview implementation and URL handling.",
       "change": [
         "frontend/src/components/PreviewPanel.jsx: Debug why URL changes don't load. Likely an iframe src not being updated, or CSP/CORS blocking, or the component not wired up to state."
       ],
       "test": "(1) Open preview panel. (2) Enter a URL (e.g. https://example.com). (3) Page should load in the preview iframe. (4) Test with localhost URL if a dev server is running.",
-      "completion_note": "Root cause: URL bar was a read-only <div>, not an <input>. Workspace.jsx passed previewUrl=\"\" so the iframe never rendered. Fix: (1) Added activeUrl/inputUrl state. (2) Replaced <div> URL bar with <input> \u2014 type URL, press Enter to navigate. (3) handleNavigate() auto-prepends https:// if no protocol. (4) iframe src bound to activeUrl. (5) useEffect syncs from previewUrl prop for Codespaces. (6) Open-in-new-tab and refresh use activeUrl. Build: vite build 0 errors. PreviewPanel.jsx 444\u2192471 lines. Note: Many sites (Google, etc.) block iframe embedding via X-Frame-Options \u2014 this is expected browser security, not a bug. Sites like example.com or user's own localhost will load fine.",
+      "completion_note": "Root cause: URL bar was a read-only <div>, not an <input>. Workspace.jsx passed previewUrl=\"\" so the iframe never rendered. Fix: (1) Added activeUrl/inputUrl state. (2) Replaced <div> URL bar with <input> — type URL, press Enter to navigate. (3) handleNavigate() auto-prepends https:// if no protocol. (4) iframe src bound to activeUrl. (5) useEffect syncs from previewUrl prop for Codespaces. (6) Open-in-new-tab and refresh use activeUrl. Build: vite build 0 errors. PreviewPanel.jsx 444→471 lines. Note: Many sites (Google, etc.) block iframe embedding via X-Frame-Options — this is expected browser security, not a bug. Sites like example.com or user's own localhost will load fine.",
       "completion_checklist": {
         "code_works": true,
         "index_updated": true,
@@ -605,13 +608,13 @@
       "reviewed_by": "Director",
       "reviewed_date": "2026-02-08",
       "review_note": "Approved. Removed auto-cd from MultiTerminal. LLM-Dev terminals independent at /root.",
-      "description": "The first terminal in the LLM-Dev panel currently mirrors/emulates the main chat terminal (same SSH session). This means you have two views of the same terminal doing the same thing \u2014 not useful. The first LLM-Dev terminal should be an independent SSH session starting at /root so users can cd anywhere (e.g. to the Director directory, or run other commands). The chat terminal stays locked to the project directory \u2014 that's correct. The LLM-Dev terminals are for auxiliary work: Director sessions, watching logs, running tests, etc. Check MultiTerminal.jsx and how it initializes its first terminal vs the chat terminal.",
+      "description": "The first terminal in the LLM-Dev panel currently mirrors/emulates the main chat terminal (same SSH session). This means you have two views of the same terminal doing the same thing — not useful. The first LLM-Dev terminal should be an independent SSH session starting at /root so users can cd anywhere (e.g. to the Director directory, or run other commands). The chat terminal stays locked to the project directory — that's correct. The LLM-Dev terminals are for auxiliary work: Director sessions, watching logs, running tests, etc. Check MultiTerminal.jsx and how it initializes its first terminal vs the chat terminal.",
       "change": [
         "frontend/src/components/MultiTerminal.jsx: Ensure the first terminal is an independent SSH session, not a mirror of ClaudeCodeTerminalChat.",
         "The first LLM-Dev terminal should start at /root (default SSH login dir), not auto-cd to the project directory."
       ],
-      "test": "(1) Open workspace with chat terminal connected. (2) Open LLM-Dev panel. (3) First terminal should be a separate session (type pwd \u2014 should show /root, not the project dir). (4) Chat terminal and LLM-Dev terminal should be independent (typing in one doesn't appear in the other).",
-      "completion_note": "Removed auto-cd block from TerminalInstance in MultiTerminal.jsx (lines 92-95 deleted). Each terminal gets its own SSH channel already \u2014 the 'mirroring' was just the auto-cd to project dir. Removed unused projectSlug prop from TerminalInstance. Chat terminal (ClaudeCodeTerminalChat.jsx:282) still auto-cds to project dir. Build: vite build 0 errors. MultiTerminal.jsx 1011\u21921004 lines. CODEBASE_INDEX updated.",
+      "test": "(1) Open workspace with chat terminal connected. (2) Open LLM-Dev panel. (3) First terminal should be a separate session (type pwd — should show /root, not the project dir). (4) Chat terminal and LLM-Dev terminal should be independent (typing in one doesn't appear in the other).",
+      "completion_note": "Removed auto-cd block from TerminalInstance in MultiTerminal.jsx (lines 92-95 deleted). Each terminal gets its own SSH channel already — the 'mirroring' was just the auto-cd to project dir. Removed unused projectSlug prop from TerminalInstance. Chat terminal (ClaudeCodeTerminalChat.jsx:282) still auto-cds to project dir. Build: vite build 0 errors. MultiTerminal.jsx 1011→1004 lines. CODEBASE_INDEX updated.",
       "completion_checklist": {
         "code_works": true,
         "index_updated": true,
@@ -1249,7 +1252,7 @@
     },
     {
       "id": "BUG-29",
-      "name": "Signup 500 \u2014 init_db creates 0-byte DB, no tables",
+      "name": "Signup 500 — init_db creates 0-byte DB, no tables",
       "completed": "2026-02-06",
       "reviewed_by": "Director (pre-template)",
       "review_notes": "Approved before review template was added",
@@ -1682,13 +1685,13 @@
     "engineer_signoff": {
       "_filled_by": "Lead Engineer when task is done",
       "_rules": [
-        "Status MUST be 'pending_review' \u2014 NEVER 'done' or 'completed'",
+        "Status MUST be 'pending_review' — NEVER 'done' or 'completed'",
         "completion_note MUST be 30+ words with file paths and test evidence",
         "All checklist items MUST be true",
         "If task test field says 'paste X', you MUST paste X in completion_note"
       ],
       "status": "pending_review",
-      "completion_note": "Changed [files]. Fixed [what]. Test evidence: [paste actual output \u2014 sqlite3 results, curl responses, browser console, etc]. Affected areas: [what else might be impacted].",
+      "completion_note": "Changed [files]. Fixed [what]. Test evidence: [paste actual output — sqlite3 results, curl responses, browser console, etc]. Affected areas: [what else might be impacted].",
       "completion_checklist": {
         "code_works": true,
         "index_updated": true,
@@ -1705,7 +1708,7 @@
         "Check CODEBASE_INDEX.yaml was updated: git log -3 -- harness/CODEBASE_INDEX.yaml",
         "Check all checklist items are true",
         "Spot-check one file's line count against index entry",
-        "REJECT if any check fails \u2014 set status back to pending with rejection_note"
+        "REJECT if any check fails — set status back to pending with rejection_note"
       ],
       "status": "completed",
       "reviewed_by": "Director",
@@ -1715,7 +1718,7 @@
       "test_evidence_verified": true
     },
     "completed_task": {
-      "_note": "This is what goes in the 'completed' array. PRESERVE all fields \u2014 never strip down to just id/name/date.",
+      "_note": "This is what goes in the 'completed' array. PRESERVE all fields — never strip down to just id/name/date.",
       "id": "[BUG/FEAT/DOCS/INFRA]-XX",
       "name": "Short descriptive name",
       "completed": "YYYY-MM-DD",
@@ -1724,12 +1727,12 @@
       "review_notes": "What was verified during review",
       "index_verified": true,
       "test_evidence_verified": true,
-      "completion_note": "PRESERVED from engineer \u2014 never delete this"
+      "completion_note": "PRESERVED from engineer — never delete this"
     },
     "investigation_request": {
       "_created_by": "Director when Gate 1 fails (index missing or stale)",
       "_handed_to": "Code Researcher agent via: 'Investigate the request at harness/investigations/active/INV-XX.md'",
-      "_flow": "Director fills request \u2192 spawns Code Researcher \u2192 agent reads request, scans code, writes to index, saves report \u2192 Director reads report \u2192 Director writes task",
+      "_flow": "Director fills request → spawns Code Researcher → agent reads request, scans code, writes to index, saves report → Director reads report → Director writes task",
       "id": "INV-XX",
       "file": "harness/investigations/active/INV-XX.md",
       "report": "harness/investigations/reports/INV-XX_report.md"

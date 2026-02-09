@@ -2323,5 +2323,10 @@ Three callbacks from Workspace to ServerManager:
 **What**: FEAT-54: Added systemPrompt field to TEMPLATE_CLAUDE_SETTINGS in projects.py. 286-word prompt covering Lead Engineer role, index-as-source-of-truth, 10-step task workflow, completion enforcement (30+ words with pasted output), pre-commit hook, M/L task sizing, and rules. JSON validated clean. FEAT-57: Added TEMPLATE_ROADMAP constant with 5 phases (Manual ✅, PRP Gen ✅, Ralph Loop 🔜, MCP Server 🔜, Browser Testing 📋). Wired into create_vps_project_folder template_files as harness/ROADMAP.md.
 **Key Learning**: systemPrompt in Claude Code settings.json persists across context window — unlike CLAUDE.md which drifts as context grows. Dense, actionable rules in systemPrompt ensure the Engineer agent never forgets core workflow even in long sessions.
 
+### Session 145 - 2026-02-09 EST
+**Task**: FEAT-55 — Director auto-scaffold
+**What**: Added 3 Director template constants (TEMPLATE_DIRECTOR_CLAUDE_MD, TEMPLATE_DIRECTOR_SETTINGS, TEMPLATE_DIRECTOR_SETTINGS_LOCAL) and updated create_vps_project_folder() to create {{slug}}-director/ with CLAUDE.md, .claude/settings.json, .claude/settings.local.json. Director CLAUDE.md includes role definition, env paths, queue entry JSON format, task creation gates (grep index, grep learnings, verify source), review workflow (check completion_note, checklist, index updates). Director settings.json has read-only permissions + 180-word systemPrompt. settings.local.json denies writes to app src/backend/frontend dirs. projects.py 1245→1394 lines.
+**Key Learning**: Director scaffold uses `director_variables = {**variables, "appDir": project_path}` to extend the base variable dict with the app directory path. The `_fill_template` function handles all `{{placeholder}}` replacement, so Director templates can reference `{{appDir}}` for cross-directory paths. Director directory is created as non-blocking (failure doesn't prevent main project scaffold from succeeding).
+
 ---
 

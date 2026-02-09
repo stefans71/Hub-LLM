@@ -823,12 +823,12 @@ backend_routers:
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 1245
+    lines: 1394
     prefix: "/api/projects"
-    purpose: "Project CRUD with chat history, VPS folder auto-creation, harness template scaffolding (FEAT-30), and project export (FEAT-51). TEMPLATE_CLAUDE_SETTINGS includes Engineer systemPrompt (FEAT-54)."
+    purpose: "Project CRUD with chat history, VPS folder auto-creation, harness template scaffolding (FEAT-30), project export (FEAT-51). Engineer systemPrompt (FEAT-54). Director auto-scaffold creates {{slug}}-director/ alongside project (FEAT-55)."
     endpoints:
       - {method: GET, path: "/", purpose: "list all projects"}
-      - {method: POST, path: "/", purpose: "create project (+ scaffold harness on VPS)"}
+      - {method: POST, path: "/", purpose: "create project (+ scaffold harness on VPS + Director dir)"}
       - {method: GET, path: "/{id}", purpose: "get specific project"}
       - {method: PATCH, path: "/{id}", purpose: "update project"}
       - {method: DELETE, path: "/{id}", purpose: "delete project"}
@@ -836,8 +836,8 @@ backend_routers:
       - {method: POST, path: "/{id}/history", purpose: "add chat message"}
       - {method: DELETE, path: "/{id}/history", purpose: "clear chat history"}
       - {method: GET, path: "/{id}/export", purpose: "FEAT-51: export project as tar.gz download from VPS"}
-    helpers: "create_vps_project_folder(vps_server_id, slug, name, tech_stack, brief) — SSH mkdir + scaffold 11 harness template files + git init (FEAT-30). _detect_commands(tech_stack) — returns install/start commands. _fill_template(template, vars) — replaces {{placeholders}}. _cleanup_export(conn, path) — best-effort temp file cleanup."
-    template_constants: "TEMPLATE_CLAUDE_MD, TEMPLATE_CLAUDE_SETTINGS (with systemPrompt FEAT-54), TEMPLATE_GENERATE_PRP, TEMPLATE_EXECUTE_PRP, TEMPLATE_FEATURE_QUEUE, TEMPLATE_CODEBASE_INDEX, TEMPLATE_LEARNINGS, TEMPLATE_README, TEMPLATE_ROADMAP (FEAT-57), TEMPLATE_PORTABLE_README"
+    helpers: "create_vps_project_folder(vps_server_id, slug, name, tech_stack, brief) — SSH mkdir + scaffold 11 harness template files + git init + Director directory with 3 files (FEAT-55). _detect_commands(tech_stack) — returns install/start commands. _fill_template(template, vars) — replaces {{placeholders}}. _cleanup_export(conn, path) — best-effort temp file cleanup."
+    template_constants: "TEMPLATE_CLAUDE_MD, TEMPLATE_CLAUDE_SETTINGS (FEAT-54), TEMPLATE_GENERATE_PRP, TEMPLATE_EXECUTE_PRP, TEMPLATE_FEATURE_QUEUE, TEMPLATE_CODEBASE_INDEX, TEMPLATE_LEARNINGS, TEMPLATE_README, TEMPLATE_ROADMAP (FEAT-57), TEMPLATE_PORTABLE_README, TEMPLATE_DIRECTOR_CLAUDE_MD (FEAT-55), TEMPLATE_DIRECTOR_SETTINGS (FEAT-55), TEMPLATE_DIRECTOR_SETTINGS_LOCAL (FEAT-55)"
     called_by_frontend: [App.jsx, Dashboard.jsx, CreateProject.jsx, Workspace.jsx, WorkspaceFileExplorer.jsx, ExportModal.jsx]
     db_tables: [projects, chat_messages, vps_servers]
     last_verified_session: 144
