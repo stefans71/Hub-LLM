@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T04:00",
+  "updated": "2026-02-09T05:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -47,30 +47,6 @@
       }
     },
     {
-      "id": "FEAT-41",
-      "name": "Docs portal — multi-page static HTML site with nav, served in preview panel",
-      "size": "L",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "Transform the static welcome-to-hubllm.html into a multi-page documentation portal with shared navigation. This lives in `frontend/public/docs/` and is always accessible in the preview panel. It's for HubLLM platform help — NOT related to the user's own projects.\n\n## Architecture\n\nMulti-page static HTML with a shared vanilla JS navigation layer. No React, no build step. Each page is a self-contained HTML file that includes a shared nav.js script.\n\n```\nfrontend/public/docs/\n├── index.html              ← Hub/landing page with nav + page links\n├── welcome.html            ← Current welcome content (rename from welcome-to-hubllm.html)\n├── workspace-guide.html    ← Detailed workspace walkthrough (each panel, what it does)\n├── git-github.html         ← Git/GitHub setup guide (expanded from welcome page section)\n├── whats-new.html          ← Changelog, new features, harness template updates\n├── harness-guide.html      ← How the harness system works (CODEBASE_INDEX, feature_queue, learnings, pre-commit hook)\n├── nav.js                  ← Shared navigation sidebar + search\n└── styles.css              ← Shared styles (extract from inline CSS)\n```\n\n## Shared Navigation (nav.js)\n\nEvery page includes `<script src='/docs/nav.js'></script>` which injects:\n- A sidebar or top nav bar with links to all doc pages\n- Current page highlighted\n- Simple text search (scans page content, highlights matches)\n- HubLLM branding header with 'A VibeShip Creation' tagline\n\n## Branding\n\n- Header: HubLLM.dev logo (text-based: 'Hub' white, 'LLM' cyan #38bdf8, '.dev' muted)\n- Tagline under logo: 'A VibeShip Creation' (or 'Powered by VibeShip' — match VibeShip's teal #00d4aa or cyan)\n- Color palette: dark theme matching workspace. Cyan #38bdf8 primary, orange #f97316 accent, green #22c55e for success states\n- Reference existing welcome-to-hubllm.html and hubllm-demo-v7_3.html for design language\n\n## Page Content\n\nAll pages should be written with ACTUAL content, not placeholders. The UI/UX should match the site's dark theme.\n\n### index.html (Hub Page)\n- Grid of cards linking to each doc page with icons and descriptions\n- Search bar at top\n- 'What's New' preview/snippet at top\n\n### welcome.html (moved from welcome-to-hubllm.html)\n- Same 4 sections as current: Getting Started, Workspace, Git/GitHub, Help\n- Add nav sidebar\n- Update Workspace.jsx to point to /docs/welcome.html (or /docs/index.html)\n\n### workspace-guide.html\n- Detailed walkthrough of each workspace panel\n- File Explorer, Terminal Chat, Preview Panel (mention DevTools via 'Open in Browser'), LLM-Dev Panel (Terminal, Editor, Docker, Logs, Project Context)\n- Tips for each area\n\n### git-github.html\n- Expanded from welcome page git section\n- Full GitHub account creation walkthrough\n- git remote, push, pull commands\n- How the AI engineer auto-commits\n\n### whats-new.html\n- Changelog format — dates + what changed\n- Can be manually updated or pulled from a static JSON file\n- Good for marketing: 'Smart pre-commit hook added', 'Welcome page launched', etc.\n\n### harness-guide.html\n- What is CODEBASE_INDEX.yaml and why it matters\n- feature_queue.json explained\n- learnings.md explained\n- The pre-commit hook and /audit-index command\n- How the Director/Engineer workflow works (for advanced users)\n\n## Shared Styles (styles.css)\n\nExtract the inline CSS from welcome-to-hubllm.html into a shared stylesheet. All pages link to it. This ensures consistent look across all doc pages.\n\n## Update References\n\n- Workspace.jsx: Update welcome URL from /docs/welcome-to-hubllm.html to /docs/index.html (hub page) or /docs/welcome.html\n- ClaudeCodeTerminalChat.jsx hint bubble: May need text update if URL changes",
-      "change": [
-        "frontend/public/docs/: Create index.html, workspace-guide.html, git-github.html, whats-new.html, harness-guide.html, nav.js, styles.css. Move/rename welcome-to-hubllm.html to welcome.html.",
-        "frontend/public/docs/nav.js: Vanilla JS that injects sidebar navigation into every page. Page list, current-page highlighting, simple search.",
-        "frontend/public/docs/styles.css: Extract and unify styles from welcome-to-hubllm.html inline CSS. Dark theme, cyan/orange accents, responsive.",
-        "frontend/src/components/Workspace.jsx: Update welcome URL to /docs/index.html (or /docs/welcome.html).",
-        "All pages: HubLLM.dev branding with 'A VibeShip Creation' tagline. Actual written content, not placeholders."
-      ],
-      "test": "(1) Visit /docs/index.html — hub page with nav and card links to all pages. (2) Click each page link — loads with shared nav sidebar. (3) Current page highlighted in nav. (4) Search bar finds text across current page. (5) All pages have HubLLM branding + VibeShip tagline. (6) All pages have real content (not Lorem ipsum). (7) Responsive at any preview panel width. (8) Welcome auto-load still works (Workspace.jsx updated URL).",
-      "completion_note": "Created 8 files in frontend/public/docs/: index.html (hub page with card grid, search bar, what's-new preview), welcome.html (migrated from welcome-to-hubllm.html with same 4 sections + nav sidebar), workspace-guide.html (6 sections covering every workspace panel), git-github.html (6 sections: what is git, commits, GitHub setup walkthrough, common commands, branching, links), whats-new.html (11 changelog entries from Dec 2025-Feb 2026 with feature/fix/improvement tags), harness-guide.html (7 sections: what is harness, CODEBASE_INDEX, feature_queue, learnings, CLAUDE.md, Director/Engineer workflow, pre-commit hook), nav.js (sidebar injection with branding, current-page highlighting, text search with mark highlighting), styles.css (extracted/unified dark theme from welcome page inline CSS, responsive at 600px/420px breakpoints). Updated Workspace.jsx welcome URL from /docs/welcome-to-hubllm.html to /docs/index.html. Deleted old welcome-to-hubllm.html. All pages have real content, HubLLM.dev branding, 'A VibeShip Creation' tagline in sidebar and footer.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": false,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "FEAT-42",
       "name": "Align workspace color palette with landing page — shift --primary from blue to cyan",
       "size": "S",
@@ -103,6 +79,16 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-41",
+      "name": "Docs portal — multi-page static HTML site with nav, served in preview panel",
+      "size": "L",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-09",
+      "review_note": "Approved. 8 files in frontend/public/docs/: 6 HTML pages + nav.js + styles.css. All pages have real content, VibeShip tagline, shared nav sidebar with search. Changelog has actual release history. Workspace.jsx updated to load /docs/index.html as welcome URL."
+    },
     {
       "id": "FEAT-40",
       "name": "OpenRouter track — add VibeShip CTA button next to PRP download",
