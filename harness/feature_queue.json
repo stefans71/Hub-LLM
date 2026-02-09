@@ -26,29 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-46",
-      "name": "VibeShip.cloud waitlist card in Setup wizard + backend signup endpoint",
-      "size": "M",
-      "priority": 3,
-      "status": "pending",
-      "description": "Add a marketing card in the Setup wizard path selection step (Setup.jsx:163-184) that says 'Don't have a VPS? Join the VibeShip.cloud beta waitlist' with an email signup form. Signups are stored in a new DB table.\n\n## Frontend — Setup.jsx\n\nBelow the two PathCards (OpenRouter and Anthropic Pro), add a styled waitlist card:\n\n```\n┌─────────────────────────────────────────────┐\n│  🚀 Don't have a VPS?                       │\n│                                             │\n│  Join the VibeShip.cloud beta waitlist.     │\n│  Get a pre-configured VPS with Claude Code  │\n│  installed — ready to vibe-code in minutes. │\n│                                             │\n│  [email@example.com     ] [Join Waitlist]   │\n│                                             │\n│  BETA                                       │\n└─────────────────────────────────────────────┘\n```\n\nStyling: subtle border, slightly dimmer background than the PathCards. Use var(--accent) (#f97316 orange) for the 'BETA' badge to differentiate from the cyan primary. Success state: 'You're on the list!' with a check icon.\n\nPlace it after the PathCards div (after line 184) but before the Continue button (line 186).\n\n## Backend — New waitlist router\n\nCreate `backend/routers/waitlist.py`:\n```python\nfrom fastapi import APIRouter, Depends, HTTPException\nfrom pydantic import BaseModel, EmailStr\nfrom sqlalchemy.ext.asyncio import AsyncSession\nfrom models import WaitlistSignup, get_session\nfrom datetime import datetime\n\nrouter = APIRouter(prefix='/api/waitlist', tags=['waitlist'])\n\nclass WaitlistRequest(BaseModel):\n    email: EmailStr\n    source: str = 'setup_wizard'  # Track where signup came from\n\nclass WaitlistResponse(BaseModel):\n    success: bool\n    message: str\n\n@router.post('/', response_model=WaitlistResponse)\nasync def join_waitlist(req: WaitlistRequest, session: AsyncSession = Depends(get_session)):\n    # Check for duplicate\n    existing = await session.execute(\n        select(WaitlistSignup).where(WaitlistSignup.email == req.email)\n    )\n    if existing.scalar_one_or_none():\n        return WaitlistResponse(success=True, message='Already on the waitlist')\n    \n    signup = WaitlistSignup(email=req.email, source=req.source)\n    session.add(signup)\n    await session.commit()\n    return WaitlistResponse(success=True, message='Added to waitlist')\n```\n\nNo auth required — anyone in the setup wizard can sign up.\n\n## Database — New model + migration\n\nIn `backend/models/__init__.py`, add:\n```python\nclass WaitlistSignup(Base):\n    __tablename__ = 'waitlist_signups'\n    \n    id = Column(String(64), primary_key=True, default=lambda: str(uuid4()))\n    email = Column(String(255), unique=True, nullable=False, index=True)\n    source = Column(String(64), default='setup_wizard')  # setup_wizard, landing_page, etc.\n    created_at = Column(DateTime, default=datetime.utcnow)\n```\n\nIMPORTANT: `create_all()` only creates NEW tables, not columns on existing ones (bug pattern #8). Since this is a new table, `create_all()` will work. But also provide an ALTER TABLE migration for production Postgres:\n```sql\nCREATE TABLE IF NOT EXISTS waitlist_signups (\n    id VARCHAR(64) PRIMARY KEY,\n    email VARCHAR(255) UNIQUE NOT NULL,\n    source VARCHAR(64) DEFAULT 'setup_wizard',\n    created_at TIMESTAMP DEFAULT NOW()\n);\nCREATE INDEX IF NOT EXISTS idx_waitlist_email ON waitlist_signups(email);\n```\n\nPut migration in `backend/migrations/add_waitlist_table.sql`.\n\n## Register the router\n\nIn `backend/main.py`, add:\n```python\nfrom routers.waitlist import router as waitlist_router\napp.include_router(waitlist_router)\n```",
-      "change": [
-        "frontend/src/pages/Setup.jsx:184 — Add VibeShip.cloud waitlist card with email input, BETA badge, and submit handler.",
-        "backend/routers/waitlist.py — New file: POST /api/waitlist/ endpoint, no auth required.",
-        "backend/models/__init__.py — Add WaitlistSignup model (id, email, source, created_at).",
-        "backend/main.py — Register waitlist router.",
-        "backend/migrations/add_waitlist_table.sql — New file: CREATE TABLE for production Postgres."
-      ],
-      "test": "(1) Open Setup wizard — waitlist card visible below the two path options. (2) Enter email and submit — 'You're on the list!' success message. (3) Submit same email again — no error, shows 'Already on the waitlist'. (4) Check DB: `SELECT * FROM waitlist_signups` shows the entry. (5) Card doesn't interfere with path selection or Continue button. (6) BETA badge visible in orange.",
-      "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
-        "committed_pushed": false,
-        "status_set_to_pending_review": false
-      }
-    },
-    {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
       "size": "L",
@@ -69,6 +46,15 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-46",
+      "name": "VibeShip.cloud waitlist card in Setup wizard + backend signup endpoint",
+      "size": "M",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: WaitlistCard with VibeShip branding (dark green gradient, cyan accents, COMING SOON badge). Backend POST /api/waitlist/ with dedup. WaitlistSignup model + dual-DB migration (005_add_waitlist_table.py). Router registered in main.py. CODEBASE_INDEX and learnings updated. Commit 4fb503c."
+    },
     {
       "id": "BUG-61",
       "name": "Preview panel shows DemoPreview instead of docs — default to /docs/index.html",
