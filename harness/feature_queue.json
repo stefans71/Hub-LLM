@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T11:30",
+  "updated": "2026-02-09T11:45",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -26,29 +26,6 @@
   },
   "queue": [
     {
-      "id": "BUG-68",
-      "name": "SSH refresh button crashes page — add Error Boundary + stabilize reconnect callback",
-      "size": "S",
-      "priority": 1,
-      "status": "pending_review",
-      "completion_note": "All 3 parts implemented: (1) ErrorBoundary.jsx class component with fallback UI + reload button, wraps entire app in App.jsx outside BrowserRouter. (2) Memoized onSshReconnected with useCallback in Workspace.jsx (empty deps, setState fns stable). (3) Try-catch around onSshReconnected invocation in WorkspaceFileExplorer.jsx:158. Backend-only fix — no browser testing needed.",
-      "description": "Clicking the green SSH refresh button (WorkspaceFileExplorer sidebar header) causes the entire page to go blank/white. Root cause: the app has NO React Error Boundary, so any uncaught error kills the whole page. Additionally, the `onSshReconnected` callback passed from Workspace.jsx is an unstable inline arrow function, and it's invoked without try-catch from an async context.",
-      "change": [
-        "frontend/src/components/ErrorBoundary.jsx — NEW FILE: React Error Boundary class component with fallback UI and reload button",
-        "frontend/src/App.jsx — Wrap main content with <ErrorBoundary>",
-        "frontend/src/components/Workspace.jsx:~467-470 — Extract inline onSshReconnected to useCallback",
-        "frontend/src/components/WorkspaceFileExplorer.jsx:~158 — Wrap onSshReconnected call in try-catch"
-      ],
-      "test": "(1) Click SSH refresh button — page should NOT crash. (2) If SSH reconnect fails, error shows in console but page stays alive. (3) Force a render error in a child component — ErrorBoundary catches it and shows recovery UI.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
       "size": "L",
@@ -69,6 +46,15 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-68",
+      "name": "SSH refresh button crashes page — ErrorBoundary + stabilized callback",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: ErrorBoundary.jsx (60 lines) — class component with getDerivedStateFromError, dark fallback UI with reload button. Wraps outside BrowserRouter in App.jsx. Workspace.jsx: onSshReconnected extracted to useCallback with empty deps. WorkspaceFileExplorer.jsx: try-catch around onSshReconnected call. Commit 63937ba."
+    },
     {
       "id": "FEAT-51",
       "name": "Export Project — confirmation modal + tar.gz download from VPS",
