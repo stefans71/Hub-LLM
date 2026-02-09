@@ -30,20 +30,20 @@
       "name": "OpenRouter track — add VibeShip waitlist button next to PRP download",
       "size": "S",
       "priority": 4,
-      "status": "pending",
+      "status": "pending_review",
       "description": "The OpenRouter track's AI chat already has a 'Download PRP (.md)' button (CreateProject.jsx lines 1521-1552) that appears when the AI generates a PRP. This works. But after downloading, the user has nowhere to go with their PRP unless they have a VPS.\n\nAdd a second button next to the download button: 'Open Your Free Account on VibeShip' (or similar CTA). This is a waitlist/interest gauge for VibeShip.cloud, the cloud hosting service being built separately.\n\n## Button design\n\nPlace next to 'Download PRP (.md)' button at line 1522. Two buttons side by side:\n1. 'Download PRP (.md)' — existing, blue styling (keep as-is)\n2. 'Launch on VibeShip' or 'Get Free Hosting' — green/accent styling, opens https://vibeship.cloud in new tab\n   - Below or next to it: small text 'Limited time — free micro hosting for your project'\n\nThis is intentionally a simple external link for now. The actual VibeShip integration (auto-deploy PRP to a container) is a future feature. Right now we just want to see if people click it — gauge interest.\n\nOptionally: Also add a 'Save to GitHub' button if the user has connected GitHub (uses the same OAuth from the GitHub card). This gives OpenRouter users three options: Download, Save to GitHub, or Launch on VibeShip.\n\nNote: VibeShip.cloud domain and landing page need to exist before this ships. If not ready, keep this task shelved.",
       "change": [
         "frontend/src/pages/CreateProject.jsx lines 1521-1552: Add a second button next to 'Download PRP'. Style: green accent, opens https://vibeship.cloud in new tab. Text: 'Launch on VibeShip' with subtitle 'Free hosting — limited time'.",
         "Optional: Add 'Save to GitHub' button if formData.githubConnected is true. Uses existing GitHub token to create repo + push PRP file."
       ],
       "test": "(1) Use OpenRouter track, define project with AI. (2) PRP appears with two buttons: 'Download PRP' and 'Launch on VibeShip'. (3) Download works as before. (4) VibeShip button opens vibeship.cloud in new tab. (5) If GitHub connected, third button 'Save to GitHub' appears.",
-      "completion_note": "",
+      "completion_note": "Added 'Launch on VibeShip' button (green accent, Zap icon) next to Download PRP button. Opens vibeship.cloud in new tab. Buttons side-by-side with flex-wrap. Skipped optional 'Save to GitHub' (task marked it optional). Build: vite build 0 errors.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

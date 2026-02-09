@@ -1542,7 +1542,7 @@ Examples:
                             isUser={msg.role === 'user'}
                           />
                           {isPRP && (
-                            <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '16px', paddingLeft: '38px' }}>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-start', marginBottom: '16px', paddingLeft: '38px' }}>
                               <button
                                 onClick={() => {
                                   const blob = new Blob([msg.content], { type: 'text/markdown' })
@@ -1572,6 +1572,28 @@ Examples:
                                 <Download size={14} />
                                 Download PRP (.md)
                               </button>
+                              <a
+                                href="https://vibeship.cloud"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '8px 14px',
+                                  background: 'rgba(34,197,94,0.15)',
+                                  border: '1px solid rgba(34,197,94,0.3)',
+                                  borderRadius: '8px',
+                                  color: '#22c55e',
+                                  fontSize: '13px',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  textDecoration: 'none'
+                                }}
+                              >
+                                <Zap size={14} />
+                                Launch on VibeShip
+                              </a>
                             </div>
                           )}
                         </div>
