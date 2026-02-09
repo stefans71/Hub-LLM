@@ -460,8 +460,8 @@ frontend_components:
   WorkspaceTopBar.jsx:
     path: frontend/src/components/WorkspaceTopBar.jsx
     lines: 329
-    purpose: "Top bar — project name, collapse toggle, model selector OR Claude Code PRO badge (FEAT-29), export button, billing warnings. When isConnected && claudeCodeStatus.installed → static badge, else → ModelSelector dropdown."
-    props: "{project, model, onModelChange, onExport, linkedServerId, isConnected, onClaudeCodeStatusChange}"
+    purpose: "Top bar — project name, collapse toggle, model selector OR Claude Code PRO badge (FEAT-29), export button, billing warnings. When isConnected && claudeCodeStatus.installed → static badge, else → ModelSelector dropdown. Detection retries 3x on failure (BUG-63)."
+    props: "{project, model, onModelChange, onExport, linkedServerId, isConnected, onClaudeCodeStatusChange, retryTrigger}"
     key_state:
       - {name: showBillingWarning, type: useState, drives: "billing switch modal"}
       - {name: selectedModelValue, type: useState, drives: "current model ID for ModelSelector value"}

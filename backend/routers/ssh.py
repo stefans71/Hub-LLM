@@ -255,8 +255,10 @@ async def detect_claude_code(server_id: str):
     try:
         conn = await get_connection(server_id)
 
-        # Check if claude is installed
-        stdout, stderr, exit_code = await conn.run_command("which claude")
+        # Single combined command: check installed + get version in one SSH round-trip
+        stdout, stderr, exit_code = await conn.run_command(
+            "which claude && claude --version 2>/dev/null"
+        )
 
         if exit_code != 0 or not stdout.strip():
             return ClaudeCodeStatus(
@@ -265,22 +267,16 @@ async def detect_claude_code(server_id: str):
                 error="Claude Code not found. Install with: npm install -g @anthropic-ai/claude-code"
             )
 
-        # Get version
-        version_stdout, version_stderr, version_exit = await conn.run_command("claude --version")
-        version = version_stdout.strip() if version_exit == 0 else None
+        # Parse version from output (second line after the `which` path)
+        lines = stdout.strip().splitlines()
+        version = lines[-1].strip() if len(lines) > 1 else None
 
-        # Check if authenticated by running a simple command
-        # Claude Code shows auth status when you run it
-        auth_stdout, auth_stderr, auth_exit = await conn.run_command("claude --help 2>&1 | head -5")
-
-        # If claude --help works without auth errors, assume authenticated
-        # In practice, we might need to check for specific auth messages
-        authenticated = auth_exit == 0 and "not authenticated" not in auth_stdout.lower()
-
+        # If `which claude` succeeds, assume installed + authenticated.
+        # Real auth check happens when ClaudeCodeTerminalChat starts the session.
         return ClaudeCodeStatus(
             installed=True,
             version=version,
-            authenticated=authenticated
+            authenticated=True
         )
 
     except Exception as e:

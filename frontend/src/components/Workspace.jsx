@@ -66,6 +66,8 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
   const [isConnecting, setIsConnecting] = useState(false)
   // CLAUDE-02: Track Claude Code status for chat routing
   const [claudeCodeStatus, setClaudeCodeStatus] = useState({ installed: false, authenticated: false })
+  // BUG-63: Manual retry trigger for Claude Code detection
+  const [retryTrigger, setRetryTrigger] = useState(0)
   // MODEL-01: Initialize from project's saved model, fallback to prop, then default
   const [selectedModel, setSelectedModel] = useState(() => {
     if (project?.selected_model) return project.selected_model
@@ -441,6 +443,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
         linkedServerId={linkedServerId}
         isConnected={isConnected}
         onClaudeCodeStatusChange={setClaudeCodeStatus}
+        retryTrigger={retryTrigger}
       />
 
       {/* W-30: Workspace Main Container - min-h-0 allows shrinking for LLM-Dev panel */}
@@ -476,6 +479,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
                 claudeCodeStatus={claudeCodeStatus}
                 onProcessingChange={setIsClaudeProcessing}
                 enhanceWithAI={enhanceWithAI}
+                onRetryConnection={() => setRetryTrigger(prev => prev + 1)}
               />
             </div>
 

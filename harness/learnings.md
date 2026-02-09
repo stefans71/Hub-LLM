@@ -2256,6 +2256,10 @@ Three callbacks from Workspace to ServerManager:
 
 ---
 
+### Session N+2 - 2026-02-09 EST
+**Task**: BUG-63 Claude Code chat stuck on "Connecting to your VPS"
+**What**: Three-part fix: (1) WorkspaceTopBar detection useEffect now retries 3x at 3s intervals on failure, with cleanup on unmount. Accepts retryTrigger prop to force re-run. (2) Chat.jsx shows "Retry Connection" button after 10s of stuck connecting overlay. Threads onRetryConnection from Workspace which increments retryTrigger counter. (3) Backend ssh.py combines 3 SSH commands into 1 (`which claude && claude --version`), drops slow `claude --help | head -5` check — real auth verified when terminal session starts.
+
 ### Session N+1 - 2026-02-09 EST
 **Task**: BUG-62 preview default open + FEAT-47 docs SVG icons
 **What**: BUG-62: Changed `useState(() => !isFirstVisit)` to `useState(false)` in Workspace.jsx so preview pane always starts open. FEAT-47: Replaced all 5 emoji icons in docs/index.html with inline Feather SVGs (play, terminal, github octocat, star, settings gear) at 24x24. Updated nav.js sidebar to use GitHub octocat SVG instead of git-branch for "Git & GitHub" nav item.

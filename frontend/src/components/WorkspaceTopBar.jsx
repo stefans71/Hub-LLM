@@ -23,7 +23,8 @@ export default function WorkspaceTopBar({
   onExport,
   linkedServerId,
   isConnected,
-  onClaudeCodeStatusChange
+  onClaudeCodeStatusChange,
+  retryTrigger
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [showNotification, setShowNotification] = useState(false)
@@ -41,12 +42,21 @@ export default function WorkspaceTopBar({
 
   // Check Claude Code status when VPS is connected
   useEffect(() => {
+    let retryCount = 0
+    const maxRetries = 3
+    let retryTimeout = null
+    let cancelled = false
+
+    const applyStatus = (status) => {
+      if (cancelled) return
+      setClaudeCodeStatus(status)
+      setApiKeys(prev => ({ ...prev, anthropic: status.installed && status.authenticated }))
+      onClaudeCodeStatusChange?.(status)
+    }
+
     const checkClaudeCode = async () => {
       if (!linkedServerId || !isConnected) {
-        const status = { installed: false, version: null, authenticated: false, checking: false, error: null }
-        setClaudeCodeStatus(status)
-        setApiKeys(prev => ({ ...prev, anthropic: false }))
-        onClaudeCodeStatusChange?.(status)
+        applyStatus({ installed: false, version: null, authenticated: false, checking: false, error: null })
         return
       }
 
@@ -70,28 +80,38 @@ export default function WorkspaceTopBar({
             checking: false,
             error: data.error
           }
-          setClaudeCodeStatus(status)
-          setApiKeys(prev => ({ ...prev, anthropic: data.installed && data.authenticated }))
-          onClaudeCodeStatusChange?.(status)
+          applyStatus(status)
+
+          // Retry if not authenticated but connected
+          if (!data.authenticated && retryCount < maxRetries && !cancelled) {
+            retryCount++
+            retryTimeout = setTimeout(checkClaudeCode, 3000)
+          }
         } else {
-          const status = { installed: false, version: null, authenticated: false, checking: false, error: 'Failed to check' }
-          setClaudeCodeStatus(status)
-          setApiKeys(prev => ({ ...prev, anthropic: false }))
-          onClaudeCodeStatusChange?.(status)
+          applyStatus({ installed: false, version: null, authenticated: false, checking: false, error: 'Failed to check' })
+          if (retryCount < maxRetries && !cancelled) {
+            retryCount++
+            retryTimeout = setTimeout(checkClaudeCode, 3000)
+          }
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('Failed to check Claude Code status:', err)
         }
-        const status = { installed: false, version: null, authenticated: false, checking: false, error: 'Connection failed' }
-        setClaudeCodeStatus(status)
-        setApiKeys(prev => ({ ...prev, anthropic: false }))
-        onClaudeCodeStatusChange?.(status)
+        applyStatus({ installed: false, version: null, authenticated: false, checking: false, error: 'Connection failed' })
+        if (retryCount < maxRetries && !cancelled) {
+          retryCount++
+          retryTimeout = setTimeout(checkClaudeCode, 3000)
+        }
       }
     }
 
     checkClaudeCode()
-  }, [linkedServerId, isConnected, onClaudeCodeStatusChange])
+    return () => {
+      cancelled = true
+      if (retryTimeout) clearTimeout(retryTimeout)
+    }
+  }, [linkedServerId, isConnected, onClaudeCodeStatusChange, retryTrigger])
 
   // Re-check API keys periodically (in case user adds key in Settings)
   const refreshApiKeys = useCallback(() => {

@@ -19,13 +19,15 @@ const MAX_IMAGES = 4 // FIFO queue limit to prevent memory bloat
  * - CLAUDE-02: Routes to Claude Code on VPS when available
  * - CLAUDE-02-REWORK: Terminal-based chat when Claude Code mode active
  */
-export default function Chat({ project, model, apiKeys, serverId, claudeCodeStatus, onProcessingChange, enhanceWithAI }) {
+export default function Chat({ project, model, apiKeys, serverId, claudeCodeStatus, onProcessingChange, enhanceWithAI, onRetryConnection }) {
   // CLAUDE-02-REWORK: Check if we should use terminal-based Claude Code chat
   const useClaudeCodeTerminal = useMemo(() => {
     const isAnthropicModel = model?.provider === 'anthropic' ||
       (typeof model === 'string' && model.toLowerCase().includes('claude'))
     return isAnthropicModel && claudeCodeStatus?.authenticated && serverId
   }, [model, claudeCodeStatus, serverId])
+  // BUG-63: Show retry button after 10s of stuck connecting
+  const [showRetry, setShowRetry] = useState(false)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -330,6 +332,15 @@ export default function Chat({ project, model, apiKeys, serverId, claudeCodeStat
     (typeof model === 'string' && model.toLowerCase().includes('claude'))
   const showConnectingWelcome = isAnthropicModel && serverId && !claudeCodeStatus?.authenticated
 
+  // BUG-63: Show retry button after 10s stuck on connecting overlay
+  useEffect(() => {
+    if (showConnectingWelcome) {
+      const timer = setTimeout(() => setShowRetry(true), 10000)
+      return () => clearTimeout(timer)
+    }
+    setShowRetry(false)
+  }, [showConnectingWelcome])
+
   return (
     <div
       className="chat-panel"
@@ -371,6 +382,26 @@ export default function Chat({ project, model, apiKeys, serverId, claudeCodeStat
                   </div>
                   <p className="vps-connecting-text">Connecting to your VPS</p>
                   <p className="vps-connecting-subtext">Setting up Claude Code terminal...</p>
+                  {showRetry && onRetryConnection && (
+                    <button
+                      onClick={onRetryConnection}
+                      style={{
+                        marginTop: '12px',
+                        padding: '6px 16px',
+                        background: 'transparent',
+                        border: '1px solid var(--border)',
+                        borderRadius: '6px',
+                        color: 'var(--primary)',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => { e.target.style.background = 'var(--bg-tertiary)'; e.target.style.borderColor = 'var(--primary)' }}
+                      onMouseLeave={(e) => { e.target.style.background = 'transparent'; e.target.style.borderColor = 'var(--border)' }}
+                    >
+                      Retry Connection
+                    </button>
+                  )}
                 </div>
               ) : (
                 <p>Hello! I'm Claude, your AI coding assistant. Ask me to build, modify, or explain anything about your project.</p>
