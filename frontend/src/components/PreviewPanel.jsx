@@ -6,7 +6,6 @@ import {
   Maximize2,
   ExternalLink,
   RefreshCw,
-  ChevronRight,
   ChevronLeft
 } from 'lucide-react'
 
@@ -21,10 +20,10 @@ import {
  */
 export default function PreviewPanel({
   previewUrl = '',
-  defaultCollapsed = true,
-  onCollapsedChange
+  collapsed = true,
+  onCollapsedChange,
+  width = 400
 }) {
-  const [collapsed, setCollapsed] = useState(defaultCollapsed)
   const [deviceMode, setDeviceMode] = useState('fit') // 'phone', 'tablet', 'desktop', 'fit'
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [activeUrl, setActiveUrl] = useState(previewUrl || '')
@@ -40,9 +39,7 @@ export default function PreviewPanel({
   }, [previewUrl])
 
   const handleToggle = () => {
-    const newCollapsed = !collapsed
-    setCollapsed(newCollapsed)
-    onCollapsedChange?.(newCollapsed)
+    onCollapsedChange?.(!collapsed)
   }
 
   const handleNavigate = (url) => {
@@ -102,52 +99,17 @@ export default function PreviewPanel({
         background: 'var(--bg-secondary)',
         position: 'relative',
         overflow: 'hidden',
+        flex: 'none',
         ...(collapsed ? {
           width: '60px',
           minWidth: '60px',
-          maxWidth: '60px',
-          flex: 'none'
+          maxWidth: '60px'
         } : {
-          flex: 1,
+          width: `${width}px`,
           minWidth: '200px'
         })
       }}
     >
-      {/* Toggle button (appears on left edge) */}
-      <button
-        onClick={handleToggle}
-        title={collapsed ? 'Expand preview' : 'Collapse preview'}
-        style={{
-          position: 'absolute',
-          left: '-12px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: '24px',
-          height: '48px',
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border)',
-          borderRight: 'none',
-          borderRadius: '8px 0 0 8px',
-          color: 'var(--text-secondary)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '12px',
-          zIndex: 10
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--bg-tertiary)'
-          e.currentTarget.style.color = 'var(--text-primary)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'var(--bg-secondary)'
-          e.currentTarget.style.color = 'var(--text-secondary)'
-        }}
-      >
-        {collapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-      </button>
-
       {/* Collapsed state - vertical "Live Preview" label */}
       {collapsed && (
         <div style={{

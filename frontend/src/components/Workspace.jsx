@@ -38,6 +38,12 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
   const [rightPanelContent, setRightPanelContent] = useState(null) // 'files', 'terminal', 'editor'
   const [editingFile, setEditingFile] = useState(null) // { path, content }
   const [previewCollapsed, setPreviewCollapsed] = useState(true)
+  // FEAT-38: Preview panel drag resize
+  const [previewWidth, setPreviewWidth] = useState(400)
+  const [previewDragging, setPreviewDragging] = useState(false)
+  const previewDragStartX = useRef(null)
+  const previewDragStartWidth = useRef(null)
+  const chatPreviewContainerRef = useRef(null)
 
   // W-31: Icon Sidebar state
   const [activeSidebarPanel, setActiveSidebarPanel] = useState('workspaces')
@@ -314,6 +320,49 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
     }
   }
 
+  // FEAT-38: Preview panel drag resize handlers
+  const handlePreviewDragStart = useCallback((e) => {
+    e.preventDefault()
+    previewDragStartX.current = e.clientX
+    previewDragStartWidth.current = previewWidth
+    setPreviewDragging(true)
+  }, [previewWidth])
+
+  const handlePreviewDragMove = useCallback((e) => {
+    if (!previewDragging || previewDragStartX.current === null) return
+    const containerWidth = chatPreviewContainerRef.current?.offsetWidth || 1200
+    const maxWidth = containerWidth * 0.8
+    // Dragging left = preview grows (negative clientX delta = larger width)
+    const delta = previewDragStartX.current - e.clientX
+    const newWidth = Math.max(200, Math.min(maxWidth, previewDragStartWidth.current + delta))
+    setPreviewWidth(newWidth)
+  }, [previewDragging])
+
+  const handlePreviewDragEnd = useCallback(() => {
+    setPreviewDragging(false)
+    previewDragStartX.current = null
+    previewDragStartWidth.current = null
+  }, [])
+
+  useEffect(() => {
+    if (previewDragging) {
+      document.addEventListener('mousemove', handlePreviewDragMove)
+      document.addEventListener('mouseup', handlePreviewDragEnd)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+    return () => {
+      document.removeEventListener('mousemove', handlePreviewDragMove)
+      document.removeEventListener('mouseup', handlePreviewDragEnd)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [previewDragging, handlePreviewDragMove, handlePreviewDragEnd])
+
+  const handlePreviewDividerDoubleClick = useCallback(() => {
+    setPreviewCollapsed(prev => !prev)
+  }, [])
+
   // BUG-25: Handle project selection from file explorer
   const handleSelectProject = (selectedProject) => {
     if (onProjectChange && selectedProject.id !== project?.id) {
@@ -403,10 +452,10 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
 
         {/* Left side - Main content (UI-02: Chat only, no tabs) */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Main Content - Chat */}
-          <div className="flex-1 flex overflow-hidden">
+          {/* Main Content - Chat + Preview */}
+          <div ref={chatPreviewContainerRef} className="flex-1 flex overflow-hidden">
             {/* Chat area */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden" style={{ minWidth: 0 }}>
               <Chat
                 project={project}
                 model={selectedModel}
@@ -418,11 +467,45 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
               />
             </div>
 
+            {/* FEAT-38: Draggable divider between chat and preview */}
+            <div
+              onMouseDown={handlePreviewDragStart}
+              onDoubleClick={handlePreviewDividerDoubleClick}
+              style={{
+                width: '6px',
+                flexShrink: 0,
+                cursor: 'col-resize',
+                background: previewDragging ? 'var(--primary)' : 'var(--border)',
+                transition: previewDragging ? 'none' : 'background 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+                zIndex: 5
+              }}
+              onMouseEnter={(e) => { if (!previewDragging) e.currentTarget.style.background = 'var(--primary)' }}
+              onMouseLeave={(e) => { if (!previewDragging) e.currentTarget.style.background = 'var(--border)' }}
+              title="Drag to resize preview. Double-click to toggle."
+            >
+              {/* Visual grip dots */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '3px',
+                opacity: 0.5
+              }}>
+                {[0,1,2].map(i => (
+                  <div key={i} style={{ width: '2px', height: '2px', borderRadius: '50%', background: 'var(--text-muted)' }} />
+                ))}
+              </div>
+            </div>
+
             {/* Preview Panel */}
             <PreviewPanel
               previewUrl=""
-              defaultCollapsed={previewCollapsed}
+              collapsed={previewCollapsed}
               onCollapsedChange={setPreviewCollapsed}
+              width={previewWidth}
             />
           </div>
         </div>

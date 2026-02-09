@@ -2137,6 +2137,12 @@ Three callbacks from Workspace to ServerManager:
 ---
 
 ### Session 40 - 2026-01-24
+**Task**: FEAT-38 (Preview panel draggable resize)
+**What**: Added drag-resizable divider between chat and preview panel in Workspace.jsx. Delta-based resize pattern (same as MultiTerminal BUG-16). Divider has grip dots, highlights on hover, double-click toggles collapse. PreviewPanel now accepts `collapsed` and `width` props from parent (was self-managing). Removed the old absolute-positioned toggle button from PreviewPanel (replaced by divider). Min width 200px, max 80% of container.
+**Key Insight**: Dragging LEFT grows the preview (inverted delta: `startWidth + (startX - clientX)`). `flex: 'none'` on preview panel so it uses explicit width instead of flex grow.
+
+---
+
 **Task**: FEAT-36 (Smart pre-commit hook + /audit-index command)
 **What**: Three deliverables: (1) TEMPLATE_PRE_COMMIT_HOOK — smart hook that checks file existence in index, line count matching, duplicate detection, not just binary staged check. Blocks on missing entries, warns on mismatches. (2) TEMPLATE_AUDIT_INDEX — `/audit-index` slash command scaffolded to `.claude/commands/audit-index.md` for on-demand full audit. (3) Upgraded Hub-LLM's own `.git/hooks/pre-commit` to use the same smart logic (with `frontend/src/` and `backend/` paths).
 **Key Insight**: Had to split `git init && git add && git commit` into separate steps so the hook file can be written between init and commit. Initial commit needs `--no-verify` because the pre-commit hook would block it. Used `r"""` for the template string to avoid escaping backslashes in bash.

@@ -54,20 +54,20 @@
       "name": "Preview panel draggable resize handle — replace collapse toggle with split-pane divider",
       "size": "M",
       "priority": 2,
-      "status": "pending",
+      "status": "pending_review",
       "description": "The preview panel currently only has a collapse/expand toggle button (chevron on left edge). There is NO draggable resize handle. Users can't adjust the preview width — it's either collapsed (60px) or flex:1 (takes half the space). This blocks practical use of the preview panel for viewing real websites, which often need more width than the default split gives.\n\nAdd a draggable vertical divider between the chat area and the preview panel. The divider should follow the same pattern already used in MultiTerminal.jsx for split-pane terminal resize (learnings Session FEAT-09, BUG-16).\n\n## Implementation\n\nPattern from learnings: delta-based drag resize with useState for width, useCallback for mousedown/mousemove/mouseup, useEffect for global mouse events, `document.body.style.cursor = 'col-resize'` during drag. Drag handle minimum 6-8px wide with visual indicator (learnings: 4px was too thin).\n\n## Requirements\n- Drag handle on the left edge of the preview panel (replaces or supplements the collapse toggle)\n- Min width: 200px (already set). Max width: 80% of container\n- Visual indicator: subtle vertical line or dots that highlight on hover (match workspace dark theme)\n- Double-click on divider: toggle collapse/expand (preserves current toggle behavior)\n- Persist width in component state (no need for localStorage yet)\n- Keep the collapse toggle button if the panel is collapsed (so user can re-expand)\n- The chat area (flex:1) absorbs the remaining space\n- `cursor: col-resize` on hover and during drag\n- `user-select: none` on body during drag to prevent text selection\n\nThe resize logic should live in Workspace.jsx (parent of both Chat and PreviewPanel) since it controls the flex layout. PreviewPanel would accept a `width` prop instead of managing its own flex.",
       "change": [
         "frontend/src/components/Workspace.jsx: Add drag resize state (previewWidth), mousedown/mousemove/mouseup handlers. Render a drag divider between Chat and PreviewPanel. Pass width to PreviewPanel. Double-click = toggle collapse.",
         "frontend/src/components/PreviewPanel.jsx: Accept width prop from parent. Remove internal flex:1 logic — width is now controlled by Workspace. Keep collapsed state for the toggle button (double-click or button)."
       ],
       "test": "(1) Hover over left edge of preview panel — cursor changes to col-resize, divider highlights. (2) Drag left — preview panel grows, chat area shrinks. (3) Drag right — preview panel shrinks. (4) Preview panel cannot shrink below 200px or grow beyond 80% of container. (5) Double-click divider — panel collapses. Double-click again — expands to previous width. (6) No text selection occurs during drag. (7) Websites in iframe respond to new width without horizontal scroll.",
-      "completion_note": "",
+      "completion_note": "Workspace.jsx (529→612 lines): Added previewWidth state, previewDragging ref-based drag handlers (delta pattern from BUG-16), 6px divider with grip dots between Chat and PreviewPanel, double-click toggles collapse. PreviewPanel.jsx (471→432 lines): Now accepts collapsed/width props from parent instead of self-managing. Removed absolute-positioned toggle button (replaced by divider). flex:'none' with explicit width. Collapsed state expand button kept. Build: vite build 0 errors. CODEBASE_INDEX updated.",
       "completion_checklist": {
-        "code_works": false,
-        "index_updated": false,
-        "learnings_written": false,
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
         "committed_pushed": false,
-        "status_set_to_pending_review": false
+        "status_set_to_pending_review": true
       }
     },
     {

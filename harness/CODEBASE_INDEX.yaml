@@ -296,8 +296,8 @@ frontend_pages:
 frontend_components:
   Workspace.jsx:
     path: frontend/src/components/Workspace.jsx
-    lines: 529
-    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout, Claude processing state, enhance banner threading"
+    lines: 612
+    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), Claude processing state, enhance banner threading"
     props: "{project, model, apiKeys, onProjectChange, enhanceWithAI}"
     key_state:
       - {name: isConnected, type: useState, drives: "SSH connection status"}
@@ -537,8 +537,8 @@ frontend_components:
 
   PreviewPanel.jsx:
     path: frontend/src/components/PreviewPanel.jsx
-    lines: 471
-    purpose: "Collapsible live preview iframe with editable URL bar, device viewport modes"
+    lines: 432
+    purpose: "Live preview iframe with editable URL bar, device viewport modes, parent-controlled width/collapse (FEAT-38)"
     props: "{previewUrl, defaultCollapsed, onCollapsedChange}"
     features:
       - "Device modes: phone (375px), tablet (768px), desktop (1280px), fit"
