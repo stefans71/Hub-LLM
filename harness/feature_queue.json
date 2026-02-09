@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T06:30",
+  "updated": "2026-02-09T07:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -26,50 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-43",
-      "name": "Brand logo consistency — split HubLLM.dev text into Hub/LLM/.dev color scheme across all pages",
-      "size": "XS",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "The landing page (LandingPage.jsx:439-441 + LandingPage.css:106-108) renders the logo as three styled spans: 'Hub' (white), 'LLM' (cyan #38bdf8), '.dev' (muted gray). But the header nav (HeaderNavigation.jsx:39) renders it as a single plain white span: `<span className='font-semibold text-white text-lg'>HubLLM.dev</span>`. This inconsistency was visible after the FEAT-42 cyan rebrand.\n\n## Fix\n\nReplace the single white span in HeaderNavigation.jsx:39 with the same three-part color split:\n- 'Hub' → white (#fff)\n- 'LLM' → cyan (var(--primary) or #38bdf8)\n- '.dev' → muted (var(--text-muted) or rgba(150,180,200,0.5))\n\nAlso check and align:\n- AuthPage.jsx:134 — `<h1>HubLLM</h1>` is plain white. Add the LLM cyan highlight.\n- Setup.jsx:152 — 'Welcome to HubLLM' heading. 'HubLLM' portion should use the color split.\n- App.jsx:252 — 'Welcome to HubLLM' heading. Same treatment.\n\nThe 'H' icon box (HeaderNavigation.jsx:33-37) already uses var(--primary) — that's fine, keep it.",
-      "change": [
-        "frontend/src/components/HeaderNavigation.jsx:39 — Replace single white 'HubLLM.dev' span with three spans: Hub (white) + LLM (var(--primary)) + .dev (var(--text-muted)).",
-        "frontend/src/components/AuthPage.jsx:134 — Split 'HubLLM' text to highlight 'LLM' in cyan.",
-        "frontend/src/pages/Setup.jsx:152 — Same color split on 'HubLLM' in welcome heading.",
-        "frontend/src/App.jsx:252 — Same color split on 'HubLLM' in welcome heading."
-      ],
-      "test": "(1) Navigate Dashboard, Workspace, Settings, Create Project — header logo shows Hub(white) LLM(cyan) .dev(muted) consistently. (2) Auth/login page shows same branding. (3) Setup wizard shows same branding. (4) Compare with landing page logo — should feel identical.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      },
-      "completion_note": "Split HubLLM text into Hub(#fff)/LLM(var(--primary))/.dev(rgba(150,180,200,0.5)) across 4 files: HeaderNavigation.jsx (header logo with .dev suffix), AuthPage.jsx (login h1), Setup.jsx (welcome heading), App.jsx (workspace welcome heading). Build passes with 0 errors."
-    },
-    {
-      "id": "BUG-56",
-      "name": "Preview panel — remove white frame wrapper for internal /docs/ pages",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "The PreviewPanel (PreviewPanel.jsx:271-314) wraps ALL content in a white-background frame with padding, border-radius, and box-shadow — designed for previewing external websites. But for internal docs (/docs/*.html), this creates a jarring windowed look instead of feeling like native app content.\n\n## Current behavior\nPreviewPanel.jsx:272-293 — outer container has 16px padding, inner div has white bg, 8px border-radius, box-shadow. The iframe sits inside this decorative wrapper. This makes sense for previewing external sites but not for our own docs.\n\n## Fix\nDetect when activeUrl starts with '/docs/' (internal docs). When true:\n- Remove the white background wrapper (lines 281-293) — or make it transparent with no shadow/radius\n- Remove the 16px padding on the container (line 277)\n- Let the iframe fill the entire panel area edge-to-edge\n- Keep the toolbar (URL bar, device buttons) as-is\n\nFor external URLs (anything not starting with /docs/), keep the current white-frame treatment.\n\nSimplest approach: add an `isInternalDocs` boolean derived from activeUrl, then conditionally apply styles.\n\n```jsx\nconst isInternalDocs = activeUrl?.startsWith('/docs/');\n// Container: padding 0 for internal, 16px for external\n// Wrapper: transparent bg + no shadow for internal, white + shadow for external\n```\n\nThe iframe itself (lines 296-309) can stay — it provides sandbox isolation and nav.js works correctly inside it. The issue is purely the cosmetic wrapper around it.",
-      "change": [
-        "frontend/src/components/PreviewPanel.jsx:272-293 — Add isInternalDocs check. When true: container padding=0, wrapper background=transparent, no borderRadius, no boxShadow. Iframe fills panel edge-to-edge.",
-        "frontend/src/components/PreviewPanel.jsx — Keep external URL frame treatment unchanged."
-      ],
-      "test": "(1) Open workspace with docs showing in preview — docs fill the entire panel without white frame/shadow. (2) Type an external URL in the preview bar — white frame with shadow returns. (3) Switch between /docs/ pages via nav sidebar — still frameless. (4) Device preview buttons (phone/tablet/desktop/fit) still work for external URLs. (5) Collapsed/expanded toggle still works.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      },
-      "completion_note": "Added isInternalDocs computed from activeUrl?.startsWith('/docs/'). When true: container padding=0, wrapper bg=transparent, no borderRadius, no boxShadow, width/height=100%. External URLs keep white frame treatment unchanged. Build passes with 0 errors."
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -81,6 +37,24 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-43",
+      "name": "Brand logo consistency — Hub/LLM/.dev color split across all pages",
+      "size": "XS",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: HeaderNavigation.jsx, AuthPage.jsx, Setup.jsx, App.jsx all use Hub(white)/LLM(var(--primary))/.dev(muted) split. Matches landing page branding. Commit d4f5a1c."
+    },
+    {
+      "id": "BUG-56",
+      "name": "Preview panel — frameless rendering for internal /docs/ pages",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: isInternalDocs boolean at line 32. Conditional styles strip white bg, padding, shadow, radius for /docs/ URLs. External URLs keep frame treatment. Commit d4f5a1c."
+    },
     {
       "id": "FEAT-42",
       "name": "Align workspace color palette — shift --primary from blue (#3b82f6) to cyan (#38bdf8)",
