@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T07:15",
+  "updated": "2026-02-09T07:45",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -26,28 +26,6 @@
   },
   "queue": [
     {
-      "id": "BUG-57",
-      "name": "Auth clears tokens on network error — deploy restarts log users out",
-      "size": "S",
-      "priority": 1,
-      "description": "When the backend is temporarily unreachable (e.g. during Coolify redeploy), AuthContext.jsx nukes the user's tokens from localStorage, permanently logging them out. The user has to re-login after every deploy.\n\n## Root cause\n\nAuthContext.jsx lines 106-113 — the catch block in `fetchUser()` calls `clearTokens()` and `setUser(null)` on ANY error (network failure, timeout, etc.). This is too aggressive. Tokens should only be cleared on explicit 401 responses (meaning the token is actually invalid).\n\n## Current behavior\n1. Coolify redeploys → backend restarts for ~10-30s\n2. User refreshes page → AuthProvider mounts → fetchUser() fires\n3. `/api/auth/me` fails (connection refused or timeout)\n4. Catch block: clearTokens() + setUser(null)\n5. isAuthenticated = false → /dashboard redirects to / (landing page)\n6. Backend comes back, but tokens are gone — user must re-login\n\n## Fix\n\nIn AuthContext.jsx `fetchUser()` (lines 75-118):\n\n1. **Network errors / timeouts** (catch block, lines 106-113): Do NOT call `clearTokens()`. Keep tokens in localStorage. Set an error state like `connectionError` instead. Let `isAuthenticated` remain based on having a stored token (optimistic).\n\n2. **Explicit 401 with failed refresh** (lines 93-105): This is the ONLY case where `clearTokens()` should fire — the token is genuinely invalid and refresh failed.\n\n3. **AppRouter (App.jsx:377-395)**: Add a connection error state between `loading` and `!isAuthenticated`. When `loading` is false AND there's a connection error AND tokens exist in localStorage, show a 'Backend unreachable — retrying...' message with auto-retry instead of redirecting to landing.\n\nAlternative simpler approach: In the catch block, just don't clear tokens. Set user to null but keep tokens. On next page load or retry, fetchUser will try again with the stored tokens. The user sees a loading/error state instead of being redirected to landing.\n\n## Key files\n- `frontend/src/contexts/AuthContext.jsx:106-113` — catch block that clears tokens (main fix)\n- `frontend/src/contexts/AuthContext.jsx:99,103` — 401-handling that should KEEP clearing tokens\n- `frontend/src/App.jsx:377-395` — AppRouter loading/auth check (optional: add retry UI)\n\n## Learnings refs\n- Session 90: Production auth issues after deploy\n- Bug pattern #12: Never docker restart Coolify containers\n- localStorage is source of truth (Sessions 43, 47)",
-      "change": [
-        "frontend/src/contexts/AuthContext.jsx:106-113 — Remove clearTokens() from the catch block. On network error, keep tokens in localStorage, set a connection error state, leave user as null but don't destroy credentials.",
-        "frontend/src/contexts/AuthContext.jsx:99,103 — Keep clearTokens() here (explicit 401 = token is invalid).",
-        "frontend/src/App.jsx:377-395 — (Optional but recommended) When loading=false, isAuthenticated=false, but tokens exist in localStorage, show a 'Reconnecting...' state with auto-retry instead of landing page."
-      ],
-      "test": "(1) Login, then stop backend (`docker stop` backend container). Refresh page. Should see error/retry UI, NOT landing page. (2) Start backend again. Page should auto-recover or manual refresh should restore session. (3) Tokens still in localStorage after backend downtime. (4) Actual expired token (wait for JWT expiry or tamper with token) should still clear tokens and show login. (5) Normal login/logout flow unchanged.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      },
-      "status": "pending_review",
-      "completion_note": "Removed clearTokens() from catch block (network errors) and non-401 HTTP errors. Only 401-after-refresh clears tokens. Added connectionError state + retryAuth() to AuthContext. AppRouter shows 'Backend Unreachable' UI with manual retry button + 10s auto-retry when tokens exist but backend is down. Build passes, 0 errors."
-    },
-    {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",
       "size": "S",
@@ -59,6 +37,15 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-57",
+      "name": "Auth preserves tokens on network error — retry UI instead of logout",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: clearTokens() only on 401. Network errors/5xx set connectionError, tokens preserved. AppRouter shows retry UI with 10s auto-retry when backend unreachable. Commit a39bd91."
+    },
     {
       "id": "FEAT-43",
       "name": "Brand logo consistency — Hub/LLM/.dev color split across all pages",
