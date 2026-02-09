@@ -37,10 +37,17 @@ frontend_entry:
     purpose: "React root renderer — mounts App into DOM with StrictMode"
     last_verified_session: 86
 
+  ErrorBoundary.jsx:
+    path: frontend/src/components/ErrorBoundary.jsx
+    lines: 56
+    purpose: "React Error Boundary class component (BUG-68). Catches uncaught render errors, shows fallback UI with reload button. Wraps entire app in App.jsx."
+    imports: [react]
+    imported_by: [App.jsx]
+
   App.jsx:
     path: frontend/src/App.jsx
-    lines: 412
-    purpose: "Root app — routing, auth redirect, project state, setup flow control. Unauthenticated visitors see LandingPage at / with CTA to /auth. handleProjectCreated accepts options.enhance for AI enhancement redirect. enhanceMode state captured from URL, cleared after first render. Workspace gate allows VPS+Claude Code users without API keys (BUG-44). Dual-path welcome screen: API Key card + VPS Subscription card (BUG-46)."
+    lines: 452
+    purpose: "Root app — routing, auth redirect, project state, setup flow control. Wrapped in ErrorBoundary (BUG-68). Unauthenticated visitors see LandingPage at / with CTA to /auth. handleProjectCreated accepts options.enhance for AI enhancement redirect. enhanceMode state captured from URL, cleared after first render. Workspace gate allows VPS+Claude Code users without API keys (BUG-44). Dual-path welcome screen: API Key card + VPS Subscription card (BUG-46)."
     key_state:
       - {name: projects, type: "useState([])", drives: "project list across app"}
       - {name: activeProject, type: "useState(null)", drives: "currently selected project"}
@@ -337,7 +344,7 @@ frontend_components:
   Workspace.jsx:
     path: frontend/src/components/Workspace.jsx
     lines: 642
-    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), auto-load docs portal on first project visit via localStorage (FEAT-37/41), preview always open by default (BUG-62), Claude processing state, enhance banner threading, export modal (FEAT-51)"
+    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), auto-load docs portal on first project visit via localStorage (FEAT-37/41), preview always open by default (BUG-62), Claude processing state, enhance banner threading, export modal (FEAT-51), memoized handleSshReconnected (BUG-68)"
     props: "{project, model, apiKeys, onProjectChange, enhanceWithAI}"
     key_state:
       - {name: isConnected, type: useState, drives: "SSH connection status"}

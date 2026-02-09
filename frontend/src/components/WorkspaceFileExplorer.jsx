@@ -155,7 +155,7 @@ export default function WorkspaceFileExplorer({
           ...prev,
           [serverId]: { connected: true, error: null }
         }))
-        onSshReconnected?.(serverId)
+        try { onSshReconnected?.(serverId) } catch (err) { console.error('SSH reconnect callback error:', err) }
       } else {
         const data = await res.json().catch(() => ({}))
         setServerStatuses(prev => ({

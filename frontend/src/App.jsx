@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import Setup from './pages/Setup'
 import LandingPage from './pages/LandingPage'
+import ErrorBoundary from './components/ErrorBoundary'
 import { Loader2, WifiOff, RefreshCw } from 'lucide-react'
 
 // Main App content (requires auth)
@@ -437,11 +438,13 @@ function AppRouter() {
 // Main App with AuthProvider and BrowserRouter
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 

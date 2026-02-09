@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 139 - 2026-02-09 06:13 EST
+**Task**: BUG-68
+**What**: Added React ErrorBoundary + stabilized SSH reconnect callback. ErrorBoundary.jsx wraps entire app in App.jsx — catches render errors with reload UI. Memoized onSshReconnected with useCallback in Workspace.jsx. Added try-catch around callback invocation in WorkspaceFileExplorer.jsx.
+**Key Learning**: React has no built-in error boundary — must use class component with componentDidCatch. Without one, any uncaught render error kills the entire page white. Wrapping at the App level catches everything.
+
 ### Session 138 - 2026-02-09 EST
 **Task**: FEAT-51
 **What**: Added Export Project feature. New ExportModal.jsx component with confirmation modal showing included/excluded files, download spinner, and error handling. Backend GET /api/projects/{id}/export endpoint: writes PORTABLE_README.md to VPS project folder, runs tar -czf excluding node_modules/__pycache__/.venv etc, reads back via base64, streams as tar.gz download. Workspace.jsx wires showExportModal state to handleExport and renders ExportModal.

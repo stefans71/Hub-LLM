@@ -95,6 +95,12 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
     editorApiRef.current = api
   }, [])
 
+  // BUG-68: Memoized SSH reconnect callback (setState functions are stable)
+  const handleSshReconnected = useCallback(() => {
+    setIsConnected(true)
+    setRetryTrigger(prev => prev + 1)
+  }, [])
+
   // FEAT-06: Handler for when a file is selected in the sidebar
   const handleFileSelect = (file, serverId) => {
     if (editorApiRef.current?.openFile) {
@@ -464,10 +470,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
           onSelectProject={handleSelectProject}
           onFileSelect={handleFileSelect}
           isClaudeProcessing={isClaudeProcessing}
-          onSshReconnected={() => {
-            setIsConnected(true)
-            setRetryTrigger(prev => prev + 1)
-          }}
+          onSshReconnected={handleSshReconnected}
         />
 
         {/* Left side - Main content (UI-02: Chat only, no tabs) */}
