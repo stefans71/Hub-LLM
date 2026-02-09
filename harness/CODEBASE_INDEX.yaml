@@ -697,13 +697,14 @@ frontend_components:
 frontend_contexts:
   AuthContext.jsx:
     path: frontend/src/contexts/AuthContext.jsx
-    lines: 241
-    purpose: "Auth state provider — JWT tokens, login/signup/logout, OAuth, token refresh"
+    lines: 253
+    purpose: "Auth state provider — JWT tokens, login/signup/logout, OAuth, token refresh. Tokens survive network errors (BUG-57) — only cleared on explicit 401."
     exports: ["AuthProvider (component)", "useAuth (hook)"]
     key_state:
       - {name: user, type: "useState(null)", drives: "authenticated user object"}
       - {name: loading, type: "useState(true)", drives: "initial auth check"}
       - {name: error, type: "useState(null)", drives: "auth errors"}
+      - {name: connectionError, type: "useState(false)", drives: "backend unreachable state (BUG-57)"}
       - {name: isMounted, type: useRef, drives: "prevent state updates after unmount"}
     methods:
       - "fetchWithTimeout(url, options, timeout=10000)"
@@ -712,6 +713,7 @@ frontend_contexts:
       - "logout() → POST /api/auth/logout"
       - "refreshAccessToken() → POST /api/auth/refresh"
       - "fetchUser(isRetry=false) → GET /api/auth/me"
+      - "retryAuth() → reset connectionError + re-fetch user (BUG-57)"
       - "handleOAuthCallback(accessToken, refreshToken)"
       - "getAuthHeader() → {Authorization: Bearer ...}"
     localStorage_keys:

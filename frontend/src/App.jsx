@@ -12,7 +12,7 @@ import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import Setup from './pages/Setup'
 import LandingPage from './pages/LandingPage'
-import { Loader2 } from 'lucide-react'
+import { Loader2, WifiOff, RefreshCw } from 'lucide-react'
 
 // Main App content (requires auth)
 function AppContent() {
@@ -356,9 +356,16 @@ function AppContent() {
 
 // Router component to handle auth callback
 function AppRouter() {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, connectionError, retryAuth } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+
+  // Auto-retry when backend is unreachable
+  useEffect(() => {
+    if (!connectionError || !localStorage.getItem('access_token')) return
+    const interval = setInterval(retryAuth, 10000)
+    return () => clearInterval(interval)
+  }, [connectionError, retryAuth])
 
   // Check for OAuth callback
   const isAuthCallback = location.pathname === '/auth/callback' ||
@@ -379,6 +386,35 @@ function AppRouter() {
     return (
       <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--primary)' }} />
+      </div>
+    )
+  }
+
+  // Backend unreachable but tokens exist — show retry UI instead of landing page
+  if (connectionError && localStorage.getItem('access_token')) {
+    return (
+      <div className="h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <div style={{ textAlign: 'center', maxWidth: '360px', padding: '32px' }}>
+          <WifiOff style={{ width: 40, height: 40, color: 'var(--text-muted)', margin: '0 auto 16px' }} />
+          <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px', color: 'var(--text-primary)' }}>
+            Backend Unreachable
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>
+            The server may be restarting. Your session is preserved.
+          </p>
+          <button
+            onClick={retryAuth}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '10px 24px', borderRadius: '8px', border: 'none',
+              background: 'var(--primary)', color: '#fff', fontSize: '14px',
+              fontWeight: 500, cursor: 'pointer'
+            }}
+          >
+            <RefreshCw style={{ width: 16, height: 16 }} />
+            Retry Connection
+          </button>
+        </div>
       </div>
     )
   }

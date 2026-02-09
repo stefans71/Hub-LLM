@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [connectionError, setConnectionError] = useState(false)
   const isMounted = useRef(true)
 
   // Get tokens from localStorage
@@ -88,7 +89,10 @@ export function AuthProvider({ children }) {
 
       if (res.ok) {
         const userData = await res.json()
-        if (isMounted.current) setUser(userData)
+        if (isMounted.current) {
+          setUser(userData)
+          setConnectionError(false)
+        }
         return userData
       } else if (res.status === 401 && !isRetry) {
         // Token expired, try refresh ONCE (no infinite recursion)
@@ -98,17 +102,23 @@ export function AuthProvider({ children }) {
         }
         clearTokens()
         if (isMounted.current) setUser(null)
-      } else {
-        // Either non-401 error or retry already attempted
+      } else if (res.status === 401 && isRetry) {
+        // 401 after refresh attempt — token is genuinely invalid
         clearTokens()
         if (isMounted.current) setUser(null)
+      } else {
+        // Server error (5xx, 403, etc.) — keep tokens, treat as connection issue
+        if (isMounted.current) {
+          setConnectionError(true)
+          setUser(null)
+        }
       }
     } catch (err) {
       console.error('Failed to fetch user:', err)
       if (isMounted.current) {
-        setError(err.message === 'Request timed out' ? 'Connection timed out' : 'Failed to load user')
-        // On timeout/error, clear tokens and allow user to re-login
-        clearTokens()
+        // Network error / timeout — keep tokens, set connection error
+        // Tokens are only cleared on explicit 401 (above)
+        setConnectionError(true)
         setUser(null)
       }
     } finally {
@@ -200,6 +210,13 @@ export function AuthProvider({ children }) {
     return accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}
   }, [getTokens])
 
+  // Retry auth after connection error
+  const retryAuth = useCallback(async () => {
+    setLoading(true)
+    setConnectionError(false)
+    await fetchUser()
+  }, [fetchUser])
+
   // Check auth on mount with cleanup
   useEffect(() => {
     isMounted.current = true
@@ -214,13 +231,15 @@ export function AuthProvider({ children }) {
     user,
     loading,
     error,
+    connectionError,
     isAuthenticated: !!user,
     login,
     signup,
     logout,
     handleOAuthCallback,
     getAuthHeader,
-    refreshAccessToken
+    refreshAccessToken,
+    retryAuth
   }
 
   return (

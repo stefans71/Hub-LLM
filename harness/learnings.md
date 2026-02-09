@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 132 - 2026-02-09 EST
+**Task**: BUG-57
+**What**: Fixed auth clearing tokens on network errors during deploys. Removed `clearTokens()` from catch block (network errors) and non-401 HTTP error branch. Only 401-after-failed-refresh clears tokens. Added `connectionError` state and `retryAuth()` to AuthContext. AppRouter now shows "Backend Unreachable" UI (WifiOff icon, retry button) with 10s auto-retry interval when tokens exist in localStorage but backend is unreachable. On recovery, connectionError clears and user session resumes.
+**Key Learning**: Auth catch blocks should NEVER destroy credentials on transient errors. Only explicit 401 (token invalid) should clear tokens. Network timeouts, 5xx errors, and connection refused are all transient — keep tokens, show retry UI.
+
 ### Session 131 - 2026-02-09 EST
 **Task**: FEAT-43 + BUG-56
 **What**: (FEAT-43) Split 'HubLLM.dev' text into three-part color scheme (Hub=white, LLM=cyan/var(--primary), .dev=muted gray) across 4 files: HeaderNavigation.jsx, AuthPage.jsx, Setup.jsx, App.jsx. Matches landing page LandingPage.jsx/LandingPage.css pattern. (BUG-56) Added `isInternalDocs` boolean to PreviewPanel.jsx — when activeUrl starts with '/docs/', removes white bg frame, padding, border-radius, and box-shadow so internal docs fill edge-to-edge. External URLs keep the decorative wrapper.
