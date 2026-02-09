@@ -249,7 +249,7 @@ function AppContent() {
                 ) : (
                   <div className="flex-1 flex items-center justify-center">
                     <div style={{ textAlign: 'center', maxWidth: '640px', padding: '32px' }}>
-                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>Welcome to HubLLM</h2>
+                      <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px' }}>Welcome to <span style={{ color: '#fff' }}>Hub</span><span style={{ color: 'var(--primary)' }}>LLM</span></h2>
                       <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '14px' }}>
                         Choose how you want to use AI in your projects
                       </p>

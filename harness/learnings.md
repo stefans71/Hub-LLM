@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 131 - 2026-02-09 EST
+**Task**: FEAT-43 + BUG-56
+**What**: (FEAT-43) Split 'HubLLM.dev' text into three-part color scheme (Hub=white, LLM=cyan/var(--primary), .dev=muted gray) across 4 files: HeaderNavigation.jsx, AuthPage.jsx, Setup.jsx, App.jsx. Matches landing page LandingPage.jsx/LandingPage.css pattern. (BUG-56) Added `isInternalDocs` boolean to PreviewPanel.jsx — when activeUrl starts with '/docs/', removes white bg frame, padding, border-radius, and box-shadow so internal docs fill edge-to-edge. External URLs keep the decorative wrapper.
+**Key Learning**: No new patterns — straightforward conditional styling.
+
 ### Session 130 - 2026-02-09 EST
 **Task**: FEAT-42
 **What**: Shifted --primary from blue #3b82f6 to cyan #38bdf8 and --primary-hover from #2563eb to #0ea5e9. Replaced all hardcoded occurrences across 10 files: index.css, ClaudeCodeTerminalChat.jsx, DashboardSidebar.jsx, AnthropicSubscription.jsx, PreviewPanel.jsx, ModelSelector.jsx, WorkspaceFileExplorer.jsx, Settings.jsx, Setup.jsx, Dashboard.jsx, CreateProject.jsx. Also replaced rgba(59, 130, 246, ...) with rgba(56, 189, 248, ...) across 6 files. Updated SKILL.md CSS vars reference.

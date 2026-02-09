@@ -29,6 +29,7 @@ export default function PreviewPanel({
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [activeUrl, setActiveUrl] = useState(previewUrl || '')
   const [inputUrl, setInputUrl] = useState(previewUrl || '')
+  const isInternalDocs = activeUrl?.startsWith('/docs/')
   const iframeRef = useRef(null)
 
   // Sync from prop when parent sets a URL (e.g., Codespaces)
@@ -272,24 +273,24 @@ export default function PreviewPanel({
           <div style={{
             flex: 1,
             display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            padding: '16px',
+            justifyContent: isInternalDocs ? 'stretch' : 'center',
+            alignItems: isInternalDocs ? 'stretch' : 'flex-start',
+            padding: isInternalDocs ? 0 : '16px',
             overflow: 'auto',
             background: 'var(--bg-tertiary)'
           }}>
             <div
               style={{
-                background: 'white',
-                borderRadius: '8px',
+                background: isInternalDocs ? 'transparent' : 'white',
+                borderRadius: isInternalDocs ? 0 : '8px',
                 display: 'flex',
                 flexDirection: 'column',
-                minHeight: '400px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                minHeight: isInternalDocs ? 0 : '400px',
+                boxShadow: isInternalDocs ? 'none' : '0 4px 20px rgba(0,0,0,0.3)',
                 flexShrink: 0,
                 overflow: 'hidden',
                 transition: 'width 0.2s ease',
-                ...getFrameStyles()
+                ...(isInternalDocs ? { width: '100%', height: '100%' } : getFrameStyles())
               }}
             >
               {activeUrl ? (

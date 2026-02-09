@@ -149,7 +149,7 @@ function ChoosePathStep({ path, setPath, onNext }) {
         textAlign: 'center',
         marginBottom: '8px'
       }}>
-        Welcome to HubLLM
+        Welcome to <span style={{ color: '#fff' }}>Hub</span><span style={{ color: 'var(--primary)' }}>LLM</span>
       </h2>
       <p style={{
         fontSize: '14px',

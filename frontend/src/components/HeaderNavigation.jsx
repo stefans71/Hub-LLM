@@ -36,7 +36,11 @@ function HeaderNavigation({ onLogout }) {
           >
             H
           </div>
-          <span className="font-semibold text-white text-lg">HubLLM.dev</span>
+          <span className="font-semibold text-lg">
+            <span style={{ color: '#fff' }}>Hub</span>
+            <span style={{ color: 'var(--primary)' }}>LLM</span>
+            <span style={{ color: 'rgba(150, 180, 200, 0.5)' }}>.dev</span>
+          </span>
         </div>
 
         {/* Navigation Tabs */}

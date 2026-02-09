@@ -573,7 +573,8 @@ frontend_components:
       - "Editable URL bar with Enter-to-navigate, auto-prepends https://"
       - "Refresh, prominent 'Open in Browser' button with text label + cyan accent (BUG-55)"
       - "onUrlChange callback fires on navigate — parent uses for welcome flag persistence"
-    last_verified_session: 129
+      - "Internal docs (/docs/*) render edge-to-edge without white frame wrapper (BUG-56)"
+    last_verified_session: 131
 
   DashboardSidebar.jsx:
     path: frontend/src/components/DashboardSidebar.jsx
@@ -588,10 +589,10 @@ frontend_components:
 
   HeaderNavigation.jsx:
     path: frontend/src/components/HeaderNavigation.jsx
-    lines: 157
-    purpose: "Top nav bar — Dashboard/Workspace/Settings tabs, user menu"
+    lines: 160
+    purpose: "Top nav bar — Dashboard/Workspace/Settings tabs, user menu. Logo uses three-part color split: Hub(white)/LLM(cyan)/dev(muted) (FEAT-43)"
     props: "{onLogout}"
-    last_verified_session: 86
+    last_verified_session: 131
 
   AuthPage.jsx:
     path: frontend/src/components/AuthPage.jsx
