@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T02:00",
+  "updated": "2026-02-09T02:30",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -49,29 +49,6 @@
       }
     },
     {
-      "id": "FEAT-39",
-      "name": "Create Project — kill Codespaces messaging, reframe GitHub as version control",
-      "size": "M",
-      "priority": 2,
-      "status": "pending_review",
-      "description": "The 'Free Cloud Hosting — Powered by GitHub' card in Create Project (Step 2: Connection Source) was designed for Codespaces integration which is now abandoned. The messaging is misleading and needs to be completely rewritten.\n\n## Current state (CreateProject.jsx lines 1666-1944)\n\nCard title: 'Free Cloud Hosting' (line 1700)\nSubtitle: 'Powered by GitHub' (line 1701)\nDescription: 'Get free cloud hosting, storage, and preview environments. Your code stays in your GitHub account.' (line 1706)\nBenefits: '60 hrs/mo free compute', '15GB storage', 'You own your code' (lines 1710-1715)\nPost-connect status: 'Ready! Code will be pushed to {repo}. Preview via Codespaces.' (line 1923)\n\nAll of this is wrong for the current direction.\n\n## New messaging\n\nCard title: 'Connect GitHub' (NOT 'Free Cloud Hosting')\nSubtitle: 'Version control & cloud backup'\nDescription: 'Back up your code to GitHub. The AI engineer commits after every task — connect a repo to push automatically.'\nBenefits: 'Free unlimited repos', 'Version history', 'You own your code'\nPost-connect status: 'Ready! Code will be pushed to {repo} after each task.'\n\nRemove ALL Codespaces references. Remove '60 hrs/mo free compute'. Remove 'preview environments'.\n\nThe 'Sign in with GitHub' button and 'Create Free Account' link stay — they still work (once BUG-54 env vars are set). The repo picker/creator stays. Just the messaging changes.\n\nAlso consider: this card should be BELOW 'Connect to VPS', not above it. VPS is the primary track for Terminal users. GitHub is supplementary. Currently GitHub card is first (lines 1666-1944) and VPS card is second (lines 1946-2181). Swap the order so VPS is first, GitHub is below with a label like 'Optional: Connect GitHub for version control'.\n\nNote: The 'RECOMMENDED' badge on the GitHub card (visible in screenshot Create-Project-Git-01.png) should move to VPS for Terminal track users, or be removed entirely.",
-      "change": [
-        "frontend/src/pages/CreateProject.jsx lines 1700-1715: Change card title from 'Free Cloud Hosting' to 'Connect GitHub'. Change subtitle to 'Version control & cloud backup'. Rewrite description and benefits. Remove all Codespaces references.",
-        "frontend/src/pages/CreateProject.jsx line 1923: Change 'Preview via Codespaces' status text to 'Code will be pushed to {repo} after each task.'",
-        "frontend/src/pages/CreateProject.jsx: Swap card order — move 'Connect to VPS' card (lines 1946-2181) ABOVE the GitHub card (lines 1666-1944). VPS is primary for Terminal track.",
-        "frontend/src/pages/CreateProject.jsx: Move or remove 'RECOMMENDED' badge from GitHub card. For Terminal track users, VPS should be recommended."
-      ],
-      "test": "(1) Open Create Project, select Terminal track. (2) Step 2 shows 'Connect to VPS' FIRST, then 'Connect GitHub' below it. (3) GitHub card says 'Version control & cloud backup' — NO mention of hosting, compute, Codespaces. (4) Connect GitHub flow still works (sign in, pick repo). (5) After selecting repo, status says 'Code will be pushed to {repo} after each task.' (6) No 'RECOMMENDED' badge on GitHub card when Terminal track is selected.",
-      "completion_note": "Rewrote GitHub card: title→'Connect GitHub', subtitle→'Version control & cloud backup', benefits→'Free unlimited repos/Version history/You own your code', status→'after each task' (no Codespaces). Swapped VPS card above GitHub card. GitHub badge→'OPTIONAL', VPS subtitle→'SSH into your own server'. Build: vite build 0 errors.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "FEAT-40",
       "name": "OpenRouter track — add VibeShip waitlist button next to PRP download",
       "size": "S",
@@ -104,6 +81,16 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-39",
+      "name": "Create Project — kill Codespaces messaging, reframe GitHub as version control",
+      "size": "M",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "reviewed_date": "2026-02-09",
+      "review_note": "Approved. VPS card first, GitHub card second with OPTIONAL badge. All Codespaces references removed from CreateProject.jsx (grep confirms zero matches). New messaging: 'Connect GitHub / Version control & cloud backup / Free unlimited repos / Version history'. Director also fixed stale Codespaces ref in welcome-to-hubllm.html line 336."
+    },
     {
       "id": "FEAT-37",
       "name": "Welcome to HubLLM page — auto-loads in preview panel on first project open",
