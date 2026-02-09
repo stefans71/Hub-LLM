@@ -26,27 +26,6 @@
   },
   "queue": [
     {
-      "id": "BUG-67",
-      "name": "Preview device buttons (phone/tablet/desktop/fit) don't work — isInternalDocs overrides sizing",
-      "size": "S",
-      "priority": 3,
-      "status": "pending_review",
-      "completion_note": "Changed PreviewPanel.jsx. Added isFullBleed = isInternalDocs && deviceMode === 'fit' (line 36). Replaced all isInternalDocs conditionals in frame container (lines 305-326) with isFullBleed. getFrameStyles() now always applies — device buttons constrain both docs and external URLs. Only Fit+docs goes edge-to-edge. All other combos (docs+phone/tablet/desktop, any external URL) get centered frame with white background, 8px border-radius, and box-shadow.",
-      "description": "The device viewport buttons in PreviewPanel (phone 375px, tablet 768px, desktop 1280px, fit) do nothing because the isInternalDocs path overrides all sizing.\n\n## Root Cause\n\nPreviewPanel.jsx:322 — when `isInternalDocs` is true, the frame container style is hardcoded to `{ width: '100%', height: '100%' }`, ignoring `getFrameStyles()` which reads `deviceMode`. So clicking the device buttons updates state but the style override means nothing changes visually.\n\n## Fix — Two-mode device sizing\n\nThe device buttons should work in BOTH modes, just targeting different things:\n\n### Mode 1: Internal docs (Docs button active, `isInternalDocs === true`)\nDevice buttons should constrain the **docs content wrapper** (the div at line 311). Remove the `isInternalDocs` override at line 322 and let `getFrameStyles()` apply normally. The docs content will render at 375px / 768px / 1280px / 100% width, centered in the preview area — letting users test responsive docs layouts.\n\nWhen docs mode is active and a device size is selected, the container should:\n- Apply `getFrameStyles()` width (375/768/1280/100%)\n- Center horizontally in the preview area\n- Keep full height\n- Use the same gray surround/shadow treatment as external sites so it looks like a device frame\n\n### Mode 2: External URL (user entered a URL, `isInternalDocs === false`)\nThis already works correctly — `getFrameStyles()` applies to the iframe container. Just keep existing behavior.\n\n### Implementation\n\nPreviewPanel.jsx:302-323 — Remove or simplify the `isInternalDocs` conditional in the frame container styles. Let `getFrameStyles()` always apply. The key change is line 322:\n\n```jsx\n// Before:\n...(isInternalDocs ? { width: '100%', height: '100%' } : getFrameStyles())\n\n// After — always use getFrameStyles:\n...getFrameStyles(),\n...(deviceMode === 'fit' ? { height: '100%' } : {})\n```\n\nAlso update the surrounding container styles (lines 305-309) — when a device size is selected (not fit), always center the frame and show the shadow/border treatment regardless of docs vs external.\n\nThe Fit mode should still go edge-to-edge for docs (current behavior).",
-      "change": [
-        "frontend/src/components/PreviewPanel.jsx:302-323 — Remove isInternalDocs override on frame sizing. Let getFrameStyles() always control width.",
-        "frontend/src/components/PreviewPanel.jsx:305-309 — Update container justify/align to center frame when a device size is active, regardless of isInternalDocs."
-      ],
-      "test": "(1) Load docs — click Phone button → docs content constrains to 375px centered. (2) Click Tablet → 768px. (3) Click Desktop → 1280px. (4) Click Fit → docs go full width edge-to-edge. (5) Enter external URL — device buttons constrain iframe same way. (6) 'Open in Browser' still opens current URL in new tab.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
       "size": "L",
@@ -67,6 +46,15 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-67",
+      "name": "Preview device buttons work for both docs and external URLs",
+      "size": "S",
+      "status": "completed",
+      "completed": "2026-02-09",
+      "reviewed_by": "Director",
+      "review_note": "Verified: Added isFullBleed = isInternalDocs && deviceMode === 'fit'. Replaced all isInternalDocs conditionals with isFullBleed. getFrameStyles() always applies — device buttons constrain both docs and external URLs. Only Fit+docs goes edge-to-edge. Commit 0581ab7."
+    },
     {
       "id": "FEAT-50",
       "name": "LLM-Dev tab bar polish: sleeker tabs, Coming Soon placeholders, swimming Docker whale",
