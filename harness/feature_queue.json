@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T11:45",
+  "updated": "2026-02-09T12:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,45 @@
     }
   },
   "queue": [
+    {
+      "id": "BUG-69",
+      "name": "Chat.jsx hooks violation — useEffect after early return crashes on mode switch",
+      "size": "XS",
+      "priority": 1,
+      "status": "pending",
+      "description": "When `useClaudeCodeTerminal` flips from false to true (e.g. after SSH refresh sets isConnected=true → Claude Code status check passes → claudeCodeStatus.authenticated becomes true), the Chat component crashes with 'Rendered fewer hooks than expected'.\n\n**Root cause:** Chat.jsx line 317 has an early return for ClaudeCodeTerminalChat. Line 336 has a `useEffect` that only runs when the early return is NOT taken. React requires the same number of hooks on every render.\n\n**Error:** `Rendered fewer hooks than expected. This may be caused by an accidental early return statement.` in `<Chat>` at line 25.\n\n## Fix\n\nMove the code at lines 329-342 ABOVE the early return at line 317. Specifically:\n\n1. Move lines 331-333 (the `isAnthropicModel`, `showConnectingWelcome` variables) to right before line 317\n2. Move lines 336-342 (the `useEffect` for BUG-63 retry timer) to right before line 317\n3. Keep the early return at line 317 where it is — just make sure ALL hooks are above it\n\nThe moved code:\n```jsx\n// BUG-24: Check connecting welcome state\nconst isAnthropicModel = model?.provider === 'anthropic' ||\n  (typeof model === 'string' && model.toLowerCase().includes('claude'))\nconst showConnectingWelcome = isAnthropicModel && serverId && !claudeCodeStatus?.authenticated\n\n// BUG-63: Show retry button after 10s stuck on connecting\nuseEffect(() => {\n  if (showConnectingWelcome) {\n    const timer = setTimeout(() => setShowRetry(true), 10000)\n    return () => clearTimeout(timer)\n  }\n  setShowRetry(false)\n}, [showConnectingWelcome])\n\n// CLAUDE-02-REWORK: early return for terminal chat\nif (useClaudeCodeTerminal) { ... }\n```\n\nThis is an XS fix — just moving ~12 lines up. No logic changes needed.",
+      "change": [
+        "frontend/src/components/Chat.jsx:329-342 — Move useEffect and variables ABOVE the early return at line 317"
+      ],
+      "test": "(1) Load workspace with VPS connected — chat shows correctly. (2) Click SSH refresh button — page should NOT crash. (3) If Claude Code authenticates, chat switches to ClaudeCodeTerminalChat without error. (4) Check console for 'hooks' errors — should be none.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "BUG-70",
+      "name": "Terminal status bar — IP tooltip on server name, not cwd span",
+      "size": "XS",
+      "priority": 3,
+      "status": "pending",
+      "description": "FEAT-49 added a cwd display and IP tooltip to MultiTerminal.jsx status bar. But the `title` attribute (hover tooltip showing IP) is on the cwd `<span>` (line 355), not on the server name. User expects to hover over 'control-tower-01' to see the IP address.\n\n## Fix\n\nIn `MultiTerminal.jsx`, find the status bar area (~lines 348-370):\n\n1. Add `title` attribute to the SERVER NAME span (the one from `getStatusText()` at ~line 352):\n```jsx\n<span\n  title={serverInfo?.host ? `${serverInfo.host}` : ''}\n  style={{ color: 'var(--text-secondary)', cursor: serverInfo?.host ? 'help' : 'default' }}\n>\n  {getStatusText()}\n</span>\n```\n\n2. Keep the cwd span's title as just the full path (remove the IP from it):\n```jsx\n<span title={cwd} ...>\n  {cwd.replace('/root/llm-hub-projects/', '~/')}\n</span>\n```\n\nThis way: hover server name → see IP. Hover cwd → see full path.",
+      "change": [
+        "frontend/src/components/MultiTerminal.jsx:~352 — Add title={serverInfo?.host} to server name span",
+        "frontend/src/components/MultiTerminal.jsx:~355 — Change title to just cwd (remove IP from it)"
+      ],
+      "test": "(1) Connect terminal. (2) Hover over server name — tooltip shows IP address. (3) Hover over cwd — tooltip shows full directory path.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
     {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
