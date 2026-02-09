@@ -48,15 +48,16 @@
     },
     {
       "id": "BUG-72",
-      "name": "Terminal tab close button missing in tabbed mode",
+      "name": "Terminal tab close button missing in tabbed mode + color picker overflow",
       "size": "XS",
       "priority": 3,
       "status": "pending",
-      "description": "The terminal close (X) button exists in split-pane mode (MultiTerminal.jsx lines 659-675) but is missing from the tabbed mode tab header (lines 732-762). Users see tabs like 'bash' but can't close them.\n\n## Fix\n\nIn the tabbed mode section (~line 760), after the `<span>{terminal.name}</span>`, add the same close button pattern from split-pane mode:\n\n```jsx\n<span>{terminal.name}</span>\n{terminals.length > 1 && (\n  <button\n    onClick={(e) => { e.stopPropagation(); closeTerminal(terminal.id); }}\n    style={{\n      background: 'none',\n      border: 'none',\n      color: 'var(--text-muted)',\n      cursor: 'pointer',\n      padding: '2px',\n      display: 'flex',\n      alignItems: 'center',\n      fontSize: '10px',\n      opacity: 0.5\n    }}\n    onMouseEnter={(e) => e.currentTarget.style.opacity = 1}\n    onMouseLeave={(e) => e.currentTarget.style.opacity = 0.5}\n  >\n    <X size={12} />\n  </button>\n)}\n```\n\nNote: subtle styling — `opacity: 0.5` by default, full opacity on hover. Only shows when more than 1 terminal exists (can't close the last one).",
+      "description": "Two small fixes in MultiTerminal.jsx:\n\n## Part 1: Close button missing in tabbed mode\n\nThe terminal close (X) button exists in split-pane mode (lines 659-675) but is missing from the tabbed mode tab header (lines 732-762). Users see tabs like 'bash' but can't close them.\n\nIn the tabbed mode section (~line 760), after `<span>{terminal.name}</span>`, add the close button (same pattern as split-pane):\n```jsx\n{terminals.length > 1 && (\n  <button\n    onClick={(e) => { e.stopPropagation(); closeTerminal(terminal.id); }}\n    style={{\n      background: 'none', border: 'none', color: 'var(--text-muted)',\n      cursor: 'pointer', padding: '2px', display: 'flex',\n      alignItems: 'center', fontSize: '10px', opacity: 0.5\n    }}\n    onMouseEnter={(e) => e.currentTarget.style.opacity = 1}\n    onMouseLeave={(e) => e.currentTarget.style.opacity = 0.5}\n  >\n    <X size={12} />\n  </button>\n)}\n```\n\n## Part 2: Color picker overflows right edge\n\nThe terminal color picker popup (lines 972-1015) uses `position: fixed` with `left: e.clientX`. When triggered from the TERMS sidebar on the far right, it overflows off-screen.\n\nFix the positioning at lines 976-978. Calculate the position so it doesn't overflow:\n```jsx\nleft: Math.min(colorPickerPosition.x, window.innerWidth - 180),\ntop: Math.min(colorPickerPosition.y, window.innerHeight - 120),\n```\nThe popup is ~160px wide and ~100px tall, so subtracting with margin keeps it visible. Alternatively, offset left by the popup width when near the right edge.",
       "change": [
-        "frontend/src/components/MultiTerminal.jsx:~760 — Add X close button to tabbed mode tabs (after terminal name span)"
+        "frontend/src/components/MultiTerminal.jsx:~760 — Add X close button to tabbed mode tabs",
+        "frontend/src/components/MultiTerminal.jsx:~976-978 — Fix color picker position to not overflow right edge"
       ],
-      "test": "(1) Open 2+ terminals. (2) Hover over a tab — X button appears with higher opacity. (3) Click X — terminal closes, switches to another tab. (4) With only 1 terminal, no X shown.",
+      "test": "(1) Open 2+ terminals in tabbed mode — X button shows, click closes tab. (2) Right-click terminal in TERMS sidebar on far right — color picker fully visible, not clipped. (3) With only 1 terminal, no X shown.",
       "completion_checklist": {
         "code_works": false,
         "index_updated": false,
