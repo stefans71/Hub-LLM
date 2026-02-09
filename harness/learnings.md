@@ -2318,5 +2318,10 @@ Three callbacks from Workspace to ServerManager:
 **Task**: FEAT-46 VibeShip.cloud waitlist card in Setup wizard
 **What**: Added VibeShip-branded waitlist card to Setup wizard step 1 (path selection). Card uses VibeShip brand colors (dark green bg + cyan accents) matching vibeship.cloud landing page. Backend waitlist endpoint, model, and migration were already in place from previous session. This session: restyled card with brand colors, placed it in ChoosePathStep between PathCards and Continue button, changed badge from "BETA" to "COMING SOON", added tagline "You Vibe, We Ship." with link to vibeship.cloud. Frontend builds clean.
 
+### Session 144 - 2026-02-09 EST
+**Task**: FEAT-54 + FEAT-57
+**What**: FEAT-54: Added systemPrompt field to TEMPLATE_CLAUDE_SETTINGS in projects.py. 286-word prompt covering Lead Engineer role, index-as-source-of-truth, 10-step task workflow, completion enforcement (30+ words with pasted output), pre-commit hook, M/L task sizing, and rules. JSON validated clean. FEAT-57: Added TEMPLATE_ROADMAP constant with 5 phases (Manual ✅, PRP Gen ✅, Ralph Loop 🔜, MCP Server 🔜, Browser Testing 📋). Wired into create_vps_project_folder template_files as harness/ROADMAP.md.
+**Key Learning**: systemPrompt in Claude Code settings.json persists across context window — unlike CLAUDE.md which drifts as context grows. Dense, actionable rules in systemPrompt ensure the Engineer agent never forgets core workflow even in long sessions.
+
 ---
 

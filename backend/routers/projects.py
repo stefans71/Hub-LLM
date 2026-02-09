@@ -112,7 +112,8 @@ TEMPLATE_CLAUDE_SETTINGS = """{
       "Bash(rm -rf /)",
       "Bash(sudo rm -rf *)"
     ]
-  }
+  },
+  "systemPrompt": "You are the Lead Engineer for {{projectName}}. You implement tasks from harness/feature_queue.json, one task at a time.\\n\\n## Source of Truth\\nCODEBASE_INDEX.yaml is the primary reference for understanding this codebase. Before every task, grep it for the relevant area — NEVER cat the whole file. After every task that changes code, update the index entries for files you touched (line counts, purpose, exports).\\n\\n## Task Workflow\\n1. Read CLAUDE.md for project rules and critical patterns\\n2. grep -i '[area]' harness/learnings.md — check past debugging for this area\\n3. grep -i '[area]' harness/CODEBASE_INDEX.yaml — understand current code structure\\n4. Write a TODO list (use TodoWrite) before starting implementation\\n5. Implement the task following patterns in CLAUDE.md\\n6. Update CODEBASE_INDEX.yaml for all files you changed\\n7. Write session notes to harness/learnings.md with date, task ID, what you did, key learnings\\n8. Write completion_note with test evidence (30+ words, pasted output)\\n9. Set ALL completion_checklist items to true\\n10. Set status to 'pending_review' — NEVER 'done' or 'completed'\\n\\n## Completion Enforcement\\n- completion_note MUST be 30+ words with pasted test output (curl response, console output, query result)\\n- All completion_checklist items must be true\\n- The git pre-commit hook blocks commits where code files changed but CODEBASE_INDEX.yaml was not updated\\n- If the hook blocks you: update the index, then commit again\\n\\n## Task Sizing\\n- XS/S tasks: you may do multiple per session\\n- M/L tasks: ONE only per session, then stop and report\\n\\n## Rules\\n- Never skip grepping learnings — past sessions have critical debugging context\\n- Never cat the full index file — grep for the specific area you need\\n- Never set a task to 'done' or 'completed' — only 'pending_review' (Director reviews)\\n- Never commit without updating the index if you changed code files\\n- If you discover a reusable pattern during implementation, add it to CLAUDE.md Critical Patterns section"
 }
 """
 
@@ -438,6 +439,45 @@ claude                  # Start a new Claude Code session
 ```
 """
 
+TEMPLATE_ROADMAP = """# Harness Automation Roadmap
+
+This roadmap tracks the evolution of the HubLLM harness — the automation layer that coordinates AI agents building your project.
+
+## Phase 1: Manual (Current) ✅ SHIPPED
+- User prompts Claude Code: "do the next task"
+- One task at a time, manual review cycle
+- harness/feature_queue.json tracks task state
+- CODEBASE_INDEX.yaml keeps agents oriented
+- harness/learnings.md captures debugging history
+
+## Phase 2: PRP Generation ✅ SHIPPED
+- `/generate-prp "brief"` — interactive Q&A → full implementation blueprint
+- `/execute-prp PRPs/x.md` — auto-populates feature_queue.json from PRP
+- User Profile in CLAUDE.md adapts Q&A across projects
+- Review gates before PRP generation and after
+
+## Phase 3: Ralph Loop 🔜 PLANNED
+- Agent auto-continues after task completion with verification gates
+- Completion quality checks before proceeding to next task
+- Automatic index updates validated between tasks
+- Pause/resume capability for long task chains
+
+## Phase 4: MCP Server 🔜 PLANNED
+- File-based task automation via Model Context Protocol
+- Tools: get_next_task, complete_task, update_index, get_learnings
+- Enables external orchestrators to drive the task loop
+- Structured tool calls replace prompt-based task management
+
+## Phase 5: Browser Testing 📋 FUTURE
+- Puppeteer/Playwright for automated UI verification
+- Screenshot comparison for visual regression
+- Agent-driven test flows that validate frontend changes
+- Integrated into completion checklist as automated gate
+
+---
+*Updated: {{createdDate}}*
+"""
+
 
 TEMPLATE_PRE_COMMIT_HOOK = r"""#!/bin/bash
 # =============================================================================
@@ -687,6 +727,7 @@ async def create_vps_project_folder(
             "harness/CODEBASE_INDEX.yaml": TEMPLATE_CODEBASE_INDEX,
             "harness/learnings.md": TEMPLATE_LEARNINGS,
             "README.md": TEMPLATE_README,
+            "harness/ROADMAP.md": TEMPLATE_ROADMAP,
             "PRPs/.gitkeep": "",
             "docs/.gitkeep": "",
             "src/.gitkeep": "",

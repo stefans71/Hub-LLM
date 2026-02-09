@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T12:45",
+  "updated": "2026-02-09T17:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,111 @@
     }
   },
   "queue": [
+    {
+      "id": "FEAT-53",
+      "name": "Improve /generate-prp intake flow — navigation, review gate, approval gate",
+      "size": "M",
+      "priority": 2,
+      "status": "pending",
+      "description": "Dogfooding TheFishStocker PRP intake revealed 4 UX gaps in the generate-prp template. All changes target TEMPLATE_GENERATE_PRP in backend/routers/projects.py (lines 119–291). This is the prompt template scaffolded as `.claude/commands/generate-prp.md`.\n\n## Gap 1: No way to go back\nUser can't revise or expand a previous answer mid-survey. Once you answer Q3, you can't change Q1.\n\n## Gap 2: No review gate\nPRP generates immediately after the last discovery question. No summary step, no chance to review/revise all answers before generation.\n\n## Gap 3: PRP has no escape hatch\nAfter generation, user is stuck with the PRP. No way to loop back to Q&A to change specific answers and regenerate. Editing the PRP text directly is token-expensive and creates cascading changes — better to revise answers and regenerate the whole PRP.\n\n## Gap 4: Claude auto-proceeds after PRP\nClaude immediately populates the queue and starts scaffolding without waiting for user approval of the PRP.",
+      "change": [
+        "backend/routers/projects.py:~157 — Addition 1: After 'Wait for the user to answer before proceeding' (line 157), insert navigation commands block. Tell Claude to inform users they can say: 'change answer [N]' or 'revise [topic]' to re-ask a question, 'show my answers' to display all answers so far, 'start over' to reset from Q1. These work during BOTH Phase 1 and Phase 2.",
+        "backend/routers/projects.py:~159-170 — Addition 5: Rewrite the User Profile save logic (lines 159-170). The User Profile is a LIVING DOCUMENT that updates continuously throughout the Q&A — not a one-time snapshot.\n\n  (a) CONTINUOUS UPDATES: Replace 'Append a ## User Profile' with 'Replace the existing ## User Profile section (or create if none exists)'. Update the profile every time the user answers, revises, expands, or restarts. Each interaction is behavioral data. The profile always reflects the CURRENT state of the user's answers.\n\n  (b) BEHAVIORAL PATTERN TRACKING: Add a `## Q&A Behavior` section to the User Profile that tracks patterns across the ENTIRE interaction:\n    - Answers revised: [list which questions were changed and how many times]\n    - Answers expanded: [list which questions the user added free-text detail to]\n    - Restarts: [N] (full survey restarts during this project)\n    - Free-text usage: [how often the user typed custom answers vs picked selectable options]\n    - Projects completed: [N] (persists across projects on this VPS — increments each time a PRP is approved)\n  \n  This section updates in real-time as the user interacts. It captures the user's pattern of engagement with the Q&A process itself.\n\n  (c) READ BEFORE STARTING: Claude MUST read the existing User Profile in CLAUDE.md before starting the intake. If a prior profile exists (from a previous project on this VPS):\n    - Use prior experience level and preferences as defaults — present them as selectable confirmations ('Last time you said X — still true?' with Yes/Change options) rather than re-asking from scratch\n    - Adapt question depth based on accumulated behavioral patterns (e.g., if user consistently expands answers with free-text, offer more open-ended options; if user picks 'you decide' frequently, ask fewer technical questions)\n    - Do NOT assume high revision count = 'make Q&A longer'. It could mean: selectable options weren't good enough, user mis-hit a key during review, or user genuinely wants more detail. The free-text option on every question + review gate should prevent most unnecessary restarts. Let the PATTERNS across multiple projects reveal the real signal.\n\n  (d) PROJECT SCOPE AWARENESS: Claude should calibrate Q&A depth to the PROJECT, not just the user. Analyze the brief ($ARGUMENTS) to gauge scope:\n    - Simple script ('auto-respond to emails with selectable options') → minimal discovery, maybe 2-3 questions, skip most technical questions. Claude can make nearly all decisions.\n    - Mid-complexity app ('task tracker with auth') → standard discovery phase, moderate follow-ups.\n    - Complex platform ('LinkedIn-style social app') → full discovery with detailed follow-ups on architecture, data models, integrations, etc.\n  Combined with user behavioral patterns: if the user has done 3 projects and always picks 'you decide' for tech stack, skip that question for a simple script but still ask for a complex platform where the choice matters more. The two axes — user patterns + project scope — together determine Q&A depth.\n\n  (e) CONTINUOUS IMPROVEMENT LOOP: Over multiple projects and PRPs, the accumulated profile evolves. Claude adapts the Q&A — better selectable options, right number of follow-up questions, scope-appropriate depth — based on how THIS user actually interacts AND what they're building. The goal is that each successive PRP intake gets smoother because Claude has learned the user's style. The review gate escape hatch remains regardless of how well Claude has learned — it's the user's safety net no matter how simple or complex the project.",
+        "backend/routers/projects.py:~186 — Addition 2: At the start of Phase 2 (line 179-186 area), add instruction for Claude to maintain a running internal summary of ALL answers given so far (Phase 1 calibration + Phase 2 discovery). This enables the 'show my answers' command and powers the review gate.",
+        "backend/routers/projects.py:~222 — Addition 3: Replace the Phase 3 header and first paragraph (lines 222-224: '## Phase 3: Generate PRP' + 'After all questions are answered, create TWO files:') with a two-step gated review process:\n\nStep 1 — Interactive answer review: For each answer the user gave, present it back using the SAME selectable-option format as the survey questions:\n  > **Platform**: Mobile-first web app\n  > 1. Keep this answer\n  > 2. Expand on this (add detail)\n  > 3. Change this answer\n  Walk through ALL answers one at a time. Options 2 and 3 open free-text input, then move to next answer.\n\nStep 2 — Final confirmation: After all answers reviewed, ask:\n  > Ready to generate the PRP?\n  > 1. Yes, generate it\n  > 2. Let me review again from the top\n  > 3. I want to change something specific\n  Only proceed to file generation after user selects 'Yes, generate it'.\n\nKeep the existing Phase 3 file generation content (lines 226-290) INTACT — just gate it behind the review + confirmation.",
+        "backend/routers/projects.py:~271 — Addition 4: Replace the existing lines 271-276 ('After generating the PRP, add all Phase 1 tasks to feature_queue.json...') with a post-generation approval gate that loops back to Q&A (NOT PRP text editing).\n\n  DESIGN RATIONALE: Editing the PRP output directly is token-expensive and creates a chain of cascading changes that need further review. The better approach is to loop back to the Q&A level — change specific answers, then regenerate the whole PRP. The pre-generation review gate (Addition 3) is the cheapest place to catch issues. But post-PRP, the user still needs an escape hatch.\n\n  After PRP is generated, STOP and present these selectable options:\n  > Your PRP is ready! Read through it, then choose:\n  > 1. Use this PRP (approve and proceed)\n  > 2. Change a specific answer (re-ask one question)\n  > 3. Start the survey again from scratch\n\n  If user selects option 2:\n  - Ask 'Which question number do you want to revisit?' (free text — user types a number or topic)\n  - Re-ask that question with selectable options\n  - After they answer, ask: 'Want to change any other answers?'\n    > 1. Yes, change another answer\n    > 2. No, regenerate the PRP with my updated answers\n  - Loop until user selects 'No, regenerate'\n  - Then regenerate the ENTIRE PRP from scratch with the updated answer set\n  - Show the new PRP and present the same 3-option gate again\n\n  If user selects option 3:\n  - Reset and restart from Phase 1 Question 1\n\n  If user selects option 1 (approve):\n  - Add Phase 1 tasks to feature_queue.json\n  - STOP AGAIN. Tell user to run /execute-prp when ready to start building. Do NOT auto-execute.",
+        "backend/routers/projects.py:~128 — Addition 6: After the Phase 1 header (line 126-128 area), add a one-time speech-to-text tip. Many users will use voice input (Windows+H, Mac dictation) to answer questions. Malformed speech-to-text wastes tokens and leads to misinterpretation. Show this tip ONCE at the start of the Q&A, before Question 1:\n\n  > **Tip: Using voice input?** If you're using speech-to-text (Windows: Win+H, Mac: Fn twice or Ctrl+Cmd+D), take a moment to read your response before submitting. Speech-to-text often produces garbled text — a quick proofread saves both of us from guessing what you meant.\n  > 1. Got it, thanks\n  > 2. Tell me more about setting up speech-to-text\n  > 3. Skip — I'm typing\n\n  If user selects option 2: Briefly explain OS-native speech-to-text setup (Win+H for Windows, Fn-Fn or Ctrl+Cmd+D for Mac). Mention Whisper as a free local alternative for better accuracy. Keep it short — link to docs rather than writing a tutorial. Then return to Question 1.\n\n  If user selects option 1 or 3: Proceed directly to Question 1.\n\n  This tip should NOT appear on subsequent projects if the User Profile already exists (user has seen it before). Check for existing profile in CLAUDE.md — if found, skip the tip."
+      ],
+      "test": "(1) Create test project (Terminal Track), run /generate-prp. (2) Answer calibration questions, type 'change answer 1' — should re-ask Q1 with selectable options. (3) Type 'show my answers' — should display summary. (4) Complete all Phase 2 questions — review gate starts: each answer replayed one at a time with Keep/Expand/Change selectable options. (5) Select 'Expand on this' for one answer — opens free-text, then moves to next. (6) After all reviewed, 'Ready to generate?' selectable prompt appears. (7) Select 'Yes' — PRP generates. (8) Claude STOPS, shows 3-option gate: Use this PRP / Change a specific answer / Start over. (9) Select 'Change a specific answer' — asks which question number, re-asks it, then asks 'change another?'. Select 'No, regenerate' — full PRP regenerates and shows 3-option gate again. (10) Select 'Use this PRP' — queue populates. (11) Claude STOPS again, tells user to run /execute-prp.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-54",
+      "name": "Add Engineer systemPrompt to TEMPLATE_CLAUDE_SETTINGS",
+      "size": "S",
+      "priority": 2,
+      "status": "pending_review",
+      "completion_note": "Added systemPrompt field to TEMPLATE_CLAUDE_SETTINGS in projects.py:96-117. JSON validated with python3 json.loads() — parses correctly with both permissions and systemPrompt keys. systemPrompt is 286 words covering: Lead Engineer role, CODEBASE_INDEX.yaml as source of truth, 10-step task workflow, completion enforcement (30+ words, pasted output), pre-commit hook reference, M/L task limit, and rules against skipping learnings/index. Existing permissions block unchanged.",
+      "description": "The scaffolded .claude/settings.json currently has permissions only — no systemPrompt. This means the Engineer has NO persistent behavioral rules during long sessions. Rules in CLAUDE.md drift as context grows; the systemPrompt persists.\n\nAdd a systemPrompt to the TEMPLATE_CLAUDE_SETTINGS constant in backend/routers/projects.py. The systemPrompt should include:\n\n1. **Role**: You are the Lead Engineer. Implement tasks from harness/feature_queue.json. One task at a time.\n2. **Index is source of truth**: CODEBASE_INDEX.yaml is the primary reference for understanding the codebase. Grep it before every task — never cat the whole file. Update it after every task that changes code.\n3. **Task workflow**: Read CLAUDE.md → grep learnings → grep index → write TODO list → implement → update index → write learnings → write completion_note with test evidence → set pending_review. NEVER set done or completed.\n4. **Completion enforcement**: completion_note must be 30+ words with pasted test output. All checklist items true. The git pre-commit hook blocks commits where code changed but index didn't.\n5. **One M/L task per session**: XS/S can do multiple.\n\nKeep the systemPrompt under ~800 words. It needs to be dense and actionable, not verbose.",
+      "change": [
+        "backend/routers/projects.py — Find TEMPLATE_CLAUDE_SETTINGS constant (currently just permissions JSON). Add a 'systemPrompt' field with the Engineer behavioral rules described above. Keep existing permissions structure intact."
+      ],
+      "test": "(1) Create a new test project in HubLLM (Terminal Track). (2) Check scaffolded .claude/settings.json on VPS — should have both 'permissions' and 'systemPrompt' fields. (3) systemPrompt should mention: index as source of truth, pending_review only, completion_note with evidence, one M/L task limit.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      }
+    },
+    {
+      "id": "FEAT-55",
+      "name": "Director auto-scaffold — create Director directory alongside project",
+      "size": "M",
+      "priority": 2,
+      "status": "pending",
+      "description": "Currently the template only scaffolds the Engineer environment. The Director directory must be created manually. This task adds Director scaffolding as part of project creation.\n\nWhen Hub-LLM creates a Terminal Track project at /root/llm-hub-projects/{{slug}}/, it should ALSO create /root/llm-hub-projects/{{slug}}-director/ with:\n\n1. **CLAUDE.md** — Director role definition, reference material:\n   - Role: Architect, planner, queue manager. Does NOT write app code.\n   - Environment paths (app directory, harness files)\n   - Queue entry format\n   - Review workflow (how to review pending_review tasks)\n   - Session workflow\n\n2. **.claude/settings.json** with:\n   - **permissions**: Read-only access to app directory + write access to app's harness/ files only\n   - **systemPrompt**: Director behavioral rules:\n     - You coordinate the Lead Engineer. Write tasks, review completions.\n     - CODEBASE_INDEX.yaml is the source of truth. Grep it before writing any task — never cat the whole file.\n     - Task creation gates: check index, check learnings, verify source, then write task.\n     - Review gates: completion_note with evidence, index updated, checklist true.\n     - DO NOT write app code. DO NOT approve tasks where index wasn't updated.\n\n3. **.claude/settings.local.json** — deny writes to app's src/, backend/, frontend/ directories\n\nNew template constants needed:\n- TEMPLATE_DIRECTOR_CLAUDE_MD\n- TEMPLATE_DIRECTOR_SETTINGS\n- TEMPLATE_DIRECTOR_SETTINGS_LOCAL\n\nUpdate create_vps_project_folder() in projects.py to create the director directory and write these files after the main project scaffold.",
+      "change": [
+        "backend/routers/projects.py — Add 3 new template constants: TEMPLATE_DIRECTOR_CLAUDE_MD, TEMPLATE_DIRECTOR_SETTINGS, TEMPLATE_DIRECTOR_SETTINGS_LOCAL",
+        "backend/routers/projects.py — In create_vps_project_folder(), after scaffolding the main project: mkdir {{slug}}-director/.claude/, write Director CLAUDE.md, settings.json, settings.local.json"
+      ],
+      "test": "(1) Create a new test project. (2) Verify /root/llm-hub-projects/{{slug}}-director/ exists with CLAUDE.md, .claude/settings.json, .claude/settings.local.json. (3) Director settings.json has systemPrompt with task creation gates and review process. (4) Director settings.local.json denies writes to app source code. (5) Director CLAUDE.md has queue format, review workflow, session workflow.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-56",
+      "name": "Add code-researcher agent to template scaffold",
+      "size": "S",
+      "priority": 3,
+      "status": "pending",
+      "description": "The CODEBASE_INDEX.yaml is the source of truth for both Director (task writing) and Engineer (implementation). Currently there's no tooling in the template to automate index population — the Engineer is just told 'update the index after every task' in CLAUDE.md.\n\nHub-LLM's own setup has a code-researcher agent (.claude/agents/code-researcher.md) that automates index scanning. Port a simplified version of this to the template.\n\nAdd TEMPLATE_CODE_RESEARCHER constant to projects.py. The agent should:\n- Scan source files (wc -l, grep for exports/imports/state/endpoints)\n- Write structured YAML entries to CODEBASE_INDEX.yaml\n- Handle 3 request types: INVESTIGATE (scan unfamiliar area), SCAN (before a task), UPDATE (after a task)\n- Use Sonnet model for cost efficiency\n\nThe Director can spawn this agent to keep the index current before writing tasks. The Engineer can spawn it after completing tasks to update the index.\n\nUpdate create_vps_project_folder() to write .claude/agents/code-researcher.md.",
+      "change": [
+        "backend/routers/projects.py — Add TEMPLATE_CODE_RESEARCHER constant with agent definition (model: sonnet, tools: Read/Write/Edit/Grep/Glob/Bash)",
+        "backend/routers/projects.py — In create_vps_project_folder(), write .claude/agents/code-researcher.md"
+      ],
+      "test": "(1) Create test project. (2) Verify .claude/agents/code-researcher.md exists. (3) File defines agent with correct tools and 3 request types. (4) YAML entry format matches index structure.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-57",
+      "name": "Add harness ROADMAP.md to template scaffold",
+      "size": "XS",
+      "priority": 3,
+      "status": "pending_review",
+      "completion_note": "Added TEMPLATE_ROADMAP constant after TEMPLATE_README in projects.py. Contains 5 phases: Phase 1 Manual (SHIPPED), Phase 2 PRP Generation (SHIPPED), Phase 3 Ralph Loop (PLANNED), Phase 4 MCP Server (PLANNED), Phase 5 Browser Testing (FUTURE). Each phase has description + status emoji. Wired into create_vps_project_folder() template_files dict as harness/ROADMAP.md. Uses {{createdDate}} variable. Python syntax verified clean.",
+      "description": "Every scaffolded project should include visibility into the harness automation roadmap so both Director and Engineer understand the planned evolution.\n\nAdd TEMPLATE_ROADMAP constant to projects.py. Content:\n\n- Phase 1: Manual (current) — user prompts 'do next task', one at a time\n- Phase 2: PRP Generation — /generate-prp + /execute-prp automate planning and task creation\n- Phase 3: Ralph Loop — agent auto-continues after task completion with verification gates\n- Phase 4: MCP Server — file-based task automation (get_next_task, complete_task, update_index)\n- Phase 5: Browser Testing — Puppeteer/Playwright for automated UI verification\n\nInclude current status markers (which phases are shipped vs planned).\n\nUpdate create_vps_project_folder() to write harness/ROADMAP.md.",
+      "change": [
+        "backend/routers/projects.py — Add TEMPLATE_ROADMAP constant",
+        "backend/routers/projects.py — In create_vps_project_folder(), write harness/ROADMAP.md"
+      ],
+      "test": "(1) Create test project. (2) Verify harness/ROADMAP.md exists with 5 phases. (3) Phase status markers are accurate.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      }
+    },
     {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",

@@ -132,6 +132,54 @@ The index is seeded empty by the scaffold, populated by DOCS-01 (first task in q
 
 ---
 
+## Session 3 — February 9, 2026
+
+### What We Did
+Completed the full `/generate-prp` intake for TheFishStocker — went through all Phase 1 calibration questions and Phase 2 discovery questions, generated the PRP, and had Claude start building.
+
+### UX Gaps Found During PRP Intake
+
+| # | Gap | Impact | Fix |
+|---|-----|--------|-----|
+| 1 | **No "go back"** — Can't revise or expand a previous answer mid-survey | User realized Q1 answer was too brief after reaching Q3. Had to finish and hope it worked out. | Add navigation commands: "change answer [N]", "show my answers", "start over" |
+| 2 | **No review gate** — PRP generates immediately after last question | No chance to see all answers together, catch mistakes, or add missing context before the PRP is built on them. | Add interactive walk-through review: each answer replayed with Keep/Expand/Change selectable options, then a final "Ready to generate?" confirmation |
+| 3 | **PRP is read-only** — User doesn't know they can request changes | PRP opens in preview panel. User thinks it's final. No guidance on how to iterate. | Add post-generation guidance: explain how to request changes, list editable sections |
+| 4 | **Claude auto-proceeds** — Starts creating tasks and scaffolding without waiting | Claude populated the queue and began DOCS-01 before user could review the PRP. No approval gate. | Add explicit approval gate: STOP after PRP generation, STOP again after queue population. Only proceed on user's explicit go-ahead. |
+
+### Template Change (FEAT-53)
+All 4 gaps are addressed in a single task: FEAT-53 in Hub-LLM's queue. Targets `TEMPLATE_GENERATE_PRP` in `backend/routers/projects.py` (lines 119–291). Five surgical additions to the existing prompt template — no structural rewrite needed.
+
+### Additional Observations
+- **User Profile update not idempotent** — If a user revises calibration answers, the template says "Append a ## User Profile section" which would create duplicates. FEAT-53 includes changing "Append" to "Replace existing (or create if none)".
+- **Post-PRP editing is the wrong default** — Letting users edit the PRP text directly ("adjust this section") is token-expensive and creates cascading changes that need further review. Better design: loop back to Q&A level, change specific answers, then regenerate the entire PRP. The pre-generation review gate (Addition 3) is the cheapest intervention point. Post-PRP gate offers: approve / change a specific answer (loops back to Q&A) / start over.
+- **User Profile is a living document, not a snapshot** — Should update continuously throughout the Q&A process, not once at the end. Every answer, revision, expansion, restart is behavioral data. Track patterns: which questions get revised, how often free-text is used vs selectable options, restart count. Over multiple projects, the accumulated profile evolves and Claude adapts the Q&A — better options, right number of follow-ups, appropriate depth. High revision count does NOT automatically mean "make Q&A longer" — could be mis-hit keys or poor selectable options. Let patterns across multiple projects reveal the real signal.
+
+### Template Infrastructure Tasks Filed (Track B)
+| Task | What | Size |
+|------|------|------|
+| FEAT-53 | Improve /generate-prp intake (navigation, review gate, approval gate, user profiling) | M |
+| FEAT-54 | Add Engineer systemPrompt to TEMPLATE_CLAUDE_SETTINGS | S |
+| FEAT-55 | Director auto-scaffold (CLAUDE.md + settings.json alongside project) | M |
+| FEAT-56 | Code-researcher agent in template | S |
+| FEAT-57 | Harness ROADMAP.md in template | XS |
+
+Decision: Track B chosen over Track A (fixing FishStocker). The current FishStocker project served as dogfooding round 1 — it found the gaps. Next project created in Hub-LLM will scaffold everything correctly. FishStocker can be deleted and recreated after these template improvements ship.
+
+### Key Design Decision: Index is Source of Truth
+- CODEBASE_INDEX.yaml supersedes individual code maps / component maps
+- Both Director (task writing via grep) and Engineer (implementation via grep) use it
+- Code-researcher agent automates index population (FEAT-56)
+- Pre-commit hook enforces index updates (FEAT-36, shipped)
+- Director systemPrompt and Engineer systemPrompt both enforce "grep the index, never cat it"
+
+### TheFishStocker Status (end of session)
+- PRP generated and saved to `PRPs/`
+- Queue populated with Phase 1 tasks
+- Project served its purpose as dogfooding round 1
+- Will be recreated after FEAT-53–57 ship with full template infrastructure
+
+---
+
 ## Automation Roadmap (from plan Phase 5)
 1. **Ralph Loop** — auto-continue after task completion (engineer doesn't stop after 1 task)
 2. **MCP server** — file-based task automation (not Supabase)

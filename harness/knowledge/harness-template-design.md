@@ -35,6 +35,16 @@ All files are templates with `{{placeholders}}` that get filled from the CreateP
 | Git workflow in CLAUDE.md | (part of TEMPLATE_CLAUDE_MD) | `CLAUDE.md` | ⏳ Pending | FEAT-37 |
 | Git section in README | (part of TEMPLATE_README) | `README.md` | ⏳ Pending | FEAT-37 |
 
+### Configuration & Infrastructure (scaffolded configs)
+
+| Feature | Description | Status | Task |
+|---------|-------------|--------|------|
+| Engineer systemPrompt | Persistent behavioral rules in settings.json | ⏳ Pending | FEAT-54 |
+| Director auto-scaffold | Director directory + CLAUDE.md + settings created alongside project | ⏳ Pending | FEAT-55 |
+| Code-researcher agent | .claude/agents/code-researcher.md for automated index scanning | ⏳ Pending | FEAT-56 |
+| Harness roadmap | harness/ROADMAP.md showing automation evolution phases | ⏳ Pending | FEAT-57 |
+| Improved PRP intake | Navigation, review gate, approval gate, user profiling | ⏳ Pending | FEAT-53 |
+
 ### Automation Features (workflow enhancements)
 
 | Feature | Description | Status | Task |
@@ -42,7 +52,6 @@ All files are templates with `{{placeholders}}` that get filled from the CreateP
 | Ralph Loop | Agent auto-continues after task completion | ❌ Not started | — |
 | MCP Server | File-based task automation (no Supabase) | ❌ Not started | — |
 | Browser Testing | Puppeteer/Playwright for visual verification | ❌ Not started | — |
-| Director auto-scaffold | Create Director directory alongside project | ❌ Not started | — |
 | Task queue archiving | Move old completed tasks to archive file | ❌ Not started | — |
 
 ### Process to Update This Manifest
