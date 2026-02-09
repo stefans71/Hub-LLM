@@ -558,7 +558,12 @@ TEMPLATE_DIRECTOR_SETTINGS = """{
       "Bash(wc *)",
       "Bash(git log *)",
       "Bash(git diff *)",
-      "Bash(git show *)"
+      "Bash(git show *)",
+      "Read(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Write({{appDir}}/harness/**)",
+      "Edit({{appDir}}/harness/**)"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -572,12 +577,12 @@ TEMPLATE_DIRECTOR_SETTINGS = """{
 TEMPLATE_DIRECTOR_SETTINGS_LOCAL = """{
   "permissions": {
     "deny": [
-      "Write({{appDir}}/src/*)",
-      "Write({{appDir}}/backend/*)",
-      "Write({{appDir}}/frontend/*)",
-      "Edit({{appDir}}/src/*)",
-      "Edit({{appDir}}/backend/*)",
-      "Edit({{appDir}}/frontend/*)",
+      "Write({{appDir}}/src/**)",
+      "Write({{appDir}}/backend/**)",
+      "Write({{appDir}}/frontend/**)",
+      "Edit({{appDir}}/src/**)",
+      "Edit({{appDir}}/backend/**)",
+      "Edit({{appDir}}/frontend/**)",
       "Bash(cd {{appDir}} && npm *)",
       "Bash(cd {{appDir}} && node *)",
       "Bash(cd {{appDir}} && python *)"
@@ -766,13 +771,16 @@ async def create_vps_project_folder(
     project_name: str = "",
     tech_stack: str = "",
     brief: str = "",
-) -> bool:
+) -> dict:
     """
     Create project folder on VPS and scaffold harness template files.
 
-    Returns True if successful, False otherwise.
+    Returns dict with:
+      - success: bool
+      - warnings: list[str] (non-fatal issues like Director scaffold failure)
     Does not raise exceptions - prints errors instead.
     """
+    warnings = []
     print(f"Creating VPS folder: {VPS_PROJECT_BASE}/{project_slug}")
     try:
         # Ensure server is loaded in cache
@@ -914,6 +922,7 @@ async def create_vps_project_folder(
                 ".claude/settings.json": TEMPLATE_DIRECTOR_SETTINGS,
                 ".claude/settings.local.json": TEMPLATE_DIRECTOR_SETTINGS_LOCAL,
             }
+            failed_files = []
             for file_path, template in director_files.items():
                 content = _fill_template(template, director_variables)
                 try:
@@ -924,20 +933,28 @@ async def create_vps_project_folder(
                         timeout=5.0,
                     )
                 except Exception as e:
+                    failed_files.append(file_path)
                     print(f"Failed to write director {file_path}: {e}")
 
-            print(f"Scaffolded Director directory at {director_path}")
+            if failed_files:
+                msg = f"Director scaffold partial failure: could not write {', '.join(failed_files)}"
+                warnings.append(msg)
+                print(msg)
+            else:
+                print(f"Scaffolded Director directory at {director_path}")
         except Exception as e:
-            print(f"Director scaffold failed (non-blocking): {e}")
+            msg = f"Director scaffold failed: {e}"
+            warnings.append(msg)
+            print(msg)
 
-        return True
+        return {"success": True, "warnings": warnings}
 
     except asyncio.TimeoutError:
         print(f"Timeout creating VPS folder for {project_slug}")
-        return False
+        return {"success": False, "warnings": warnings}
     except Exception as e:
         print(f"Failed to create VPS folder for {project_slug}: {e}")
-        return False
+        return {"success": False, "warnings": warnings}
 
 
 class ProjectContext(BaseModel):
@@ -995,6 +1012,9 @@ class ProjectResponse(BaseModel):
 
     # Selected model
     selected_model: Optional[dict] = None
+
+    # Scaffold warnings (populated on create if Director scaffold had issues)
+    scaffold_warnings: Optional[List[str]] = None
 
     # Timestamps
     created_at: datetime
@@ -1104,13 +1124,15 @@ async def create_project(project: ProjectCreate):
     # Create folder on VPS if VPS server is linked — scaffold harness template (FEAT-30)
     if project.vps_server_id:
         tech_stack = project.context.tech_stack if project.context else ""
-        await create_vps_project_folder(
+        result = await create_vps_project_folder(
             vps_server_id=project.vps_server_id,
             project_slug=slug,
             project_name=project.name,
             tech_stack=tech_stack or "",
             brief=project.brief or "",
         )
+        if result.get("warnings"):
+            response.scaffold_warnings = result["warnings"]
 
     return response
 

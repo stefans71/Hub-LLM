@@ -2328,5 +2328,10 @@ Three callbacks from Workspace to ServerManager:
 **What**: Added 3 Director template constants (TEMPLATE_DIRECTOR_CLAUDE_MD, TEMPLATE_DIRECTOR_SETTINGS, TEMPLATE_DIRECTOR_SETTINGS_LOCAL) and updated create_vps_project_folder() to create {{slug}}-director/ with CLAUDE.md, .claude/settings.json, .claude/settings.local.json. Director CLAUDE.md includes role definition, env paths, queue entry JSON format, task creation gates (grep index, grep learnings, verify source), review workflow (check completion_note, checklist, index updates). Director settings.json has read-only permissions + 180-word systemPrompt. settings.local.json denies writes to app src/backend/frontend dirs. projects.py 1245→1394 lines.
 **Key Learning**: Director scaffold uses `director_variables = {**variables, "appDir": project_path}` to extend the base variable dict with the app directory path. The `_fill_template` function handles all `{{placeholder}}` replacement, so Director templates can reference `{{appDir}}` for cross-directory paths. Director directory is created as non-blocking (failure doesn't prevent main project scaffold from succeeding).
 
+### Session 146 - 2026-02-09 EST
+**Task**: FEAT-55 R2 — Director rejection fixes
+**What**: Fixed 3 Director review rejections: (1) Changed create_vps_project_folder return from bool to dict {success, warnings}. Director scaffold failures collected in warnings list, surfaced via new scaffold_warnings field on ProjectResponse. (2) Added Read(*), Glob(*), Grep(*), Write/Edit(harness/**) to TEMPLATE_DIRECTOR_SETTINGS allow. (3) Changed all 6 Write/Edit deny rules from * to ** for recursive subdirectory matching.
+**Key Learning**: Claude Code permission globs — single `*` only matches direct children, `**` matches recursively. Director needs dedicated tool permissions (Read, Glob, Grep) not just Bash equivalents, otherwise every file operation prompts the user. Scaffold functions that can partially fail should return structured results (dict with warnings) rather than swallowing errors — the frontend needs to surface partial failures to users.
+
 ---
 
