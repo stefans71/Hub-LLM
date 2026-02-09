@@ -313,6 +313,22 @@ export default function Chat({ project, model, apiKeys, serverId, claudeCodeStat
     return match ? match[1] : 'text'
   }
 
+  // BUG-24: Option D - Check if we should show "Connecting to VPS..." welcome message
+  // instead of "Hello I'm Claude" when serverId exists but ClaudeCodeTerminal hasn't loaded yet
+  const isAnthropicModel = model?.provider === 'anthropic' ||
+    (typeof model === 'string' && model.toLowerCase().includes('claude'))
+  const showConnectingWelcome = isAnthropicModel && serverId && !claudeCodeStatus?.authenticated
+
+  // BUG-63: Show retry button after 10s stuck on connecting overlay
+  // BUG-69: Must be above early return so hook count is stable across renders
+  useEffect(() => {
+    if (showConnectingWelcome) {
+      const timer = setTimeout(() => setShowRetry(true), 10000)
+      return () => clearTimeout(timer)
+    }
+    setShowRetry(false)
+  }, [showConnectingWelcome])
+
   // CLAUDE-02-REWORK: Render terminal-based chat when Claude Code mode is active
   if (useClaudeCodeTerminal) {
     return (
@@ -325,21 +341,6 @@ export default function Chat({ project, model, apiKeys, serverId, claudeCodeStat
       />
     )
   }
-
-  // BUG-24: Option D - Check if we should show "Connecting to VPS..." welcome message
-  // instead of "Hello I'm Claude" when serverId exists but ClaudeCodeTerminal hasn't loaded yet
-  const isAnthropicModel = model?.provider === 'anthropic' ||
-    (typeof model === 'string' && model.toLowerCase().includes('claude'))
-  const showConnectingWelcome = isAnthropicModel && serverId && !claudeCodeStatus?.authenticated
-
-  // BUG-63: Show retry button after 10s stuck on connecting overlay
-  useEffect(() => {
-    if (showConnectingWelcome) {
-      const timer = setTimeout(() => setShowRetry(true), 10000)
-      return () => clearTimeout(timer)
-    }
-    setShowRetry(false)
-  }, [showConnectingWelcome])
 
   return (
     <div

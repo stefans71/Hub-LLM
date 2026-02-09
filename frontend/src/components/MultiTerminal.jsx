@@ -349,10 +349,13 @@ function TerminalInstance({ id, projectId, serverId, isActive, isSplitPane, onSt
             background: getStatusColor(),
             flexShrink: 0
           }} />
-          <span style={{ color: 'var(--text-secondary)' }}>{getStatusText()}</span>
+          <span
+            title={serverInfo?.host || ''}
+            style={{ color: 'var(--text-secondary)', cursor: serverInfo?.host ? 'help' : 'default' }}
+          >{getStatusText()}</span>
           {cwd && (
             <span
-              title={`${serverInfo?.host || ''} — ${cwd}`}
+              title={cwd}
               style={{
                 color: 'var(--text-muted)',
                 marginLeft: '8px',

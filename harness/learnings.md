@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 140 - 2026-02-09 06:33 EST
+**Task**: BUG-69, BUG-70
+**What**: BUG-69 — Moved useEffect + derived variables above early return in Chat.jsx to fix hooks violation on Claude Code mode switch. BUG-70 — Moved IP tooltip from cwd span to server name span in MultiTerminal.jsx status bar.
+**Key Learning**: React hooks must have identical call count every render. Any early return that skips a hook causes "Rendered fewer hooks than expected" crash. Always put ALL hooks above any conditional returns.
+
 ### Session 139 - 2026-02-09 06:13 EST
 **Task**: BUG-68
 **What**: Added React ErrorBoundary + stabilized SSH reconnect callback. ErrorBoundary.jsx wraps entire app in App.jsx — catches render errors with reload UI. Memoized onSshReconnected with useCallback in Workspace.jsx. Added try-catch around callback invocation in WorkspaceFileExplorer.jsx.

@@ -371,7 +371,7 @@ frontend_components:
   Chat.jsx:
     path: frontend/src/components/Chat.jsx
     lines: 566
-    purpose: "Chat panel — routes to OpenRouter chat or ClaudeCodeTerminalChat based on model+VPS"
+    purpose: "Chat panel — routes to OpenRouter chat or ClaudeCodeTerminalChat based on model+VPS. BUG-69: all hooks above early return for stable hook count."
     props: "{project, model, apiKeys, serverId, claudeCodeStatus, onProcessingChange, enhanceWithAI}"
     key_state:
       - {name: messages, type: "useState([])", drives: "chat history"}
