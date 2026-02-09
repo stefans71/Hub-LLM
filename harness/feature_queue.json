@@ -26,31 +26,6 @@
   },
   "queue": [
     {
-      "id": "FEAT-52",
-      "name": "Markdown preview toggle in Editor tab",
-      "size": "S",
-      "priority": 2,
-      "status": "pending_review",
-      "completion_note": "All in CodeEditor.jsx (205→266 lines). showPreview state + isMarkdown derived. Toggle button with Eye/Code icons in header bar. Ctrl+Shift+V shortcut via Monaco addCommand. ReactMarkdown render with dark-themed styled components (h1-h3, code blocks, tables, blockquotes, links). Footer hint switches to 'Ctrl+Shift+V for source' in preview mode. Preview auto-resets on non-md file switch.",
-      "description": "When a .md file is open in the Editor tab (LLM-Dev panel), add a toggle to switch between raw Monaco source and rendered markdown preview — like VS Code's Ctrl+Shift+V.\n\n## What exists\n- `react-markdown` is already installed (v9.0.1) and used in `Chat.jsx` line 426 for chat message rendering\n- `CodeEditor.jsx` (205 lines) already detects .md files via `getLanguage()` at line 47: `'md': 'markdown'`\n- The editor header bar (lines 155-187) has filename + save button — this is where the toggle goes\n- `LLMDevPanel.jsx` renders `<CodeEditor path={...} content={codeContent} readOnly={true} />` at line 537\n\n## Implementation\n\nAll changes in `CodeEditor.jsx` — no changes needed in LLMDevPanel.jsx.\n\n### 1. Add state for preview mode\n```jsx\nconst [showPreview, setShowPreview] = useState(false)\nconst isMarkdown = getLanguage(path) === 'markdown'\n```\n\n### 2. Add toggle button in the header bar (line ~161, after the language badge)\nOnly render when `isMarkdown` is true:\n```jsx\n{isMarkdown && (\n  <button\n    onClick={() => setShowPreview(prev => !prev)}\n    style={{\n      display: 'flex', alignItems: 'center', gap: '4px',\n      padding: '2px 8px', fontSize: '11px',\n      background: showPreview ? 'var(--primary, #3b82f6)' : 'transparent',\n      border: '1px solid var(--border, #374151)',\n      borderRadius: '4px', color: 'var(--text-primary, #e5e7eb)',\n      cursor: 'pointer'\n    }}\n    title=\"Toggle markdown preview (Ctrl+Shift+V)\"\n  >\n    {showPreview ? 'Source' : 'Preview'}\n  </button>\n)}\n```\n\n### 3. Add keyboard shortcut Ctrl+Shift+V\nIn the Monaco editor setup (line ~118, alongside the Ctrl+S handler):\n```jsx\neditor.addCommand(\n  window.monaco.KeyMod.CtrlCmd | window.monaco.KeyMod.Shift | window.monaco.KeyCode.KeyV,\n  () => { if (isMarkdown) setShowPreview(prev => !prev) }\n)\n```\n\n### 4. Conditionally render Monaco or markdown preview\nReplace the editor container at line ~195. When `showPreview && isMarkdown`, render ReactMarkdown instead of Monaco:\n```jsx\n{showPreview && isMarkdown ? (\n  <div style={{\n    flex: 1, overflow: 'auto', padding: '24px 32px',\n    background: '#1e1e1e', color: '#c0caf5',\n    fontSize: '14px', lineHeight: '1.7'\n  }}>\n    <ReactMarkdown\n      components={{\n        h1: ({children}) => <h1 style={{fontSize:'28px',fontWeight:700,marginTop:'24px',marginBottom:'12px',borderBottom:'1px solid #333',paddingBottom:'8px'}}>{children}</h1>,\n        h2: ({children}) => <h2 style={{fontSize:'22px',fontWeight:600,marginTop:'20px',marginBottom:'8px',borderBottom:'1px solid #333',paddingBottom:'6px'}}>{children}</h2>,\n        h3: ({children}) => <h3 style={{fontSize:'18px',fontWeight:600,marginTop:'16px',marginBottom:'6px'}}>{children}</h3>,\n        p: ({children}) => <p style={{margin:'8px 0'}}>{children}</p>,\n        code: ({inline,children,...props}) => inline\n          ? <code style={{background:'#2d2d2d',padding:'2px 6px',borderRadius:'4px',fontSize:'13px'}} {...props}>{children}</code>\n          : <pre style={{background:'#0d1117',padding:'16px',borderRadius:'8px',overflow:'auto',fontSize:'13px'}}><code {...props}>{children}</code></pre>,\n        ul: ({children}) => <ul style={{paddingLeft:'24px',margin:'8px 0'}}>{children}</ul>,\n        ol: ({children}) => <ol style={{paddingLeft:'24px',margin:'8px 0'}}>{children}</ol>,\n        li: ({children}) => <li style={{margin:'4px 0'}}>{children}</li>,\n        blockquote: ({children}) => <blockquote style={{borderLeft:'3px solid #3b82f6',paddingLeft:'16px',margin:'12px 0',color:'#9ca3af'}}>{children}</blockquote>,\n        a: ({href,children}) => <a href={href} target='_blank' rel='noopener' style={{color:'#3b82f6',textDecoration:'underline'}}>{children}</a>,\n        table: ({children}) => <table style={{borderCollapse:'collapse',width:'100%',margin:'12px 0'}}>{children}</table>,\n        th: ({children}) => <th style={{border:'1px solid #333',padding:'8px',textAlign:'left',background:'#2d2d2d'}}>{children}</th>,\n        td: ({children}) => <td style={{border:'1px solid #333',padding:'8px'}}>{children}</td>\n      }}\n    >\n      {content}\n    </ReactMarkdown>\n  </div>\n) : (\n  <div ref={containerRef} className=\"flex-1\" />\n)}\n```\n\n### 5. Update footer\nWhen in preview mode, change the footer hint from 'Ctrl+S to save' to 'Ctrl+Shift+V for source'.\n\n## Key details\n- Import `ReactMarkdown` from `'react-markdown'` at the top of CodeEditor.jsx\n- The toggle is purely visual — no content changes, editor stays read-only for .md in LLMDevPanel\n- Monaco stays mounted (don't dispose it) so switching back is instant\n- The dark theme styling should match the Monaco vs-dark background (#1e1e1e)\n- Non-.md files are completely unaffected — no toggle button shown",
-      "change": [
-        "frontend/src/components/CodeEditor.jsx:1 — Add import for ReactMarkdown",
-        "frontend/src/components/CodeEditor.jsx:~20 — Add showPreview state + isMarkdown derived",
-        "frontend/src/components/CodeEditor.jsx:~118 — Add Ctrl+Shift+V keyboard shortcut in Monaco",
-        "frontend/src/components/CodeEditor.jsx:~161 — Add Preview/Source toggle button in header",
-        "frontend/src/components/CodeEditor.jsx:~195 — Conditional render: ReactMarkdown or Monaco container",
-        "frontend/src/components/CodeEditor.jsx:~201 — Update footer hint text for preview mode"
-      ],
-      "test": "(1) Open a .md file — Preview button appears in editor header. (2) Click Preview — rendered markdown with headings, code blocks, tables, links. (3) Click Source — back to Monaco raw view. (4) Ctrl+Shift+V toggles between views. (5) Open a .js file — no Preview button, no change in behavior. (6) Dark theme matches Monaco background.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": false,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
       "size": "L",
@@ -71,6 +46,35 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-52",
+      "name": "Markdown preview toggle in Editor tab",
+      "size": "S",
+      "priority": 2,
+      "status": "completed",
+      "completed": "2026-02-09",
+      "description": "When a .md file is open in the Editor tab, toggle between raw Monaco source and rendered markdown preview (like VS Code Ctrl+Shift+V). All changes in CodeEditor.jsx. react-markdown already installed (used in Chat.jsx).",
+      "change": [
+        "frontend/src/components/CodeEditor.jsx:1 — Import ReactMarkdown + Eye/Code icons",
+        "frontend/src/components/CodeEditor.jsx:~23 — showPreview state + isMarkdown derived from getLanguage()",
+        "frontend/src/components/CodeEditor.jsx:~124 — Ctrl+Shift+V keyboard shortcut via Monaco addCommand",
+        "frontend/src/components/CodeEditor.jsx:~175 — Toggle button with Eye/Code icons (only for .md files)",
+        "frontend/src/components/CodeEditor.jsx:~219 — Conditional render: ReactMarkdown with dark-themed styled components or Monaco",
+        "frontend/src/components/CodeEditor.jsx:~143 — Preview auto-resets on non-md file switch",
+        "frontend/src/components/CodeEditor.jsx:footer — Hint switches to 'Ctrl+Shift+V for source' in preview"
+      ],
+      "test": "(1) Open .md — Preview button appears. (2) Click Preview — rendered markdown. (3) Click Source — back to Monaco. (4) Ctrl+Shift+V toggles. (5) Open .js — no Preview button. (6) Dark theme matches.",
+      "completion_note": "All in CodeEditor.jsx (205→266 lines). showPreview state + isMarkdown derived. Toggle button with Eye/Code icons in header bar. Ctrl+Shift+V shortcut via Monaco addCommand. ReactMarkdown render with dark-themed styled components (h1-h3, code blocks, tables, blockquotes, links). Footer hint switches. Preview auto-resets on non-md file switch.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      },
+      "reviewed_by": "Director",
+      "review_note": "Verified commit 53551de: ReactMarkdown import + Eye/Code icons from lucide-react. showPreview state with isMarkdown derived. Toggle button only renders for markdown files, highlighted blue when active. Ctrl+Shift+V via Monaco addCommand with isMarkdown guard. Preview renders with full styled components (h1-h3, code inline+block, ul/ol/li, blockquote, links with target=_blank, table/th/td). Dark theme matches Monaco #1e1e1e. Auto-reset useEffect on path change. Footer hint dynamic. Index updated (lines 266, purpose updated). Learnings Session 143."
+    },
     {
       "id": "BUG-72",
       "name": "Terminal tab close button missing in desktop tab header + color picker overflow",
