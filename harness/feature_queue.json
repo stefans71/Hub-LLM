@@ -26,6 +26,45 @@
   },
   "queue": [
     {
+      "id": "BUG-62",
+      "name": "Preview pane should default to open on every workspace visit",
+      "size": "XS",
+      "priority": 1,
+      "status": "pending",
+      "description": "The preview pane defaults to collapsed for return visits. It should always start open.\n\nWorkspace.jsx:44:\n```jsx\nconst [previewCollapsed, setPreviewCollapsed] = useState(() => !isFirstVisit)\n```\n\nThis means only the very first visit opens the preview. Every subsequent visit collapses it. Change to always default open:\n```jsx\nconst [previewCollapsed, setPreviewCollapsed] = useState(false)\n```\n\nThe `isFirstVisit` variable is still used for setting the `welcomed_` localStorage flag (line 48), so keep that. Just decouple it from the collapsed state.",
+      "change": [
+        "frontend/src/components/Workspace.jsx:44 — Change `useState(() => !isFirstVisit)` to `useState(false)` so preview always starts open."
+      ],
+      "test": "(1) Open a project you've visited before — preview pane is open showing docs. (2) Manually collapse the preview — it collapses. (3) Navigate away and come back — preview is open again (no persistence of collapsed state).",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-47",
+      "name": "Docs home card icons — replace emoji with inline SVGs, use GitHub octocat for Git card",
+      "size": "XS",
+      "priority": 1,
+      "status": "pending",
+      "description": "The docs home page (frontend/public/docs/index.html:34-63) uses unicode emoji for the card grid icons. These render inconsistently across browsers/OS. Replace them with inline Feather-style SVGs matching the sidebar nav icons from nav.js (FEAT-44).\n\nCurrent emoji → target SVG:\n- Getting Started: `&#128640;` (rocket) → use the `svgPlay` icon from nav.js:9 (play triangle)\n- Workspace Guide: `&#128421;&#65039;` (desktop) → use the `svgTerminal` icon from nav.js:10 (terminal prompt)\n- Git & GitHub: `&#128256;` (shuffle) → use the **GitHub octocat** SVG from CreateProject.jsx:528-530:\n  ```html\n  <svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\">\n    <path d=\"M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z\"/>\n  </svg>\n  ```\n  Note: use `fill=\"currentColor\"` not `fill=\"white\"` so it inherits the card icon color from CSS.\n- What's New: `&#10024;` (sparkles) → use the `svgStar` icon from nav.js:12 (star)\n- Harness System: `&#9881;&#65039;` (gear) → use the `svgSettings` icon from nav.js:13 (settings gear)\n\nSize the SVGs at 24x24 within the `.card-icon` div. The existing CSS should handle color/spacing — just swap the HTML entities for SVG markup.\n\nAlso update the sidebar nav Git & GitHub icon in nav.js:11 — change `svgGitBranch` to the GitHub octocat SVG (same path as above, but at 16x16 to match other nav icons).",
+      "change": [
+        "frontend/public/docs/index.html:36,42,48,54,60 — Replace emoji HTML entities with inline SVGs (play, terminal, github-octocat, star, settings).",
+        "frontend/public/docs/nav.js:11 — Replace svgGitBranch with GitHub octocat SVG (16x16, fill='currentColor')."
+      ],
+      "test": "(1) Open docs home page — all 5 cards show crisp SVG icons, no emoji. (2) Git & GitHub card shows the GitHub cat logo. (3) Sidebar nav 'Git & GitHub' item shows the GitHub cat icon. (4) Icons inherit color from CSS (no hardcoded white/black fills).",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "INFRA-02",
       "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
       "size": "L",

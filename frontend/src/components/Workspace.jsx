@@ -41,7 +41,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
   // BUG-55: Flag set when user navigates away, not on mount
   const isFirstVisit = project?.id && !localStorage.getItem(`welcomed_${project.id}`)
   const [welcomeUrl] = useState('/docs/index.html')
-  const [previewCollapsed, setPreviewCollapsed] = useState(() => !isFirstVisit)
+  const [previewCollapsed, setPreviewCollapsed] = useState(false)
   const welcomeUrlRef = useRef(welcomeUrl)
   const handlePreviewUrlChange = useCallback((newUrl) => {
     // Set welcomed flag when user navigates away from the welcome page

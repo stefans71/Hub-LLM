@@ -2256,6 +2256,10 @@ Three callbacks from Workspace to ServerManager:
 
 ---
 
+### Session N+1 - 2026-02-09 EST
+**Task**: BUG-62 preview default open + FEAT-47 docs SVG icons
+**What**: BUG-62: Changed `useState(() => !isFirstVisit)` to `useState(false)` in Workspace.jsx so preview pane always starts open. FEAT-47: Replaced all 5 emoji icons in docs/index.html with inline Feather SVGs (play, terminal, github octocat, star, settings gear) at 24x24. Updated nav.js sidebar to use GitHub octocat SVG instead of git-branch for "Git & GitHub" nav item.
+
 ### Session N - 2026-02-09 EST
 **Task**: FEAT-46 VibeShip.cloud waitlist card in Setup wizard
 **What**: Added VibeShip-branded waitlist card to Setup wizard step 1 (path selection). Card uses VibeShip brand colors (dark green bg + cyan accents) matching vibeship.cloud landing page. Backend waitlist endpoint, model, and migration were already in place from previous session. This session: restyled card with brand colors, placed it in ChoosePathStep between PathCards and Continue button, changed badge from "BETA" to "COMING SOON", added tagline "You Vibe, We Ship." with link to vibeship.cloud. Frontend builds clean.
