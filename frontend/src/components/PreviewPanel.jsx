@@ -6,7 +6,8 @@ import {
   Maximize2,
   ExternalLink,
   RefreshCw,
-  ChevronLeft
+  ChevronLeft,
+  BookOpen
 } from 'lucide-react'
 
 /**
@@ -23,7 +24,8 @@ export default function PreviewPanel({
   collapsed = true,
   onCollapsedChange,
   width = 400,
-  onUrlChange
+  onUrlChange,
+  dragging = false
 }) {
   const [deviceMode, setDeviceMode] = useState('fit') // 'phone', 'tablet', 'desktop', 'fit'
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -114,6 +116,16 @@ export default function PreviewPanel({
         })
       }}
     >
+      {/* Drag overlay — prevents iframe from stealing mouse events during resize */}
+      {dragging && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          zIndex: 10,
+          cursor: 'col-resize'
+        }} />
+      )}
+
       {/* Collapsed state - vertical "Live Preview" label */}
       {collapsed && (
         <div style={{
@@ -242,6 +254,20 @@ export default function PreviewPanel({
             {/* Actions */}
             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
               <button
+                onClick={() => { setActiveUrl('/docs/index.html'); setInputUrl('/docs/index.html') }}
+                title="Open documentation"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                  padding: '4px 10px', background: 'transparent',
+                  border: '1px solid var(--border)', borderRadius: '4px',
+                  color: 'var(--text-secondary)', cursor: 'pointer',
+                  fontSize: '11px', fontFamily: 'inherit'
+                }}
+              >
+                <BookOpen size={13} />
+                <span>Docs</span>
+              </button>
+              <button
                 onClick={handleOpenInNewTab}
                 disabled={!activeUrl}
                 title="Open in new tab for Chrome DevTools"
@@ -296,24 +322,20 @@ export default function PreviewPanel({
                 ...(isInternalDocs ? { width: '100%', height: '100%' } : getFrameStyles())
               }}
             >
-              {activeUrl ? (
-                <iframe
-                  ref={iframeRef}
-                  src={activeUrl}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                    flex: 1,
-                    minHeight: '400px',
-                    opacity: isRefreshing ? 0.5 : 1,
-                    transition: 'opacity 0.3s'
-                  }}
-                  title="Live Preview"
-                />
-              ) : (
-                <DemoPreview />
-              )}
+              <iframe
+                ref={iframeRef}
+                src={activeUrl || '/docs/index.html'}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  flex: 1,
+                  minHeight: '400px',
+                  opacity: isRefreshing ? 0.5 : 1,
+                  transition: 'opacity 0.3s'
+                }}
+                title="Live Preview"
+              />
             </div>
           </div>
         </>
@@ -379,78 +401,3 @@ function ActionButton({ icon, title, onClick, disabled }) {
   )
 }
 
-// Demo preview content when no URL is provided
-function DemoPreview() {
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '48px 24px',
-      color: '#1a1a1a',
-      textAlign: 'center',
-      flex: 1,
-      minHeight: '400px'
-    }}>
-      {/* Logo placeholder */}
-      <div style={{
-        width: '60px',
-        height: '60px',
-        borderRadius: '16px',
-        background: 'linear-gradient(135deg, #38bdf8, #8b5cf6)',
-        marginBottom: '24px'
-      }} />
-
-      <h1 style={{
-        fontSize: '32px',
-        fontWeight: 'bold',
-        marginBottom: '12px'
-      }}>
-        Build faster with{' '}
-        <span style={{
-          background: 'linear-gradient(135deg, #38bdf8, #8b5cf6)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
-        }}>
-          AI
-        </span>
-      </h1>
-
-      <p style={{
-        color: '#6b7280',
-        maxWidth: '400px',
-        marginBottom: '32px',
-        fontSize: '16px',
-        lineHeight: 1.6
-      }}>
-        The ultimate workspace for developers looking to integrate LLMs into their production environment seamlessly.
-      </p>
-
-      <div style={{ display: 'flex', gap: '12px' }}>
-        <button style={{
-          padding: '12px 24px',
-          background: '#38bdf8',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          fontWeight: '500',
-          cursor: 'pointer'
-        }}>
-          Get Started
-        </button>
-        <button style={{
-          padding: '12px 24px',
-          background: 'transparent',
-          color: '#374151',
-          border: '1px solid #d1d5db',
-          borderRadius: '8px',
-          fontWeight: '500',
-          cursor: 'pointer'
-        }}>
-          Documentation
-        </button>
-      </div>
-    </div>
-  )
-}

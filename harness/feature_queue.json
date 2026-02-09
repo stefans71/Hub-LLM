@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T08:30",
+  "updated": "2026-02-09T09:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,6 +25,82 @@
     }
   },
   "queue": [
+    {
+      "id": "BUG-61",
+      "name": "Preview panel shows DemoPreview instead of docs — default to /docs/index.html",
+      "size": "XS",
+      "priority": 1,
+      "status": "pending_review",
+      "description": "Two problems: (1) After first visit, the preview panel shows the useless 'Build faster with AI' DemoPreview instead of docs. (2) There's no way for users to get back to the docs once they navigate away.\n\n## Problem 1: Default to docs\n\n`welcomeUrl` in Workspace.jsx:43-44 only sets `/docs/index.html` on first visit. After that, `welcomeUrl` is empty and PreviewPanel falls back to DemoPreview (line 315).\n\nFix: Always default to `/docs/index.html`. In Workspace.jsx:43-44:\n```jsx\nconst [welcomeUrl] = useState('/docs/index.html')\n```\nRemove the `isFirstVisit` conditional for the URL (keep it for `previewCollapsed` so the panel auto-expands on first visit but stays in whatever state the user left it on return visits).\n\n## Problem 2: Add a 'Docs' button to the preview toolbar\n\nUsers need a way to get back to the docs after navigating to a different URL. Add a small 'Docs' button in the preview toolbar actions area (PreviewPanel.jsx, around line 242-266, next to 'Open in Browser').\n\n```jsx\n<button\n  onClick={() => { setActiveUrl('/docs/index.html'); setInputUrl('/docs/index.html') }}\n  title=\"Open documentation\"\n  style={{\n    display: 'flex', alignItems: 'center', gap: '4px',\n    padding: '4px 10px', background: 'transparent',\n    border: '1px solid var(--border)', borderRadius: '4px',\n    color: 'var(--text-secondary)', cursor: 'pointer',\n    fontSize: '11px', fontFamily: 'inherit'\n  }}\n>\n  <BookOpen size={13} />\n  <span>Docs</span>\n</button>\n```\n\nImport `BookOpen` from lucide-react (or use an existing icon).\n\n## Problem 3: DemoPreview cleanup\n\nWith docs as the default, DemoPreview (PreviewPanel.jsx:383+) is never shown. Remove it entirely or keep as a dead-code fallback — engineer's choice.\n\nAlso: the hint text at the bottom of the terminal says 'The Welcome guide is open in the Preview panel →' even when it's NOT. This hint should be conditional on the docs actually being loaded.",
+      "change": [
+        "frontend/src/components/Workspace.jsx:43-44 — Always set welcomeUrl to '/docs/index.html'. Keep isFirstVisit only for previewCollapsed state.",
+        "frontend/src/components/PreviewPanel.jsx — Add 'Docs' button in toolbar actions area that navigates to /docs/index.html.",
+        "frontend/src/components/PreviewPanel.jsx:314-315 — Optional: default activeUrl to '/docs/index.html' as fallback.",
+        "frontend/src/components/PreviewPanel.jsx:383+ — Optional: remove DemoPreview function if no longer reachable."
+      ],
+      "test": "(1) Open any project — preview panel shows docs, not DemoPreview. (2) Type an external URL in the bar — loads that URL. (3) Click the Docs button — returns to /docs/index.html. (4) First visit to a new project — preview auto-expands with docs. (5) Return visits — preview stays in user's last collapsed/expanded state but defaults to docs URL.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      },
+      "completion_note": "Always default welcomeUrl to '/docs/index.html' (removed isFirstVisit conditional for URL, kept it for previewCollapsed). Added 'Docs' button (BookOpen icon) in PreviewPanel toolbar to navigate back to docs. Removed DemoPreview function entirely — iframe falls back to /docs/index.html. Build passes."
+    },
+    {
+      "id": "FEAT-46",
+      "name": "VibeShip.cloud waitlist card in Setup wizard + backend signup endpoint",
+      "size": "M",
+      "priority": 3,
+      "status": "pending",
+      "description": "Add a marketing card in the Setup wizard path selection step (Setup.jsx:163-184) that says 'Don't have a VPS? Join the VibeShip.cloud beta waitlist' with an email signup form. Signups are stored in a new DB table.\n\n## Frontend — Setup.jsx\n\nBelow the two PathCards (OpenRouter and Anthropic Pro), add a styled waitlist card:\n\n```\n┌─────────────────────────────────────────────┐\n│  🚀 Don't have a VPS?                       │\n│                                             │\n│  Join the VibeShip.cloud beta waitlist.     │\n│  Get a pre-configured VPS with Claude Code  │\n│  installed — ready to vibe-code in minutes. │\n│                                             │\n│  [email@example.com     ] [Join Waitlist]   │\n│                                             │\n│  BETA                                       │\n└─────────────────────────────────────────────┘\n```\n\nStyling: subtle border, slightly dimmer background than the PathCards. Use var(--accent) (#f97316 orange) for the 'BETA' badge to differentiate from the cyan primary. Success state: 'You're on the list!' with a check icon.\n\nPlace it after the PathCards div (after line 184) but before the Continue button (line 186).\n\n## Backend — New waitlist router\n\nCreate `backend/routers/waitlist.py`:\n```python\nfrom fastapi import APIRouter, Depends, HTTPException\nfrom pydantic import BaseModel, EmailStr\nfrom sqlalchemy.ext.asyncio import AsyncSession\nfrom models import WaitlistSignup, get_session\nfrom datetime import datetime\n\nrouter = APIRouter(prefix='/api/waitlist', tags=['waitlist'])\n\nclass WaitlistRequest(BaseModel):\n    email: EmailStr\n    source: str = 'setup_wizard'  # Track where signup came from\n\nclass WaitlistResponse(BaseModel):\n    success: bool\n    message: str\n\n@router.post('/', response_model=WaitlistResponse)\nasync def join_waitlist(req: WaitlistRequest, session: AsyncSession = Depends(get_session)):\n    # Check for duplicate\n    existing = await session.execute(\n        select(WaitlistSignup).where(WaitlistSignup.email == req.email)\n    )\n    if existing.scalar_one_or_none():\n        return WaitlistResponse(success=True, message='Already on the waitlist')\n    \n    signup = WaitlistSignup(email=req.email, source=req.source)\n    session.add(signup)\n    await session.commit()\n    return WaitlistResponse(success=True, message='Added to waitlist')\n```\n\nNo auth required — anyone in the setup wizard can sign up.\n\n## Database — New model + migration\n\nIn `backend/models/__init__.py`, add:\n```python\nclass WaitlistSignup(Base):\n    __tablename__ = 'waitlist_signups'\n    \n    id = Column(String(64), primary_key=True, default=lambda: str(uuid4()))\n    email = Column(String(255), unique=True, nullable=False, index=True)\n    source = Column(String(64), default='setup_wizard')  # setup_wizard, landing_page, etc.\n    created_at = Column(DateTime, default=datetime.utcnow)\n```\n\nIMPORTANT: `create_all()` only creates NEW tables, not columns on existing ones (bug pattern #8). Since this is a new table, `create_all()` will work. But also provide an ALTER TABLE migration for production Postgres:\n```sql\nCREATE TABLE IF NOT EXISTS waitlist_signups (\n    id VARCHAR(64) PRIMARY KEY,\n    email VARCHAR(255) UNIQUE NOT NULL,\n    source VARCHAR(64) DEFAULT 'setup_wizard',\n    created_at TIMESTAMP DEFAULT NOW()\n);\nCREATE INDEX IF NOT EXISTS idx_waitlist_email ON waitlist_signups(email);\n```\n\nPut migration in `backend/migrations/add_waitlist_table.sql`.\n\n## Register the router\n\nIn `backend/main.py`, add:\n```python\nfrom routers.waitlist import router as waitlist_router\napp.include_router(waitlist_router)\n```",
+      "change": [
+        "frontend/src/pages/Setup.jsx:184 — Add VibeShip.cloud waitlist card with email input, BETA badge, and submit handler.",
+        "backend/routers/waitlist.py — New file: POST /api/waitlist/ endpoint, no auth required.",
+        "backend/models/__init__.py — Add WaitlistSignup model (id, email, source, created_at).",
+        "backend/main.py — Register waitlist router.",
+        "backend/migrations/add_waitlist_table.sql — New file: CREATE TABLE for production Postgres."
+      ],
+      "test": "(1) Open Setup wizard — waitlist card visible below the two path options. (2) Enter email and submit — 'You're on the list!' success message. (3) Submit same email again — no error, shows 'Already on the waitlist'. (4) Check DB: `SELECT * FROM waitlist_signups` shows the entry. (5) Card doesn't interfere with path selection or Continue button. (6) BETA badge visible in orange.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "BUG-60",
+      "name": "Preview divider jumps when mouse enters iframe — needs drag overlay",
+      "size": "XS",
+      "priority": 2,
+      "status": "pending_review",
+      "description": "The preview panel drag divider (Workspace.jsx:484-515) becomes erratic when dragging near the iframe. When the mouse enters the iframe during a drag, the iframe captures mousemove events and the document-level listener stops receiving them, causing the divider to jump or freeze.\n\nAlso: mousing over the preview pane (without clicking the divider) can cause the divider to visually shift — likely because the iframe content triggers layout recalculations.\n\n## Fix\n\nAdd a transparent overlay div on top of the iframe DURING drag operations. This prevents the iframe from stealing mouse events.\n\nIn PreviewPanel.jsx (or Workspace.jsx), when `previewDragging` is true, render a transparent overlay:\n```jsx\n{previewDragging && (\n  <div style={{\n    position: 'absolute',\n    top: 0, left: 0, right: 0, bottom: 0,\n    zIndex: 10,\n    cursor: 'col-resize'\n  }} />\n)}\n```\n\nPlace this inside the preview panel container (PreviewPanel.jsx:98-116) so it covers the iframe. Pass `previewDragging` as a prop from Workspace.jsx.\n\nAlternatively, add the overlay in Workspace.jsx wrapping the entire chat+preview area during drag.\n\n## Also consider\n- Make the divider hit area wider (currently 6px — hard to grab). Could add invisible padding or a wider hover zone using a pseudo-element or wrapper.",
+      "change": [
+        "frontend/src/components/Workspace.jsx — Pass previewDragging prop to PreviewPanel.",
+        "frontend/src/components/PreviewPanel.jsx — Accept dragging prop. Render absolute transparent overlay when dragging=true to block iframe mouse events."
+      ],
+      "test": "(1) Drag the divider left/right — smooth motion, no jumping when cursor enters preview area. (2) Release mouse — overlay disappears, iframe is interactive again. (3) Mouse over preview pane without clicking divider — divider stays still.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      },
+      "completion_note": "Passed previewDragging as 'dragging' prop from Workspace to PreviewPanel. Added absolute transparent overlay (zIndex 10, cursor col-resize) that renders when dragging=true, preventing iframe from stealing mouse events. Build passes."
+    },
+    {
+      "id": "INFRA-02",
+      "name": "Zero-downtime deploys — rolling updates, production build, SSH persistence",
+      "size": "L",
+      "priority": 4,
+      "status": "shelved",
+      "shelved_reason": "Not needed while single-user testing. Queue for when real users are onboarding.",
+      "description": "Current deploys restart all containers, causing ~30s downtime, dropped SSH connections, and interrupted Claude Code sessions. Future work:\n\n1. Production frontend build (vite build + nginx) instead of dev server\n2. Rolling deploys via Coolify/Docker health checks\n3. Persistent SSH session state (Redis-backed) with auto-reconnect\n4. Blue-green deployment for zero-downtime swaps"
+    },
     {
       "id": "BUBBLE-01",
       "name": "Bubble View Polish and Edge Cases",

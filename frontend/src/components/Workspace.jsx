@@ -40,9 +40,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
   // FEAT-37: Auto-load welcome page on first project open
   // BUG-55: Flag set when user navigates away, not on mount
   const isFirstVisit = project?.id && !localStorage.getItem(`welcomed_${project.id}`)
-  const [welcomeUrl] = useState(() =>
-    isFirstVisit ? '/docs/index.html' : ''
-  )
+  const [welcomeUrl] = useState('/docs/index.html')
   const [previewCollapsed, setPreviewCollapsed] = useState(() => !isFirstVisit)
   const welcomeUrlRef = useRef(welcomeUrl)
   const handlePreviewUrlChange = useCallback((newUrl) => {
@@ -521,6 +519,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
               onCollapsedChange={setPreviewCollapsed}
               width={previewWidth}
               onUrlChange={handlePreviewUrlChange}
+              dragging={previewDragging}
             />
           </div>
         </div>

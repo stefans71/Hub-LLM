@@ -565,16 +565,18 @@ frontend_components:
 
   PreviewPanel.jsx:
     path: frontend/src/components/PreviewPanel.jsx
-    lines: 452
-    purpose: "Live preview iframe with editable URL bar, device viewport modes, parent-controlled width/collapse (FEAT-38), onUrlChange callback for welcome persistence (BUG-55)"
-    props: "{previewUrl, collapsed, onCollapsedChange, width, onUrlChange}"
+    lines: 393
+    purpose: "Live preview iframe with editable URL bar, device viewport modes, parent-controlled width/collapse (FEAT-38), onUrlChange callback for welcome persistence (BUG-55), drag overlay (BUG-60)"
+    props: "{previewUrl, collapsed, onCollapsedChange, width, onUrlChange, dragging}"
     features:
       - "Device modes: phone (375px), tablet (768px), desktop (1280px), fit"
-      - "Editable URL bar with Enter-to-navigate, auto-prepends https://"
-      - "Refresh, prominent 'Open in Browser' button with text label + cyan accent (BUG-55)"
+      - "Editable URL bar with Enter-to-navigate, auto-prepends https://, cyan focus border (FEAT-45)"
+      - "Refresh, 'Open in Browser' button, 'Docs' button to return to /docs/index.html (BUG-61)"
       - "onUrlChange callback fires on navigate — parent uses for welcome flag persistence"
       - "Internal docs (/docs/*) render edge-to-edge without white frame wrapper (BUG-56)"
-    last_verified_session: 131
+      - "Transparent drag overlay prevents iframe from stealing mouse events during resize (BUG-60)"
+      - "DemoPreview removed — defaults to /docs/index.html (BUG-61)"
+    last_verified_session: 134
 
   DashboardSidebar.jsx:
     path: frontend/src/components/DashboardSidebar.jsx

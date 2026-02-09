@@ -4,6 +4,11 @@ Track discoveries, patterns, and friction points for harness improvement.
 
 ---
 
+### Session 135 - 2026-02-09 EST
+**Task**: BUG-61 + BUG-60
+**What**: (BUG-61) Changed welcomeUrl to always default to '/docs/index.html' (removed isFirstVisit conditional for URL). Added 'Docs' button (BookOpen icon) to PreviewPanel toolbar. Removed DemoPreview function — iframe fallback is /docs/index.html. (BUG-60) Passed previewDragging as 'dragging' prop to PreviewPanel. Added absolute transparent overlay (zIndex 10) that renders during drag to prevent iframe from stealing mousemove events.
+**Key Learning**: Iframes steal mouse events during drag operations. Always add a transparent overlay on top of iframes during any drag-resize interaction. This is a universal pattern for any resizable panel adjacent to an iframe.
+
 ### Session 134 - 2026-02-09 EST
 **Task**: FEAT-45 + BUG-59
 **What**: (FEAT-45) Removed H icon box from header, bumped logo to 22px, reduced tab padding to px-3/py-1 with rounded-sm. Added cyan focus border to PreviewPanel URL input via onFocus/onBlur. File explorer actions hover cyan instead of white. Collapse button styled. (BUG-59) Added minChatWidth=300 constraint to preview drag max width calc. Changed chat area minWidth from 0 to 300px. PreviewPanel already had flex:'none' preventing flex redistribution.
