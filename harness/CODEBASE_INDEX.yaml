@@ -823,7 +823,7 @@ backend_routers:
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 1697
+    lines: 1743
     prefix: "/api/projects"
     purpose: "Project CRUD with chat history, VPS folder auto-creation, harness template scaffolding (FEAT-30), project export (FEAT-51). Engineer systemPrompt (FEAT-54). Director auto-scaffold (FEAT-55). Improved PRP intake with navigation, review gate, approval gate, user profiling (FEAT-53). Human-oriented welcome message (FEAT-61)."
     endpoints:

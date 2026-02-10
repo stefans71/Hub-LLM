@@ -2358,5 +2358,10 @@ Three callbacks from Workspace to ServerManager:
 **What**: Rewrote TEMPLATE_DIRECTOR_WELCOME: removed "hubllm.dev" gray text from ASCII art row 3, changed Director/Engineer labels from gray (\x1b[90m]) to cyan (\x1b[36m]), replaced LLM-oriented bottom section with human step-by-step onboarding (3 numbered steps: open LLM-Dev Terminal + paste command, come back and type claude, run /generate-prp). Added copy/paste note and Preview panel reference in dim text at bottom. 16→29 template lines. projects.py 1679→1694 lines.
 **Key Learning**: Welcome messages for new users must assume zero CLI knowledge. "Open a sub-terminal and run X" means nothing to a beginner. Better: "In the lower-left, open the LLM-Dev Terminal panel and copy and paste this into the terminal: [command]".
 
+### Session 152 - 2026-02-09 EST
+**Task**: FEAT-61 — Responsive welcome script + ANSI Shadow logo
+**What**: Converted TEMPLATE_DIRECTOR_WELCOME from plain text to a bash script with `tput cols` width detection. ≥62 cols shows figlet ANSI Shadow logo (6 rows, ██╗ blocks + ╚═╝ shadows), <62 cols shows compact 3-line box-drawing logo. Both use brand colors (Hub=bold white, LLM=sky blue, .dev=dark gray). Onboarding text also has wide and narrow variants — narrow wraps at ~30 chars for phone portrait. Frontend changed from `cat .welcome` to `bash .welcome`. projects.py 1697→1743 lines.
+**Key Learning**: To make a scaffolded text file responsive to terminal width, convert it to a bash script. `tput cols` detects width, `cat <<'HEREDOC'` outputs ANSI-colored content verbatim (single-quoted delimiter prevents bash variable expansion). Frontend runs `bash .welcome 2>/dev/null` — fails silently on older projects without the script. Heredoc terminators must be at column 1 (no indent) even inside if/else blocks.
+
 ---
 
