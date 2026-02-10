@@ -389,7 +389,7 @@ frontend_components:
   ClaudeCodeTerminalChat.jsx:
     path: frontend/src/components/ClaudeCodeTerminalChat.jsx
     lines: 1151
-    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card pointing to Welcome guide in Preview panel (FEAT-35/FEAT-37), auto-cd to project dir on connect (FEAT-33)"
+    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card pointing to Welcome guide in Preview panel (FEAT-35/FEAT-37), auto-cd to Director dir + cat .welcome on connect (FEAT-33/FEAT-60)"
     props: "{project, serverId, projectSlug, onProcessingChange, enhanceWithAI, autoStart}"
     key_state:
       - {name: messages, type: "useState([])", drives: "parsed chat bubbles"}
@@ -823,7 +823,7 @@ backend_routers:
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 1661
+    lines: 1679
     prefix: "/api/projects"
     purpose: "Project CRUD with chat history, VPS folder auto-creation, harness template scaffolding (FEAT-30), project export (FEAT-51). Engineer systemPrompt (FEAT-54). Director auto-scaffold (FEAT-55). Improved PRP intake with navigation, review gate, approval gate, user profiling (FEAT-53)."
     endpoints:

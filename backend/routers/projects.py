@@ -713,6 +713,23 @@ TEMPLATE_DIRECTOR_SETTINGS_LOCAL = """{
 }
 """
 
+TEMPLATE_DIRECTOR_WELCOME = (
+    "\n"
+    "  \x1b[1;37m╦ ╦╦ ╦\x1b[0m\x1b[38;2;56;189;248m╔╗ ╦  ╦  ╔╦╗\x1b[0m\n"
+    "  \x1b[1;37m╠═╣║ ║\x1b[0m\x1b[38;2;56;189;248m╠╩╗║  ║  ║║║\x1b[0m\n"
+    "  \x1b[1;37m╩ ╩╚═╝\x1b[0m\x1b[38;2;56;189;248m╚═╝╩═╝╩═╝╩ ╩\x1b[0m  \x1b[90mhubllm.dev\x1b[0m\n"
+    "\n"
+    "  Welcome to \x1b[1;37m{{projectName}}\x1b[0m!\n"
+    "\n"
+    "  \x1b[90mDirector:\x1b[0m  \x1b[32m/root/llm-hub-projects/{{slug}}-director/\x1b[0m\n"
+    "  \x1b[90mEngineer:\x1b[0m  \x1b[32m{{appDir}}/\x1b[0m\n"
+    "\n"
+    "  To start the Lead Engineer, open a sub-terminal and run:\n"
+    "    \x1b[36mcd {{appDir}} && claude\x1b[0m\n"
+    "\n"
+    "  See \x1b[1mCLAUDE.md\x1b[0m for your Director workflow.\n"
+)
+
 
 TEMPLATE_PRE_COMMIT_HOOK = r"""#!/bin/bash
 # =============================================================================
@@ -1166,6 +1183,7 @@ async def create_vps_project_folder(
                 "CLAUDE.md": TEMPLATE_DIRECTOR_CLAUDE_MD,
                 ".claude/settings.json": TEMPLATE_DIRECTOR_SETTINGS,
                 ".claude/settings.local.json": TEMPLATE_DIRECTOR_SETTINGS_LOCAL,
+                ".welcome": TEMPLATE_DIRECTOR_WELCOME,
             }
             failed_files = []
             for file_path, template in director_files.items():

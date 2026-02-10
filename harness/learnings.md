@@ -2348,5 +2348,10 @@ Three callbacks from Workspace to ServerManager:
 **What**: Added Quick Reference section to TEMPLATE_DIRECTOR_CLAUDE_MD showing Director path (/root/llm-hub-projects/{{slug}}-director/) and App path ({{appDir}}/) in a table, plus Engineer launch command. Placed after Role, before Environment.
 **Key Learning**: director_variables inherits {{slug}} from base variables via **variables spread. No need to add it explicitly.
 
+### Session 150 - 2026-02-09 EST
+**Task**: FEAT-60 — Welcome message in Director terminal
+**What**: Added TEMPLATE_DIRECTOR_WELCOME with ANSI-colored ASCII art using brand colors (Hub=bold white, LLM=sky blue #38bdf8 true color, .dev=dark gray). Uses parenthesized string concat `("..." "...")` instead of triple-quotes so `\x1b` writes actual escape bytes to the .welcome file. Scaffolded to {slug}-director/.welcome. Frontend: changed ClaudeCodeTerminalChat.jsx auto-cd from {slug}/ to {slug}-director/ + appended `&& cat .welcome 2>/dev/null`.
+**Key Learning**: ANSI escape codes in Python template constants that get written to files via SSH must be actual escape bytes (`\x1b`), not literal text `\033`. Triple-quoted strings treat `\x1b` as escape, but for clarity use parenthesized string concatenation so each line is explicit. True color ANSI (`\x1b[38;2;R;G;Bm`) works in xterm.js since it supports 24-bit color.
+
 ---
 
