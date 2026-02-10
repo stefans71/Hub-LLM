@@ -2387,3 +2387,9 @@ Three callbacks from Workspace to ServerManager:
 
 ---
 
+### Session 157 - 2026-02-10 15:18 EST
+**Task**: FEAT-66 — Getting Started + docs visual alignment
+**What**: Four-part fix: (A) Restored SVG Lucide icons on docs home cards (play triangle, terminal/chevron, GitHub octocat, star, gear) replacing HTML entity emojis, added Getting Started as first card. (B) Aligned TEMPLATE_GETTING_STARTED_HTML CSS to match docs.py DOCS_CSS — gradient background, gradient sidebar with cyan border and #00d4aa tagline, .section cards with section-numbers, .code-block, .tip with tip-label, styled footer with logo spans and footer-tagline. (C) Added Getting Started to _NAV_PAGES as second entry after Home, created CONTENT_GETTING_STARTED with 5 sections and GET /getting-started generic endpoint. (D) Sidebar nav in Getting Started template already had correct order. docs.py 778→843, projects.py 1907→1945.
+
+---
+

@@ -182,6 +182,7 @@ mark { background: rgba(249, 115, 22, 0.35); color: #fff; padding: 1px 2px; bord
 # ---------------------------------------------------------------------------
 _NAV_PAGES = [
     ("home", "Home", "/api/docs/home"),
+    ("getting-started", "Getting Started", "/api/docs/getting-started"),
     ("workspace", "Workspace Guide", "/api/docs/workspace-guide"),
     ("git", "Git &amp; GitHub", "/api/docs/git-github"),
     ("whats-new", "What's New", "/api/docs/whats-new"),
@@ -249,23 +250,28 @@ CONTENT_HOME = """\
   </div>
 
   <div class="card-grid">
+    <a href="/api/docs/getting-started" class="card">
+      <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></div>
+      <div class="card-title">Getting Started</div>
+      <div class="card-desc">First steps in your HubLLM workspace &mdash; launch Claude, describe a task, and start building.</div>
+    </a>
     <a href="/api/docs/workspace-guide" class="card">
-      <div class="card-icon">&#128187;</div>
+      <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg></div>
       <div class="card-title">Workspace Guide</div>
       <div class="card-desc">Detailed walkthrough of every panel: File Explorer, Terminal Chat, Preview, and LLM-Dev.</div>
     </a>
     <a href="/api/docs/git-github" class="card">
-      <div class="card-icon">&#128025;</div>
+      <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></div>
       <div class="card-title">Git &amp; GitHub</div>
       <div class="card-desc">Set up version control, connect to GitHub, push your code, and understand commits.</div>
     </a>
     <a href="/api/docs/whats-new" class="card">
-      <div class="card-icon">&#11088;</div>
+      <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
       <div class="card-title">What's New</div>
       <div class="card-desc">Changelog and release notes &mdash; new features, improvements, and fixes.</div>
     </a>
     <a href="/api/docs/harness" class="card">
-      <div class="card-icon">&#9881;</div>
+      <div class="card-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
       <div class="card-title">Harness System</div>
       <div class="card-desc">How the AI engineering harness works &mdash; CODEBASE_INDEX, feature queue, learnings, and workflows.</div>
     </a>
@@ -752,6 +758,65 @@ CONTENT_HARNESS = """\
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+CONTENT_GETTING_STARTED = """\
+  <div class="page-header">
+    <h1>Getting Started</h1>
+    <p class="page-desc">First steps in your HubLLM workspace &mdash; launch Claude, describe a task, and start building.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">1</span>
+    <h2>Your Workspace</h2>
+    <p style="margin-top: 14px;">When you create a project, HubLLM sets up two directories on your VPS:</p>
+    <ul class="steps">
+      <li><span class="step-num">&bull;</span><strong>Director</strong> &mdash; <code>{slug}-director/</code> &mdash; manages the project: planning, task creation, and review.</li>
+      <li><span class="step-num">&bull;</span><strong>Engineer</strong> &mdash; <code>{slug}/</code> &mdash; writes code, runs tests, and handles git.</li>
+    </ul>
+    <div class="tip"><span class="tip-label">Tip:</span> The Director and Engineer each run their own Claude Code session in separate terminals.</div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">2</span>
+    <h2>Launch Your AI Engineer</h2>
+    <p style="margin-top: 14px;">Open the <strong>LLM-Dev Terminal</strong> panel in the lower-left of the screen. Copy and paste this command:</p>
+    <div class="code-block"><span class="cmd">cd</span> /root/llm-hub-projects/{slug} <span class="flag">&amp;&amp;</span> <span class="cmd">claude</span></div>
+    <p>This starts a Claude Code session in your Engineer directory. Claude will read your codebase, write code, and commit changes.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">3</span>
+    <h2>Start the Project Director</h2>
+    <p style="margin-top: 14px;">Come back to the main terminal (upper area) and type:</p>
+    <div class="code-block"><span class="cmd">claude</span></div>
+    <p>Press Enter. This starts your AI Coding session with the Project Director AI Persona.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">4</span>
+    <h2>Terminal Tips</h2>
+    <p style="margin-top: 14px;"><strong>Copy:</strong> Highlight text in the terminal, right-click and select "Copy".</p>
+    <p><strong>Paste:</strong> Right-click in the terminal and select "Paste".</p>
+    <div class="tip"><span class="tip-label">Tip:</span> HubLLM works with any terminal-based AI coding tool. Claude Code is the default.</div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">5</span>
+    <h2>Next Steps</h2>
+    <p style="margin-top: 14px;">Once both terminals are running, the Director will guide you through the rest of the workflow &mdash; task planning, execution, and review.</p>
+    <p>For more details, see the <a href="/api/docs/workspace-guide">Workspace Guide</a> or browse the <a href="/api/docs/home">full documentation</a>.</p>
+  </div>
+
+  <div class="footer">
+    <div class="footer-brand"><span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span></div>
+    <div class="footer-tagline">A VibeShip Creation</div>
+  </div>"""
+
+
+@router.get("/getting-started")
+async def docs_getting_started():
+    return HTMLResponse(_docs_page("Getting Started", "getting-started", CONTENT_GETTING_STARTED))
+
 
 @router.get("/home")
 async def docs_home():

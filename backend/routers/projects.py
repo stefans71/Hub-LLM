@@ -814,59 +814,88 @@ TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #0f1419; color: #e2e8f0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    line-height: 1.6;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(145deg, #0a0f1a 0%, #0d1520 50%, #080c14 100%);
+    color: #e0e0e0; line-height: 1.6; min-height: 100vh;
   }
   .docs-layout { display: flex; min-height: 100vh; }
   .docs-sidebar {
-    width: 220px; min-width: 220px; background: #1a2028;
-    border-right: 1px solid #2d3748; padding: 20px 0; display: flex; flex-direction: column;
+    width: 220px; min-width: 220px;
+    background: linear-gradient(180deg, #0d1520 0%, #0a0f1a 100%);
+    border-right: 1px solid rgba(56, 189, 248, 0.12);
+    padding: 20px 0; display: flex; flex-direction: column;
   }
-  .sidebar-brand { padding: 0 16px 16px; border-bottom: 1px solid #2d3748; margin-bottom: 12px; }
-  .sidebar-logo { font-size: 18px; font-weight: 700; }
-  .logo-hub { color: #fff; }
-  .logo-llm { color: #38bdf8; }
-  .logo-dev { color: #64748b; font-weight: 400; }
-  .sidebar-tagline { color: #475569; font-size: 11px; margin-top: 2px; }
-  .docs-sidebar nav { display: flex; flex-direction: column; gap: 2px; padding: 0 8px; }
+  .docs-sidebar .sidebar-brand {
+    padding: 0 16px 16px; border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+    margin-bottom: 12px; text-align: center;
+  }
+  .docs-sidebar .sidebar-brand .logo { font-size: 22px; font-weight: 700; }
+  .docs-sidebar .sidebar-brand .brand-tagline {
+    font-size: 11px; color: #00d4aa; letter-spacing: 0.5px; margin-top: 2px;
+  }
+  .docs-sidebar nav { padding: 0 8px; display: flex; flex-direction: column; gap: 2px; }
   .docs-sidebar nav a {
-    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    display: flex; align-items: center; gap: 10px; padding: 9px 14px;
     color: #94a3b8; text-decoration: none; font-size: 13px; border-radius: 6px;
   }
-  .docs-sidebar nav a:hover { background: #242b35; color: #e2e8f0; }
-  .docs-sidebar nav a.active { background: rgba(56, 189, 248, 0.1); color: #38bdf8; }
-  .docs-content { flex: 1; padding: 24px 32px; max-width: 720px; overflow-y: auto; }
-  h1 { font-size: 22px; margin-bottom: 8px; }
-  h2 { font-size: 16px; color: #38bdf8; margin: 28px 0 12px; border-bottom: 1px solid #2d3748; padding-bottom: 6px; }
-  p { margin-bottom: 12px; }
+  .docs-sidebar nav a:hover { background: rgba(56, 189, 248, 0.08); color: #e0e0e0; }
+  .docs-sidebar nav a.active {
+    background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-weight: 600;
+  }
+  .logo-hub { color: #fff; }
+  .logo-llm { color: #38bdf8; }
+  .logo-dev { color: rgba(150, 180, 200, 0.5); }
+  .docs-content { flex: 1; max-width: 780px; padding: 32px 32px 64px; overflow-y: auto; }
+  .page-header { margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid rgba(56, 189, 248, 0.15); }
+  .page-header h1 { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .page-header .page-desc { font-size: 14px; color: rgba(150, 180, 200, 0.7); }
+  .section {
+    background: linear-gradient(135deg, #1a2535 0%, #0f1620 100%);
+    border: 1px solid rgba(56, 189, 248, 0.12); border-radius: 12px;
+    padding: 24px; margin-bottom: 20px;
+  }
+  .section-number {
+    display: inline-block; width: 28px; height: 28px; line-height: 28px;
+    text-align: center; background: rgba(56, 189, 248, 0.15); color: #38bdf8;
+    border-radius: 50%; font-size: 13px; font-weight: 600; margin-right: 10px;
+    vertical-align: middle;
+  }
+  h2 { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 14px; display: inline; vertical-align: middle; }
+  p { font-size: 14px; color: #c0c8d4; margin-bottom: 10px; }
   .path-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: baseline; }
   .path-label { color: #38bdf8; font-weight: 600; min-width: 70px; }
   .path-value { color: #22c55e; font-family: monospace; font-size: 14px; word-break: break-all; }
-  .step { margin-bottom: 16px; }
   code {
-    background: #1a2028; color: #38bdf8; padding: 2px 8px; border-radius: 4px;
-    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: rgba(56, 189, 248, 0.1); color: #38bdf8; padding: 2px 6px;
+    border-radius: 4px; font-size: 13px;
   }
-  .cmd-block {
-    background: #1a2028; border: 1px solid #2d3748; border-radius: 6px;
-    padding: 10px 14px; margin: 8px 0 12px; font-family: monospace; font-size: 13px;
-    color: #38bdf8; overflow-x: auto;
+  .code-block {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: #0d0d0d; border: 1px solid rgba(56, 189, 248, 0.1);
+    border-radius: 8px; padding: 14px 16px; font-size: 13px; color: #c0c8d4;
+    overflow-x: auto; margin: 10px 0; line-height: 1.5;
   }
-  .note { color: #94a3b8; font-size: 13px; }
-  .tip { color: #64748b; font-size: 12px; margin-top: 4px; }
-  .footer {
-    margin-top: 40px; padding-top: 16px; border-top: 1px solid #2d3748;
-    color: #475569; font-size: 12px; text-align: center;
+  .code-block .cmd { color: #22c55e; }
+  .tip {
+    background: rgba(249, 115, 22, 0.06); border: 1px solid rgba(249, 115, 22, 0.15);
+    border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #d0d8e4; margin: 10px 0;
   }
+  .tip-label { color: #f97316; font-weight: 600; margin-right: 6px; }
   a { color: #38bdf8; text-decoration: none; }
   a:hover { text-decoration: underline; }
+  .footer {
+    text-align: center; margin-top: 32px; padding-top: 20px;
+    border-top: 1px solid rgba(56, 189, 248, 0.1); color: rgba(150, 180, 200, 0.5);
+  }
+  .footer .footer-brand { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .footer .footer-tagline { font-size: 12px; color: #00d4aa; }
   @media (max-width: 600px) {
     .docs-layout { flex-direction: column; }
-    .docs-sidebar { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid #2d3748; padding: 12px 0; }
+    .docs-sidebar { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid rgba(56, 189, 248, 0.12); padding: 12px 0; }
     .docs-sidebar nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
     .docs-sidebar nav a { padding: 6px 10px; font-size: 12px; }
-    .docs-content { padding: 16px; }
+    .docs-content { padding: 20px 16px 48px; }
   }
 </style>
 </head>
@@ -875,8 +904,8 @@ TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
 <div class="docs-layout">
   <div class="docs-sidebar">
     <div class="sidebar-brand">
-      <div class="sidebar-logo"><span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span></div>
-      <div class="sidebar-tagline">A VibeShip Creation</div>
+      <div class="logo"><span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span></div>
+      <div class="brand-tagline">A VibeShip Creation</div>
     </div>
     <nav>
       <a href="/api/docs/home">Home</a>
@@ -889,52 +918,61 @@ TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
   </div>
 
   <div class="docs-content">
-    <h1>Welcome to {{projectName}}</h1>
-    <p class="note">Your AI-powered development workspace is ready.</p>
-
-    <h2>Your Project</h2>
-    <div class="path-row">
-      <span class="path-label">Director:</span>
-      <span class="path-value">{{slug}}-director/</span>
-    </div>
-    <div class="path-row">
-      <span class="path-label">Engineer:</span>
-      <span class="path-value">{{appDir}}/</span>
-    </div>
-    <p class="tip">The <strong>Director</strong> (this terminal) manages the project &mdash; planning, task creation, and review.<br>
-    The <strong>Engineer</strong> (LLM-Dev Terminal) writes code, runs tests, and handles git.</p>
-
-    <h2>Step 1: Launch Your AI Engineer</h2>
-    <div class="step">
-      <p>Open the <strong>LLM-Dev Terminal</strong> panel in the lower-left of the screen.</p>
-      <p>Copy and paste this command:</p>
-      <div class="cmd-block">cd {{appDir}} && claude</div>
-      <p class="tip">Hub-LLM works with any terminal-based AI coding tool. Claude Code is the default.</p>
+    <div class="page-header">
+      <h1>Welcome to {{projectName}}</h1>
+      <p class="page-desc">Your AI-powered development workspace is ready.</p>
     </div>
 
-    <h2>Step 2: Start the Project Director</h2>
-    <div class="step">
-      <p>Come back to the main terminal (upper area) and type:</p>
-      <div class="cmd-block">claude</div>
-      <p>Press Enter. Select <strong>allow</strong> when prompted.</p>
+    <div class="section">
+      <span class="section-number">1</span>
+      <h2>Your Project</h2>
+      <div style="margin-top: 14px;">
+        <div class="path-row">
+          <span class="path-label">Director:</span>
+          <span class="path-value">{{slug}}-director/</span>
+        </div>
+        <div class="path-row">
+          <span class="path-label">Engineer:</span>
+          <span class="path-value">{{appDir}}/</span>
+        </div>
+      </div>
+      <div class="tip"><span class="tip-label">Tip:</span> The <strong>Director</strong> (this terminal) manages the project &mdash; planning, task creation, and review. The <strong>Engineer</strong> (LLM-Dev Terminal) writes code, runs tests, and handles git.</div>
     </div>
 
-    <h2>Step 3: Generate Your Project Plan</h2>
-    <div class="step">
-      <p>Once the Director&rsquo;s Claude Code session is running, type:</p>
-      <div class="cmd-block">/generate-prp</div>
-      <p>This walks you through turning your project idea into a detailed <strong>Product Requirements Prompt</strong> (PRP).</p>
+    <div class="section">
+      <span class="section-number">2</span>
+      <h2>Launch Your AI Engineer</h2>
+      <p style="margin-top: 14px;">Open the <strong>LLM-Dev Terminal</strong> panel in the lower-left of the screen. Copy and paste this command:</p>
+      <div class="code-block"><span class="cmd">cd {{appDir}} && claude</span></div>
+      <div class="tip"><span class="tip-label">Tip:</span> HubLLM works with any terminal-based AI coding tool. Claude Code is the default.</div>
     </div>
 
-    <h2>Terminal Tips</h2>
-    <p><strong>Copy:</strong> Highlight text, then right-click and select &ldquo;Copy&rdquo;</p>
-    <p><strong>Paste:</strong> Right-click in the terminal and select &ldquo;Paste&rdquo;</p>
+    <div class="section">
+      <span class="section-number">3</span>
+      <h2>Start the Project Director</h2>
+      <p style="margin-top: 14px;">Come back to the main terminal (upper area) and type:</p>
+      <div class="code-block"><span class="cmd">claude</span></div>
+      <p>Press Enter. This will start your AI Coding session with the Project Director AI Persona.</p>
+    </div>
 
-    <h2>Next Steps</h2>
-    <p>After generating your PRP, the Director will guide you through the rest of the workflow &mdash; task planning, execution, and review.</p>
-    <p>For full documentation, see <a href="/api/docs/home">Hub-LLM Docs</a>.</p>
+    <div class="section">
+      <span class="section-number">4</span>
+      <h2>Terminal Tips</h2>
+      <p style="margin-top: 14px;"><strong>Copy:</strong> Highlight text in the terminal, right-click and select "Copy".</p>
+      <p><strong>Paste:</strong> Right-click in the terminal and select "Paste".</p>
+    </div>
 
-    <div class="footer">HubLLM.dev &mdash; A VibeShip Creation</div>
+    <div class="section">
+      <span class="section-number">5</span>
+      <h2>Next Steps</h2>
+      <p style="margin-top: 14px;">Once both terminals are running, the Director will guide you through the rest of the workflow &mdash; task planning, execution, and review.</p>
+      <p>For full documentation, see <a href="/api/docs/home">HubLLM Docs</a>.</p>
+    </div>
+
+    <div class="footer">
+      <div class="footer-brand"><span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span></div>
+      <div class="footer-tagline">A VibeShip Creation</div>
+    </div>
   </div>
 </div>
 
