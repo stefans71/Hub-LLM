@@ -1677,6 +1677,48 @@ async def get_project_getting_started(project_id: str):
         return Response(content=html, media_type="text/html")
 
 
+@router.post("/{project_id}/refresh-welcome")
+async def refresh_welcome(project_id: str):
+    """BUG-68: Re-write .welcome to VPS with latest template. Called on terminal connect."""
+    async with async_session() as session:
+        result = await session.execute(select(ProjectModel).where(ProjectModel.id == project_id))
+        project = result.scalar_one_or_none()
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        if not project.vps_server_id:
+            raise HTTPException(status_code=400, detail="Project has no VPS server")
+
+        project_path = f"{VPS_PROJECT_BASE}/{project.slug}"
+        director_path = f"{VPS_PROJECT_BASE}/{project.slug}-director"
+        variables = {
+            "projectName": project.name,
+            "slug": project.slug,
+            "techStack": "Not specified",
+            "createdDate": "",
+            "projectBrief": "",
+            "installCommand": "",
+            "startCommand": "",
+            "appDir": project_path,
+        }
+        content = _fill_template(TEMPLATE_DIRECTOR_WELCOME, variables)
+
+        try:
+            await load_server_to_cache(
+                (await session.execute(
+                    select(VPSServerModel).where(VPSServerModel.id == project.vps_server_id)
+                )).scalar_one_or_none()
+            )
+            conn = await asyncio.wait_for(get_connection(project.vps_server_id), timeout=10.0)
+            await asyncio.wait_for(
+                conn.write_file(f"{director_path}/.welcome", content),
+                timeout=5.0,
+            )
+            return {"status": "ok"}
+        except Exception as e:
+            logger.warning(f"refresh-welcome failed for {project.slug}: {e}")
+            raise HTTPException(status_code=502, detail=f"Failed to write .welcome: {e}")
+
+
 @router.patch("/{project_id}", response_model=ProjectResponse)
 async def update_project(project_id: str, update: ProjectUpdate):
     """Update a project"""

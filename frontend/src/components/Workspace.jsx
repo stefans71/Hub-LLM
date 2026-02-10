@@ -45,10 +45,20 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
     if (project?.id) return `/api/projects/${project.id}/getting-started`
     return '/api/docs/home'
   }
-  const [welcomeUrl] = useState(getPreviewUrl)
+  const [welcomeUrl, setWelcomeUrl] = useState(getPreviewUrl)
   const [previewCollapsed, setPreviewCollapsed] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const welcomeUrlRef = useRef(welcomeUrl)
+  // BUG-67: Sync welcomeUrl when project loads after initial mount
+  useEffect(() => {
+    if (project?.id) {
+      setWelcomeUrl(`/api/projects/${project.id}/getting-started`)
+    }
+  }, [project?.id])
+  // BUG-67: Keep welcomeUrlRef in sync for BUG-55 navigation detection
+  useEffect(() => {
+    welcomeUrlRef.current = welcomeUrl
+  }, [welcomeUrl])
   const handlePreviewUrlChange = useCallback((newUrl) => {
     // Set welcomed flag when user navigates away from the welcome page
     if (welcomeUrlRef.current && project?.id && newUrl !== welcomeUrlRef.current) {

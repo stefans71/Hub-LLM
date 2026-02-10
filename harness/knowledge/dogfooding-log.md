@@ -343,6 +343,41 @@ Steps 3-7 blocked on merge to main (deploying FEAT-62-64) then creating fresh te
 
 ---
 
+## Session 8 — February 10, 2026 (BUG-67 + BUG-68, Audit Step 3 Fixes)
+
+### What We Did
+Created fresh "PUGG Training" project after deploying FEAT-65+66. Found and fixed 2 bugs from the live test.
+
+### Bugs Found During Dogfooding
+| Bug | Issue | Root Cause | Fix | Status |
+|-----|-------|-----------|-----|--------|
+| BUG-67 | Preview panel starts on docs Home instead of Getting Started | Race condition: `useState(getPreviewUrl)` is lazy-initialized — called once on mount when `project` is null, locking `welcomeUrl` to `/api/docs/home` forever. | Added `setWelcomeUrl` + `useEffect` to sync when `project.id` loads after mount. Also added `useEffect` to keep `welcomeUrlRef` in sync for BUG-55 navigation detection. | Fixed, merged |
+| BUG-68 | Terminal shows old welcome text (pre-FEAT-62 content) | Deploy timing: project creation API hit old Coolify container (with old `TEMPLATE_DIRECTOR_WELCOME`) during rolling restart. `.welcome` is written once at scaffold time and never updated. | New `POST /api/projects/{id}/refresh-welcome` endpoint writes latest template to VPS via SSH. Frontend calls it before `bash .welcome` on terminal connect. Graceful fallback — if refresh fails, stale `.welcome` still runs. | Fixed, merged |
+
+### Key Pattern Discovered: Lazy useState Initialization
+`useState(fn)` calls `fn` only on first render. If the value depends on props that may be null on mount (like `project` after page refresh), the state locks to the null-case forever. Fix: pair with `useEffect` to sync when the prop arrives. This is the same class of bug as recurring pattern #9 (linkedServerId not updating on project change).
+
+### Key Pattern Discovered: Scaffold-Time Static Files Go Stale
+Any file written once at scaffold time (`.welcome`, `CLAUDE.md`, `settings.json`) will diverge from the template after the next deploy. For files that should always reflect the latest template, refresh on access (like the new `refresh-welcome` endpoint). For files the user customizes (like `CLAUDE.md`), scaffold-once is correct.
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `frontend/src/components/Workspace.jsx:48-61` | Added `setWelcomeUrl` + two `useEffect` hooks for project.id sync |
+| `backend/routers/projects.py:1680-1719` | New `POST /{id}/refresh-welcome` endpoint |
+| `frontend/src/components/ClaudeCodeTerminalChat.jsx:279-295` | Await refresh-welcome before running bash .welcome |
+
+### Dogfooding Audit Status
+- [x] Step 1-2: Template snapshot + diff (v2 shipped)
+- [x] **Step 3a**: Preview panel opens on Getting Started (BUG-67 fixed)
+- [x] **Step 3b**: Terminal welcome shows latest template (BUG-68 fixed)
+- [ ] **Step 4**: Test /generate-prp intake (FEAT-53 improvements)
+- [ ] **Step 5**: Test Director setup
+- [ ] **Step 6**: Test code-researcher agent
+- [ ] **Step 7**: Test pre-commit hook
+
+---
+
 ## Automation Roadmap (from plan Phase 5)
 1. **Ralph Loop** — auto-continue after task completion (engineer doesn't stop after 1 task)
 2. **MCP server** — file-based task automation (not Supabase)

@@ -278,11 +278,21 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
               startClaudeCode()
             } else {
               // FEAT-33/FEAT-60: Auto-cd to Director directory and show welcome
-              if (projectSlug && wsRef.current?.readyState === WebSocket.OPEN) {
-                wsRef.current.send(JSON.stringify({ type: 'input', data: `cd /root/llm-hub-projects/${projectSlug}-director && bash .welcome 2>/dev/null\n` }))
+              // BUG-68: Refresh .welcome with latest template before running it
+              const runWelcome = () => {
+                if (projectSlug && wsRef.current?.readyState === WebSocket.OPEN) {
+                  wsRef.current.send(JSON.stringify({ type: 'input', data: `cd /root/llm-hub-projects/${projectSlug}-director && bash .welcome 2>/dev/null\n` }))
+                }
+                claudeStartedRef.current = true
+                setStatus('claude_ready')
               }
-              claudeStartedRef.current = true
-              setStatus('claude_ready')
+              if (project?.id) {
+                fetch(`/api/projects/${project.id}/refresh-welcome`, { method: 'POST' })
+                  .then(() => runWelcome())
+                  .catch(() => runWelcome()) // Non-fatal — stale .welcome still works
+              } else {
+                runWelcome()
+              }
             }
             break
 
