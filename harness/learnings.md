@@ -2353,5 +2353,10 @@ Three callbacks from Workspace to ServerManager:
 **What**: Added TEMPLATE_DIRECTOR_WELCOME with ANSI-colored ASCII art using brand colors (Hub=bold white, LLM=sky blue #38bdf8 true color, .dev=dark gray). Uses parenthesized string concat `("..." "...")` instead of triple-quotes so `\x1b` writes actual escape bytes to the .welcome file. Scaffolded to {slug}-director/.welcome. Frontend: changed ClaudeCodeTerminalChat.jsx auto-cd from {slug}/ to {slug}-director/ + appended `&& cat .welcome 2>/dev/null`.
 **Key Learning**: ANSI escape codes in Python template constants that get written to files via SSH must be actual escape bytes (`\x1b`), not literal text `\033`. Triple-quoted strings treat `\x1b` as escape, but for clarity use parenthesized string concatenation so each line is explicit. True color ANSI (`\x1b[38;2;R;G;Bm`) works in xterm.js since it supports 24-bit color.
 
+### Session 151 - 2026-02-09 EST
+**Task**: FEAT-61 — Fix welcome message for human operators
+**What**: Rewrote TEMPLATE_DIRECTOR_WELCOME: removed "hubllm.dev" gray text from ASCII art row 3, changed Director/Engineer labels from gray (\x1b[90m]) to cyan (\x1b[36m]), replaced LLM-oriented bottom section with human step-by-step onboarding (3 numbered steps: open LLM-Dev Terminal + paste command, come back and type claude, run /generate-prp). Added copy/paste note and Preview panel reference in dim text at bottom. 16→29 template lines. projects.py 1679→1694 lines.
+**Key Learning**: Welcome messages for new users must assume zero CLI knowledge. "Open a sub-terminal and run X" means nothing to a beginner. Better: "In the lower-left, open the LLM-Dev Terminal panel and copy and paste this into the terminal: [command]".
+
 ---
 

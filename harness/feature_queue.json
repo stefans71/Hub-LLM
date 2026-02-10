@@ -26,6 +26,26 @@
   },
   "queue": [
     {
+      "id": "FEAT-61",
+      "name": "Fix welcome message — rewrite for human operators, fix colors",
+      "size": "S",
+      "priority": 1,
+      "status": "pending_review",
+      "description": "The TEMPLATE_DIRECTOR_WELCOME in projects.py (lines 716-731) is written for an LLM, not a human user. The colors are also slightly off. This task rewrites the welcome message for human operators with step-by-step onboarding instructions.",
+      "change": [
+        "backend/routers/projects.py:716-731 — Rewrite TEMPLATE_DIRECTOR_WELCOME: fix ASCII art colors (Hub all white, LLM all sky blue, remove hubllm.dev), change Director/Engineer labels to cyan, replace bottom section with human-oriented step-by-step onboarding instructions"
+      ],
+      "test": "(1) Create test project. (2) Open in workspace. (3) Verify ASCII art colors match brand (Hub=white, LLM=sky blue, no hubllm.dev text). (4) Director/Engineer labels are cyan. (5) Step-by-step instructions are present and readable. (6) Copy/paste note appears at bottom.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": false,
+        "status_set_to_pending_review": true
+      },
+      "completion_note": "Rewrote TEMPLATE_DIRECTOR_WELCOME (projects.py:716-744, 16→29 lines). Color fixes: removed 'hubllm.dev' gray text from ASCII art row 3, changed Director/Engineer labels from gray (\\x1b[90m) to cyan (\\x1b[36m). Hub letters remain bold white, LLM letters remain sky blue true color — both verified correct. Content rewrite: replaced LLM-oriented bottom section with 3-step human onboarding (open LLM-Dev Terminal + paste cd command, come back and type claude, run /generate-prp). Added copy/paste note and Preview panel reference in dim text. Verified: Python syntax OK, 36 real \\x1b escape bytes, no literal \\033, no hubllm.dev text, all 3 steps present, copy/paste note present."
+    },
+    {
       "id": "FEAT-58",
       "name": "Clean up VPS directories on project delete",
       "size": "S",
