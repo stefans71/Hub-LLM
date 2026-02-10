@@ -790,20 +790,34 @@ TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
   body {
     background: #0f1419; color: #e2e8f0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    line-height: 1.6; padding: 24px; max-width: 720px; margin: 0 auto;
+    line-height: 1.6;
   }
+  .docs-layout { display: flex; min-height: 100vh; }
+  .docs-sidebar {
+    width: 220px; min-width: 220px; background: #1a2028;
+    border-right: 1px solid #2d3748; padding: 20px 0; display: flex; flex-direction: column;
+  }
+  .sidebar-brand { padding: 0 16px 16px; border-bottom: 1px solid #2d3748; margin-bottom: 12px; }
+  .sidebar-logo { font-size: 18px; font-weight: 700; }
+  .logo-hub { color: #fff; }
+  .logo-llm { color: #38bdf8; }
+  .logo-dev { color: #64748b; font-weight: 400; }
+  .sidebar-tagline { color: #475569; font-size: 11px; margin-top: 2px; }
+  .docs-sidebar nav { display: flex; flex-direction: column; gap: 2px; padding: 0 8px; }
+  .docs-sidebar nav a {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    color: #94a3b8; text-decoration: none; font-size: 13px; border-radius: 6px;
+  }
+  .docs-sidebar nav a:hover { background: #242b35; color: #e2e8f0; }
+  .docs-sidebar nav a.active { background: rgba(56, 189, 248, 0.1); color: #38bdf8; }
+  .docs-content { flex: 1; padding: 24px 32px; max-width: 720px; overflow-y: auto; }
   h1 { font-size: 22px; margin-bottom: 8px; }
   h2 { font-size: 16px; color: #38bdf8; margin: 28px 0 12px; border-bottom: 1px solid #2d3748; padding-bottom: 6px; }
   p { margin-bottom: 12px; }
-  .brand { font-size: 18px; margin-bottom: 20px; }
-  .brand-hub { color: #fff; font-weight: 700; }
-  .brand-llm { color: #38bdf8; font-weight: 700; }
-  .brand-dev { color: #64748b; font-weight: 400; }
   .path-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: baseline; }
   .path-label { color: #38bdf8; font-weight: 600; min-width: 70px; }
   .path-value { color: #22c55e; font-family: monospace; font-size: 14px; word-break: break-all; }
   .step { margin-bottom: 16px; }
-  .step-num { color: #f97316; font-weight: 700; font-size: 15px; margin-right: 6px; }
   code {
     background: #1a2028; color: #38bdf8; padding: 2px 8px; border-radius: 4px;
     font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px;
@@ -821,60 +835,82 @@ TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
   }
   a { color: #38bdf8; text-decoration: none; }
   a:hover { text-decoration: underline; }
+  @media (max-width: 600px) {
+    .docs-layout { flex-direction: column; }
+    .docs-sidebar { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid #2d3748; padding: 12px 0; }
+    .docs-sidebar nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+    .docs-sidebar nav a { padding: 6px 10px; font-size: 12px; }
+    .docs-content { padding: 16px; }
+  }
 </style>
 </head>
 <body>
 
-<div class="brand">
-  <span class="brand-hub">Hub</span><span class="brand-llm">LLM</span><span class="brand-dev">.dev</span>
+<div class="docs-layout">
+  <div class="docs-sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo"><span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span></div>
+      <div class="sidebar-tagline">A VibeShip Creation</div>
+    </div>
+    <nav>
+      <a href="/docs/index.html">Home</a>
+      <a href="#" class="active">Getting Started</a>
+      <a href="/docs/workspace-guide.html">Workspace Guide</a>
+      <a href="/docs/git-github.html">Git &amp; GitHub</a>
+      <a href="/docs/whats-new.html">What&rsquo;s New</a>
+      <a href="/docs/harness-guide.html">Harness System</a>
+    </nav>
+  </div>
+
+  <div class="docs-content">
+    <h1>Welcome to {{projectName}}</h1>
+    <p class="note">Your AI-powered development workspace is ready.</p>
+
+    <h2>Your Project</h2>
+    <div class="path-row">
+      <span class="path-label">Director:</span>
+      <span class="path-value">{{slug}}-director/</span>
+    </div>
+    <div class="path-row">
+      <span class="path-label">Engineer:</span>
+      <span class="path-value">{{appDir}}/</span>
+    </div>
+    <p class="tip">The <strong>Director</strong> (this terminal) manages the project &mdash; planning, task creation, and review.<br>
+    The <strong>Engineer</strong> (LLM-Dev Terminal) writes code, runs tests, and handles git.</p>
+
+    <h2>Step 1: Launch Your AI Engineer</h2>
+    <div class="step">
+      <p>Open the <strong>LLM-Dev Terminal</strong> panel in the lower-left of the screen.</p>
+      <p>Copy and paste this command:</p>
+      <div class="cmd-block">cd {{appDir}} && claude</div>
+      <p class="tip">Hub-LLM works with any terminal-based AI coding tool. Claude Code is the default.</p>
+    </div>
+
+    <h2>Step 2: Start the Project Director</h2>
+    <div class="step">
+      <p>Come back to the main terminal (upper area) and type:</p>
+      <div class="cmd-block">claude</div>
+      <p>Press Enter. Select <strong>allow</strong> when prompted.</p>
+    </div>
+
+    <h2>Step 3: Generate Your Project Plan</h2>
+    <div class="step">
+      <p>Once the Director&rsquo;s Claude Code session is running, type:</p>
+      <div class="cmd-block">/generate-prp</div>
+      <p>This walks you through turning your project idea into a detailed <strong>Product Requirements Prompt</strong> (PRP).</p>
+    </div>
+
+    <h2>Terminal Tips</h2>
+    <p><strong>Copy:</strong> Highlight text, then right-click and select &ldquo;Copy&rdquo;</p>
+    <p><strong>Paste:</strong> Right-click in the terminal and select &ldquo;Paste&rdquo;</p>
+
+    <h2>Next Steps</h2>
+    <p>After generating your PRP, the Director will guide you through the rest of the workflow &mdash; task planning, execution, and review.</p>
+    <p>For full documentation, see <a href="/docs/index.html">Hub-LLM Docs</a>.</p>
+
+    <div class="footer">HubLLM.dev &mdash; A VibeShip Creation</div>
+  </div>
 </div>
-
-<h1>Welcome to {{projectName}}</h1>
-<p class="note">Your AI-powered development workspace is ready.</p>
-
-<h2>Your Project</h2>
-<div class="path-row">
-  <span class="path-label">Director:</span>
-  <span class="path-value">{{slug}}-director/</span>
-</div>
-<div class="path-row">
-  <span class="path-label">Engineer:</span>
-  <span class="path-value">{{appDir}}/</span>
-</div>
-<p class="tip">The <strong>Director</strong> (this terminal) manages the project &mdash; planning, task creation, and review.<br>
-The <strong>Engineer</strong> (LLM-Dev Terminal) writes code, runs tests, and handles git.</p>
-
-<h2>Step 1: Launch Your AI Engineer</h2>
-<div class="step">
-  <p>Open the <strong>LLM-Dev Terminal</strong> panel in the lower-left of the screen.</p>
-  <p>Copy and paste this command:</p>
-  <div class="cmd-block">cd {{appDir}} && claude</div>
-  <p class="tip">Hub-LLM works with any terminal-based AI coding tool. Claude Code is the default.</p>
-</div>
-
-<h2>Step 2: Start the Project Director</h2>
-<div class="step">
-  <p>Come back to the main terminal (upper area) and type:</p>
-  <div class="cmd-block">claude</div>
-  <p>Press Enter. Select <strong>allow</strong> when prompted.</p>
-</div>
-
-<h2>Step 3: Generate Your Project Plan</h2>
-<div class="step">
-  <p>Once the Director&rsquo;s Claude Code session is running, type:</p>
-  <div class="cmd-block">/generate-prp</div>
-  <p>This walks you through turning your project idea into a detailed <strong>Product Requirements Prompt</strong> (PRP).</p>
-</div>
-
-<h2>Terminal Tips</h2>
-<p><strong>Copy:</strong> Highlight text, then right-click and select &ldquo;Copy&rdquo;</p>
-<p><strong>Paste:</strong> Right-click in the terminal and select &ldquo;Paste&rdquo;</p>
-
-<h2>Next Steps</h2>
-<p>After generating your PRP, the Director will guide you through the rest of the workflow &mdash; task planning, execution, and review.</p>
-<p>For full documentation, see <a href="/docs/index.html" target="_top">Hub-LLM Docs</a>.</p>
-
-<div class="footer">HubLLM.dev &mdash; A VibeShip Creation</div>
 
 </body>
 </html>"""

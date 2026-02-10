@@ -31,10 +31,9 @@ export default function PreviewPanel({
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [activeUrl, setActiveUrl] = useState(previewUrl || '')
   const [inputUrl, setInputUrl] = useState(previewUrl || '')
-  const isInternalDocs = activeUrl?.startsWith('/docs/')
-  // BUG-67: Only go edge-to-edge for internal docs in Fit mode.
-  // All other combos (docs+phone/tablet/desktop, external URLs) get centered device frame.
-  const isFullBleed = isInternalDocs && deviceMode === 'fit'
+  // FEAT-63: Full-bleed for ALL content in Fit mode (not just /docs/).
+  // Phone/tablet/desktop modes get centered device frame.
+  const isFullBleed = deviceMode === 'fit'
   const iframeRef = useRef(null)
 
   // Sync from prop when parent sets a URL (e.g., Codespaces)
@@ -257,7 +256,7 @@ export default function PreviewPanel({
             {/* Actions */}
             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
               <button
-                onClick={() => { setActiveUrl('/docs/index.html'); setInputUrl('/docs/index.html') }}
+                onClick={() => { const url = previewUrl || '/docs/index.html'; setActiveUrl(url); setInputUrl(url) }}
                 title="Open documentation"
                 style={{
                   display: 'flex', alignItems: 'center', gap: '4px',
@@ -320,7 +319,7 @@ export default function PreviewPanel({
                 minHeight: isFullBleed ? 0 : '400px',
                 boxShadow: isFullBleed ? 'none' : '0 4px 20px rgba(0,0,0,0.3)',
                 flexShrink: 0,
-                overflow: 'hidden',
+                overflow: isFullBleed ? 'auto' : 'hidden',
                 transition: 'width 0.2s ease',
                 ...getFrameStyles(),
                 ...(isFullBleed ? { height: '100%' } : {})
@@ -328,7 +327,7 @@ export default function PreviewPanel({
             >
               <iframe
                 ref={iframeRef}
-                src={activeUrl || '/docs/index.html'}
+                src={activeUrl || previewUrl || '/docs/index.html'}
                 style={{
                   width: '100%',
                   height: '100%',
