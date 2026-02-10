@@ -597,6 +597,18 @@ TEMPLATE_DIRECTOR_CLAUDE_MD = """# {{projectName}} — Director
 ## Role
 You are the Director for **{{projectName}}**. You architect, plan, and manage the task queue. You coordinate the Lead Engineer. You do NOT write application code.
 
+## Quick Reference
+
+| | Path |
+|--|------|
+| **This directory (Director)** | `/root/llm-hub-projects/{{slug}}-director/` |
+| **App directory (Engineer)** | `{{appDir}}/` |
+
+To launch the Lead Engineer's Claude session, open a sub-terminal and run:
+```bash
+cd {{appDir}} && claude
+```
+
 ## Environment
 
 | Path | Purpose |

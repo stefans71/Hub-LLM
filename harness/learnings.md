@@ -2343,5 +2343,10 @@ Three callbacks from Workspace to ServerManager:
 **What**: Added TEMPLATE_CODE_RESEARCHER (120 lines) to projects.py. Simplified port from HubLLM's own code-researcher agent — generalized for any scaffolded project. Covers 3 request types (INVESTIGATE, SCAN, UPDATE), scanning techniques for frontend and backend files, YAML entry formats, cross-reference patterns. Added .claude/agents/ to scaffold subdirs. projects.py 1526→1649 lines.
 **Key Learning**: When porting an internal agent to a template, generalize paths (remove hardcoded repo paths, use {{placeholders}}), remove project-specific sections (like investigation reports workflow that requires a Director), and keep the scanning commands generic enough to work across tech stacks. The YAML entry format should match the seeded CODEBASE_INDEX.yaml structure.
 
+### Session 149 - 2026-02-09 EST
+**Task**: FEAT-59 — Director CLAUDE.md quick-reference
+**What**: Added Quick Reference section to TEMPLATE_DIRECTOR_CLAUDE_MD showing Director path (/root/llm-hub-projects/{{slug}}-director/) and App path ({{appDir}}/) in a table, plus Engineer launch command. Placed after Role, before Environment.
+**Key Learning**: director_variables inherits {{slug}} from base variables via **variables spread. No need to add it explicitly.
+
 ---
 

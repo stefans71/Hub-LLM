@@ -26,24 +26,63 @@
   },
   "queue": [
     {
-      "id": "FEAT-56",
-      "name": "Add code-researcher agent to template scaffold",
-      "size": "S",
-      "priority": 3,
+      "id": "FEAT-59",
+      "name": "Add directory quick-reference to Director CLAUDE.md template",
+      "size": "XS",
+      "priority": 1,
       "status": "pending_review",
-      "completion_note": "Added TEMPLATE_CODE_RESEARCHER constant (120 lines) to projects.py after TEMPLATE_AUDIT_INDEX. Simplified port from HubLLM's own .claude/agents/code-researcher.md — generalized for any project (uses {{projectName}} placeholder, generic directory paths). Agent defines: model sonnet, tools Read/Write/Edit/Grep/Glob/Bash, 3 request types (INVESTIGATE, SCAN, UPDATE). Includes scanning techniques for frontend (.jsx/.tsx/.vue) and backend (.py/.js/.ts/.go), cross-reference patterns, YAML entry formats for components and routers. Added .claude/agents to subdirs array and .claude/agents/code-researcher.md to template_files dict. Python syntax OK. projects.py 1526→1649 lines.",
-      "description": "The CODEBASE_INDEX.yaml is the source of truth for both Director (task writing) and Engineer (implementation). Currently there's no tooling in the template to automate index population — the Engineer is just told 'update the index after every task' in CLAUDE.md.\n\nHub-LLM's own setup has a code-researcher agent (.claude/agents/code-researcher.md) that automates index scanning. Port a simplified version of this to the template.\n\nAdd TEMPLATE_CODE_RESEARCHER constant to projects.py. The agent should:\n- Scan source files (wc -l, grep for exports/imports/state/endpoints)\n- Write structured YAML entries to CODEBASE_INDEX.yaml\n- Handle 3 request types: INVESTIGATE (scan unfamiliar area), SCAN (before a task), UPDATE (after a task)\n- Use Sonnet model for cost efficiency\n\nThe Director can spawn this agent to keep the index current before writing tasks. The Engineer can spawn it after completing tasks to update the index.\n\nUpdate create_vps_project_folder() to write .claude/agents/code-researcher.md.",
+      "completion_note": "Added Quick Reference section to TEMPLATE_DIRECTOR_CLAUDE_MD after Role, before Environment. Shows both paths (Director: /root/llm-hub-projects/{{slug}}-director/, App: {{appDir}}/) in a table plus Engineer launch command (cd {{appDir}} && claude). Verified {{slug}} is available via director_variables = {**variables, 'appDir': project_path} — slug comes from the base variables dict. Python syntax OK. projects.py 1649→1661 lines.",
+      "description": "The Director CLAUDE.md template needs a quick-reference section showing both directory paths so users can reconnect after SSH drops. The Director's Environment table already has {{appDir}} but lacks the Director's own path and a clear 'how to launch the Engineer' reference.\n\nAdd a 'Quick Reference' section at the TOP of TEMPLATE_DIRECTOR_CLAUDE_MD (projects.py:595-660) right after the Role section, before Environment:\n\n## Quick Reference\n| | Path |\n|--|------|\n| **This directory (Director)** | `/root/llm-hub-projects/{{slug}}-director/` |\n| **App directory (Engineer)** | `{{appDir}}/` |\n\nTo launch the Lead Engineer's Claude session, open a sub-terminal and run:\n```bash\ncd {{appDir}} && claude\n```\n\nAlso verify that {{slug}} is available in director_variables (it should be — inherited from variables via **variables spread on line 903).",
       "change": [
-        "backend/routers/projects.py — Add TEMPLATE_CODE_RESEARCHER constant with agent definition (model: sonnet, tools: Read/Write/Edit/Grep/Glob/Bash)",
-        "backend/routers/projects.py — In create_vps_project_folder(), write .claude/agents/code-researcher.md"
+        "backend/routers/projects.py:595-660 — Add Quick Reference section to TEMPLATE_DIRECTOR_CLAUDE_MD after Role section with both directory paths and Engineer launch command"
       ],
-      "test": "(1) Create test project. (2) Verify .claude/agents/code-researcher.md exists. (3) File defines agent with correct tools and 3 request types. (4) YAML entry format matches index structure.",
+      "test": "(1) Create test project. (2) Verify pugg-training-director/CLAUDE.md has Quick Reference section with correct paths. (3) Verify {{slug}} resolved correctly.",
       "completion_checklist": {
         "code_works": true,
         "index_updated": true,
         "learnings_written": true,
         "committed_pushed": true,
         "status_set_to_pending_review": true
+      }
+    },
+    {
+      "id": "FEAT-60",
+      "name": "Welcome message in Director terminal on project open",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "When a user opens their project and the terminal starts in the Director's directory, they should see a welcome message with ASCII art and directory paths. Two changes needed:\n\n**1. Template (projects.py):**\nAdd TEMPLATE_DIRECTOR_WELCOME constant with:\n- ASCII art banner for hubllm.dev (keep it compact, 3-4 lines)\n- Welcome text: 'Welcome to {{projectName}}!'\n- Two directory paths:\n  - Director: /root/llm-hub-projects/{{slug}}-director/\n  - Engineer (App): /root/llm-hub-projects/{{slug}}/\n- Points to README.md for full setup guide\n- Launch instruction: 'To start the Lead Engineer: open a sub-terminal and run: cd {{appDir}} && claude'\n\nScaffold this to {{slug}}-director/.welcome in create_vps_project_folder().\n\n**2. Platform (terminal startup):**\nWhen Hub-LLM's terminal auto-cd's into the project directory, append a cat command to display the welcome file:\n`cd /root/llm-hub-projects/{slug}-director && cat .welcome 2>/dev/null`\n\nThe 2>/dev/null ensures no error if .welcome doesn't exist (older projects won't have it).\n\nFind where the terminal auto-cd command is constructed in the frontend (likely in terminal connection or workspace code) and append the cat command.",
+      "change": [
+        "backend/routers/projects.py — Add TEMPLATE_DIRECTOR_WELCOME constant with ASCII art + directory paths + README pointer. Wire into create_vps_project_folder() to scaffold as {{slug}}-director/.welcome",
+        "frontend — Find where terminal auto-cd command is built for project open. Append '&& cat .welcome 2>/dev/null' to display welcome message on terminal startup"
+      ],
+      "test": "(1) Create test project. (2) Open project in workspace. (3) Terminal auto-cd's into Director directory and displays welcome message with ASCII art, both directory paths, and README pointer. (4) Verify paths are correct. (5) Verify no error on projects without .welcome file.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-58",
+      "name": "Clean up VPS directories on project delete",
+      "size": "S",
+      "priority": 2,
+      "status": "pending",
+      "description": "When a user deletes a project from the Hub-LLM UI, the delete_project() endpoint (projects.py:1415-1429) only removes the DB record and chat messages. The VPS directories are left as orphans. This task adds VPS cleanup to the delete flow.\n\nAfter DB deletion succeeds, SSH to the project's VPS server and remove:\n1. /root/llm-hub-projects/{slug}/ (the app/Engineer directory)\n2. /root/llm-hub-projects/{slug}-director/ (the Director directory, FEAT-55)\n\nThese are sibling directories — not nested — but both are scaffolded by create_vps_project_folder() and belong to the same project.\n\nBoth removals should be non-blocking (don't fail the delete if SSH is down — the DB record is already gone). Log warnings if VPS cleanup fails, similar to the scaffold_warnings pattern from FEAT-55.\n\nThe project model has vps_server_id and slug fields available. Use the same SSH connection pattern as create_vps_project_folder().\n\n**Frontend**: Update the delete confirmation dialog to say: 'This will delete all folders associated with this project' and list both directories:\n- /root/llm-hub-projects/{slug}/\n- /root/llm-hub-projects/{slug}-director/\n\nThe backend response should confirm which directories were successfully removed so the frontend can show accurate feedback.",
+      "change": [
+        "backend/routers/projects.py:1415-1429 — In delete_project(), after DB deletion: get SSH connection via vps_server_id, rm -rf both {slug}/ and {slug}-director/ directories, return list of removed paths in response",
+        "frontend — Update delete confirmation dialog to list both directories that will be removed and show 'Delete all folders associated with this project'"
+      ],
+      "test": "(1) Create a test project with VPS. (2) Verify both {slug}/ and {slug}-director/ exist on VPS. (3) Delete project from UI — confirm dialog shows both directories. (4) Verify both directories removed from VPS. (5) Verify delete still works if VPS is unreachable (non-blocking). (6) Verify response includes which directories were removed.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
       }
     },
     {
@@ -67,6 +106,28 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-56",
+      "name": "Add code-researcher agent to template scaffold",
+      "size": "S",
+      "priority": 3,
+      "status": "completed",
+      "completion_note": "Added TEMPLATE_CODE_RESEARCHER constant (120 lines) to projects.py after TEMPLATE_AUDIT_INDEX. Simplified port from HubLLM's own .claude/agents/code-researcher.md — generalized for any project (uses {{projectName}} placeholder, generic directory paths). Agent defines: model sonnet, tools Read/Write/Edit/Grep/Glob/Bash, 3 request types (INVESTIGATE, SCAN, UPDATE). Includes scanning techniques for frontend (.jsx/.tsx/.vue) and backend (.py/.js/.ts/.go), cross-reference patterns, YAML entry formats for components and routers. Added .claude/agents to subdirs array and .claude/agents/code-researcher.md to template_files dict. Python syntax OK. projects.py 1526→1649 lines.",
+      "description": "The CODEBASE_INDEX.yaml is the source of truth for both Director (task writing) and Engineer (implementation). Currently there's no tooling in the template to automate index population — the Engineer is just told 'update the index after every task' in CLAUDE.md.\n\nHub-LLM's own setup has a code-researcher agent (.claude/agents/code-researcher.md) that automates index scanning. Port a simplified version of this to the template.\n\nAdd TEMPLATE_CODE_RESEARCHER constant to projects.py. The agent should:\n- Scan source files (wc -l, grep for exports/imports/state/endpoints)\n- Write structured YAML entries to CODEBASE_INDEX.yaml\n- Handle 3 request types: INVESTIGATE (scan unfamiliar area), SCAN (before a task), UPDATE (after a task)\n- Use Sonnet model for cost efficiency\n\nThe Director can spawn this agent to keep the index current before writing tasks. The Engineer can spawn it after completing tasks to update the index.\n\nUpdate create_vps_project_folder() to write .claude/agents/code-researcher.md.",
+      "change": [
+        "backend/routers/projects.py — Add TEMPLATE_CODE_RESEARCHER constant with agent definition (model: sonnet, tools: Read/Write/Edit/Grep/Glob/Bash)",
+        "backend/routers/projects.py — In create_vps_project_folder(), write .claude/agents/code-researcher.md"
+      ],
+      "test": "(1) Create test project. (2) Verify .claude/agents/code-researcher.md exists. (3) File defines agent with correct tools and 3 request types. (4) YAML entry format matches index structure.",
+      "completion_checklist": {
+        "code_works": true,
+        "index_updated": true,
+        "learnings_written": true,
+        "committed_pushed": true,
+        "status_set_to_pending_review": true
+      },
+      "review_note": "PASS. 120-line generalized agent with all 3 request types (INVESTIGATE, SCAN, UPDATE). YAML entry formats match index structure. Scanning techniques cover frontend (.jsx/.tsx/.vue/.svelte) and backend (.py/.js/.ts/.go/.rs). No Hub-LLM-specific references — properly generalized with {{projectName}} placeholder. .claude/agents/ subdirectory added to scaffold. Clean port from Hub-LLM's own code-researcher."
+    },
     {
       "id": "FEAT-53",
       "name": "Improve /generate-prp intake flow — navigation, review gate, approval gate",
