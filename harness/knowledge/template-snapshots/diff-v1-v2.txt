@@ -1,0 +1,166 @@
+Only in /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v2-post-feat57/.claude/agents: code-researcher.md
+diff -r /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v1-base/.claude/commands/generate-prp.md /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v2-post-feat57/.claude/commands/generate-prp.md
+7a8,24
+> ## Before Starting — Read Existing User Profile
+> 
+> **FIRST**, read `CLAUDE.md` and check if a `## User Profile` section already exists from a previous project on this VPS. If it does:
+> - Use prior experience level and preferences as defaults — present them as selectable confirmations ("Last time you said X — still true?" with 1. Yes / 2. Change options) rather than re-asking from scratch
+> - Check the `## Q&A Behavior` section for behavioral patterns. Adapt question depth based on accumulated patterns:
+>   - If user consistently picks "you decide": ask fewer technical questions
+>   - If user frequently expands answers with free-text: offer more open-ended options
+> - Do NOT assume high revision count = "make Q&A longer." It could mean poor options, mis-clicks, or genuine detail preference. Let patterns across multiple projects reveal the real signal.
+> - Skip the speech-to-text tip (user has already seen it)
+> 
+> **PROJECT SCOPE AWARENESS**: Analyze the brief ($ARGUMENTS) to gauge project scope and calibrate Q&A depth:
+> - Simple script ("auto-respond to emails"): minimal discovery, 2-3 questions, skip most technical questions. You make nearly all decisions.
+> - Mid-complexity app ("task tracker with auth"): standard discovery phase, moderate follow-ups.
+> - Complex platform ("LinkedIn-style social app"): full discovery with detailed follow-ups on architecture, data models, integrations.
+> 
+> The two axes — **user behavioral patterns** + **project scope** — together determine Q&A depth.
+> 
+10c27,42
+< Ask these questions in a friendly, conversational way. Present as numbered multiple choice. Always include "Not sure — you decide" as an option.
+---
+> Ask these questions in a friendly, conversational way. Present as numbered multiple choice. Always include "Not sure — you decide" as an option. Always include a free-text option: "Something else (tell me)".
+> 
+> ### Speech-to-text tip (first-time users only)
+> 
+> If NO existing User Profile was found in CLAUDE.md, show this tip ONCE before Question 1:
+> 
+> > **Tip: Using voice input?** If you're using speech-to-text (Windows: Win+H, Mac: Fn twice or Ctrl+Cmd+D), take a moment to read your response before submitting. Speech-to-text often produces garbled text — a quick proofread saves both of us from guessing what you meant.
+> > 1. Got it, thanks
+> > 2. Tell me more about setting up speech-to-text
+> > 3. Skip — I'm typing
+> 
+> If user selects option 2: Briefly explain OS-native speech-to-text setup (Win+H for Windows, Fn-Fn or Ctrl+Cmd+D for Mac). Mention Whisper as a free local alternative for better accuracy. Keep it short. Then proceed to Question 1.
+> 
+> If user selects option 1 or 3: Proceed directly to Question 1.
+> 
+> ### Calibration Questions
+39c71,80
+< **Wait for the user to answer before proceeding.**
+---
+> **Wait for the user to answer before proceeding.** Ask ONE question at a time.
+> 
+> ### Navigation Commands (available throughout ALL phases)
+> 
+> After presenting each question, remind the user (briefly, once early on) that they can use these commands at any time:
+> - **"change answer [N]"** or **"revise [topic]"** — re-ask a previous question with its original selectable options
+> - **"show my answers"** — display a summary of ALL answers given so far
+> - **"start over"** — reset from Question 1
+> 
+> If the user invokes any of these, handle it immediately, then return to where they were.
+41c82
+< ### After calibration — save user profile to CLAUDE.md
+---
+> ### After each answer — update User Profile in CLAUDE.md (living document)
+43c84,87
+< Append a `## User Profile` section to `CLAUDE.md` with the user's answers. This persists across sessions so every future interaction adapts automatically.
+---
+> The User Profile is a **LIVING DOCUMENT** that updates continuously — not a one-time snapshot. After EVERY answer, revision, expansion, or restart:
+> 
+> 1. **Replace** the existing `## User Profile` section in `CLAUDE.md` (or create if none exists). NEVER append a duplicate — always replace in-place.
+> 2. The profile reflects the CURRENT state of all answers at all times.
+51a96,102
+> 
+> ## Q&A Behavior
+> - Answers revised: [list which questions were changed and how many times]
+> - Answers expanded: [list which questions the user added free-text detail to]
+> - Restarts: [N] (full survey restarts during this project)
+> - Free-text usage: [how often the user typed custom answers vs picked selectable options]
+> - Projects completed: [N] (persists across projects — increments each time a PRP is approved)
+62a114,115
+> **Maintain a running internal summary of ALL answers** given so far (Phase 1 calibration + Phase 2 discovery). This powers the "show my answers" command and the review gate. Update it after every answer.
+> 
+66a120
+> - Always include a free-text option: "Something else (tell me)"
+104c158
+< ## Phase 3: Generate PRP
+---
+> ## Phase 3: Review Gate (BEFORE generating PRP)
+106c160,186
+< After all questions are answered, create TWO files:
+---
+> **Do NOT generate the PRP yet.** First, walk through every answer for the user to review.
+> 
+> ### Step 1 — Interactive answer review
+> 
+> For EACH answer the user gave (Phase 1 + Phase 2), present it back using selectable options:
+> 
+> > **[Question topic]**: [Their answer]
+> > 1. Keep this answer
+> > 2. Expand on this (add detail)
+> > 3. Change this answer
+> 
+> Walk through ALL answers one at a time. If the user selects "Expand" or "Change", accept their free-text input, update the answer summary and User Profile, then continue to the next answer.
+> 
+> ### Step 2 — Final confirmation
+> 
+> After all answers are reviewed, ask:
+> 
+> > Ready to generate the PRP?
+> > 1. Yes, generate it
+> > 2. Let me review again from the top
+> > 3. I want to change something specific (tell me which question)
+> 
+> Only proceed to Phase 4 (file generation) after the user selects **"Yes, generate it."**
+> 
+> ## Phase 4: Generate PRP
+> 
+> Create TWO files:
+153,158d232
+< After generating the PRP, add all Phase 1 tasks to `harness/feature_queue.json` with:
+< - Incremental IDs (FEAT-01, FEAT-02, etc.)
+< - Priority order matching phase sequence
+< - File paths planned for the project
+< - Test requirements from the PRP
+< 
+172a247,282
+> 
+> ## Phase 5: Post-PRP Approval Gate
+> 
+> After generating both files, **STOP.** Present the PRP to the user and offer these selectable options:
+> 
+> > Your PRP is ready! Read through it, then choose:
+> > 1. **Use this PRP** (approve and proceed)
+> > 2. **Change a specific answer** (re-ask one question, then regenerate)
+> > 3. **Start the survey again from scratch**
+> 
+> ### If user selects "Change a specific answer":
+> 1. Ask: "Which question do you want to revisit?" (free text — user types a number or topic)
+> 2. Re-ask that question with its original selectable options
+> 3. After they answer, ask:
+>    > Want to change any other answers?
+>    > 1. Yes, change another answer
+>    > 2. No, regenerate the PRP with my updated answers
+> 4. Loop until user selects "No, regenerate"
+> 5. Regenerate the ENTIRE PRP from scratch with the updated answer set
+> 6. Update the User Profile in CLAUDE.md (including incrementing revision counts in Q&A Behavior)
+> 7. Show the new PRP and present the same 3-option approval gate again
+> 
+> ### If user selects "Start the survey again from scratch":
+> - Increment the Restarts count in User Profile
+> - Reset and restart from Phase 1 Question 1
+> 
+> ### If user selects "Use this PRP" (approve):
+> 1. Add all Phase 1 tasks to `harness/feature_queue.json` with:
+>    - Incremental IDs (FEAT-01, FEAT-02, etc.)
+>    - Priority order matching phase sequence
+>    - File paths planned for the project
+>    - Test requirements from the PRP
+> 2. Increment "Projects completed" in the User Profile Q&A Behavior section
+> 3. **STOP.** Tell the user: "Your PRP is approved and Phase 1 tasks are in the queue. Run `/execute-prp PRPs/[project-name]-prp.md` when you're ready to start building."
+> 
+> **Do NOT auto-execute the PRP. Do NOT start building. Wait for the user to run /execute-prp.**
+diff -r /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v1-base/.claude/settings.json /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v2-post-feat57/.claude/settings.json
+20c20,21
+<   }
+---
+>   },
+>   "systemPrompt": "You are the Lead Engineer for {{projectName}}. You implement tasks from harness/feature_queue.json, one task at a time.\\n\\n## Source of Truth\\nCODEBASE_INDEX.yaml is the primary reference for understanding this codebase. Before every task, grep it for the relevant area — NEVER cat the whole file. After every task that changes code, update the index entries for files you touched (line counts, purpose, exports).\\n\\n## Task Workflow\\n1. Read CLAUDE.md for project rules and critical patterns\\n2. grep -i '[area]' harness/learnings.md — check past debugging for this area\\n3. grep -i '[area]' harness/CODEBASE_INDEX.yaml — understand current code structure\\n4. Write a TODO list (use TodoWrite) before starting implementation\\n5. Implement the task following patterns in CLAUDE.md\\n6. Update CODEBASE_INDEX.yaml for all files you changed\\n7. Write session notes to harness/learnings.md with date, task ID, what you did, key learnings\\n8. Write completion_note with test evidence (30+ words, pasted output)\\n9. Set ALL completion_checklist items to true\\n10. Set status to 'pending_review' — NEVER 'done' or 'completed'\\n\\n## Completion Enforcement\\n- completion_note MUST be 30+ words with pasted test output (curl response, console output, query result)\\n- All completion_checklist items must be true\\n- The git pre-commit hook blocks commits where code files changed but CODEBASE_INDEX.yaml was not updated\\n- If the hook blocks you: update the index, then commit again\\n\\n## Task Sizing\\n- XS/S tasks: you may do multiple per session\\n- M/L tasks: ONE only per session, then stop and report\\n\\n## Rules\\n- Never skip grepping learnings — past sessions have critical debugging context\\n- Never cat the full index file — grep for the specific area you need\\n- Never set a task to 'done' or 'completed' — only 'pending_review' (Director reviews)\\n- Never commit without updating the index if you changed code files\\n- If you discover a reusable pattern during implementation, add it to CLAUDE.md Critical Patterns section"
+Only in /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v2-post-feat57/director/.claude: settings.json
+Only in /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v2-post-feat57/director/.claude: settings.local.json
+Only in /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v2-post-feat57/director: CLAUDE.md
+Only in /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v2-post-feat57/harness: ROADMAP.md
+Only in /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v2-post-feat57/: MANIFEST.md
+Only in /root/dev/Hub-LLM/harness/knowledge/template-snapshots/v1-base/: SNAPSHOT-README.md

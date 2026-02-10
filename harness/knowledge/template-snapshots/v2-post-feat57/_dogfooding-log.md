@@ -180,48 +180,6 @@ Decision: Track B chosen over Track A (fixing FishStocker). The current FishStoc
 
 ---
 
-## Session 4 — February 9, 2026 (Post-FEAT-57 Audit)
-
-### What We Did
-Reviewed and shipped all 5 template improvement tasks (FEAT-53–57). Created v2 template snapshot and diffed against v1-base. All expected changes present, no unexpected changes.
-
-### Tasks Reviewed
-| Task | Verdict | Notes |
-|------|---------|-------|
-| FEAT-53 | ✅ PASS | All 6 additions to /generate-prp: navigation, answer tracking, review gate, approval gate, living user profile, STT tip. Template grew 172→284 lines. |
-| FEAT-54 | ✅ PASS | Engineer systemPrompt (286 words) with index-as-source-of-truth, pending_review enforcement, completion_note mandate, M/L task limit. |
-| FEAT-55 | ❌→✅ PASS (R2) | Rejected R1 for: (1) non-blocking scaffold silently swallowing errors, (2) missing Read/Glob/Grep/Write/Edit tool permissions, (3) shallow glob `*` instead of `**` in deny rules. All 3 fixed in R2 — warnings now surface to frontend via `ProjectResponse.scaffold_warnings`. |
-| FEAT-56 | ✅ PASS | 120-line generalized code-researcher agent. 3 request types, YAML formats, scanning techniques for frontend + backend. Properly generalized from Hub-LLM's own agent. |
-| FEAT-57 | ✅ PASS | 5-phase roadmap with accurate status markers. Wired into scaffold. |
-
-### Template Snapshot
-- **v1-base**: 11 templates, pre-FEAT-53 baseline (34KB zip)
-- **v2-post-feat57**: 16 templates, all improvements shipped (42KB zip)
-- **Diff**: 7 changes — 2 modified files (.claude/settings.json, generate-prp.md) + 5 new files (director/CLAUDE.md, director settings, code-researcher.md, ROADMAP.md)
-- Full diff saved to `template-snapshots/diff-v1-v2.txt`
-
-### /execute-prp Compatibility Check
-Reviewed `/execute-prp` (unchanged since v1-base, 30 lines) for compatibility with FEAT-53's new flow. Compatible — the approval gate populates the queue before handing off, and /execute-prp just picks up the first pending task. No changes needed.
-
-### Design Doc Updated
-- `harness-template-design.md` manifest: FEAT-36, FEAT-53–57 marked ✅ Shipped
-- File tree updated to include `.claude/agents/`, `harness/ROADMAP.md`, `{{slug}}-director/`
-- "File Contents" section still reflects v1-base text — refer to v2 snapshot for current versions
-
-### Remaining Audit Steps (require live test)
-- [ ] Step 3: Create test project via Hub-LLM UI, verify all files on VPS
-- [ ] Step 4: Test /generate-prp intake flow (12-step walkthrough)
-- [ ] Step 5: Test Director setup
-- [ ] Step 6: Test code-researcher agent
-- [ ] Step 7: Test pre-commit hook
-
-### Next Steps
-1. User creates a new project through Hub-LLM to validate the scaffold
-2. Walk through /generate-prp to test FEAT-53 in real usage
-3. After live audit passes: delete old FishStocker, create real FishStocker with correct name
-
----
-
 ## Automation Roadmap (from plan Phase 5)
 1. **Ralph Loop** — auto-continue after task completion (engineer doesn't stop after 1 task)
 2. **MCP server** — file-based task automation (not Supabase)

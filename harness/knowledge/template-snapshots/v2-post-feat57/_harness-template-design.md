@@ -1,8 +1,7 @@
 # Harness Template Design — Scaffoldable Files
 
 *Designed: February 8, 2026*
-*Updated: February 9, 2026 — FEAT-53–57 shipped, v2 snapshot created*
-*Status: v2-post-feat57 complete. See `template-snapshots/v2-post-feat57/` for current files.*
+*Status: Design complete — ready for implementation*
 
 ---
 
@@ -30,10 +29,8 @@ All files are templates with `{{placeholders}}` that get filled from the CreateP
 | Codebase index | `TEMPLATE_CODEBASE_INDEX` | `harness/CODEBASE_INDEX.yaml` | ✅ Shipped | FEAT-30 |
 | Session memory | `TEMPLATE_LEARNINGS` | `harness/learnings.md` | ✅ Shipped | FEAT-30 |
 | Project README | `TEMPLATE_README` | `README.md` | ✅ Shipped | FEAT-30 |
-| Smart pre-commit hook | `TEMPLATE_PRE_COMMIT_HOOK` | `.git/hooks/pre-commit` | ✅ Shipped | FEAT-36 |
-| Index audit command | `TEMPLATE_AUDIT_INDEX` | `.claude/commands/audit-index.md` | ✅ Shipped | FEAT-36 |
-| Code-researcher agent | `TEMPLATE_CODE_RESEARCHER` | `.claude/agents/code-researcher.md` | ✅ Shipped | FEAT-56 |
-| Harness roadmap | `TEMPLATE_ROADMAP` | `harness/ROADMAP.md` | ✅ Shipped | FEAT-57 |
+| Smart pre-commit hook | `TEMPLATE_PRE_COMMIT_HOOK` | `.git/hooks/pre-commit` | ⏳ Pending | FEAT-36 |
+| Index audit command | `TEMPLATE_AUDIT_INDEX` | `.claude/commands/audit-index.md` | ⏳ Pending | FEAT-36 |
 | Git onboarding HTML | `TEMPLATE_GIT_ONBOARDING_HTML` | `docs/getting-started-with-git.html` | ⏳ Pending | FEAT-37 |
 | Git workflow in CLAUDE.md | (part of TEMPLATE_CLAUDE_MD) | `CLAUDE.md` | ⏳ Pending | FEAT-37 |
 | Git section in README | (part of TEMPLATE_README) | `README.md` | ⏳ Pending | FEAT-37 |
@@ -42,9 +39,11 @@ All files are templates with `{{placeholders}}` that get filled from the CreateP
 
 | Feature | Description | Status | Task |
 |---------|-------------|--------|------|
-| Engineer systemPrompt | Persistent behavioral rules in settings.json | ✅ Shipped | FEAT-54 |
-| Director auto-scaffold | Director directory + CLAUDE.md + settings created alongside project | ✅ Shipped | FEAT-55 |
-| Improved PRP intake | Navigation, review gate, approval gate, user profiling, STT tip | ✅ Shipped | FEAT-53 |
+| Engineer systemPrompt | Persistent behavioral rules in settings.json | ⏳ Pending | FEAT-54 |
+| Director auto-scaffold | Director directory + CLAUDE.md + settings created alongside project | ⏳ Pending | FEAT-55 |
+| Code-researcher agent | .claude/agents/code-researcher.md for automated index scanning | ⏳ Pending | FEAT-56 |
+| Harness roadmap | harness/ROADMAP.md showing automation evolution phases | ⏳ Pending | FEAT-57 |
+| Improved PRP intake | Navigation, review gate, approval gate, user profiling | ⏳ Pending | FEAT-53 |
 
 ### Automation Features (workflow enhancements)
 
@@ -71,37 +70,28 @@ All files are templates with `{{placeholders}}` that get filled from the CreateP
 
 ```
 {{slug}}/
-├── CLAUDE.md                           # Project rules + User Profile (living document)
+├── CLAUDE.md                           # Project rules — agent reads this first
 ├── .claude/
-│   ├── settings.json                   # Permissions + Engineer systemPrompt (FEAT-54)
-│   ├── commands/
-│   │   ├── generate-prp.md             # /generate-prp — Q&A + review gate + approval gate (FEAT-53)
-│   │   ├── execute-prp.md              # /execute-prp — task execution
-│   │   └── audit-index.md              # /audit-index — index validation (FEAT-36)
-│   └── agents/
-│       └── code-researcher.md          # Automated index scanning agent (FEAT-56)
+│   ├── settings.json                   # Claude Code settings (allowlist, etc.)
+│   └── commands/
+│       ├── generate-prp.md             # /generate-prp slash command
+│       ├── execute-prp.md              # /execute-prp slash command
+│       └── audit-index.md              # /audit-index slash command (FEAT-36)
 ├── .git/
 │   └── hooks/
 │       └── pre-commit                  # Smart index enforcement hook (FEAT-36)
 ├── harness/
 │   ├── feature_queue.json              # Task queue
 │   ├── CODEBASE_INDEX.yaml             # File map (starts minimal, grows)
-│   ├── learnings.md                    # Session debugging history
-│   └── ROADMAP.md                      # 5-phase automation roadmap (FEAT-57)
+│   └── learnings.md                    # Session debugging history
 ├── PRPs/                               # Generated implementation blueprints
 │   └── .gitkeep
 ├── docs/                               # Technical overview + user-facing docs
-│   ├── getting-started-with-git.html   # Git/GitHub onboarding page (FEAT-37, pending)
+│   ├── getting-started-with-git.html   # Git/GitHub onboarding page (FEAT-37)
 │   └── .gitkeep
 ├── src/                                # User's application code
 │   └── .gitkeep
 └── README.md                           # Generated from project brief
-
-{{slug}}-director/                      # Director directory (FEAT-55)
-├── CLAUDE.md                           # Director role, queue format, review workflow
-└── .claude/
-    ├── settings.json                   # Read-only permissions + Director systemPrompt
-    └── settings.local.json             # Deny writes to app's src/backend/frontend
 ```
 
 ---
