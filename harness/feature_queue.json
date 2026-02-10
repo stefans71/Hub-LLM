@@ -52,6 +52,49 @@
       "completion_note": "All 3 parts implemented. (A) TEMPLATE_GETTING_STARTED_HTML: ~100-line self-contained HTML with inline CSS, dark theme, 5 sections (Your Project, Steps 1-3, Terminal Tips, Next Steps), brand colors, footer. GET /{project_id}/getting-started endpoint renders dynamically via _fill_template. (B) Slimmed TEMPLATE_DIRECTOR_WELCOME text body: removed step 3, removed verbose descriptions, added orange 'See Getting Started →', 'STARTING:' heading, 2 steps only, single orange Note line. (C) Workspace.jsx: welcomeUrl = /api/projects/{id}/getting-started. ClaudeCodeTerminalChat.jsx: deleted writeln + deleted help bubble + removed unused state. py_compile OK, bash -n OK, 86 escape bytes. projects.py 1743→1845."
     },
     {
+      "id": "FEAT-65",
+      "name": "Terminal welcome message V4 — expanded steps with Director/Engineer context",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Dogfooding audit Step 3 revealed the terminal welcome message (TEMPLATE_DIRECTOR_WELCOME, projects.py:716-779) needs restructuring. The FEAT-62 slim version is too terse — users need explicit Director/Engineer context in the numbered steps, not just at the top.\n\nBrand colors: orange=#f97316 (\\x1b[38;2;249;115;22m), cyan=#38bdf8 (\\x1b[38;2;56;189;248m or \\x1b[36m), white=\\x1b[1;37m, green=\\x1b[32m.\n\nRewrite the wide-version text body (lines 740-756). Structure:\n\n  Welcome to {{projectName}}!        ← orange (#f97316), not bold white\n  Getting started: see preview panel to the right  ← 'Getting started:' in orange, rest in cyan\n\n  Director:  {{slug}}-director/      ← cyan label, green path (no change)\n  Engineer:  {{appDir}}/             ← cyan label, green path (no change)\n\n  You will be managing the Project Director workflow from this panel.\n\n  STARTING:                          ← orange (#f97316), not bold white\n\n  1. You will be managing the Project Director workflow from this\n     panel/terminal.\n     Director:  {{slug}}-director/\n\n  2. You will manage Lead Engineer workflow in:\n     Engineer:  {{appDir}}/\n     In the lower-left of the screen, open the LLM-Dev Terminal panel\n     and copy and paste this into the terminal:\n     cd {{appDir}} && claude          ← cyan\n\n  3. Come back to this terminal and type\n     claude                           ← cyan\n     Press Enter.\n     This will start your AI Coding session with the Project Director\n     AI Persona.\n\n  Note:                              ← orange\n  To copy text in the terminal, highlight it, right-click and\n  select 'Copy'.                     ← 'Copy' in cyan\n  To paste, right-click in the terminal and select 'Paste'.\n                                     ← 'Paste' in cyan\n  For more info, see the Getting Started document in the Preview\n  panel (right side).                ← 'Getting Started ... Preview panel' in cyan\n\nAlso update the narrow version (<62 cols, lines 758-777) with equivalent content, tighter wrapping.\n\nKeep ASCII logo (lines 716-738) completely unchanged.",
+      "change": [
+        "backend/routers/projects.py:740-756 — Rewrite wide-version text body: 'Welcome to' in orange, 'Getting started:' orange + cyan explanation, add 'You will be managing...' line, 'STARTING:' in orange, 3 expanded steps with Director/Engineer context in each, expanded Note section with cyan highlights for Copy/Paste/Preview references",
+        "backend/routers/projects.py:758-777 — Rewrite narrow-version text body with same structure, tighter wrapping for <62 cols"
+      ],
+      "test": "(1) Create new project. (2) Terminal shows orange 'Welcome to X!', orange 'Getting started:' + cyan 'see preview panel...'. (3) Director/Engineer paths shown. (4) 'STARTING:' in orange. (5) Step 1 explains Director with path. (6) Step 2 explains Engineer with path + LLM-Dev Terminal + cd command in cyan. (7) Step 3 explains coming back, 'claude' in cyan, Director AI Persona. (8) Note section: orange 'Note:', Copy/Paste/Preview references in cyan. (9) Narrow terminal (<62 cols) shows compact version.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-66",
+      "name": "Getting Started + docs visual alignment — shared styling, add to docs nav",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Dogfooding audit Step 3 found visual inconsistency between the Getting Started page (projects.py:782-911 TEMPLATE_GETTING_STARTED_HTML) and the docs pages (docs.py DOCS_CSS). Issues:\n\n1. **Different background**: Getting Started uses flat `#0f1419`, docs use `linear-gradient(145deg, #0a0f1a, #0d1520, #080c14)`\n2. **Different footer**: Getting Started has plain text 'HubLLM.dev — A VibeShip Creation', docs have styled `<div class=\"footer-brand\"><span class=\"logo-hub\">Hub</span>...` with colored logo\n3. **Missing from docs nav**: docs.py `_NAV_PAGES` (line 183-189) has 5 entries — no Getting Started. When user navigates from Getting Started → Docs Home, they can't get back.\n4. **No section cards**: Getting Started uses simple h2/p, docs use `.section` cards with gradient backgrounds and borders\n\nFixes:\n\n**A. Align Getting Started CSS (projects.py:788-845)**\n- Background: match docs gradient\n- Sidebar: match docs sidebar styling (gradient bg, colored border, brand tagline in #00d4aa, nav icon support)\n- Footer: use same `footer-brand` + `footer-tagline` HTML structure as docs pages\n- Section styling: wrap content sections in `.section` class divs with gradient backgrounds like docs\n- Overall: Getting Started should look like it belongs to the same docs portal\n\n**B. Add Getting Started to docs nav (docs.py:183-189)**\n- Add 'Getting Started' entry to _NAV_PAGES list, probably as second item after Home\n- Link target: `/api/docs/getting-started` — create a new generic Getting Started endpoint\n- This is NOT the project-specific page — it's a general overview that says 'When you create a project, you'll see a personalized Getting Started page in your workspace'\n- Keep project-specific version at `/api/projects/{id}/getting-started` unchanged\n\n**C. Update Getting Started sidebar nav to include itself properly**\n- projects.py:855-862 — Getting Started nav links should match docs nav order exactly",
+      "change": [
+        "backend/routers/projects.py:788-845 — Update TEMPLATE_GETTING_STARTED_HTML CSS: gradient background, styled footer with logo spans, section card styling to match docs.py DOCS_CSS",
+        "backend/routers/projects.py:847-911 — Update HTML body: wrap sections in .section divs, update footer to match docs footer-brand structure",
+        "backend/routers/docs.py:183-189 — Add ('getting-started', 'Getting Started', '/api/docs/getting-started') to _NAV_PAGES as second entry",
+        "backend/routers/docs.py — Add new GET /getting-started endpoint with generic Getting Started content (not project-specific)",
+        "backend/routers/projects.py:855-862 — Update Getting Started sidebar nav to match docs nav order with Getting Started entry"
+      ],
+      "test": "(1) Open project Getting Started page — visual style matches docs pages (gradient bg, section cards, styled footer). (2) Navigate from Getting Started → Docs Home → Getting Started link visible in nav. (3) Click Getting Started in docs nav → shows generic Getting Started page. (4) Both Getting Started pages have consistent nav sidebar. (5) Footer shows styled HubLLM.dev logo (not plain text).",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
       "id": "FEAT-58",
       "name": "Clean up VPS directories on project delete",
       "size": "S",
