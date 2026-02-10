@@ -2,7 +2,7 @@
 Projects Router - Manage development projects/workspaces
 """
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -739,60 +739,145 @@ TEMPLATE_DIRECTOR_WELCOME = (
     "if [ \"$COLS\" -ge 62 ]; then\n"
     "cat <<'TEXT'\n"
     "  Welcome to \x1b[1;37m{{projectName}}\x1b[0m!\n"
+    "  \x1b[38;2;249;115;22mSee Getting Started in the Preview panel \xe2\x86\x92\x1b[0m\n"
     "\n"
-    "  \x1b[36mDirector:\x1b[0m  \x1b[32m/root/llm-hub-projects/{{slug}}-director/\x1b[0m\n"
+    "  \x1b[36mDirector:\x1b[0m  \x1b[32m{{slug}}-director/\x1b[0m\n"
     "  \x1b[36mEngineer:\x1b[0m  \x1b[32m{{appDir}}/\x1b[0m\n"
     "\n"
-    "  You will be managing the Project Director workflow from this panel.\n"
+    "  \x1b[1;37mSTARTING:\x1b[0m\n"
     "\n"
-    "  To get started:\n"
-    "\n"
-    "  1. In the lower-left of the screen, open the \x1b[1mLLM-Dev Terminal\x1b[0m panel\n"
-    "     and copy and paste this into the terminal:\n"
+    "  1. Open the \x1b[1mLLM-Dev Terminal\x1b[0m (lower-left), paste:\n"
     "     \x1b[36mcd {{appDir}} && claude\x1b[0m\n"
     "\n"
-    "  2. Come back to this terminal and type \x1b[1mclaude\x1b[0m then press Enter.\n"
-    "     This will start your Claude Code session.\n"
-    "     Select 'allow' and answer yes to other questions.\n"
-    "     Follow other instructions if prompted.\n"
+    "  2. Come back here, type: \x1b[1mclaude\x1b[0m\n"
+    "     Press Enter.\n"
     "\n"
-    "  3. Once Claude Code has launched, type \x1b[36m/generate-prp\x1b[0m to walk through\n"
-    "     enhancing your project description into a full PRP (Product Requirements Prompt).\n"
-    "\n"
-    "  \x1b[90mNote: To copy text in the terminal, highlight it, right-click and select 'Copy'.\x1b[0m\n"
-    "  \x1b[90mTo paste, right-click in the terminal and select 'Paste'.\x1b[0m\n"
-    "  \x1b[90mFor more info, see the Getting Started document in the Preview panel (right side).\x1b[0m\n"
+    "  \x1b[38;2;249;115;22mNote:\x1b[0m Copy = highlight + right-click. Paste = right-click.\n"
     "TEXT\n"
     "else\n"
     "cat <<'TEXT'\n"
     "  Welcome to \x1b[1;37m{{projectName}}\x1b[0m!\n"
+    "  \x1b[38;2;249;115;22mSee Getting Started in\x1b[0m\n"
+    "  \x1b[38;2;249;115;22mthe Preview panel \xe2\x86\x92\x1b[0m\n"
     "\n"
     "  \x1b[36mDir:\x1b[0m \x1b[32m{{slug}}-director/\x1b[0m\n"
     "  \x1b[36mEng:\x1b[0m \x1b[32m{{slug}}/\x1b[0m\n"
     "\n"
-    "  You'll manage the Director\n"
-    "  workflow from this panel.\n"
+    "  \x1b[1;37mSTARTING:\x1b[0m\n"
     "\n"
-    "  To get started:\n"
-    "\n"
-    "  1. Open the \x1b[1mLLM-Dev Terminal\x1b[0m\n"
-    "     panel (lower-left).\n"
-    "     Paste this command:\n"
+    "  1. Open \x1b[1mLLM-Dev Terminal\x1b[0m\n"
+    "     (lower-left), paste:\n"
     "     \x1b[36mcd {{appDir}} && claude\x1b[0m\n"
     "\n"
-    "  2. Return here, type\n"
-    "     \x1b[1mclaude\x1b[0m then press Enter.\n"
-    "     Select 'allow' when asked.\n"
+    "  2. Return here, type:\n"
+    "     \x1b[1mclaude\x1b[0m then Enter.\n"
     "\n"
-    "  3. In Claude Code, type\n"
-    "     \x1b[36m/generate-prp\x1b[0m to build\n"
-    "     your project plan.\n"
-    "\n"
-    "  \x1b[90mCopy: highlight, right-click\x1b[0m\n"
-    "  \x1b[90mPaste: right-click in terminal\x1b[0m\n"
+    "  \x1b[38;2;249;115;22mNote:\x1b[0m Copy: highlight,\n"
+    "  right-click. Paste: right-click.\n"
     "TEXT\n"
     "fi\n"
 )
+
+
+TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started — {{projectName}}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0f1419; color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6; padding: 24px; max-width: 720px; margin: 0 auto;
+  }
+  h1 { font-size: 22px; margin-bottom: 8px; }
+  h2 { font-size: 16px; color: #38bdf8; margin: 28px 0 12px; border-bottom: 1px solid #2d3748; padding-bottom: 6px; }
+  p { margin-bottom: 12px; }
+  .brand { font-size: 18px; margin-bottom: 20px; }
+  .brand-hub { color: #fff; font-weight: 700; }
+  .brand-llm { color: #38bdf8; font-weight: 700; }
+  .brand-dev { color: #64748b; font-weight: 400; }
+  .path-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: baseline; }
+  .path-label { color: #38bdf8; font-weight: 600; min-width: 70px; }
+  .path-value { color: #22c55e; font-family: monospace; font-size: 14px; word-break: break-all; }
+  .step { margin-bottom: 16px; }
+  .step-num { color: #f97316; font-weight: 700; font-size: 15px; margin-right: 6px; }
+  code {
+    background: #1a2028; color: #38bdf8; padding: 2px 8px; border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px;
+  }
+  .cmd-block {
+    background: #1a2028; border: 1px solid #2d3748; border-radius: 6px;
+    padding: 10px 14px; margin: 8px 0 12px; font-family: monospace; font-size: 13px;
+    color: #38bdf8; overflow-x: auto;
+  }
+  .note { color: #94a3b8; font-size: 13px; }
+  .tip { color: #64748b; font-size: 12px; margin-top: 4px; }
+  .footer {
+    margin-top: 40px; padding-top: 16px; border-top: 1px solid #2d3748;
+    color: #475569; font-size: 12px; text-align: center;
+  }
+  a { color: #38bdf8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <span class="brand-hub">Hub</span><span class="brand-llm">LLM</span><span class="brand-dev">.dev</span>
+</div>
+
+<h1>Welcome to {{projectName}}</h1>
+<p class="note">Your AI-powered development workspace is ready.</p>
+
+<h2>Your Project</h2>
+<div class="path-row">
+  <span class="path-label">Director:</span>
+  <span class="path-value">{{slug}}-director/</span>
+</div>
+<div class="path-row">
+  <span class="path-label">Engineer:</span>
+  <span class="path-value">{{appDir}}/</span>
+</div>
+<p class="tip">The <strong>Director</strong> (this terminal) manages the project &mdash; planning, task creation, and review.<br>
+The <strong>Engineer</strong> (LLM-Dev Terminal) writes code, runs tests, and handles git.</p>
+
+<h2>Step 1: Launch Your AI Engineer</h2>
+<div class="step">
+  <p>Open the <strong>LLM-Dev Terminal</strong> panel in the lower-left of the screen.</p>
+  <p>Copy and paste this command:</p>
+  <div class="cmd-block">cd {{appDir}} && claude</div>
+  <p class="tip">Hub-LLM works with any terminal-based AI coding tool. Claude Code is the default.</p>
+</div>
+
+<h2>Step 2: Start the Project Director</h2>
+<div class="step">
+  <p>Come back to the main terminal (upper area) and type:</p>
+  <div class="cmd-block">claude</div>
+  <p>Press Enter. Select <strong>allow</strong> when prompted.</p>
+</div>
+
+<h2>Step 3: Generate Your Project Plan</h2>
+<div class="step">
+  <p>Once the Director&rsquo;s Claude Code session is running, type:</p>
+  <div class="cmd-block">/generate-prp</div>
+  <p>This walks you through turning your project idea into a detailed <strong>Product Requirements Prompt</strong> (PRP).</p>
+</div>
+
+<h2>Terminal Tips</h2>
+<p><strong>Copy:</strong> Highlight text, then right-click and select &ldquo;Copy&rdquo;</p>
+<p><strong>Paste:</strong> Right-click in the terminal and select &ldquo;Paste&rdquo;</p>
+
+<h2>Next Steps</h2>
+<p>After generating your PRP, the Director will guide you through the rest of the workflow &mdash; task planning, execution, and review.</p>
+<p>For full documentation, see <a href="/docs/index.html" target="_top">Hub-LLM Docs</a>.</p>
+
+<div class="footer">HubLLM.dev &mdash; A VibeShip Creation</div>
+
+</body>
+</html>"""
 
 
 TEMPLATE_PRE_COMMIT_HOOK = r"""#!/bin/bash
@@ -1473,6 +1558,23 @@ async def get_project(project_id: str):
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         return db_to_response(project)
+
+
+@router.get("/{project_id}/getting-started")
+async def get_project_getting_started(project_id: str):
+    """Render project-specific Getting Started page from template."""
+    async with async_session() as session:
+        result = await session.execute(select(ProjectModel).where(ProjectModel.id == project_id))
+        project = result.scalar_one_or_none()
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        variables = {
+            "projectName": project.name,
+            "slug": project.slug,
+            "appDir": f"/root/llm-hub-projects/{project.slug}",
+        }
+        html = _fill_template(TEMPLATE_GETTING_STARTED_HTML, variables)
+        return Response(content=html, media_type="text/html")
 
 
 @router.patch("/{project_id}", response_model=ProjectResponse)

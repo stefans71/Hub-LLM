@@ -266,6 +266,41 @@ Both auto-deployed via Coolify.
 
 ---
 
+## Session 6 — February 10, 2026 (Welcome Experience V3 Design)
+
+### What We Did
+Created fresh "PUGG Training" project after cleaning up old VPS directories. Reviewed the live welcome experience and identified major UX gaps. Designed FEAT-62.
+
+### Issues Found During Live Test
+1. **Terminal welcome message is ephemeral**: Once Claude Code starts, the onboarding scrolls off. No persistent reference for paths or commands.
+2. **Preview panel opens on "Home" (card grid) not "Getting Started"**: User must manually navigate to Getting Started in the sidebar.
+3. **Getting Started page has WRONG instructions**: welcome.html tells user to "cd into project directory" and "type claude" as step 1 — this starts the Director, not the Engineer. No project-specific paths. Mentions hint bubble we're deleting.
+4. **Redundant "Type claude..." in 3 places**: (a) green terminal writeln from ClaudeCodeTerminalChat.jsx:287, (b) help bubble overlay at bottom, (c) terminal welcome message. Too noisy.
+5. **Help bubble overlaps terminal output**: Adds visual clutter, redundant with welcome message.
+6. **Old VPS directories persist after project delete**: rm -rf command split across terminal line breaks — only first dir was removed. FEAT-58 gap confirmed again.
+7. **Deleted projects still appear in sidebar**: rm -rf removes VPS dirs but not DB records. Must delete from UI to clean sidebar.
+
+### Key Design Decisions
+- **Dynamic Getting Started page, NOT scaffolded**: New endpoint `GET /api/projects/{id}/getting-started` renders TEMPLATE_GETTING_STARTED_HTML with project data on every request. Update template → deploy → ALL projects (existing + new) see the update immediately.
+- **Self-contained HTML with inline CSS**: No dependencies on /docs/styles.css or nav.js. Dark theme matching workspace.
+- **Slim terminal welcome**: Logo + paths + one cd example + "See Getting Started →" in orange. No multi-LLM options (just claude as the example).
+- **Delete help bubble entirely**: Terminal message + Getting Started page provide sufficient guidance.
+- **Brand orange sourced from codebase**: #f97316 found in AnthropicSubscription.jsx:12, ClaudeCodeTerminalChat.jsx:949.
+
+### Architecture Discovery
+- PreviewPanel is an iframe that needs a URL returning raw HTML — existing `/api/files/content` returns JSON
+- For Getting Started specifically: dynamic backend rendering is better than VPS file serving (no SSH needed, updates apply to all projects)
+- For future VPS file preview: `/api/files/raw/{server_id}/{path:path}` pattern designed (deferred, not needed for FEAT-62)
+- `_fill_template()` already exists in projects.py — reuse for dynamic rendering
+- PreviewPanel's welcomeUrl controlled by Workspace.jsx:44 — single-line change to wire dynamic URL
+
+### New Tasks Filed
+| Task | What | Priority |
+|------|------|----------|
+| FEAT-62 | Welcome Experience V3 — dynamic Getting Started + slim terminal + delete bubble | P1 |
+
+---
+
 ## Automation Roadmap (from plan Phase 5)
 1. **Ralph Loop** — auto-continue after task completion (engineer doesn't stop after 1 task)
 2. **MCP server** — file-based task automation (not Supabase)

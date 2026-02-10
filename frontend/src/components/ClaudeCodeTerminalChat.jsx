@@ -208,9 +208,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
   const [copied, setCopied] = useState(false)
 
   // FEAT-27: Floating hint overlay state
-  const [showCommandHint, setShowCommandHint] = useState(false)
   // FEAT-35: Collapsible hint bubble
-  const [hintCollapsed, setHintCollapsed] = useState(false)
 
   const copyBriefToClipboard = useCallback(() => {
     if (!project?.brief) return
@@ -283,14 +281,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
               if (projectSlug && wsRef.current?.readyState === WebSocket.OPEN) {
                 wsRef.current.send(JSON.stringify({ type: 'input', data: `cd /root/llm-hub-projects/${projectSlug}-director && bash .welcome 2>/dev/null\n` }))
               }
-              if (xtermRef.current) {
-                xtermRef.current.writeln('\x1b[36mType "claude" to start a new session, or "claude --resume" to resume a previous one.\x1b[0m')
-                xtermRef.current.writeln('')
-                xtermRef.current.scrollToBottom()
-              }
               claudeStartedRef.current = true
               setStatus('claude_ready')
-              setShowCommandHint(true)
             }
             break
 
@@ -1026,68 +1018,6 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
             onClick={handleTerminalClick}
             style={{ display: viewMode === 'terminal' && terminalReady ? 'block' : 'none', height: '100%' }}
           />
-          {/* FEAT-27/35: Floating hint overlay with collapse/dismiss */}
-          {showCommandHint && viewMode === 'terminal' && (
-            <div style={{
-              position: 'absolute',
-              bottom: '24px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'rgba(15, 20, 25, 0.85)',
-              backdropFilter: 'blur(8px)',
-              borderRadius: '8px',
-              border: '1px solid rgba(56, 189, 248, 0.2)',
-              maxWidth: '420px',
-              zIndex: 10,
-              ...(!hintCollapsed ? { padding: '12px 16px' } : { padding: '6px 12px', cursor: 'pointer' })
-            }}
-              {...(hintCollapsed ? { onClick: () => setHintCollapsed(false) } : {})}
-            >
-              {hintCollapsed ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '12px' }}>
-                  <span style={{ transform: 'rotate(-90deg)', display: 'inline-block' }}>&#9662;</span>
-                  <span>Hint</span>
-                </div>
-              ) : (
-                <>
-                  {/* Controls row */}
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px', marginBottom: '8px' }}>
-                    <button
-                      onClick={() => setHintCollapsed(true)}
-                      title="Collapse hint"
-                      style={{
-                        background: 'none', border: 'none', color: '#64748b', cursor: 'pointer',
-                        padding: '2px 4px', fontSize: '14px', lineHeight: 1, borderRadius: '4px'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.color = '#e2e8f0'}
-                      onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
-                    >&#9662;</button>
-                    <button
-                      onClick={() => setShowCommandHint(false)}
-                      title="Dismiss hint"
-                      style={{
-                        background: 'none', border: 'none', color: '#64748b', cursor: 'pointer',
-                        padding: '2px 4px', fontSize: '14px', lineHeight: 1, borderRadius: '4px'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.color = '#e2e8f0'}
-                      onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
-                    >&times;</button>
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#e2e8f0', marginBottom: '6px', textAlign: 'center' }}>
-                    {showEnhanceBanner
-                      ? 'Copy your project brief above, then type claude to start'
-                      : 'Type claude to start a new session'}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#64748b', textAlign: 'center', marginBottom: '8px' }}>
-                    or claude --resume to continue a previous one
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'center', borderTop: '1px solid rgba(56, 189, 248, 0.1)', paddingTop: '8px' }}>
-                    The Welcome guide is open in the Preview panel &rarr;
-                  </div>
-                </>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Chat Input Area - only shown in bubble view */}
