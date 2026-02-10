@@ -5,58 +5,29 @@
 
 ---
 
-## Pre-Audit: Verify All Tasks Completed
+## Pre-Audit: Verify All Tasks Completed ✅ DONE (Feb 10)
 
-```bash
-# Check queue for pending_review or still-pending tasks
-cat /root/dev/Hub-LLM/harness/feature_queue.json | jq '[.queue[] | select(.id | test("FEAT-5[3-7]"))] | .[] | {id, name, status}'
-```
+All original FEAT-53-57 plus follow-up FEAT-59-61 reviewed and completed.
 
-All 5 must be `completed` (reviewed by Director) before proceeding.
-
-| Task | What to verify shipped |
-|------|----------------------|
-| FEAT-53 | `TEMPLATE_GENERATE_PRP` has: navigation commands, answer tracking, interactive review gate, post-PRP approval gate with Q&A loop-back, continuous user profile updates, project scope awareness, speech-to-text tip |
-| FEAT-54 | `TEMPLATE_CLAUDE_SETTINGS` has `systemPrompt` field with: index as source of truth, pending_review only, completion_note mandate, one M/L task limit |
-| FEAT-55 | `create_vps_project_folder()` creates `{{slug}}-director/` with: CLAUDE.md, .claude/settings.json (with systemPrompt), .claude/settings.local.json (deny writes to app code) |
-| FEAT-56 | `.claude/agents/code-researcher.md` scaffolded with: 3 request types, YAML entry formats, extraction patterns |
-| FEAT-57 | `harness/ROADMAP.md` scaffolded with 5-phase automation path |
+| Task | Status | Review |
+|------|--------|--------|
+| FEAT-53 | ✅ | All 6 additions to /generate-prp verified |
+| FEAT-54 | ✅ | Engineer systemPrompt (286 words) |
+| FEAT-55 | ✅ | R2 pass after 3-fix rejection (non-blocking, permissions, glob depth) |
+| FEAT-56 | ✅ | 120-line generalized code-researcher agent |
+| FEAT-57 | ✅ | 5-phase roadmap |
+| FEAT-59 | ✅ | Quick Reference paths in Director CLAUDE.md |
+| FEAT-60 | ✅ | Welcome message with brand colors, auto-display on terminal open |
+| FEAT-61 | ✅ | Welcome rewritten for humans, responsive (bash script, tput cols), figlet ANSI Shadow logo |
 
 ---
 
-## Audit Step 1: Create v2 Template Snapshot
+## Audit Steps 1-2: Snapshots & Diff ✅ DONE (Feb 10)
 
-```bash
-cd /root/dev/Hub-LLM/harness/knowledge/template-snapshots
-./create-snapshot.sh v2-post-feat57
-```
-
-Verify:
-- [ ] All 11+ templates extracted (check for UNMAPPED warnings)
-- [ ] New files present: `director/CLAUDE.md`, `director/.claude/settings.json`, `.claude/agents/code-researcher.md`, `harness/ROADMAP.md`
-- [ ] ZIP created
-
----
-
-## Audit Step 2: Diff Against v1-base
-
-```bash
-diff -rq template-snapshots/v1-base/ template-snapshots/v2-post-feat57/
-```
-
-Expected changes:
-- [ ] `.claude/settings.json` — now has systemPrompt (was permissions-only)
-- [ ] `.claude/commands/generate-prp.md` — 6 additions (navigation, review gate, approval gate, user profile, scope awareness, STT tip)
-- [ ] `director/CLAUDE.md` — NEW file (was empty dir)
-- [ ] `director/.claude/settings.json` — NEW file with systemPrompt
-- [ ] `director/.claude/settings.local.json` — NEW file with deny rules
-- [ ] `.claude/agents/code-researcher.md` — NEW file
-- [ ] `harness/ROADMAP.md` — NEW file
-
-Save the full diff:
-```bash
-diff -r template-snapshots/v1-base/ template-snapshots/v2-post-feat57/ > template-snapshots/diff-v1-v2.txt
-```
+- v2 snapshot: 16/16 templates extracted, 180K dir / 42K zip
+- Diff: 7 changes — all expected, no surprises
+- Full diff saved to `template-snapshots/diff-v1-v2.txt`
+- Note: v2 snapshot predates FEAT-59-61 (welcome message, responsive script). A v3 snapshot should be created after live testing.
 
 ---
 
@@ -149,12 +120,12 @@ After Engineer makes code changes:
 
 ---
 
-## Audit Step 8: Update Harness Template Design Doc
+## Audit Step 8: Update Harness Template Design Doc ✅ DONE (Feb 10)
 
-After audit passes:
-- [ ] Update `harness/knowledge/harness-template-design.md` manifest — mark FEAT-53-57 as ✅ Shipped
-- [ ] Update `harness/knowledge/dogfooding-log.md` — add Session 4 with audit results
-- [ ] Note any new gaps found during this audit
+- [x] harness-template-design.md manifest updated — FEAT-36, 53-57 marked ✅ Shipped
+- [x] File tree updated with .claude/agents/, harness/ROADMAP.md, {{slug}}-director/
+- [x] dogfooding-log.md Session 4 added with review results + snapshot info
+- [x] Gaps found: project delete doesn't clean VPS dirs (FEAT-58), welcome message needed human rewrite (FEAT-61)
 
 ---
 

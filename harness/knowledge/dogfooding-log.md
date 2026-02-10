@@ -222,6 +222,50 @@ Reviewed `/execute-prp` (unchanged since v1-base, 30 lines) for compatibility wi
 
 ---
 
+## Session 5 — February 10, 2026 (FEAT-59-61, Merge to Main, Live Test)
+
+### What We Did
+Shipped 3 follow-up tasks (FEAT-59-61), merged feature/harness-v2 to main twice (FEAT-53-57 + FEAT-59-61), created test project "pugg-training-v2" to verify scaffold.
+
+### Tasks Shipped
+| Task | What |
+|------|------|
+| FEAT-59 | Quick Reference paths in Director CLAUDE.md (Director + Engineer dirs, launch command) |
+| FEAT-60 | Welcome message — ANSI-colored ASCII art, brand colors from LandingPage.css (#38bdf8 sky blue), auto-display via cat .welcome on terminal open |
+| FEAT-61 | Welcome rewrite for humans — figlet ANSI Shadow logo (2x bigger), responsive bash script (tput cols ≥62 desktop / <62 mobile), step-by-step onboarding instructions, copy/paste notes |
+
+### Issues Found During Live Test
+1. **First scaffold test (pugg-training)**: None of FEAT-53-57 landed — code was on feature/harness-v2, not merged to main. Production deploys from main.
+2. **Welcome message v1 was for LLMs not humans**: "See CLAUDE.md for your Director workflow" — rewritten with step-by-step instructions for human operators.
+3. **ASCII logo too small on desktop**: Original 3-line ╦╔╗ art barely visible. Replaced with 6-line figlet ANSI Shadow with ██╗ blocks.
+4. **Mobile portrait would break**: 61-char logo wraps on 40-col phone terminal. Made responsive with bash tput cols detection.
+5. **Brand colors wrong on first attempt**: B guessed cyan instead of actual #38bdf8. Fixed by pulling colors from LandingPage.css (Hub=#fff, LLM=#38bdf8, .dev=gray).
+6. **Shadow effect requested**: ██╗ solid blocks in brand colors, ╚═╝ framework in dark gray creates depth.
+7. **Project delete doesn't clean VPS dirs**: delete_project() only removes DB record. FEAT-58 filed (pending, not blocking).
+
+### New Tasks Filed
+| Task | What | Priority |
+|------|------|----------|
+| FEAT-58 | Clean up both VPS dirs ({slug}/ + {slug}-director/) on project delete | P2 |
+
+### Merges to Main
+1. First merge: FEAT-53-57 + FEAT-59-60 (fast-forward, 4782 insertions)
+2. Second merge: FEAT-61 (fast-forward, 244 insertions)
+Both auto-deployed via Coolify.
+
+### Key Design Decisions
+- **Welcome is a bash script, not a text file**: enables responsive width detection for mobile vs desktop
+- **Frontend runs `bash .welcome` not `cat .welcome`**: changed in ClaudeCodeTerminalChat.jsx:284
+- **Terminal auto-cd goes to Director dir, not app dir**: user workflow starts in Director, opens sub-terminal for Engineer
+- **Brand colors from source code, not guessed**: LandingPage.css is the color authority
+
+### Live Test Status
+- pugg-training-v2 created with full v2 scaffold
+- Welcome message displays on terminal open
+- Remaining audit steps 3-7 (file verification, PRP intake test, Director test, code-researcher test, pre-commit hook test) ready to run
+
+---
+
 ## Automation Roadmap (from plan Phase 5)
 1. **Ralph Loop** — auto-continue after task completion (engineer doesn't stop after 1 task)
 2. **MCP server** — file-based task automation (not Supabase)
