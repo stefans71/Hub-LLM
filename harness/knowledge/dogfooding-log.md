@@ -301,6 +301,48 @@ Created fresh "PUGG Training" project after cleaning up old VPS directories. Rev
 
 ---
 
+## Session 7 — February 10, 2026 (FEAT-62–64 Ship, Docs Migration)
+
+### What We Did
+Shipped FEAT-62, FEAT-63, and FEAT-64 — completing the full onboarding UX overhaul and migrating all documentation to dynamic backend templates.
+
+### Tasks Shipped
+| Task | What |
+|------|------|
+| FEAT-62 | Dynamic Getting Started page (project-specific), slim terminal welcome, help bubble deleted |
+| FEAT-63 | Fix Getting Started rendering: full-bleed in Fit mode, scroll overflow fix, nav sidebar, Docs button uses previewUrl |
+| FEAT-64 | Migrate all 5 doc pages to dynamic backend templates at /api/docs/*, delete static frontend/public/docs/ |
+
+### Architecture Shipped
+- **docs.py** (778 lines): New router with shared `DOCS_CSS`, `_nav_sidebar(active)`, `_docs_page()` wrapper. 5 endpoints: `/home`, `/workspace-guide`, `/git-github`, `/whats-new`, `/harness`
+- **Getting Started** remains project-specific at `/api/projects/{id}/getting-started` (uses `_fill_template` with project placeholders)
+- **PreviewPanel**: `isFullBleed = deviceMode === 'fit'` for all content. Docs button + iframe default to `/api/docs/home`
+- **Workspace.jsx**: fallback URL `/api/docs/home` instead of old `/docs/welcome.html`
+- **Static files deleted**: 8 files removed from `frontend/public/docs/` (HTML, CSS, JS)
+
+### Key Design Decisions
+- **All docs are now dynamic**: Update a Python constant → deploy → all users see changes. No static file management.
+- **Shared CSS constant**: One `DOCS_CSS` string shared across all 5 pages + Getting Started has its own inline CSS (different theme, simpler layout)
+- **Nav sidebar baked in**: No more `nav.js` runtime injection. Each page has sidebar HTML with correct `active` class at render time
+- **Getting Started excluded from global nav**: It's project-specific (has `{{projectName}}`, `{{slug}}`, `{{appDir}}` placeholders), so the docs nav has 5 pages and Getting Started has its own nav pointing to `/api/docs/*`
+
+### Dogfooding Audit Status
+- [x] Step 1-2: Template snapshot + diff (v2 shipped)
+- [ ] **Step 3**: Create test project, verify all files on VPS
+- [ ] **Step 4**: Test /generate-prp intake (FEAT-53 improvements)
+- [ ] **Step 5**: Test Director setup
+- [ ] **Step 6**: Test code-researcher agent
+- [ ] **Step 7**: Test pre-commit hook
+
+Steps 3-7 blocked on merge to main (deploying FEAT-62-64) then creating fresh test project.
+
+### Next Steps
+1. Merge feature/harness-v2 to main (FEAT-62-64)
+2. Create fresh test project to validate full scaffold + new docs rendering
+3. Resume audit Steps 3-7
+
+---
+
 ## Automation Roadmap (from plan Phase 5)
 1. **Ralph Loop** — auto-continue after task completion (engineer doesn't stop after 1 task)
 2. **MCP server** — file-based task automation (not Supabase)
