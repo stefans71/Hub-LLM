@@ -740,7 +740,6 @@ TEMPLATE_DIRECTOR_WELCOME = (
     "cat <<'TEXT'\n"
     "  \x1b[38;2;249;115;22mWelcome to {{projectName}}!\x1b[0m\n"
     "  \x1b[38;2;249;115;22mGetting started:\x1b[0m \x1b[36msee preview panel to the right\x1b[0m\n"
-    "\n"
     "  \x1b[36mDirector:\x1b[0m  \x1b[32m{{slug}}-director/\x1b[0m\n"
     "  \x1b[36mEngineer:\x1b[0m  \x1b[32m{{appDir}}/\x1b[0m\n"
     "\n"
@@ -756,7 +755,7 @@ TEMPLATE_DIRECTOR_WELCOME = (
     "     \x1b[36mEngineer:\x1b[0m  \x1b[32m{{appDir}}/\x1b[0m\n"
     "     In the lower-left of the screen, open the \x1b[1mLLM-Dev Terminal\x1b[0m panel\n"
     "     and copy and paste this into the terminal:\n"
-    "     \x1b[36mcd {{appDir}} && claude\x1b[0m\n"
+    "     \x1b[36mcd \x1b[32m{{appDir}}\x1b[36m && claude\x1b[0m\n"
     "\n"
     "  3. Come back to this terminal and type\n"
     "     \x1b[36mclaude\x1b[0m\n"
@@ -776,7 +775,6 @@ TEMPLATE_DIRECTOR_WELCOME = (
     "  \x1b[38;2;249;115;22mWelcome to {{projectName}}!\x1b[0m\n"
     "  \x1b[38;2;249;115;22mGetting started:\x1b[0m\n"
     "  \x1b[36msee preview panel \xe2\x86\x92\x1b[0m\n"
-    "\n"
     "  \x1b[36mDir:\x1b[0m \x1b[32m{{slug}}-director/\x1b[0m\n"
     "  \x1b[36mEng:\x1b[0m \x1b[32m{{slug}}/\x1b[0m\n"
     "\n"
@@ -789,7 +787,7 @@ TEMPLATE_DIRECTOR_WELCOME = (
     "     \x1b[36mEng:\x1b[0m \x1b[32m{{appDir}}/\x1b[0m\n"
     "     Open \x1b[1mLLM-Dev Terminal\x1b[0m\n"
     "     (lower-left), paste:\n"
-    "     \x1b[36mcd {{appDir}} && claude\x1b[0m\n"
+    "     \x1b[36mcd \x1b[32m{{appDir}}\x1b[36m && claude\x1b[0m\n"
     "\n"
     "  3. Return here, type:\n"
     "     \x1b[36mclaude\x1b[0m then Enter.\n"
@@ -837,6 +835,10 @@ TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
   .docs-sidebar nav a {
     display: flex; align-items: center; gap: 10px; padding: 9px 14px;
     color: #94a3b8; text-decoration: none; font-size: 13px; border-radius: 6px;
+  }
+  .docs-sidebar nav a .nav-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; flex-shrink: 0;
   }
   .docs-sidebar nav a:hover { background: rgba(56, 189, 248, 0.08); color: #e0e0e0; }
   .docs-sidebar nav a.active {
@@ -908,12 +910,12 @@ TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
       <div class="brand-tagline">A VibeShip Creation</div>
     </div>
     <nav>
-      <a href="/api/docs/home">Home</a>
-      <a href="#" class="active">Getting Started</a>
-      <a href="/api/docs/workspace-guide">Workspace Guide</a>
-      <a href="/api/docs/git-github">Git &amp; GitHub</a>
-      <a href="/api/docs/whats-new">What&rsquo;s New</a>
-      <a href="/api/docs/harness">Harness System</a>
+      <a href="/api/docs/home"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span>Home</a>
+      <a href="#" class="active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>Getting Started</a>
+      <a href="/api/docs/workspace-guide"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg></span>Workspace Guide</a>
+      <a href="/api/docs/git-github"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg></span>Git &amp; GitHub</a>
+      <a href="/api/docs/whats-new"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span>What&rsquo;s New</a>
+      <a href="/api/docs/harness"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></span>Harness System</a>
     </nav>
   </div>
 
