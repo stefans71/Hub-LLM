@@ -2380,3 +2380,10 @@ Three callbacks from Workspace to ServerManager:
 
 ---
 
+### Session 156 - 2026-02-10 15:18 EST
+**Task**: FEAT-65 — Terminal welcome message V4 — expanded steps with Director/Engineer context
+**What**: Rewrote TEMPLATE_DIRECTOR_WELCOME wide (lines 740-773) and narrow (775-803) text bodies in projects.py. Wide version: orange 'Welcome to {{projectName}}!', orange 'Getting started:' + cyan explanation, Director/Engineer paths, context line, orange 'STARTING:', 3 expanded steps (Director workflow, Engineer workflow with LLM-Dev Terminal + cd command, come back + claude + Director AI Persona), expanded Note with cyan Copy/Paste/Getting Started/Preview panel highlights. Narrow version: compact equivalent with abbreviated labels, arrows for copy/paste. projects.py 1881→1907 lines.
+**Key Learning**: Edit tool treats `\x1b` as literal 4 characters (backslash-x-1-b), matching Python source. Read tool renders `\xe2\x86\x92` as `→` but the file contains the literal escape text. Always use `cat -v` via Bash to verify exact byte sequences when editing files with escape codes.
+
+---
+
