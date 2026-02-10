@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-09T17:00",
+  "updated": "2026-02-10T12:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -50,6 +50,52 @@
         "status_set_to_pending_review": true
       },
       "completion_note": "All 3 parts implemented. (A) TEMPLATE_GETTING_STARTED_HTML: ~100-line self-contained HTML with inline CSS, dark theme, 5 sections (Your Project, Steps 1-3, Terminal Tips, Next Steps), brand colors, footer. GET /{project_id}/getting-started endpoint renders dynamically via _fill_template. (B) Slimmed TEMPLATE_DIRECTOR_WELCOME text body: removed step 3, removed verbose descriptions, added orange 'See Getting Started →', 'STARTING:' heading, 2 steps only, single orange Note line. (C) Workspace.jsx: welcomeUrl = /api/projects/{id}/getting-started. ClaudeCodeTerminalChat.jsx: deleted writeln + deleted help bubble + removed unused state. py_compile OK, bash -n OK, 86 escape bytes. projects.py 1743→1845."
+    },
+    {
+      "id": "FEAT-63",
+      "name": "Fix Getting Started rendering — full-bleed, scroll, nav sidebar, Docs button",
+      "size": "S",
+      "priority": 1,
+      "status": "pending",
+      "description": "Live testing of FEAT-62 revealed four issues:\n\n1. **Getting Started renders in device-frame mode** — `isInternalDocs` check (PreviewPanel.jsx:34) only matches `/docs/` prefix, not `/api/projects/`. Fix: make ALL content full-bleed in Fit mode. Delete `isInternalDocs`, change to `const isFullBleed = deviceMode === 'fit'`.\n\n2. **Scrolling broken in full-bleed** — `overflow: 'hidden'` on inner frame container (PreviewPanel.jsx:320) prevents scrolling. Fix: `overflow: isFullBleed ? 'auto' : 'hidden'`.\n\n3. **No nav sidebar** — Old docs had sidebar nav. Getting Started template is standalone. Fix: Add inline nav sidebar to TEMPLATE_GETTING_STARTED_HTML matching existing docs nav style (HubLLM.dev header, A VibeShip Creation tagline, nav links: Home, Getting Started (active), Workspace Guide, Git & GitHub, What's New, Harness System). Active page highlighted sky-blue (#38bdf8). All inline CSS. Responsive: sidebar flows above content on narrow viewports. Layout: sidebar left (~240px), content right (flex). Links point to `/api/docs/*` endpoints (FEAT-64 creates these; if not yet done, point to current `/docs/*.html`).\n\n4. **Docs button hardcodes /docs/index.html** — Can't navigate back to project Getting Started. Fix: PreviewPanel.jsx:257 change onClick to use `previewUrl || '/api/docs/home'` instead of hardcoded path. Also update iframe default src (line 328) from '/docs/index.html' to '/api/docs/home'.\n\nAll changes are frontend/backend only, no VPS scaffolding.",
+      "change": [
+        "frontend/src/components/PreviewPanel.jsx:34-37 — Delete `isInternalDocs`, change to `const isFullBleed = deviceMode === 'fit'`",
+        "frontend/src/components/PreviewPanel.jsx:320 — Change overflow from 'hidden' to `isFullBleed ? 'auto' : 'hidden'`",
+        "frontend/src/components/PreviewPanel.jsx:257 — Docs button onClick: use `previewUrl || '/api/docs/home'` instead of hardcoded '/docs/index.html'",
+        "frontend/src/components/PreviewPanel.jsx:328 — iframe default src: '/api/docs/home' instead of '/docs/index.html'",
+        "backend/routers/projects.py:782-880 — Update TEMPLATE_GETTING_STARTED_HTML: add inline nav sidebar with HubLLM.dev brand header, 6 nav links, active highlighting, responsive layout (~240px sidebar left, content right)"
+      ],
+      "test": "(1) Open project — Getting Started renders full-bleed (no device frame border). (2) Page scrolls when content exceeds viewport. (3) Nav sidebar visible with correct links. (4) Getting Started highlighted as active page. (5) Click Docs button — returns to project Getting Started (or /api/docs/home). (6) Switch to Phone mode — device frame appears. (7) Switch back to Fit — full-bleed again.",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
+    },
+    {
+      "id": "FEAT-64",
+      "name": "Migrate all docs to dynamic backend templates",
+      "size": "M",
+      "priority": 3,
+      "status": "pending",
+      "description": "Convert all static doc pages from frontend/public/docs/ to dynamic backend templates served by a new docs router. Update template → deploy → all users see updates instantly. No more static files.\n\nMigration map:\n- index.html → GET /api/docs/home (TEMPLATE_DOCS_HOME)\n- workspace-guide.html → GET /api/docs/workspace-guide (TEMPLATE_DOCS_WORKSPACE)\n- git-github.html → GET /api/docs/git-github (TEMPLATE_DOCS_GIT)\n- whats-new.html → GET /api/docs/whats-new (TEMPLATE_DOCS_WHATS_NEW)\n- harness-guide.html → GET /api/docs/harness (TEMPLATE_DOCS_HARNESS)\n\nEach template is self-contained HTML with ALL CSS inlined (currently split across styles.css + nav.js for sidebar). The nav sidebar currently injected by nav.js must be baked into each template's HTML directly. Each page gets its own `active` class on the correct nav link.\n\nNav links in all templates (including FEAT-63's Getting Started) point to /api/docs/* endpoints.\n\nStatic files to convert:\n- frontend/public/docs/index.html (home page with card grid, search, what's new preview)\n- frontend/public/docs/welcome.html (getting started walkthrough)\n- frontend/public/docs/workspace-guide.html (6-section guide with workspace diagram)\n- frontend/public/docs/git-github.html (git basics + GitHub setup)\n- frontend/public/docs/whats-new.html (changelog entries)\n- frontend/public/docs/harness-guide.html (7-section harness system guide)\n- frontend/public/docs/styles.css (all styles to inline)\n- frontend/public/docs/nav.js (sidebar to bake into each template)\n\nAfter migration is confirmed working, delete frontend/public/docs/ directory.",
+      "change": [
+        "backend/routers/docs.py (NEW) — New router with 5 endpoints, each returning HTMLResponse with self-contained template. Import from fastapi import APIRouter; from fastapi.responses import HTMLResponse",
+        "backend/main.py — Register docs router: from routers import docs; app.include_router(docs.router, prefix='/api/docs', tags=['docs'])",
+        "backend/routers/projects.py — Update TEMPLATE_GETTING_STARTED_HTML nav links from /docs/*.html to /api/docs/*",
+        "frontend/src/components/PreviewPanel.jsx — Docs button and iframe default: /api/docs/home (already done in FEAT-63)",
+        "frontend/public/docs/ — DELETE entire directory after confirming migration works"
+      ],
+      "test": "(1) All 5 doc pages render via /api/docs/* endpoints. (2) Nav sidebar works across all pages with correct active highlighting. (3) Docs button returns to /api/docs/home. (4) Getting Started nav links point to /api/docs/*. (5) No 404s for any doc navigation. (6) Update a template → deploy → verify change visible immediately. (7) Search functionality on home page still works (inline JS). (8) All styles render correctly (fully inlined, no external CSS dependency).",
+      "completion_checklist": {
+        "code_works": false,
+        "index_updated": false,
+        "learnings_written": false,
+        "committed_pushed": false,
+        "status_set_to_pending_review": false
+      }
     },
     {
       "id": "FEAT-58",
