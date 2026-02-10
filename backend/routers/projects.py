@@ -853,12 +853,12 @@ TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
       <div class="sidebar-tagline">A VibeShip Creation</div>
     </div>
     <nav>
-      <a href="/docs/index.html">Home</a>
+      <a href="/api/docs/home">Home</a>
       <a href="#" class="active">Getting Started</a>
-      <a href="/docs/workspace-guide.html">Workspace Guide</a>
-      <a href="/docs/git-github.html">Git &amp; GitHub</a>
-      <a href="/docs/whats-new.html">What&rsquo;s New</a>
-      <a href="/docs/harness-guide.html">Harness System</a>
+      <a href="/api/docs/workspace-guide">Workspace Guide</a>
+      <a href="/api/docs/git-github">Git &amp; GitHub</a>
+      <a href="/api/docs/whats-new">What&rsquo;s New</a>
+      <a href="/api/docs/harness">Harness System</a>
     </nav>
   </div>
 
@@ -906,7 +906,7 @@ TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
 
     <h2>Next Steps</h2>
     <p>After generating your PRP, the Director will guide you through the rest of the workflow &mdash; task planning, execution, and review.</p>
-    <p>For full documentation, see <a href="/docs/index.html">Hub-LLM Docs</a>.</p>
+    <p>For full documentation, see <a href="/api/docs/home">Hub-LLM Docs</a>.</p>
 
     <div class="footer">HubLLM.dev &mdash; A VibeShip Creation</div>
   </div>

@@ -256,7 +256,7 @@ export default function PreviewPanel({
             {/* Actions */}
             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
               <button
-                onClick={() => { const url = previewUrl || '/docs/index.html'; setActiveUrl(url); setInputUrl(url) }}
+                onClick={() => { const url = previewUrl || '/api/docs/home'; setActiveUrl(url); setInputUrl(url) }}
                 title="Open documentation"
                 style={{
                   display: 'flex', alignItems: 'center', gap: '4px',
@@ -327,7 +327,7 @@ export default function PreviewPanel({
             >
               <iframe
                 ref={iframeRef}
-                src={activeUrl || previewUrl || '/docs/index.html'}
+                src={activeUrl || previewUrl || '/api/docs/home'}
                 style={{
                   width: '100%',
                   height: '100%',

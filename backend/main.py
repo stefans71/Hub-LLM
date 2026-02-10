@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
 
-from routers import chat, projects, voice, ssh, github, servers, auth, ai, stats, terminal, files, settings, waitlist
+from routers import chat, projects, voice, ssh, github, servers, auth, ai, stats, terminal, files, settings, waitlist, docs
 from models import init_db, close_db
 from services.vps_connection import vps_manager
 
@@ -59,6 +59,7 @@ app.include_router(terminal.router, prefix="/api/terminal", tags=["terminal"])
 app.include_router(files.router, prefix="/api/files", tags=["files"])
 app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
 app.include_router(waitlist.router, prefix="/api/waitlist", tags=["waitlist"])
+app.include_router(docs.router, prefix="/api/docs", tags=["docs"])
 
 
 @app.get("/")

@@ -43,7 +43,7 @@ export default function Workspace({ project, model, apiKeys, onProjectChange, en
   const isFirstVisit = project?.id && !localStorage.getItem(`welcomed_${project.id}`)
   const getPreviewUrl = () => {
     if (project?.id) return `/api/projects/${project.id}/getting-started`
-    return '/docs/welcome.html'
+    return '/api/docs/home'
   }
   const [welcomeUrl] = useState(getPreviewUrl)
   const [previewCollapsed, setPreviewCollapsed] = useState(false)

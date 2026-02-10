@@ -821,6 +821,22 @@ backend_routers:
     called_by_frontend: [Chat.jsx, CreateProject.jsx]
     last_verified_session: 86
 
+  docs.py:
+    path: backend/routers/docs.py
+    lines: 778
+    prefix: "/api/docs"
+    purpose: "Dynamic documentation pages (FEAT-64). All doc pages are self-contained HTML with inline CSS and baked-in nav sidebar. Replaces frontend/public/docs/ static files."
+    endpoints:
+      - {method: GET, path: "/home", purpose: "Home page with card grid, search, what's new preview"}
+      - {method: GET, path: "/workspace-guide", purpose: "Workspace guide with 6 sections"}
+      - {method: GET, path: "/git-github", purpose: "Git & GitHub setup guide"}
+      - {method: GET, path: "/whats-new", purpose: "Changelog entries"}
+      - {method: GET, path: "/harness", purpose: "Harness system guide with 7 sections"}
+    helpers: "_nav_sidebar(active) — builds sidebar HTML with correct active page. _docs_page(title, active, content, extra_js) — wraps content in full HTML with CSS + sidebar."
+    constants: "DOCS_CSS, CONTENT_HOME, CONTENT_WORKSPACE, CONTENT_GIT, CONTENT_WHATS_NEW, CONTENT_HARNESS, HOME_SEARCH_JS"
+    called_by_frontend: [PreviewPanel.jsx, Workspace.jsx]
+    last_verified_session: 155
+
   projects.py:
     path: backend/routers/projects.py
     lines: 1881
