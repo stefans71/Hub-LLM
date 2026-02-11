@@ -34,8 +34,8 @@ frontend_entry:
   main.jsx:
     path: frontend/src/main.jsx
     lines: 10
-    purpose: "React root renderer — mounts App into DOM with StrictMode"
-    last_verified_session: 86
+    purpose: "React root renderer — mounts App into DOM. BUG-69: StrictMode removed (double-mount creates duplicate WS/PTY connections in dev mode; Docker runs npm run dev so StrictMode was active in prod)"
+    lines: 14
 
   ErrorBoundary.jsx:
     path: frontend/src/components/ErrorBoundary.jsx
@@ -389,7 +389,7 @@ frontend_components:
   ClaudeCodeTerminalChat.jsx:
     path: frontend/src/components/ClaudeCodeTerminalChat.jsx
     lines: 1114
-    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card pointing to Welcome guide in Preview panel (FEAT-35/FEAT-37), auto-cd to Director dir + bash .welcome on connect (FEAT-33/FEAT-60), refresh .welcome via API before display (BUG-68). Connection ID guard (connectIdRef) + isInitialMountRef + WS handler cleanup before close, no convertEol (BUG-69)"
+    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card pointing to Welcome guide in Preview panel (FEAT-35/FEAT-37), auto-cd to Director dir + bash .welcome on connect (FEAT-33/FEAT-60), refresh .welcome via API before display (BUG-68). Connection ID guard (connectIdRef) + isInitialMountRef + WS handler nulling before close + convertEol:true (BUG-69). StrictMode removal in main.jsx was critical fix — see main.jsx."
     props: "{project, serverId, projectSlug, onProcessingChange, enhanceWithAI, autoStart}"
     key_state:
       - {name: messages, type: "useState([])", drives: "parsed chat bubbles"}
@@ -1872,11 +1872,11 @@ recurring_bugs:
     fix: "BUG-68: For files that should always reflect latest template, refresh on access (POST refresh-welcome endpoint). For user-customizable files (CLAUDE.md), scaffold-once is correct."
 
   - id: 22
-    desc: "Double WebSocket connect on mount — async loadXterm + useEffect both call connect()"
+    desc: "Double echo in terminal — every keystroke/output doubled (ccllaauuddee), blank lines in welcome text"
     sessions: []
-    affected_files: [ClaudeCodeTerminalChat.jsx]
+    affected_files: [ClaudeCodeTerminalChat.jsx, main.jsx]
     status: fixed
-    fix: "BUG-69: Guard reconnect useEffect with isInitialMountRef (skip first run). Also null out WS handlers (onmessage/onclose/onerror) before .close() — WS.close() is async and CLOSING state still receives messages. Remove unused status from connect deps. Same pattern as BUG-73 fix in MultiTerminal."
+    fix: "BUG-69: Root cause was React.StrictMode active in production (Docker runs npm run dev). StrictMode double-mounts components, creating duplicate WS/PTY connections. Fix: (1) Remove StrictMode from main.jsx, (2) Guard reconnect useEffect with isInitialMountRef, (3) Null out WS handlers before .close(), (4) connectIdRef to reject stale connection messages. Re-enable StrictMode when migrating to production builds (INFRA-02)."
 
   - id: 23
     desc: "iframe nav links lose project context — docs pages link to generic Getting Started"
