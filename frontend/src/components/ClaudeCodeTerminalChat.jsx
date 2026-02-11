@@ -661,6 +661,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
           white: '#a9b1d6',
         },
         scrollback: 5000,
+        convertEol: true,
       })
 
       const fitAddon = new FitAddon()

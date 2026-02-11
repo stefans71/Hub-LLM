@@ -388,7 +388,7 @@ frontend_components:
 
   ClaudeCodeTerminalChat.jsx:
     path: frontend/src/components/ClaudeCodeTerminalChat.jsx
-    lines: 1113
+    lines: 1114
     purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card pointing to Welcome guide in Preview panel (FEAT-35/FEAT-37), auto-cd to Director dir + bash .welcome on connect (FEAT-33/FEAT-60), refresh .welcome via API before display (BUG-68). Connection ID guard (connectIdRef) + isInitialMountRef + WS handler cleanup before close, no convertEol (BUG-69)"
     props: "{project, serverId, projectSlug, onProcessingChange, enhanceWithAI, autoStart}"
     key_state:
