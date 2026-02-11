@@ -388,8 +388,8 @@ frontend_components:
 
   ClaudeCodeTerminalChat.jsx:
     path: frontend/src/components/ClaudeCodeTerminalChat.jsx
-    lines: 1114
-    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card pointing to Welcome guide in Preview panel (FEAT-35/FEAT-37), auto-cd to Director dir + bash .welcome on connect (FEAT-33/FEAT-60), refresh .welcome via API before display (BUG-68). Connection ID guard (connectIdRef) + isInitialMountRef + WS handler nulling before close + convertEol:true (BUG-69). StrictMode removal in main.jsx was critical fix — see main.jsx."
+    lines: 1127
+    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card pointing to Welcome guide in Preview panel (FEAT-35/FEAT-37), auto-cd to Director dir + bash .welcome on connect (FEAT-33/FEAT-60), refresh .welcome via API before display (BUG-68). Connection ID guard (connectIdRef) + isInitialMountRef + WS handler nulling before close + convertEol:true (BUG-69). StrictMode removal in main.jsx was critical fix — see main.jsx. TEMPORARY: BUG-69 debug counters (debugRef, debugInfo state, red debug bar)."
     props: "{project, serverId, projectSlug, onProcessingChange, enhanceWithAI, autoStart}"
     key_state:
       - {name: messages, type: "useState([])", drives: "parsed chat bubbles"}
