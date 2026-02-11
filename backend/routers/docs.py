@@ -226,6 +226,22 @@ def _docs_page(title: str, active: str, content: str, extra_js: str = "") -> str
         f'  <div class="docs-content">\n{content}\n  </div>\n'
         '</div>\n'
         f'{extra_js}\n'
+        # BUG-70: Propagate projectId through nav links so Getting Started
+        # points back to the project-specific page, not the generic docs version
+        '<script>\n'
+        '(function() {\n'
+        '  var pid = new URLSearchParams(location.search).get("projectId");\n'
+        '  if (!pid) return;\n'
+        '  document.querySelectorAll(".docs-sidebar nav a").forEach(function(a) {\n'
+        '    var text = a.textContent.trim();\n'
+        '    if (text === "Getting Started") {\n'
+        '      a.href = "/api/projects/" + pid + "/getting-started";\n'
+        '    } else if (a.href && a.href.indexOf("projectId=") === -1) {\n'
+        '      a.href += (a.href.indexOf("?") !== -1 ? "&" : "?") + "projectId=" + pid;\n'
+        '    }\n'
+        '  });\n'
+        '})();\n'
+        '</script>\n'
         '</body>\n</html>'
     )
 

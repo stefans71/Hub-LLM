@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-10T12:00",
+  "updated": "2026-02-10T18:00",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -92,6 +92,37 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-70",
+      "name": "Getting Started nav links lose project context",
+      "size": "S",
+      "priority": 2,
+      "status": "completed",
+      "review_notes": "Director-implemented (skipped Engineer queue — process violation noted). Getting Started template nav links now append ?projectId={{projectId}} to all outgoing docs links. docs.py _docs_page() injects <script> that reads projectId from URL query and rewrites Getting Started link to /api/projects/{id}/getting-started + propagates projectId to all other nav links. py_compile clean.",
+      "description": "Navigating from project-specific Getting Started to a docs page (e.g., Workspace Guide) then clicking Getting Started in that page's nav loads /api/docs/getting-started (generic) instead of /api/projects/{id}/getting-started (project-specific). Fix: propagate projectId via query params.",
+      "change": [
+        "backend/routers/projects.py:1673 — Add projectId to Getting Started template variables",
+        "backend/routers/projects.py:913-918 — Append ?projectId={{projectId}} to all nav links in TEMPLATE_GETTING_STARTED_HTML",
+        "backend/routers/docs.py:_docs_page() — Add <script> block for projectId propagation via URL query param"
+      ],
+      "test": "Open project workspace → preview shows project-specific Getting Started. Click Workspace Guide → URL has ?projectId=. Click Getting Started from docs page → loads project-specific version."
+    },
+    {
+      "id": "BUG-69",
+      "name": "Double echo in ClaudeCodeTerminalChat — every keystroke doubled",
+      "size": "S",
+      "priority": 1,
+      "status": "completed",
+      "review_notes": "Director-implemented (skipped Engineer queue — process violation noted). 4 changes: (1) isInitialMountRef guard on reconnect useEffect to prevent double connect on mount. (2) Null out WS onmessage/onclose/onerror handlers before .close() to prevent stale messages during async CLOSING state. (3) Removed status from connect useCallback deps — never read, only written. (4) Mirrors BUG-73 fix pattern from MultiTerminal. ClaudeCodeTerminalChat.jsx 1091→1103 lines.",
+      "description": "Typing 'claude' showed 'ccllaauuddee'. Two connect() calls on mount: loadXterm() at line 681 + useEffect([serverId, projectSlug]) at line 709. Combined with WS.close() being async (CLOSING state still receives messages), both connections wrote output to same terminal.",
+      "change": [
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx:~205 — Add isInitialMountRef = useRef(true)",
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx:236-241 — Null out WS handlers before .close()",
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx:541 — Remove status from connect deps",
+        "frontend/src/components/ClaudeCodeTerminalChat.jsx:711-721 — Guard reconnect useEffect with isInitialMountRef"
+      ],
+      "test": "Open project workspace → type claude → shows claude (not ccllaauuddee). Switch projects → terminal reconnects correctly. Welcome text still displays on connect."
+    },
     {
       "id": "FEAT-66",
       "name": "Getting Started + docs visual alignment — shared styling, add to docs nav",

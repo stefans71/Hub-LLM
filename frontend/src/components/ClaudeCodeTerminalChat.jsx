@@ -202,6 +202,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
   const [isProcessing, setIsProcessing] = useState(false) // True when waiting for Claude's response
   const [processingText, setProcessingText] = useState('') // Current spinner text (e.g., "Channeling...")
   const [terminalReady, setTerminalReady] = useState(false) // True when xterm is mounted and ready
+  const isInitialMountRef = useRef(true) // BUG-69: Guard against double connect on mount
 
   // FEAT-25: Enhance banner state (captured on mount, survives prop changes)
   const [showEnhanceBanner, setShowEnhanceBanner] = useState(!!enhanceWithAI)
@@ -234,6 +235,11 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
 
     // Close existing connection
     if (wsRef.current) {
+      // BUG-69: Null out handlers before closing to prevent stale messages
+      // during async CLOSING state from writing to terminal
+      wsRef.current.onmessage = null
+      wsRef.current.onclose = null
+      wsRef.current.onerror = null
       wsRef.current.close()
       wsRef.current = null
     }
@@ -535,7 +541,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
       setStatus('error')
       setError('WebSocket connection failed')
     }
-  }, [serverId, status])
+  }, [serverId]) // BUG-69: Removed `status` — connect never reads it, only writes via setStatus
 
   // Start Claude Code interactive session
   const startClaudeCode = useCallback(() => {
@@ -702,8 +708,14 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
     }
   }, []) // Only run once on mount
 
-  // Reconnect when serverId or projectSlug changes (BUG-21: handles project switch)
+  // BUG-69: Guard against double connect on mount. loadXterm() already connects.
+  // This effect only handles project switches (when props change AFTER mount).
+  // (BUG-21: original reconnect-on-prop-change, BUG-73: MultiTerminal removed equivalent)
   useEffect(() => {
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false
+      return
+    }
     if (xtermRef.current && serverId) {
       xtermRef.current.clear()
       connect()
