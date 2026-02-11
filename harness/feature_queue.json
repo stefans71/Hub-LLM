@@ -1,6 +1,6 @@
 {
   "version": "6.0",
-  "updated": "2026-02-10T18:00",
+  "updated": "2026-02-11T01:15",
   "session_docs": [
     "CLAUDE.md",
     "harness/feature_queue.json"
@@ -25,47 +25,6 @@
     }
   },
   "queue": [
-    {
-      "id": "BUG-74",
-      "name": "Director scaffold missing .claude/commands/ — /generate-prp not available",
-      "size": "S",
-      "priority": 1,
-      "status": "pending_review",
-      "completion_note": "Added '.claude/commands' to Director scaffold subdirs and generate-prp.md + execute-prp.md to director_files dict. py_compile OK. projects.py 1945→1997.",
-      "description": "Dogfooding: typing /gener in Director Claude Code session only shows /insights — custom commands /generate-prp and /execute-prp don't load because the Director scaffold never creates the .claude/commands/ directory or writes the command files.\n\nThe Engineer scaffold (line 1342) creates .claude/commands/ and writes generate-prp.md + execute-prp.md (lines 1355-1356). But the Director scaffold (line 1425) only creates [\"\", \".claude\"] subdirs and writes 4 files (CLAUDE.md, settings, settings.local, .welcome). The Director terminal runs Claude Code from {slug}-director/ which has no .claude/commands/ directory.\n\nFix: Add .claude/commands to Director subdirs and add command files to director_files dict. The Director should get /generate-prp (planning is a Director activity). Include /execute-prp too since the user may want to run it from either terminal.",
-      "change": [
-        "backend/routers/projects.py:1425 — Change subdirs from [\"\", \".claude\"] to [\"\", \".claude\", \".claude/commands\"]",
-        "backend/routers/projects.py:1437 — Add to director_files dict: '.claude/commands/generate-prp.md': TEMPLATE_GENERATE_PRP and '.claude/commands/execute-prp.md': TEMPLATE_EXECUTE_PRP"
-      ],
-      "test": "(1) Create a new project with VPS. (2) SSH to VPS, verify {slug}-director/.claude/commands/generate-prp.md exists. (3) Launch Claude Code in Director terminal, type /gener — should show /generate-prp in autocomplete. (4) Verify Engineer directory still has all 3 commands too.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
-    {
-      "id": "BUG-75",
-      "name": "Getting Started page missing /generate-prp tip after step 3",
-      "size": "XS",
-      "priority": 2,
-      "status": "pending_review",
-      "completion_note": "Added /generate-prp tip div after step 3 in both TEMPLATE_GETTING_STARTED_HTML (projects.py) and CONTENT_GETTING_STARTED (docs.py). py_compile OK. docs.py 843→866.",
-      "description": "Dogfooding: Getting Started page (TEMPLATE_GETTING_STARTED_HTML) section 3 'Start the Project Director' ends with 'Press Enter. This will start your AI Coding session with the Project Director AI Persona.' but never mentions /generate-prp as the next step.\n\nThe user expects a tip after step 3 saying something like: 'Next, use /generate-prp to enhance your project brief.' This guides them to the PRP workflow after launching the Director.\n\nAdd a tip div (same style as existing tips in sections 1 and 2) or an additional <p> after line 961 that mentions /generate-prp.",
-      "change": [
-        "backend/routers/projects.py:961 — After the 'Press Enter' paragraph, add: <p style=\"margin-top: 10px;\">Next, type <code>/generate-prp</code> to create a detailed project brief that guides your AI team.</p> or a .tip div with similar content"
-      ],
-      "test": "(1) Open project workspace. (2) Preview panel shows Getting Started page. (3) Section 3 now mentions /generate-prp after the 'Press Enter' line. (4) Text is styled consistently with the rest of the page.",
-      "completion_checklist": {
-        "code_works": true,
-        "index_updated": true,
-        "learnings_written": true,
-        "committed_pushed": true,
-        "status_set_to_pending_review": true
-      }
-    },
     {
       "id": "FEAT-62",
       "name": "Welcome experience V3 — dynamic Getting Started page + slim terminal message",
@@ -133,6 +92,24 @@
     }
   ],
   "completed": [
+    {
+      "id": "BUG-74",
+      "name": "Director scaffold missing .claude/commands/ — /generate-prp not available",
+      "size": "S",
+      "status": "completed",
+      "review_notes": "PASS. Director scaffold subdirs expanded to include .claude/commands, generate-prp.md + execute-prp.md added to director_files dict. New projects will have /generate-prp and /execute-prp available in Director terminal. projects.py lines 1425 and 1437-1441.",
+      "completion_note": "Added '.claude/commands' to Director scaffold subdirs and generate-prp.md + execute-prp.md to director_files dict. py_compile OK. projects.py 1945→1997.",
+      "description": "Director scaffold only created [\"\", \".claude\"] subdirs — missing .claude/commands/. Custom commands /generate-prp and /execute-prp were only scaffolded in the Engineer dir. Fix: expand subdirs and add command files to director_files dict."
+    },
+    {
+      "id": "BUG-75",
+      "name": "Getting Started page missing /generate-prp tip after step 3",
+      "size": "XS",
+      "status": "completed",
+      "review_notes": "PASS. Tip div added after step 3 in both TEMPLATE_GETTING_STARTED_HTML (projects.py:962) and CONTENT_GETTING_STARTED (docs.py:815). Consistent .tip styling with existing tips. Both project-specific and generic Getting Started pages updated.",
+      "completion_note": "Added /generate-prp tip div after step 3 in both TEMPLATE_GETTING_STARTED_HTML (projects.py) and CONTENT_GETTING_STARTED (docs.py). py_compile OK. docs.py 843→866.",
+      "description": "Getting Started section 3 ended with 'Press Enter' but never mentioned /generate-prp. Added tip div guiding users to type /generate-prp after launching the Director."
+    },
     {
       "id": "BUG-70",
       "name": "Getting Started nav links lose project context",
