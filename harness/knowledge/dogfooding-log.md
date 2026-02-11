@@ -378,6 +378,44 @@ Any file written once at scaffold time (`.welcome`, `CLAUDE.md`, `settings.json`
 
 ---
 
+## Session 9 — February 11, 2026 (BUG-69, BUG-74, BUG-75)
+
+### What We Did
+Fixed double echo in terminal (BUG-69), then found and fixed two more bugs during continued dogfooding: Director scaffold missing custom commands (BUG-74), Getting Started page missing /generate-prp tip (BUG-75).
+
+### Bugs Found During Dogfooding
+| Bug | Issue | Root Cause | Fix | Status |
+|-----|-------|-----------|-----|--------|
+| BUG-69 | Typing `claude` shows `ccllaauuddee` — every keystroke doubled | Dangling `setHintCollapsed(true)` in `term.onData` handler — function was removed (FEAT-27/35 hint overlay cleanup) but call was left behind. Every keystroke threw `Uncaught ReferenceError`, causing xterm.js to re-fire onData. | Removed the broken call. Also removed React.StrictMode (defensive) and added isInitialMountRef guard + WS handler nulling. | Fixed, merged |
+| BUG-74 | `/generate-prp` not available in Director terminal — typing `/gener` only shows `/insights` | Director scaffold (line 1425) only creates `["", ".claude"]` subdirs, doesn't create `.claude/commands/` or write command files. Commands were only scaffolded in Engineer dir. | Added `.claude/commands` to Director subdirs, added generate-prp.md + execute-prp.md to director_files dict. | Fixed, merged |
+| BUG-75 | Getting Started page section 3 doesn't mention `/generate-prp` | Section 3 ends with "Press Enter" but never tells user about the next step. | Added tip div after step 3 in both TEMPLATE_GETTING_STARTED_HTML (projects.py) and CONTENT_GETTING_STARTED (docs.py). | Fixed, merged |
+
+### Key Debugging Lesson: Instrument First
+BUG-69 took 4 fix attempts across 2 sessions before diagnosis. First 3 attempts guessed at connection-level duplication (double connect, StrictMode, race conditions). What finally worked: adding visible diagnostic counters + console.warn logging. The console immediately showed `onData` firing twice per keystroke followed by `setHintCollapsed is not defined` error. **Lesson: diagnostic logging should be step 1, not step 4.**
+
+### Key Pattern Discovered: Director vs Engineer Scaffold Gap
+The Director scaffold (FEAT-55) was added later and only included the basics (CLAUDE.md, settings, .welcome). When new features are added to the Engineer scaffold (like .claude/commands/ in FEAT-30), they must also be checked against the Director scaffold. Two separate `template_files` dicts in the same function — easy to forget the second one.
+
+### Documentation Gap Identified
+Finding the Getting Started HTML templates was harder than it should be. There are **two versions** that need to stay in sync:
+1. `TEMPLATE_GETTING_STARTED_HTML` in projects.py — project-specific (has {{projectName}}, {{slug}}, {{appDir}} placeholders)
+2. `CONTENT_GETTING_STARTED` in docs.py — generic docs version (no placeholders)
+
+These will be updated frequently. The template translation cheat sheet in Director CLAUDE.md needs entries for both.
+
+### Dogfooding Audit Status
+- [x] Step 3a: Preview panel opens on Getting Started (BUG-67)
+- [x] Step 3b: Terminal welcome shows latest template (BUG-68)
+- [x] Step 3c: Terminal no double echo (BUG-69)
+- [x] Step 3d: Director has /generate-prp command (BUG-74)
+- [x] Step 3e: Getting Started mentions /generate-prp (BUG-75)
+- [ ] **Step 4**: Test /generate-prp intake (FEAT-53 improvements)
+- [ ] **Step 5**: Test Director setup
+- [ ] **Step 6**: Test code-researcher agent
+- [ ] **Step 7**: Test pre-commit hook
+
+---
+
 ## Automation Roadmap (from plan Phase 5)
 1. **Ralph Loop** — auto-continue after task completion (engineer doesn't stop after 1 task)
 2. **MCP server** — file-based task automation (not Supabase)
