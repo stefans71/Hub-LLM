@@ -812,6 +812,7 @@ CONTENT_GETTING_STARTED = """\
     <p style="margin-top: 14px;">Come back to the main terminal (upper area) and type:</p>
     <div class="code-block"><span class="cmd">claude</span></div>
     <p>Press Enter. This starts your AI Coding session with the Project Director AI Persona.</p>
+    <div class="tip"><span class="tip-label">Tip:</span> Once the Director is running, type <code>/generate-prp</code> to create a detailed project brief that guides your AI team.</div>
   </div>
 
   <div class="section">

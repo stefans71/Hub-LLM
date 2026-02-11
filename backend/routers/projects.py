@@ -959,6 +959,7 @@ TEMPLATE_GETTING_STARTED_HTML = """<!DOCTYPE html>
       <p style="margin-top: 14px;">Come back to the main terminal (upper area) and type:</p>
       <div class="code-block"><span class="cmd">claude</span></div>
       <p>Press Enter. This will start your AI Coding session with the Project Director AI Persona.</p>
+      <div class="tip"><span class="tip-label">Tip:</span> Once the Director is running, type <code>/generate-prp</code> to create a detailed project brief that guides your AI team.</div>
     </div>
 
     <div class="section">
@@ -1422,7 +1423,7 @@ async def create_vps_project_folder(
         }
         try:
             # Create director subdirectories
-            for subdir in ["", ".claude"]:
+            for subdir in ["", ".claude", ".claude/commands"]:
                 try:
                     await asyncio.wait_for(
                         conn.create_directory(
@@ -1438,6 +1439,8 @@ async def create_vps_project_folder(
                 "CLAUDE.md": TEMPLATE_DIRECTOR_CLAUDE_MD,
                 ".claude/settings.json": TEMPLATE_DIRECTOR_SETTINGS,
                 ".claude/settings.local.json": TEMPLATE_DIRECTOR_SETTINGS_LOCAL,
+                ".claude/commands/generate-prp.md": TEMPLATE_GENERATE_PRP,
+                ".claude/commands/execute-prp.md": TEMPLATE_EXECUTE_PRP,
                 ".welcome": TEMPLATE_DIRECTOR_WELCOME,
             }
             failed_files = []

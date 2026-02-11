@@ -2393,3 +2393,9 @@ Three callbacks from Workspace to ServerManager:
 
 ---
 
+### Session 158 - 2026-02-11 00:59 EST
+**Task**: BUG-74 + BUG-75 — Director scaffold missing .claude/commands/ + /generate-prp tip
+**What**: BUG-74: Added ".claude/commands" to Director scaffold subdirs list and added generate-prp.md + execute-prp.md to director_files dict. BUG-75: Added /generate-prp tip div after step 3 in both TEMPLATE_GETTING_STARTED_HTML (projects.py) and CONTENT_GETTING_STARTED (docs.py). projects.py 1945→1997, docs.py 843→866.
+
+---
+

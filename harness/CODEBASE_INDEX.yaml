@@ -823,7 +823,7 @@ backend_routers:
 
   docs.py:
     path: backend/routers/docs.py
-    lines: 865
+    lines: 866
     prefix: "/api/docs"
     purpose: "Dynamic documentation pages (FEAT-64). All doc pages are self-contained HTML with inline CSS and baked-in nav sidebar. SVG Lucide icons on home cards + nav sidebar (FEAT-66). Getting Started in nav + generic endpoint (FEAT-66). projectId query param propagation via JS for project-context nav links (BUG-70)."
     endpoints:
@@ -840,9 +840,9 @@ backend_routers:
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 1990
+    lines: 1997
     prefix: "/api/projects"
-    purpose: "Project CRUD with chat history, VPS folder auto-creation, harness template scaffolding (FEAT-30), project export (FEAT-51). Engineer systemPrompt (FEAT-54). Director auto-scaffold (FEAT-55). Improved PRP intake with navigation, review gate, approval gate, user profiling (FEAT-53). Human-oriented welcome message (FEAT-61). Dynamic Getting Started HTML page (FEAT-62). Terminal welcome V4 (FEAT-65). Getting Started CSS aligned with docs + nav icons (FEAT-66). Refresh .welcome on terminal connect (BUG-68). Getting Started nav links pass projectId for context propagation (BUG-70)."
+    purpose: "Project CRUD with chat history, VPS folder auto-creation, harness template scaffolding (FEAT-30), project export (FEAT-51). Engineer systemPrompt (FEAT-54). Director auto-scaffold (FEAT-55). Improved PRP intake with navigation, review gate, approval gate, user profiling (FEAT-53). Human-oriented welcome message (FEAT-61). Dynamic Getting Started HTML page (FEAT-62). Terminal welcome V4 (FEAT-65). Getting Started CSS aligned with docs (FEAT-66). Director scaffold includes .claude/commands/ (BUG-74). /generate-prp tip in Getting Started (BUG-75)."
     endpoints:
       - {method: GET, path: "/", purpose: "list all projects"}
       - {method: POST, path: "/", purpose: "create project (+ scaffold harness on VPS + Director dir)"}
