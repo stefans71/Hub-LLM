@@ -388,8 +388,8 @@ frontend_components:
 
   ClaudeCodeTerminalChat.jsx:
     path: frontend/src/components/ClaudeCodeTerminalChat.jsx
-    lines: 1127
-    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card pointing to Welcome guide in Preview panel (FEAT-35/FEAT-37), auto-cd to Director dir + bash .welcome on connect (FEAT-33/FEAT-60), refresh .welcome via API before display (BUG-68). Connection ID guard (connectIdRef) + isInitialMountRef + WS handler nulling before close + convertEol:true (BUG-69). StrictMode removal in main.jsx was critical fix — see main.jsx. TEMPORARY: BUG-69 debug counters (debugRef, debugInfo state, red debug bar)."
+    lines: 1097
+    purpose: "Terminal-based Claude Code chat with bubble/terminal view toggle, per-project session tracking, enhance banner with copy-to-clipboard, collapsible hint card pointing to Welcome guide in Preview panel (FEAT-35/FEAT-37), auto-cd to Director dir + bash .welcome on connect (FEAT-33/FEAT-60), refresh .welcome via API before display (BUG-68). Connection ID guard (connectIdRef) + isInitialMountRef + WS handler nulling before close + convertEol:true (BUG-69). Root cause: dangling setHintCollapsed(true) call threw ReferenceError on every keystroke, causing xterm onData to re-fire."
     props: "{project, serverId, projectSlug, onProcessingChange, enhanceWithAI, autoStart}"
     key_state:
       - {name: messages, type: "useState([])", drives: "parsed chat bubbles"}
@@ -1872,11 +1872,11 @@ recurring_bugs:
     fix: "BUG-68: For files that should always reflect latest template, refresh on access (POST refresh-welcome endpoint). For user-customizable files (CLAUDE.md), scaffold-once is correct."
 
   - id: 22
-    desc: "Double echo in terminal — every keystroke/output doubled (ccllaauuddee), blank lines in welcome text"
+    desc: "Double echo in terminal — every keystroke doubled (ccllaauuddee)"
     sessions: []
-    affected_files: [ClaudeCodeTerminalChat.jsx, main.jsx]
+    affected_files: [ClaudeCodeTerminalChat.jsx]
     status: fixed
-    fix: "BUG-69: Root cause was React.StrictMode active in production (Docker runs npm run dev). StrictMode double-mounts components, creating duplicate WS/PTY connections. Fix: (1) Remove StrictMode from main.jsx, (2) Guard reconnect useEffect with isInitialMountRef, (3) Null out WS handlers before .close(), (4) connectIdRef to reject stale connection messages. Re-enable StrictMode when migrating to production builds (INFRA-02)."
+    fix: "BUG-69: Root cause was dangling setHintCollapsed(true) call in term.onData handler — function was never defined (FEAT-27/35 hint state removed but call left behind). Uncaught ReferenceError on every keystroke caused xterm.js to re-fire the onData event, sending each input character twice to the PTY. Fix: remove the broken call. Defensive fixes also applied: isInitialMountRef, connectIdRef, WS handler nulling, StrictMode removal."
 
   - id: 23
     desc: "iframe nav links lose project context — docs pages link to generic Getting Started"

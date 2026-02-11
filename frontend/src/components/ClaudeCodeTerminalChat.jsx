@@ -176,9 +176,6 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
   const wsRef = useRef(null)
   const connectIdRef = useRef(0) // BUG-69: tracks active connection ID to prevent stale WS writes
   const fitAddonRef = useRef(null)
-  // BUG-69 DEBUG: Visible counters to find duplication point
-  const debugRef = useRef({ connects: 0, onDataCalls: 0, wsSends: 0, wsReceives: 0 })
-  const [debugInfo, setDebugInfo] = useState('')
   const [status, setStatus] = useState('disconnected') // 'disconnected', 'connecting', 'connected', 'error', 'claude_starting', 'claude_ready'
   const [serverInfo, setServerInfo] = useState(null)
   const [error, setError] = useState(null)
@@ -252,11 +249,6 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
     setError(null)
     claudeStartedRef.current = false
 
-    // BUG-69 DEBUG: Count connect calls
-    debugRef.current.connects++
-    const connectNum = debugRef.current.connects
-    console.warn(`[BUG-69] connect() called #${connectNum}`)
-
     // BUG-69: Increment connection ID — only the latest connection writes to terminal
     const thisConnectId = ++connectIdRef.current
 
@@ -271,12 +263,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
 
     ws.onopen = () => {
       // BUG-69: Stale connection — don't initialize
-      if (thisConnectId !== connectIdRef.current) {
-        console.warn(`[BUG-69] STALE ws.onopen — thisId=${thisConnectId}, currentId=${connectIdRef.current}`)
-        ws.close()
-        return
-      }
-      console.warn(`[BUG-69] ws.onopen — connectId=${thisConnectId}`)
+      if (thisConnectId !== connectIdRef.current) { ws.close(); return }
       // Send init message with terminal size
       const cols = xtermRef.current?.cols || 80
       const rows = xtermRef.current?.rows || 24
@@ -325,9 +312,6 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
 
           case 'output':
             if (xtermRef.current && message.data) {
-              debugRef.current.wsReceives++
-              const rn = debugRef.current.wsReceives
-              if (rn <= 30) console.warn(`[BUG-69] output #${rn}: ${JSON.stringify(message.data).substring(0, 80)}`)
               xtermRef.current.write(message.data)
               xtermRef.current.scrollToBottom()
 
@@ -687,7 +671,6 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
       fitAddonRef.current = fitAddon
 
       // Mount terminal
-      console.warn(`[BUG-69] loadXterm completed — mounting terminal to DOM`)
       term.open(terminalRef.current)
 
       // Fit terminal to container and mark as ready
@@ -699,19 +682,10 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
       })
 
       // BUG-18 FIX: Handle terminal keyboard input - send to WebSocket
-      console.warn(`[BUG-69] onData handler registered on terminal instance`)
       term.onData((data) => {
-        debugRef.current.onDataCalls++
-        debugRef.current.wsSends++
-        const n = debugRef.current.onDataCalls
-        if (n <= 20) console.warn(`[BUG-69] onData #${n}: "${data.replace(/\r/g,'\\r').replace(/\n/g,'\\n')}"`)
-        // BUG-69 DEBUG: Update visible counter every keystroke
-        setDebugInfo(`IN:${debugRef.current.onDataCalls} OUT:${debugRef.current.wsReceives} CON:${debugRef.current.connects}`)
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ type: 'input', data }))
         }
-        // FEAT-27/35: Collapse hint overlay on first keystroke (X to fully dismiss)
-        setHintCollapsed(true)
       })
 
       // Focus terminal for keyboard input
@@ -1076,13 +1050,6 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
             style={{ display: viewMode === 'terminal' && terminalReady ? 'block' : 'none', height: '100%' }}
           />
         </div>
-
-        {/* BUG-69 DEBUG: Visible counter bar */}
-        {debugInfo && (
-          <div style={{ background: '#b91c1c', color: '#fff', padding: '2px 8px', fontSize: '11px', fontFamily: 'monospace' }}>
-            BUG-69 DEBUG: {debugInfo} | Type a few chars then screenshot this + browser console (F12)
-          </div>
-        )}
 
         {/* Chat Input Area - only shown in bubble view */}
         {viewMode === 'bubbles' && (
