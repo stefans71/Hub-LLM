@@ -174,6 +174,7 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
   const terminalRef = useRef(null)
   const xtermRef = useRef(null)
   const wsRef = useRef(null)
+  const connectIdRef = useRef(0) // BUG-69: tracks active connection ID to prevent stale WS writes
   const fitAddonRef = useRef(null)
   const [status, setStatus] = useState('disconnected') // 'disconnected', 'connecting', 'connected', 'error', 'claude_starting', 'claude_ready'
   const [serverInfo, setServerInfo] = useState(null)
@@ -248,6 +249,9 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
     setError(null)
     claudeStartedRef.current = false
 
+    // BUG-69: Increment connection ID — only the latest connection writes to terminal
+    const thisConnectId = ++connectIdRef.current
+
     // Build WebSocket URL - use serverId directly
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const params = new URLSearchParams()
@@ -258,6 +262,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
     wsRef.current = ws
 
     ws.onopen = () => {
+      // BUG-69: Stale connection — don't initialize
+      if (thisConnectId !== connectIdRef.current) { ws.close(); return }
       // Send init message with terminal size
       const cols = xtermRef.current?.cols || 80
       const rows = xtermRef.current?.rows || 24
@@ -265,6 +271,8 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
     }
 
     ws.onmessage = (event) => {
+      // BUG-69: Stale connection — ignore its messages
+      if (thisConnectId !== connectIdRef.current) return
       try {
         const message = JSON.parse(event.data)
 
@@ -532,12 +540,15 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
     }
 
     ws.onclose = () => {
+      // BUG-69: Only update status if this is still the active connection
+      if (thisConnectId !== connectIdRef.current) return
       if (status === 'connecting' || status === 'connected' || status === 'claude_ready') {
         setStatus('disconnected')
       }
     }
 
     ws.onerror = () => {
+      if (thisConnectId !== connectIdRef.current) return
       setStatus('error')
       setError('WebSocket connection failed')
     }
@@ -650,7 +661,6 @@ export default function ClaudeCodeTerminalChat({ project, serverId, projectSlug,
           white: '#a9b1d6',
         },
         scrollback: 5000,
-        convertEol: true,
       })
 
       const fitAddon = new FitAddon()
