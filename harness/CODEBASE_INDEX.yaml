@@ -312,21 +312,12 @@ frontend_pages:
 # ============================================================================
 # FRONTEND — Static Files (frontend/public/)
 # ============================================================================
-frontend_static:
-  docs_portal:
-    path: frontend/public/docs/
-    purpose: "Multi-page static HTML docs portal (FEAT-41). HubLLM platform help — dark theme, shared nav sidebar, text search, HubLLM+VibeShip branding."
-    served_at: "/docs/"
-    loaded_by: [Workspace.jsx]
-    files:
-      - {name: index.html, purpose: "Hub/landing page — card grid linking to all doc pages, search bar, what's-new preview"}
-      - {name: welcome.html, purpose: "Getting started guide (migrated from welcome-to-hubllm.html) — first steps, workspace diagram, quick tips"}
-      - {name: workspace-guide.html, purpose: "Detailed walkthrough of every workspace panel — top bar, file explorer, terminal chat, preview, LLM-Dev"}
-      - {name: git-github.html, purpose: "Git/GitHub setup — what is git, commits, GitHub account creation, push/pull commands, branching"}
-      - {name: whats-new.html, purpose: "Changelog — feature/fix/improvement entries with dates and tags"}
-      - {name: harness-guide.html, purpose: "Harness system explained — CODEBASE_INDEX, feature_queue, learnings, CLAUDE.md, Director/Engineer workflow, pre-commit hook"}
-      - {name: nav.js, purpose: "Shared vanilla JS — injects sidebar nav with Feather SVG icons (FEAT-44), current-page highlighting, text search with mark highlighting"}
-      - {name: styles.css, purpose: "Shared dark theme stylesheet — SVG nav-icon layout, two-line footer (footer-brand 16px + footer-tagline 12px), responsive at 600px/420px breakpoints"}
+# NOTE: frontend/public/docs/ was DELETED in FEAT-64. All docs are now dynamic
+# backend templates served by docs.py (/api/docs/*) and projects.py
+# (/api/projects/{id}/getting-started). See backend_routers.docs.py below.
+# Old static files: index.html, welcome.html, workspace-guide.html,
+# git-github.html, whats-new.html, harness-guide.html, nav.js, styles.css
+# — all removed. Do NOT recreate static docs files.
 
 # ============================================================================
 # FRONTEND — Styles (frontend/src/)
@@ -344,7 +335,7 @@ frontend_components:
   Workspace.jsx:
     path: frontend/src/components/Workspace.jsx
     lines: 664
-    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), auto-load docs portal on first project visit via localStorage (FEAT-37/41), preview always open by default (BUG-62), Claude processing state, enhance banner threading, export modal (FEAT-51), memoized handleSshReconnected (BUG-68), welcomeUrl sync when project loads after mount (BUG-67)"
+    purpose: "Main workspace orchestrator — SSH auto-connect, model persistence, panel layout with draggable preview divider (FEAT-38), loads dynamic Getting Started page via /api/projects/{id}/getting-started with /api/docs/home fallback (FEAT-62/64), preview always open by default (BUG-62), Claude processing state, enhance banner threading, export modal (FEAT-51), memoized handleSshReconnected (BUG-68), welcomeUrl sync when project loads after mount (BUG-67)"
     props: "{project, model, apiKeys, onProjectChange, enhanceWithAI}"
     key_state:
       - {name: isConnected, type: useState, drives: "SSH connection status"}
@@ -598,11 +589,10 @@ frontend_components:
     features:
       - "Device modes: phone (375px), tablet (768px), desktop (1280px), fit — work for BOTH docs and external URLs (BUG-67)"
       - "Editable URL bar with Enter-to-navigate, auto-prepends https://, cyan focus border (FEAT-45)"
-      - "Refresh, 'Open in Browser' button, 'Docs' button to return to /docs/index.html (BUG-61)"
+      - "Refresh, 'Open in Browser' button, 'Docs' button links to dynamic /api/docs/home (BUG-61, FEAT-64)"
       - "onUrlChange callback fires on navigate — parent uses for welcome flag persistence"
       - "isFullBleed = internal docs + Fit mode only → edge-to-edge. All other combos get centered frame with shadow (BUG-67)"
       - "Transparent drag overlay prevents iframe from stealing mouse events during resize (BUG-60)"
-      - "DemoPreview removed — defaults to /docs/index.html (BUG-61)"
     last_verified_session: 137
 
   DashboardSidebar.jsx:
