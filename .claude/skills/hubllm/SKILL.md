@@ -82,6 +82,12 @@ App.jsx
 `ai.py auth.py chat.py files.py github.py projects.py servers.py settings.py ssh.py stats.py terminal.py voice.py`
 Key: `backend/services/vps_connection.py`
 
+## Template Files (`backend/templates/`)
+All harness templates: `backend/templates/harness/` (engineer/, director/, shared/, pages/)
+All docs page content: `backend/templates/docs/`
+Loader modules: `backend/templates/harness_templates.py`, `backend/templates/docs_templates.py`
+Templates use `{{placeholder}}` syntax — replaced by `_fill_template()` in `projects.py` at scaffold time.
+
 ## Quick Ref
 - **localStorage is source of truth** for VPS servers
 - **Chat routing:** Anthropic+VPS → SSH | else → OpenRouter API

@@ -1,0 +1,52 @@
+  <div class="page-header">
+    <h1>Getting Started</h1>
+    <p class="page-desc">First steps in your HubLLM workspace &mdash; launch Claude, describe a task, and start building.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">1</span>
+    <h2>Your Workspace</h2>
+    <p style="margin-top: 14px;">When you create a project, HubLLM sets up two directories on your VPS:</p>
+    <ul class="steps">
+      <li><span class="step-num">&bull;</span><strong>Director</strong> &mdash; <code>{slug}-director/</code> &mdash; manages the project: planning, task creation, and review.</li>
+      <li><span class="step-num">&bull;</span><strong>Engineer</strong> &mdash; <code>{slug}/</code> &mdash; writes code, runs tests, and handles git.</li>
+    </ul>
+    <div class="tip"><span class="tip-label">Tip:</span> The Director and Engineer each run their own Claude Code session in separate terminals.</div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">2</span>
+    <h2>Launch Your AI Engineer</h2>
+    <p style="margin-top: 14px;">Open the <strong>LLM-Dev Terminal</strong> panel in the lower-left of the screen. Copy and paste this command:</p>
+    <div class="code-block"><span class="cmd">cd</span> /root/llm-hub-projects/{slug} <span class="flag">&amp;&amp;</span> <span class="cmd">claude</span></div>
+    <p>This starts a Claude Code session in your Engineer directory. Claude will read your codebase, write code, and commit changes.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">3</span>
+    <h2>Start the Project Director</h2>
+    <p style="margin-top: 14px;">Come back to the main terminal (upper area) and type:</p>
+    <div class="code-block"><span class="cmd">claude</span></div>
+    <p>Press Enter. This starts your AI Coding session with the Project Director AI Persona.</p>
+    <div class="tip"><span class="tip-label">Tip:</span> Once the Director is running, type <code>/generate-prp</code> to create a detailed project brief that guides your AI team.</div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">4</span>
+    <h2>Terminal Tips</h2>
+    <p style="margin-top: 14px;"><strong>Copy:</strong> Highlight text in the terminal, right-click and select "Copy".</p>
+    <p><strong>Paste:</strong> Right-click in the terminal and select "Paste".</p>
+    <div class="tip"><span class="tip-label">Tip:</span> HubLLM works with any terminal-based AI coding tool. Claude Code is the default.</div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">5</span>
+    <h2>Next Steps</h2>
+    <p style="margin-top: 14px;">Once both terminals are running, the Director will guide you through the rest of the workflow &mdash; task planning, execution, and review.</p>
+    <p>For more details, see the <a href="/api/docs/workspace-guide">Workspace Guide</a> or browse the <a href="/api/docs/home">full documentation</a>.</p>
+  </div>
+
+  <div class="footer">
+    <div class="footer-brand"><span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span></div>
+    <div class="footer-tagline">A VibeShip Creation</div>
+  </div>

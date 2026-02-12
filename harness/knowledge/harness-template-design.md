@@ -1,8 +1,8 @@
 # Harness Template Design — Scaffoldable Files
 
 *Designed: February 8, 2026*
-*Updated: February 9, 2026 — FEAT-53–57 shipped, v2 snapshot created*
-*Status: v2-post-feat57 complete. See `template-snapshots/v2-post-feat57/` for current files.*
+*Updated: February 11, 2026 — FEAT-67: Templates extracted to `backend/templates/` as separate files*
+*Status: v3-post-feat67. Templates now live in `backend/templates/harness/` and `backend/templates/docs/` with proper file extensions.*
 
 ---
 
@@ -12,6 +12,8 @@ When a user creates a project in HubLLM (Terminal Track), these files get scaffo
 
 All files are templates with `{{placeholders}}` that get filled from the CreateProject form data.
 
+**Architecture (FEAT-67):** Template content lives in separate files under `backend/templates/` with proper extensions (`.md`, `.json`, `.yaml`, `.sh`, `.html`, `.css`, `.js`). Loader modules (`harness_templates.py`, `docs_templates.py`) read these files at import time and export the same constant names that `projects.py` and `docs.py` import. This gives templates syntax highlighting, makes them easy to find, and separates content from route logic.
+
 ---
 
 ## Template Feature Manifest
@@ -20,23 +22,28 @@ All files are templates with `{{placeholders}}` that get filled from the CreateP
 
 ### Scaffolded Files (what users get on project creation)
 
-| Feature | Template Constant | Scaffolded To | Status | Task |
-|---------|------------------|---------------|--------|------|
-| Project rules | `TEMPLATE_CLAUDE_MD` | `CLAUDE.md` | ✅ Shipped | FEAT-30 |
-| Agent settings | `TEMPLATE_CLAUDE_SETTINGS` | `.claude/settings.json` | ✅ Shipped | FEAT-30 |
-| PRP generation | `TEMPLATE_GENERATE_PRP` | `.claude/commands/generate-prp.md` | ✅ Shipped | FEAT-31 |
-| PRP execution | `TEMPLATE_EXECUTE_PRP` | `.claude/commands/execute-prp.md` | ✅ Shipped | FEAT-30 |
-| Task queue | `TEMPLATE_FEATURE_QUEUE` | `harness/feature_queue.json` | ✅ Shipped | FEAT-30 |
-| Codebase index | `TEMPLATE_CODEBASE_INDEX` | `harness/CODEBASE_INDEX.yaml` | ✅ Shipped | FEAT-30 |
-| Session memory | `TEMPLATE_LEARNINGS` | `harness/learnings.md` | ✅ Shipped | FEAT-30 |
-| Project README | `TEMPLATE_README` | `README.md` | ✅ Shipped | FEAT-30 |
-| Smart pre-commit hook | `TEMPLATE_PRE_COMMIT_HOOK` | `.git/hooks/pre-commit` | ✅ Shipped | FEAT-36 |
-| Index audit command | `TEMPLATE_AUDIT_INDEX` | `.claude/commands/audit-index.md` | ✅ Shipped | FEAT-36 |
-| Code-researcher agent | `TEMPLATE_CODE_RESEARCHER` | `.claude/agents/code-researcher.md` | ✅ Shipped | FEAT-56 |
-| Harness roadmap | `TEMPLATE_ROADMAP` | `harness/ROADMAP.md` | ✅ Shipped | FEAT-57 |
-| Git onboarding HTML | `TEMPLATE_GIT_ONBOARDING_HTML` | `docs/getting-started-with-git.html` | ⏳ Pending | FEAT-37 |
-| Git workflow in CLAUDE.md | (part of TEMPLATE_CLAUDE_MD) | `CLAUDE.md` | ⏳ Pending | FEAT-37 |
-| Git section in README | (part of TEMPLATE_README) | `README.md` | ⏳ Pending | FEAT-37 |
+| Feature | Template File | Scaffolded To | Status | Task |
+|---------|--------------|---------------|--------|------|
+| Project rules | `harness/engineer/claude.md` | `CLAUDE.md` | ✅ Shipped | FEAT-30 |
+| Agent settings | `harness/engineer/claude-settings.json` | `.claude/settings.json` | ✅ Shipped | FEAT-30 |
+| PRP generation | `harness/shared/generate-prp.md` | `.claude/commands/generate-prp.md` | ✅ Shipped | FEAT-31 |
+| PRP execution | `harness/shared/execute-prp.md` | `.claude/commands/execute-prp.md` | ✅ Shipped | FEAT-30 |
+| Task queue | `harness/engineer/feature-queue.json` | `harness/feature_queue.json` | ✅ Shipped | FEAT-30 |
+| Codebase index | `harness/engineer/codebase-index.yaml` | `harness/CODEBASE_INDEX.yaml` | ✅ Shipped | FEAT-30 |
+| Session memory | `harness/engineer/learnings.md` | `harness/learnings.md` | ✅ Shipped | FEAT-30 |
+| Project README | `harness/engineer/readme.md` | `README.md` | ✅ Shipped | FEAT-30 |
+| Smart pre-commit hook | `harness/engineer/pre-commit-hook.sh` | `.git/hooks/pre-commit` | ✅ Shipped | FEAT-36 |
+| Index audit command | `harness/engineer/audit-index.md` | `.claude/commands/audit-index.md` | ✅ Shipped | FEAT-36 |
+| Code-researcher agent | `harness/engineer/code-researcher.md` | `.claude/agents/code-researcher.md` | ✅ Shipped | FEAT-56 |
+| Harness roadmap | `harness/engineer/roadmap.md` | `harness/ROADMAP.md` | ✅ Shipped | FEAT-57 |
+| Director CLAUDE.md | `harness/director/claude.md` | `{slug}-director/CLAUDE.md` | ✅ Shipped | FEAT-55 |
+| Director settings | `harness/director/claude-settings.json` | `{slug}-director/.claude/settings.json` | ✅ Shipped | FEAT-55 |
+| Director local settings | `harness/director/claude-settings-local.json` | `{slug}-director/.claude/settings.local.json` | ✅ Shipped | FEAT-55 |
+| Terminal welcome | `harness/director/welcome.sh` | `{slug}-director/.welcome` | ✅ Shipped | FEAT-61 |
+| Getting Started page | `harness/pages/getting-started.html` | Served at `/api/projects/{id}/getting-started` | ✅ Shipped | FEAT-62 |
+| Export README | `export/portable-readme.md` | Included in project export | ✅ Shipped | FEAT-51 |
+
+*All paths relative to `backend/templates/`. Loader: `backend/templates/harness_templates.py`.*
 
 ### Configuration & Infrastructure (scaffolded configs)
 

@@ -314,7 +314,8 @@ frontend_pages:
 # ============================================================================
 # NOTE: frontend/public/docs/ was DELETED in FEAT-64. All docs are now dynamic
 # backend templates served by docs.py (/api/docs/*) and projects.py
-# (/api/projects/{id}/getting-started). See backend_routers.docs.py below.
+# (/api/projects/{id}/getting-started). Template content lives in
+# backend/templates/ (FEAT-67). See backend_templates section below.
 # Old static files: index.html, welcome.html, workspace-guide.html,
 # git-github.html, whats-new.html, harness-guide.html, nav.js, styles.css
 # — all removed. Do NOT recreate static docs files.
@@ -763,6 +764,43 @@ frontend_assets:
     note: "Cropped from full wordmark (833x128) to icon mark only (152x128). Cleaned: removed XML declaration/DOCTYPE and text paths. Renders at 24x24 with objectFit:contain."
 
 # ============================================================================
+# BACKEND — Templates (backend/templates/) — FEAT-67
+# ============================================================================
+# All harness and docs page templates extracted from projects.py and docs.py
+# into separate files with proper extensions. Loader modules export the same
+# constant names so projects.py and docs.py just import them.
+backend_templates:
+  harness_templates.py:
+    path: backend/templates/harness_templates.py
+    purpose: "Loader module — reads 18 harness template files and exports them as constants imported by projects.py"
+    exports: [TEMPLATE_CLAUDE_MD, TEMPLATE_CLAUDE_SETTINGS, TEMPLATE_GENERATE_PRP, TEMPLATE_EXECUTE_PRP, TEMPLATE_FEATURE_QUEUE, TEMPLATE_CODEBASE_INDEX, TEMPLATE_LEARNINGS, TEMPLATE_README, TEMPLATE_ROADMAP, TEMPLATE_PRE_COMMIT_HOOK, TEMPLATE_AUDIT_INDEX, TEMPLATE_CODE_RESEARCHER, TEMPLATE_DIRECTOR_CLAUDE_MD, TEMPLATE_DIRECTOR_SETTINGS, TEMPLATE_DIRECTOR_SETTINGS_LOCAL, TEMPLATE_DIRECTOR_WELCOME, TEMPLATE_GETTING_STARTED_HTML, TEMPLATE_PORTABLE_README]
+    last_verified_session: 160
+  docs_templates.py:
+    path: backend/templates/docs_templates.py
+    purpose: "Loader module — reads 8 docs page content files and exports them as constants imported by docs.py"
+    exports: [DOCS_CSS, CONTENT_HOME, HOME_SEARCH_JS, CONTENT_WORKSPACE, CONTENT_GIT, CONTENT_WHATS_NEW, CONTENT_HARNESS, CONTENT_GETTING_STARTED]
+    last_verified_session: 160
+  harness_dir:
+    path: backend/templates/harness/
+    purpose: "Template files for project scaffolding"
+    subdirs:
+      engineer: "claude.md, claude-settings.json, feature-queue.json, codebase-index.yaml, learnings.md, readme.md, roadmap.md, pre-commit-hook.sh, audit-index.md, code-researcher.md"
+      director: "claude.md, claude-settings.json, claude-settings-local.json, welcome.sh"
+      shared: "generate-prp.md, execute-prp.md"
+      pages: "getting-started.html"
+    last_verified_session: 160
+  docs_dir:
+    path: backend/templates/docs/
+    purpose: "Doc page content files served at /api/docs/*"
+    files: "styles.css, home.html, home-search.js, workspace.html, git.html, whats-new.html, harness.html, getting-started.html"
+    last_verified_session: 160
+  export_dir:
+    path: backend/templates/export/
+    purpose: "Export template files"
+    files: "portable-readme.md"
+    last_verified_session: 160
+
+# ============================================================================
 # BACKEND — Routers (backend/routers/)
 # ============================================================================
 backend_routers:
@@ -813,9 +851,9 @@ backend_routers:
 
   docs.py:
     path: backend/routers/docs.py
-    lines: 866
+    lines: 122
     prefix: "/api/docs"
-    purpose: "Dynamic documentation pages (FEAT-64). All doc pages are self-contained HTML with inline CSS and baked-in nav sidebar. SVG Lucide icons on home cards + nav sidebar (FEAT-66). Getting Started in nav + generic endpoint (FEAT-66). projectId query param propagation via JS for project-context nav links (BUG-70)."
+    purpose: "Dynamic documentation pages (FEAT-64). Page content imported from backend/templates/docs/ (FEAT-67). SVG Lucide icons on home cards + nav sidebar (FEAT-66). projectId query param propagation via JS (BUG-70)."
     endpoints:
       - {method: GET, path: "/home", purpose: "Home page with card grid (5 SVG-icon cards), search, what's new preview"}
       - {method: GET, path: "/getting-started", purpose: "FEAT-66: Generic Getting Started page (not project-specific)"}
@@ -824,15 +862,15 @@ backend_routers:
       - {method: GET, path: "/whats-new", purpose: "Changelog entries"}
       - {method: GET, path: "/harness", purpose: "Harness system guide with 7 sections"}
     helpers: "_nav_sidebar(active) — builds sidebar HTML with correct active page. _docs_page(title, active, content, extra_js) — wraps content in full HTML with CSS + sidebar."
-    constants: "DOCS_CSS, CONTENT_HOME, CONTENT_GETTING_STARTED, CONTENT_WORKSPACE, CONTENT_GIT, CONTENT_WHATS_NEW, CONTENT_HARNESS, HOME_SEARCH_JS"
+    imports_from: "templates.docs_templates (DOCS_CSS, CONTENT_HOME, HOME_SEARCH_JS, CONTENT_WORKSPACE, CONTENT_GIT, CONTENT_WHATS_NEW, CONTENT_HARNESS, CONTENT_GETTING_STARTED)"
     called_by_frontend: [PreviewPanel.jsx, Workspace.jsx]
-    last_verified_session: 157
+    last_verified_session: 160
 
   projects.py:
     path: backend/routers/projects.py
-    lines: 1997
+    lines: 762
     prefix: "/api/projects"
-    purpose: "Project CRUD with chat history, VPS folder auto-creation, harness template scaffolding (FEAT-30), project export (FEAT-51). Engineer systemPrompt (FEAT-54). Director auto-scaffold (FEAT-55). Improved PRP intake with navigation, review gate, approval gate, user profiling (FEAT-53). Human-oriented welcome message (FEAT-61). Dynamic Getting Started HTML page (FEAT-62). Terminal welcome V4 (FEAT-65). Getting Started CSS aligned with docs (FEAT-66). Director scaffold includes .claude/commands/ (BUG-74). /generate-prp tip in Getting Started (BUG-75)."
+    purpose: "Project CRUD with chat history, VPS folder auto-creation, harness template scaffolding (FEAT-30), project export (FEAT-51). Templates extracted to backend/templates/ (FEAT-67). BUG-76: create_directory wrapped in try/except for project recreation."
     endpoints:
       - {method: GET, path: "/", purpose: "list all projects"}
       - {method: POST, path: "/", purpose: "create project (+ scaffold harness on VPS + Director dir)"}
@@ -845,11 +883,11 @@ backend_routers:
       - {method: POST, path: "/{id}/history", purpose: "add chat message"}
       - {method: DELETE, path: "/{id}/history", purpose: "clear chat history"}
       - {method: GET, path: "/{id}/export", purpose: "FEAT-51: export project as tar.gz download from VPS"}
-    helpers: "create_vps_project_folder(vps_server_id, slug, name, tech_stack, brief) — SSH mkdir + scaffold 11 harness template files + git init + Director directory with 3 files (FEAT-55). _detect_commands(tech_stack) — returns install/start commands. _fill_template(template, vars) — replaces {{placeholders}}. _cleanup_export(conn, path) — best-effort temp file cleanup."
-    template_constants: "TEMPLATE_CLAUDE_MD, TEMPLATE_CLAUDE_SETTINGS (FEAT-54), TEMPLATE_GENERATE_PRP (FEAT-53), TEMPLATE_EXECUTE_PRP, TEMPLATE_FEATURE_QUEUE, TEMPLATE_CODEBASE_INDEX, TEMPLATE_LEARNINGS, TEMPLATE_README, TEMPLATE_ROADMAP (FEAT-57), TEMPLATE_PORTABLE_README, TEMPLATE_DIRECTOR_CLAUDE_MD (FEAT-55), TEMPLATE_DIRECTOR_SETTINGS (FEAT-55), TEMPLATE_DIRECTOR_SETTINGS_LOCAL (FEAT-55), TEMPLATE_CODE_RESEARCHER (FEAT-56), TEMPLATE_AUDIT_INDEX, TEMPLATE_GETTING_STARTED_HTML (FEAT-62)"
+    helpers: "create_vps_project_folder(vps_server_id, slug, name, tech_stack, brief) — SSH mkdir + scaffold harness template files + git init + Director directory. _detect_commands(tech_stack) — returns install/start commands. _fill_template(template, vars) — replaces {{placeholders}}. _cleanup_export(conn, path) — best-effort temp file cleanup."
+    imports_from: "templates.harness_templates (18 template constants)"
     called_by_frontend: [App.jsx, Dashboard.jsx, CreateProject.jsx, Workspace.jsx, WorkspaceFileExplorer.jsx, ExportModal.jsx, ClaudeCodeTerminalChat.jsx]
     db_tables: [projects, chat_messages, vps_servers]
-    last_verified_session: 144
+    last_verified_session: 160
 
   ssh.py:
     path: backend/routers/ssh.py

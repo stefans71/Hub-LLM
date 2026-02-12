@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started — {{projectName}}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(145deg, #0a0f1a 0%, #0d1520 50%, #080c14 100%);
+    color: #e0e0e0; line-height: 1.6; min-height: 100vh;
+  }
+  .docs-layout { display: flex; min-height: 100vh; }
+  .docs-sidebar {
+    width: 220px; min-width: 220px;
+    background: linear-gradient(180deg, #0d1520 0%, #0a0f1a 100%);
+    border-right: 1px solid rgba(56, 189, 248, 0.12);
+    padding: 20px 0; display: flex; flex-direction: column;
+  }
+  .docs-sidebar .sidebar-brand {
+    padding: 0 16px 16px; border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+    margin-bottom: 12px; text-align: center;
+  }
+  .docs-sidebar .sidebar-brand .logo { font-size: 22px; font-weight: 700; }
+  .docs-sidebar .sidebar-brand .brand-tagline {
+    font-size: 11px; color: #00d4aa; letter-spacing: 0.5px; margin-top: 2px;
+  }
+  .docs-sidebar nav { padding: 0 8px; display: flex; flex-direction: column; gap: 2px; }
+  .docs-sidebar nav a {
+    display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+    color: #94a3b8; text-decoration: none; font-size: 13px; border-radius: 6px;
+  }
+  .docs-sidebar nav a .nav-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; flex-shrink: 0;
+  }
+  .docs-sidebar nav a:hover { background: rgba(56, 189, 248, 0.08); color: #e0e0e0; }
+  .docs-sidebar nav a.active {
+    background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-weight: 600;
+  }
+  .logo-hub { color: #fff; }
+  .logo-llm { color: #38bdf8; }
+  .logo-dev { color: rgba(150, 180, 200, 0.5); }
+  .docs-content { flex: 1; max-width: 780px; padding: 32px 32px 64px; overflow-y: auto; }
+  .page-header { margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid rgba(56, 189, 248, 0.15); }
+  .page-header h1 { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .page-header .page-desc { font-size: 14px; color: rgba(150, 180, 200, 0.7); }
+  .section {
+    background: linear-gradient(135deg, #1a2535 0%, #0f1620 100%);
+    border: 1px solid rgba(56, 189, 248, 0.12); border-radius: 12px;
+    padding: 24px; margin-bottom: 20px;
+  }
+  .section-number {
+    display: inline-block; width: 28px; height: 28px; line-height: 28px;
+    text-align: center; background: rgba(56, 189, 248, 0.15); color: #38bdf8;
+    border-radius: 50%; font-size: 13px; font-weight: 600; margin-right: 10px;
+    vertical-align: middle;
+  }
+  h2 { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 14px; display: inline; vertical-align: middle; }
+  p { font-size: 14px; color: #c0c8d4; margin-bottom: 10px; }
+  .path-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: baseline; }
+  .path-label { color: #38bdf8; font-weight: 600; min-width: 70px; }
+  .path-value { color: #22c55e; font-family: monospace; font-size: 14px; word-break: break-all; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: rgba(56, 189, 248, 0.1); color: #38bdf8; padding: 2px 6px;
+    border-radius: 4px; font-size: 13px;
+  }
+  .code-block {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: #0d0d0d; border: 1px solid rgba(56, 189, 248, 0.1);
+    border-radius: 8px; padding: 14px 16px; font-size: 13px; color: #c0c8d4;
+    overflow-x: auto; margin: 10px 0; line-height: 1.5;
+  }
+  .code-block .cmd { color: #22c55e; }
+  .tip {
+    background: rgba(249, 115, 22, 0.06); border: 1px solid rgba(249, 115, 22, 0.15);
+    border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #d0d8e4; margin: 10px 0;
+  }
+  .tip-label { color: #f97316; font-weight: 600; margin-right: 6px; }
+  a { color: #38bdf8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .footer {
+    text-align: center; margin-top: 32px; padding-top: 20px;
+    border-top: 1px solid rgba(56, 189, 248, 0.1); color: rgba(150, 180, 200, 0.5);
+  }
+  .footer .footer-brand { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .footer .footer-tagline { font-size: 12px; color: #00d4aa; }
+  @media (max-width: 600px) {
+    .docs-layout { flex-direction: column; }
+    .docs-sidebar { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid rgba(56, 189, 248, 0.12); padding: 12px 0; }
+    .docs-sidebar nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+    .docs-sidebar nav a { padding: 6px 10px; font-size: 12px; }
+    .docs-content { padding: 20px 16px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="docs-layout">
+  <div class="docs-sidebar">
+    <div class="sidebar-brand">
+      <div class="logo"><span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span></div>
+      <div class="brand-tagline">A VibeShip Creation</div>
+    </div>
+    <nav>
+      <a href="/api/docs/home?projectId={{projectId}}"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span>Home</a>
+      <a href="#" class="active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>Getting Started</a>
+      <a href="/api/docs/workspace-guide?projectId={{projectId}}"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg></span>Workspace Guide</a>
+      <a href="/api/docs/git-github?projectId={{projectId}}"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg></span>Git &amp; GitHub</a>
+      <a href="/api/docs/whats-new?projectId={{projectId}}"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span>What&rsquo;s New</a>
+      <a href="/api/docs/harness?projectId={{projectId}}"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></span>Harness System</a>
+    </nav>
+  </div>
+
+  <div class="docs-content">
+    <div class="page-header">
+      <h1>Welcome to {{projectName}}</h1>
+      <p class="page-desc">Your AI-powered development workspace is ready.</p>
+    </div>
+
+    <div class="section">
+      <span class="section-number">1</span>
+      <h2>Your Project</h2>
+      <div style="margin-top: 14px;">
+        <div class="path-row">
+          <span class="path-label">Director:</span>
+          <span class="path-value">{{slug}}-director/</span>
+        </div>
+        <div class="path-row">
+          <span class="path-label">Engineer:</span>
+          <span class="path-value">{{appDir}}/</span>
+        </div>
+      </div>
+      <div class="tip"><span class="tip-label">Tip:</span> The <strong>Director</strong> (this terminal) manages the project &mdash; planning, task creation, and review. The <strong>Engineer</strong> (LLM-Dev Terminal) writes code, runs tests, and handles git.</div>
+    </div>
+
+    <div class="section">
+      <span class="section-number">2</span>
+      <h2>Launch Your AI Engineer</h2>
+      <p style="margin-top: 14px;">Open the <strong>LLM-Dev Terminal</strong> panel in the lower-left of the screen. Copy and paste this command:</p>
+      <div class="code-block"><span class="cmd">cd {{appDir}} && claude</span></div>
+      <div class="tip"><span class="tip-label">Tip:</span> HubLLM works with any terminal-based AI coding tool. Claude Code is the default.</div>
+    </div>
+
+    <div class="section">
+      <span class="section-number">3</span>
+      <h2>Start the Project Director</h2>
+      <p style="margin-top: 14px;">Come back to the main terminal (upper area) and type:</p>
+      <div class="code-block"><span class="cmd">claude</span></div>
+      <p>Press Enter. This will start your AI Coding session with the Project Director AI Persona.</p>
+      <div class="tip"><span class="tip-label">Tip:</span> Once the Director is running, type <code>/generate-prp</code> to create a detailed project brief that guides your AI team.</div>
+    </div>
+
+    <div class="section">
+      <span class="section-number">4</span>
+      <h2>Terminal Tips</h2>
+      <p style="margin-top: 14px;"><strong>Copy:</strong> Highlight text in the terminal, right-click and select "Copy".</p>
+      <p><strong>Paste:</strong> Right-click in the terminal and select "Paste".</p>
+    </div>
+
+    <div class="section">
+      <span class="section-number">5</span>
+      <h2>Next Steps</h2>
+      <p style="margin-top: 14px;">Once both terminals are running, the Director will guide you through the rest of the workflow &mdash; task planning, execution, and review.</p>
+      <p>For full documentation, see <a href="/api/docs/home">HubLLM Docs</a>.</p>
+    </div>
+
+    <div class="footer">
+      <div class="footer-brand"><span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span></div>
+      <div class="footer-tagline">A VibeShip Creation</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

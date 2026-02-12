@@ -1,0 +1,33 @@
+# =============================================================================
+# {{projectName}} — CODEBASE INDEX
+# =============================================================================
+# Single source of truth for codebase structure.
+# Agent reads this to know where files live and what they do.
+# Agent UPDATES this after every task that changes code.
+#
+# Created: {{createdDate}}
+# Last updated: {{createdDate}}
+# =============================================================================
+
+meta:
+  project: "{{projectName}}"
+  stack: "{{techStack}}"
+  created: "{{createdDate}}"
+  last_updated: "{{createdDate}}"
+  total_files: 0
+
+# Populated by DOCS-01 task. Structure will look like:
+#
+# source_files:
+#   src/App.jsx:
+#     lines: 45
+#     purpose: "Root component — renders layout and routes"
+#     exports: [App]
+#     imports: [react, react-router-dom]
+#     last_verified_session: 1
+#
+# recurring_bugs:
+#   - id: 1
+#     pattern: "Description of the recurring issue"
+#     fix: "How to fix it"
+#     affected_files: [src/SomeFile.jsx]

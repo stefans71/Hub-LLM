@@ -30,7 +30,9 @@
       "name": "Scaffold fails silently when recreating project with same slug — stale VPS files persist",
       "size": "S",
       "priority": 1,
-      "status": "pending",
+      "status": "completed",
+      "completed": "2026-02-11",
+      "completion_note": "Fixed as part of FEAT-67 template extraction. Wrapped create_directory(project_path) in try/except at line 120-124 of projects.py. Same pattern as VPS_PROJECT_BASE at lines 115-118. Scaffold now proceeds to write/overwrite all files even when directories exist from a deleted project.",
       "description": "Root cause of BUG-74 regression and Director getting Engineer settings.\n\nWhen a user deletes a project and recreates with the same name/slug, the VPS directories persist (FEAT-58 not done). The scaffold function create_vps_project_folder() hits line 1326:\n\n  await asyncio.wait_for(conn.create_directory(project_path), timeout=5.0)\n\nThis throws an exception because the directory already exists. Unlike line 1320-1323 (VPS_PROJECT_BASE), this call is NOT wrapped in try/except. The outer try/except at line 1302/1475 catches it and returns success: False. ALL scaffold code is skipped — Engineer files, Director files, git init, everything. Old stale files from the original project persist untouched.\n\nProof: User deleted PUGG Training and recreated. Director directory files are ALL from Feb 10 12:06 (original scaffold). Only .welcome is fresh (Feb 11 — BUG-68 refresh endpoint). Director has Engineer settings.json, no .claude/commands/.\n\nLearnings: Session 158 (BUG-74/75), dogfooding session 9.",
       "change": [
         "backend/routers/projects.py:1325-1326 — Wrap create_directory(project_path) in try/except like line 1320-1323: try: create_directory(...) except Exception: pass  # May already exist from previous project",
@@ -112,6 +114,15 @@
     }
   ],
   "completed": [
+    {
+      "id": "FEAT-67",
+      "name": "Extract templates from projects.py + docs.py to backend/templates/",
+      "size": "M",
+      "status": "completed",
+      "completed": "2026-02-11",
+      "review_notes": "18 harness templates extracted from projects.py (~1,250 lines) and 8 docs templates from docs.py (~595 lines) into separate files under backend/templates/ with proper extensions. Loader modules (harness_templates.py, docs_templates.py) export same constant names. All 26 templates verified to match original content. projects.py: 1929→762 lines. docs.py: 867→122 lines. py_compile OK for both. BUG-76 fix included.",
+      "description": "Extract all template string constants from projects.py and docs.py into separate files under backend/templates/ with proper extensions (.md, .json, .yaml, .sh, .html, .css, .js). Create loader modules that read files and export same constant names. Update CLAUDE.md cheat sheet, SKILL.md, CODEBASE_INDEX.yaml, and harness-template-design.md."
+    },
     {
       "id": "BUG-74",
       "name": "Director scaffold missing .claude/commands/ — /generate-prp not available",

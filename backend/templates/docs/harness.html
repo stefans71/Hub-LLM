@@ -1,0 +1,116 @@
+  <div class="page-header">
+    <h1>Harness System</h1>
+    <p class="page-desc">How the AI engineering harness works &mdash; the system that keeps Claude productive and your project organized.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">1</span>
+    <h2>What is the Harness?</h2>
+    <p style="margin-top: 14px;">The harness is a set of files and conventions that guide AI engineering sessions. It gives Claude Code structured context about your project, tracks tasks, captures learnings, and ensures quality through automated checks.</p>
+    <p>Think of it as a project management layer designed specifically for AI engineers. Humans set the direction; the harness keeps the AI on track.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">2</span>
+    <h2>CODEBASE_INDEX.yaml</h2>
+    <p style="margin-top: 14px;">This file is the AI's map of your codebase. It contains structured descriptions of every significant file: what it does, what it exports, its dependencies, and how it relates to other files.</p>
+    <h3>Why it matters</h3>
+    <p>When Claude starts a new session, it reads CODEBASE_INDEX.yaml to understand your project's architecture without having to read every file.</p>
+    <h3>How it stays current</h3>
+    <p>The index is updated during development sessions. A pre-commit hook can audit the index to catch drift.</p>
+    <div class="code-block">
+      <span class="comment"># Example entry in CODEBASE_INDEX.yaml</span><br>
+      <span class="cmd">frontend/src/components/Workspace.jsx</span>:<br>
+      &nbsp;&nbsp;description: <span class="flag">Main workspace orchestrator</span><br>
+      &nbsp;&nbsp;exports: [Workspace]<br>
+      &nbsp;&nbsp;imports: [Chat, PreviewPanel, LLMDevPanel, ...]<br>
+      &nbsp;&nbsp;lines: 450<br>
+      &nbsp;&nbsp;role: <span class="flag">Layout container for all workspace panels</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">3</span>
+    <h2>feature_queue.json</h2>
+    <p style="margin-top: 14px;">The feature queue is a structured task list that defines what needs to be built. Each task includes:</p>
+    <ul class="steps">
+      <li><span class="step-num">&bull;</span><strong>ID</strong> &mdash; A unique identifier like <code>FEAT-41</code> or <code>BUG-54</code></li>
+      <li><span class="step-num">&bull;</span><strong>Size</strong> &mdash; XS, S, M, or L. XS/S tasks can be batched; M/L tasks are done one at a time</li>
+      <li><span class="step-num">&bull;</span><strong>Description</strong> &mdash; Detailed requirements and implementation notes</li>
+      <li><span class="step-num">&bull;</span><strong>Change list</strong> &mdash; Which files need to be created or modified</li>
+      <li><span class="step-num">&bull;</span><strong>Test criteria</strong> &mdash; How to verify the task is complete</li>
+      <li><span class="step-num">&bull;</span><strong>Completion checklist</strong> &mdash; Code works, index updated, learnings written, committed, status set</li>
+    </ul>
+    <h3>Task lifecycle</h3>
+    <div class="code-block">
+      pending &rarr; in_progress &rarr; pending_review &rarr; completed<br>
+      <span class="comment"># Only the Director moves tasks to "completed" after review</span>
+    </div>
+    <div class="tip"><span class="tip-label">Tip:</span> Tasks are never marked "done" by the engineer. They go to <code>pending_review</code>, and a human reviews and promotes them.</div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">4</span>
+    <h2>learnings.md</h2>
+    <p style="margin-top: 14px;">This file captures debugging insights, architectural decisions, and gotchas discovered during development sessions.</p>
+    <h3>Why it matters</h3>
+    <p>AI sessions are stateless &mdash; Claude doesn't remember previous conversations. Learnings.md is the persistent memory.</p>
+    <h3>What gets recorded</h3>
+    <ul class="steps">
+      <li><span class="step-num">&bull;</span>Bugs that were tricky to diagnose and their root causes</li>
+      <li><span class="step-num">&bull;</span>Patterns that work (and patterns that don't)</li>
+      <li><span class="step-num">&bull;</span>Decisions about architecture or library choices</li>
+      <li><span class="step-num">&bull;</span>Environment quirks (e.g., "SQLite and Postgres handle X differently")</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <span class="section-number">5</span>
+    <h2>CLAUDE.md</h2>
+    <p style="margin-top: 14px;">The CLAUDE.md file in your project root contains rules and patterns that Claude follows automatically.</p>
+    <h3>What's in it</h3>
+    <ul class="steps">
+      <li><span class="step-num">&bull;</span><strong>Critical patterns</strong> &mdash; Code snippets for common tasks (API calls with timeouts, preventing infinite loops, drag resize, etc.)</li>
+      <li><span class="step-num">&bull;</span><strong>Project rules</strong> &mdash; Which branch to work on, how to test, when to commit</li>
+      <li><span class="step-num">&bull;</span><strong>Stack info</strong> &mdash; Database engine, deployment config, environment variables</li>
+    </ul>
+    <p>When the AI discovers a new pattern worth remembering, it adds it to CLAUDE.md so future sessions benefit automatically.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">6</span>
+    <h2>Director &amp; Engineer Workflow</h2>
+    <p style="margin-top: 14px;">HubLLM uses a two-role workflow for AI-assisted development:</p>
+    <h3>The Director (Human)</h3>
+    <ul class="steps">
+      <li><span class="step-num">&bull;</span>Writes tasks in <code>feature_queue.json</code> with clear requirements</li>
+      <li><span class="step-num">&bull;</span>Reviews completed work and moves tasks to <code>completed</code></li>
+      <li><span class="step-num">&bull;</span>Merges feature branches into <code>main</code> for production deployment</li>
+      <li><span class="step-num">&bull;</span>Sets priorities and makes architectural decisions</li>
+    </ul>
+    <h3>The Engineer (Claude Code)</h3>
+    <ul class="steps">
+      <li><span class="step-num">&bull;</span>Picks up tasks from the queue and implements them</li>
+      <li><span class="step-num">&bull;</span>Follows patterns in CLAUDE.md and checks learnings.md</li>
+      <li><span class="step-num">&bull;</span>Tests changes, commits to the feature branch, pushes</li>
+      <li><span class="step-num">&bull;</span>Sets tasks to <code>pending_review</code> (never <code>completed</code>)</li>
+    </ul>
+    <div class="tip"><span class="tip-label">Tip:</span> This workflow prevents the AI from self-approving its own work. The human always has the final say before changes go to production.</div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">7</span>
+    <h2>Pre-commit Hook</h2>
+    <p style="margin-top: 14px;">HubLLM projects can include a Git pre-commit hook that runs automated checks before every commit:</p>
+    <ul class="steps">
+      <li><span class="step-num">&bull;</span>Verifies you're on the correct branch (not committing to <code>main</code> directly)</li>
+      <li><span class="step-num">&bull;</span>Checks that CODEBASE_INDEX.yaml is up to date with changed files</li>
+      <li><span class="step-num">&bull;</span>Validates that learnings.md has been updated</li>
+    </ul>
+    <p>If a check fails, the commit is blocked with a clear message about what needs to be fixed.</p>
+  </div>
+
+  <div class="footer">
+    <div class="footer-brand"><span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span></div>
+    <div class="footer-tagline">A VibeShip Creation</div>
+  </div>

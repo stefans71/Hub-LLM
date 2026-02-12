@@ -1,0 +1,99 @@
+  <div class="page-header">
+    <h1>Git &amp; GitHub</h1>
+    <p class="page-desc">Version control setup, GitHub integration, and how your AI engineer handles commits.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">1</span>
+    <h2>What is Git?</h2>
+    <p style="margin-top: 14px;">Git is a version control system that tracks every change to your code. Think of it like an unlimited undo history &mdash; you can see what changed, when, and why, and roll back to any previous state.</p>
+    <p>Your HubLLM project already has Git initialized. When you scaffolded your project, <code>git init</code> was run automatically.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">2</span>
+    <h2>Understanding Commits</h2>
+    <p style="margin-top: 14px;">A <strong>commit</strong> is a snapshot of your code at a point in time. Each commit has:</p>
+    <ul class="steps">
+      <li><span class="step-num">&bull;</span><strong>A message</strong> describing what changed (e.g., "Add login page with form validation")</li>
+      <li><span class="step-num">&bull;</span><strong>A unique ID</strong> (a hash like <code>a1b2c3d</code>) so you can reference it later</li>
+      <li><span class="step-num">&bull;</span><strong>A diff</strong> showing exactly which lines were added, changed, or removed</li>
+    </ul>
+    <h3>Auto-commits by Claude</h3>
+    <p>When Claude Code finishes a task, it automatically creates a commit with a descriptive message.</p>
+    <div class="tip"><span class="tip-label">Tip:</span> Run <code>git log --oneline</code> in the terminal to see a list of all commits.</div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">3</span>
+    <h2>Setting Up GitHub</h2>
+    <p style="margin-top: 14px;">GitHub is a cloud service that stores your Git repositories online. Connecting gives you cloud backup, collaboration, and a shareable link to your project.</p>
+    <h3>Step 1: Create a GitHub Account</h3>
+    <p>If you don't have one already, sign up at <a href="https://github.com/join" target="_blank">github.com/join</a>. It's free.</p>
+    <h3>Step 2: Create a Repository</h3>
+    <ol class="steps">
+      <li><span class="step-num">1.</span>Go to <a href="https://github.com/new" target="_blank">github.com/new</a></li>
+      <li><span class="step-num">2.</span>Enter a repository name (e.g., <code>my-project</code>)</li>
+      <li><span class="step-num">3.</span>Leave it as <strong>Public</strong> or choose <strong>Private</strong></li>
+      <li><span class="step-num">4.</span><strong>Do NOT</strong> initialize with a README (your project already has one)</li>
+      <li><span class="step-num">5.</span>Click <strong>Create repository</strong></li>
+    </ol>
+    <h3>Step 3: Connect Your Project</h3>
+    <p>In your HubLLM terminal, run these commands:</p>
+    <div class="code-block">
+      <span class="comment"># Add your GitHub repo as a remote</span><br>
+      <span class="cmd">git remote add</span> origin <span class="flag">https://github.com/YOUR_USERNAME/YOUR_REPO.git</span><br><br>
+      <span class="comment"># Push your code to GitHub</span><br>
+      <span class="cmd">git push</span> <span class="flag">-u</span> origin main
+    </div>
+    <p>After this, your code is backed up on GitHub. Every time Claude commits, you can push with <code>git push</code>.</p>
+  </div>
+
+  <div class="section">
+    <span class="section-number">4</span>
+    <h2>Common Git Commands</h2>
+    <p style="margin-top: 14px;">Here are the commands you'll use most often:</p>
+    <div class="code-block">
+      <span class="comment"># See what files have changed</span><br>
+      <span class="cmd">git status</span><br><br>
+      <span class="comment"># See recent commits</span><br>
+      <span class="cmd">git log</span> <span class="flag">--oneline</span><br><br>
+      <span class="comment"># Push commits to GitHub</span><br>
+      <span class="cmd">git push</span><br><br>
+      <span class="comment"># Pull latest changes (if collaborating)</span><br>
+      <span class="cmd">git pull</span><br><br>
+      <span class="comment"># See what changed in a file</span><br>
+      <span class="cmd">git diff</span> <span class="flag">filename.js</span><br><br>
+      <span class="comment"># Undo uncommitted changes to a file</span><br>
+      <span class="cmd">git checkout</span> <span class="flag">--</span> filename.js
+    </div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">5</span>
+    <h2>Branching (Advanced)</h2>
+    <p style="margin-top: 14px;">Branches let you work on features in isolation without affecting your main code.</p>
+    <div class="code-block">
+      <span class="comment"># Create a new branch</span><br>
+      <span class="cmd">git checkout</span> <span class="flag">-b</span> my-feature<br><br>
+      <span class="comment"># Switch back to main</span><br>
+      <span class="cmd">git checkout</span> main<br><br>
+      <span class="comment"># Merge your feature into main</span><br>
+      <span class="cmd">git merge</span> my-feature
+    </div>
+    <div class="tip"><span class="tip-label">Tip:</span> For most projects, working directly on <code>main</code> is fine. Branching becomes useful when collaborating with others.</div>
+  </div>
+
+  <div class="section">
+    <span class="section-number">6</span>
+    <h2>Helpful Links</h2>
+    <div class="link-row" style="margin-top: 14px;">
+      <a href="https://github.com/join" target="_blank" class="link-btn">Sign up for GitHub</a>
+      <a href="https://github.com/login" target="_blank" class="link-btn">Sign in to GitHub</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-brand"><span class="logo-hub">Hub</span><span class="logo-llm">LLM</span><span class="logo-dev">.dev</span></div>
+    <div class="footer-tagline">A VibeShip Creation</div>
+  </div>

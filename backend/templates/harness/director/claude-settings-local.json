@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "deny": [
+      "Write({{appDir}}/src/**)",
+      "Write({{appDir}}/backend/**)",
+      "Write({{appDir}}/frontend/**)",
+      "Edit({{appDir}}/src/**)",
+      "Edit({{appDir}}/backend/**)",
+      "Edit({{appDir}}/frontend/**)",
+      "Bash(cd {{appDir}} && npm *)",
+      "Bash(cd {{appDir}} && node *)",
+      "Bash(cd {{appDir}} && python *)"
+    ]
+  }
+}
